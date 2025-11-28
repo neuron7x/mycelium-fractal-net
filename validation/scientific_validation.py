@@ -4,10 +4,10 @@ This module validates MyceliumFractalNet outputs against published
 results from biophysics literature to ensure physiological accuracy.
 
 References:
-    - Hille B (2001) "Ion Channels of Excitable Membranes" 3rd Ed
-    - Fricker et al. (2017) "The Mycelium as a Network"
-    - Hodgkin & Huxley (1952) "A quantitative description of membrane current"
-    - Turing A (1952) "The chemical basis of morphogenesis"
+    - Hille B (2001) "Ion Channels of Excitable Membranes" 3rd Ed, Sinauer
+    - Fricker et al. (2017) Fungal Biology Reviews 31:158-170
+    - Hodgkin & Huxley (1952) J. Physiol. 117:500-544
+    - Turing A (1952) Phil. Trans. R. Soc. Lond. B 237:37-72
 
 Run with: python validation/scientific_validation.py
 """

@@ -115,7 +115,7 @@ class TestFractalDimensionConvergence:
                 turing_enabled=True,
             )
 
-            # Use threshold near field mean
+            # Use threshold at field median
             threshold = np.percentile(field, 50)  # Median
             binary = field > threshold
 
