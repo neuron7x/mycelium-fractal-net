@@ -352,9 +352,8 @@ def simulate_mycelium_field(
             jitter = rng.normal(0, np.sqrt(jitter_var), size=field.shape)
             field += jitter
 
-        # Ion clamping (≈ [-95, 40] mV with min clamp)
+        # Ion clamping (≈ [-95, 40] mV)
         field = np.clip(field, -0.095, 0.040)
-        field = np.maximum(field, -0.095 + ION_CLAMP_MIN)
 
     return field, growth_events
 
@@ -388,10 +387,12 @@ def estimate_fractal_dimension(
     """
     if binary_field.ndim != 2 or binary_field.shape[0] != binary_field.shape[1]:
         raise ValueError("binary_field must be a square 2D array.")
+    if num_scales < 1:
+        raise ValueError("num_scales must be >= 1.")
 
     n = binary_field.shape[0]
     if max_box_size is None:
-        max_box_size = max(min_box_size * (2 ** (num_scales - 1)), min_box_size)
+        max_box_size = min_box_size * (2 ** (num_scales - 1))
         max_box_size = min(max_box_size, n // 2 if n >= 4 else n)
 
     if max_box_size < min_box_size:

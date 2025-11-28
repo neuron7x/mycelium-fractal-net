@@ -15,12 +15,16 @@ from mycelium_fractal_net import (
 
 def test_nernst_rtfz_at_body_temperature() -> None:
     """Verify RT/zF at 37°C equals ~26.7 mV for z=1."""
-    # Calculate RT/zF
-    rt_zf = (R_GAS_CONSTANT * BODY_TEMPERATURE_K) / (1 * FARADAY_CONSTANT) * 1000  # mV
+    # NERNST_RTFZ_MV is pre-computed as (R*T/F)*1000 for z=1
+    # Verify it matches manual calculation
+    z_valence = 1
+    rt_zf_calculated = (
+        R_GAS_CONSTANT * BODY_TEMPERATURE_K / (z_valence * FARADAY_CONSTANT) * 1000
+    )  # mV
 
-    assert abs(rt_zf - NERNST_RTFZ_MV) < 0.01
+    assert abs(rt_zf_calculated - NERNST_RTFZ_MV) < 0.01
     # Should be approximately 26.7 mV
-    assert 26.5 < rt_zf < 27.0
+    assert 26.5 < NERNST_RTFZ_MV < 27.0
 
 
 def test_nernst_potassium_physiological() -> None:

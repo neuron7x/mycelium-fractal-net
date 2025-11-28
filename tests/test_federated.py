@@ -80,21 +80,19 @@ def test_aggregate_robustness_to_byzantine() -> None:
 
 def test_aggregate_empty_raises() -> None:
     """Test that aggregating empty list raises ValueError."""
+    import pytest
+
     agg = HierarchicalKrumAggregator()
 
-    try:
+    with pytest.raises(ValueError, match="No gradients"):
         agg.aggregate([])
-        assert False, "Should have raised ValueError"
-    except ValueError as e:
-        assert "No gradients" in str(e)
 
 
 def test_krum_select_empty_raises() -> None:
     """Test that Krum with empty list raises ValueError."""
+    import pytest
+
     agg = HierarchicalKrumAggregator()
 
-    try:
+    with pytest.raises(ValueError, match="No gradients"):
         agg.krum_select([], num_byzantine=0)
-        assert False, "Should have raised ValueError"
-    except ValueError as e:
-        assert "No gradients" in str(e)
