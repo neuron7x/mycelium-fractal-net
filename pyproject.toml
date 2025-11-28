@@ -1,0 +1,59 @@
+
+[project]
+name = "mycelium-fractal-net"
+version = "4.1.0"
+description = "Neuro-fractal mycelium dynamics engine with Nernst potentials, diffusion field, and fractal analysis."
+authors = [{ name = "Yaroslav Vasylenko", email = "example@example.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["neuroscience", "fractal", "mycelium", "simulation", "nernst", "LLM-tools"]
+
+dependencies = [
+  "numpy>=1.24",
+  "sympy>=1.12",
+  "torch>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "pytest-cov>=4.0",
+  "ruff>=0.5.0",
+  "mypy>=1.8.0",
+  "black>=24.0.0",
+  "isort>=5.12.0",
+  "types-setuptools",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["mycelium_fractal_net"]
+
+[tool.pytest.ini_options]
+addopts = "-q --disable-warnings"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "I"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+namespace_packages = true
+pretty = true
+
+[tool.coverage.run]
+source = ["mycelium_fractal_net"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
