@@ -13,6 +13,8 @@ from .model import (
     run_validation,
     run_validation_cli,
     simulate_mycelium_field,
+    symbolic_nernst_verify,
+    symbolic_turing_verify,
     verify_stdp_lipschitz,
     verify_turing_instability,
 )
@@ -27,6 +29,8 @@ __all__ = [
     "run_validation",
     "run_validation_cli",
     "simulate_mycelium_field",
+    "symbolic_nernst_verify",
+    "symbolic_turing_verify",
     "verify_stdp_lipschitz",
     "verify_turing_instability",
 ]

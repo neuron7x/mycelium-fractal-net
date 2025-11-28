@@ -63,11 +63,12 @@ def compute_nernst_potential(
     return (R_GAS_CONSTANT * temperature_k) / (z_valence * FARADAY_CONSTANT) * math.log(ratio)
 
 
-def _symbolic_nernst_example() -> float:
+def symbolic_nernst_verify() -> float:
     """
-    Використовує sympy для підтвердження формули Нернста на конкретних значеннях.
+    Use sympy to verify Nernst formula with specific values.
 
-    Повертає числове значення потенціалу для K+ при стандартних концентраціях.
+    Returns numeric potential for K+ at standard concentrations.
+    This function verifies that the symbolic and numeric implementations match.
     """
     R, T, z, F, c_out, c_in = sp.symbols("R T z F c_out c_in", positive=True)
     E_expr = (R * T) / (z * F) * sp.log(c_out / c_in)
@@ -82,6 +83,10 @@ def _symbolic_nernst_example() -> float:
     }
     E_val = float(E_expr.subs(subs).evalf())
     return E_val
+
+
+# Backward compatibility alias
+_symbolic_nernst_example = symbolic_nernst_verify
 
 
 # === Turing Reaction-Diffusion Constants ===
@@ -181,11 +186,12 @@ def verify_turing_instability(
     return is_unstable, max_lambda, k_at_max
 
 
-def _symbolic_turing_verify() -> Dict[str, float]:
+def symbolic_turing_verify() -> Dict[str, float]:
     """
     Sympy verification of Turing dispersion relation.
 
     Returns dictionary with symbolic and numerical verification results.
+    Useful for validating that the numerical implementation matches theory.
     """
     k, d_u, d_v, a, b = sp.symbols("k d_u d_v a b", real=True, positive=True)
 
@@ -216,6 +222,10 @@ def _symbolic_turing_verify() -> Dict[str, float]:
     }
 
 
+# Backward compatibility alias
+_symbolic_turing_verify = symbolic_turing_verify
+
+
 # === STDP (Spike-Timing-Dependent Plasticity) Constants ===
 STDP_TAU_MS: float = 20.0  # Time constant in milliseconds
 STDP_A_PLUS: float = 0.01  # LTP amplitude
@@ -232,13 +242,15 @@ def compute_stdp_weight_change(
     Compute STDP weight change based on spike timing difference.
 
     Implements asymmetric STDP rule:
-        Δw = A+ * exp(-|Δt|/τ)  if Δt > 0 (pre before post → LTP)
-        Δw = -A- * exp(-|Δt|/τ) if Δt < 0 (post before pre → LTD)
+        Δw = A+ * exp(-|Δt|/τ)  if Δt > 0 (post fires after pre → LTP)
+        Δw = -A- * exp(-|Δt|/τ) if Δt < 0 (post fires before pre → LTD)
 
     Parameters
     ----------
     delta_t_ms : float
         Time difference t_post - t_pre in milliseconds.
+        Positive when post-synaptic spike follows pre-synaptic spike (LTP).
+        Negative when post-synaptic spike precedes pre-synaptic spike (LTD).
     tau_ms : float
         Time constant for exponential decay.
     a_plus : float
@@ -252,10 +264,10 @@ def compute_stdp_weight_change(
         Weight change Δw.
     """
     if delta_t_ms > 0:
-        # Pre before post → LTP
+        # Post fires after pre → LTP (strengthen connection)
         return a_plus * math.exp(-abs(delta_t_ms) / tau_ms)
     elif delta_t_ms < 0:
-        # Post before pre → LTD
+        # Post fires before pre → LTD (weaken connection)
         return -a_minus * math.exp(-abs(delta_t_ms) / tau_ms)
     else:
         return 0.0

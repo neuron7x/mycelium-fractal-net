@@ -3,17 +3,19 @@ import math
 
 from mycelium_fractal_net import (
     compute_turing_dispersion,
+    symbolic_turing_verify,
     verify_turing_instability,
 )
-from mycelium_fractal_net.model import _symbolic_turing_verify
 
 
 def test_turing_dispersion_zero_wavenumber() -> None:
     """At k=0, dispersion should return homogeneous stability value."""
     lambda_0 = compute_turing_dispersion(k=0.0, d_u=1.0, d_v=10.0, a=0.5, b=1.0)
-    # At k=0, trace = a - b, det = a*(-b) + a*b = 0
-    # So lambda = trace/2 = (0.5 - 1.0)/2 = -0.25
+    # At k=0, trace = a - b = 0.5 - 1.0 = -0.5
+    # det = a*(-b) + a*b = -0.5 + 0.5 = 0
+    # lambda = (trace + sqrt(trace^2)) / 2 = 0 (larger eigenvalue when det=0)
     assert math.isfinite(lambda_0)
+    assert lambda_0 <= 0  # Stable or marginally stable at k=0
 
 
 def test_turing_dispersion_nonzero_wavenumber() -> None:
@@ -35,7 +37,7 @@ def test_turing_instability_verification() -> None:
 
 def test_symbolic_turing_verification() -> None:
     """Test sympy-based Turing verification."""
-    result = _symbolic_turing_verify()
+    result = symbolic_turing_verify()
     assert "trace" in result
     assert "determinant" in result
     assert "lambda_max_at_k0.3" in result

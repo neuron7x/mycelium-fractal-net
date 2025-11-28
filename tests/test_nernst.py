@@ -1,7 +1,6 @@
 import math
 
-from mycelium_fractal_net import compute_nernst_potential
-from mycelium_fractal_net.model import _symbolic_nernst_example
+from mycelium_fractal_net import compute_nernst_potential, symbolic_nernst_verify
 
 
 def test_nernst_potassium_physiological_range() -> None:
@@ -29,7 +28,7 @@ def test_nernst_potassium_target_89mv() -> None:
 
 def test_nernst_symbolic_numeric_match() -> None:
     """Verify symbolic and numeric Nernst calculations match."""
-    e_symbolic = _symbolic_nernst_example() * 1000.0
+    e_symbolic = symbolic_nernst_verify() * 1000.0
     e_numeric = compute_nernst_potential(1, 5e-3, 140e-3) * 1000.0
 
     # Should match to floating-point precision
