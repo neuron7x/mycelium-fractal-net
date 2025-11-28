@@ -16,6 +16,11 @@ def test_validation_cycle_produces_metrics() -> None:
         "growth_events",
         "nernst_symbolic_mV",
         "nernst_numeric_mV",
+        "turing_is_unstable",
+        "turing_max_lambda",
+        "turing_k_at_max",
+        "stdp_lipschitz_ok",
+        "stdp_lipschitz_const",
     }
     assert required_keys.issubset(metrics.keys())
 
@@ -23,3 +28,6 @@ def test_validation_cycle_produces_metrics() -> None:
     assert metrics["loss_final"] >= 0.0
     assert metrics["pot_min_mV"] < metrics["pot_max_mV"]
     assert 0.0 <= metrics["example_fractal_dim"] <= 3.0
+
+    # Verify bio-physics metrics
+    assert metrics["stdp_lipschitz_const"] < 0.01  # Per spec

@@ -16,7 +16,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from mycelium_fractal_net import run_validation_cli
+from mycelium_fractal_net import run_validation_cli  # noqa: E402, I001
 
 
 if __name__ == "__main__":

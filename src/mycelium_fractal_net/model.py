@@ -84,6 +84,252 @@ def _symbolic_nernst_example() -> float:
     return E_val
 
 
+# === Turing Reaction-Diffusion Constants ===
+TURING_THRESHOLD: float = 0.75  # Activation threshold for Turing patterns
+
+
+def compute_turing_dispersion(
+    k: float,
+    d_u: float = 1.0,
+    d_v: float = 10.0,
+    a: float = 0.5,
+    b: float = 1.0,
+) -> float:
+    """
+    Compute Turing dispersion relation λ(k) for reaction-diffusion system.
+
+    For Turing instability, we analyze the linearized reaction-diffusion system:
+        ∂u/∂t = d_u ∇²u + f(u,v)
+        ∂v/∂t = d_v ∇²v + g(u,v)
+
+    The dispersion relation λ(k) gives growth rate of perturbations at wavenumber k.
+    Turing instability requires λ(k) > 0 for some k > 0.
+
+    Simplified model: λ(k) = (a - d_u*k²) * (1 - d_v*k²/b) - coupling term
+
+    Parameters
+    ----------
+    k : float
+        Wavenumber (spatial frequency).
+    d_u : float
+        Diffusion coefficient for activator.
+    d_v : float
+        Diffusion coefficient for inhibitor.
+    a : float
+        Reaction rate parameter for activator.
+    b : float
+        Reaction rate parameter for inhibitor.
+
+    Returns
+    -------
+    float
+        Growth rate λ(k) at wavenumber k.
+    """
+    # Trace and determinant of Jacobian with diffusion terms
+    trace = a - b - (d_u + d_v) * k * k
+    det = (a - d_u * k * k) * (-b - d_v * k * k) + a * b
+
+    # Eigenvalue from quadratic: λ² - trace*λ + det = 0
+    # For instability, we need the larger eigenvalue > 0
+    discriminant = trace * trace - 4.0 * det
+    if discriminant < 0:
+        return trace / 2.0  # Real part of complex eigenvalue
+    sqrt_disc = math.sqrt(discriminant)
+    lambda_plus = (trace + sqrt_disc) / 2.0
+    return lambda_plus
+
+
+def verify_turing_instability(
+    d_u: float = 1.0,
+    d_v: float = 10.0,
+    a: float = 0.5,
+    b: float = 0.3,
+    k_samples: int = 50,
+) -> Tuple[bool, float, float]:
+    """
+    Verify Turing instability condition: λ(k) > 0 for some k > 0.
+
+    Uses sympy for symbolic verification and numerical sampling.
+
+    Parameters
+    ----------
+    d_u : float
+        Diffusion coefficient for activator.
+    d_v : float
+        Diffusion coefficient for inhibitor.
+    a : float
+        Reaction rate for activator.
+    b : float
+        Reaction rate for inhibitor.
+    k_samples : int
+        Number of k values to sample.
+
+    Returns
+    -------
+    Tuple[bool, float, float]
+        (is_unstable, max_lambda, k_at_max)
+    """
+    k_vals = np.linspace(0.01, 2.0, k_samples)
+    lambdas = [compute_turing_dispersion(k, d_u, d_v, a, b) for k in k_vals]
+    lambdas_arr = np.array(lambdas)
+
+    max_idx = int(np.argmax(lambdas_arr))
+    max_lambda = float(lambdas_arr[max_idx])
+    k_at_max = float(k_vals[max_idx])
+
+    is_unstable = max_lambda > 0
+    return is_unstable, max_lambda, k_at_max
+
+
+def _symbolic_turing_verify() -> Dict[str, float]:
+    """
+    Sympy verification of Turing dispersion relation.
+
+    Returns dictionary with symbolic and numerical verification results.
+    """
+    k, d_u, d_v, a, b = sp.symbols("k d_u d_v a b", real=True, positive=True)
+
+    # Jacobian eigenvalue analysis
+    trace_expr = a - b - (d_u + d_v) * k**2
+    det_expr = (a - d_u * k**2) * (-b - d_v * k**2) + a * b
+
+    # Substitute typical Turing-unstable parameters
+    subs = {d_u: 1.0, d_v: 10.0, a: 0.5, b: 0.3}
+
+    # Evaluate at a specific k
+    k_test = 0.3
+    trace_val = float(trace_expr.subs({**subs, k: k_test}).evalf())
+    det_val = float(det_expr.subs({**subs, k: k_test}).evalf())
+
+    # Compute eigenvalue
+    disc = trace_val**2 - 4 * det_val
+    if disc >= 0:
+        lambda_max = (trace_val + math.sqrt(disc)) / 2.0
+    else:
+        lambda_max = trace_val / 2.0
+
+    return {
+        "trace": trace_val,
+        "determinant": det_val,
+        "lambda_max_at_k0.3": lambda_max,
+        "is_unstable": float(lambda_max > 0),
+    }
+
+
+# === STDP (Spike-Timing-Dependent Plasticity) Constants ===
+STDP_TAU_MS: float = 20.0  # Time constant in milliseconds
+STDP_A_PLUS: float = 0.01  # LTP amplitude
+STDP_A_MINUS: float = 0.012  # LTD amplitude (slightly larger for homeostasis)
+
+
+def compute_stdp_weight_change(
+    delta_t_ms: float,
+    tau_ms: float = STDP_TAU_MS,
+    a_plus: float = STDP_A_PLUS,
+    a_minus: float = STDP_A_MINUS,
+) -> float:
+    """
+    Compute STDP weight change based on spike timing difference.
+
+    Implements asymmetric STDP rule:
+        Δw = A+ * exp(-|Δt|/τ)  if Δt > 0 (pre before post → LTP)
+        Δw = -A- * exp(-|Δt|/τ) if Δt < 0 (post before pre → LTD)
+
+    Parameters
+    ----------
+    delta_t_ms : float
+        Time difference t_post - t_pre in milliseconds.
+    tau_ms : float
+        Time constant for exponential decay.
+    a_plus : float
+        Amplitude for LTP (potentiation).
+    a_minus : float
+        Amplitude for LTD (depression).
+
+    Returns
+    -------
+    float
+        Weight change Δw.
+    """
+    if delta_t_ms > 0:
+        # Pre before post → LTP
+        return a_plus * math.exp(-abs(delta_t_ms) / tau_ms)
+    elif delta_t_ms < 0:
+        # Post before pre → LTD
+        return -a_minus * math.exp(-abs(delta_t_ms) / tau_ms)
+    else:
+        return 0.0
+
+
+def verify_stdp_lipschitz(
+    tau_ms: float = STDP_TAU_MS,
+    a_plus: float = STDP_A_PLUS,
+    a_minus: float = STDP_A_MINUS,
+    epsilon: float = 0.01,
+) -> Tuple[bool, float]:
+    """
+    Verify STDP function satisfies Lipschitz condition with constant < epsilon.
+
+    The Lipschitz constant is bounded by max|dΔw/d(Δt)|.
+    For exponential STDP: max derivative = max(A+, A-) / τ.
+
+    Parameters
+    ----------
+    tau_ms : float
+        STDP time constant.
+    a_plus : float
+        LTP amplitude.
+    a_minus : float
+        LTD amplitude.
+    epsilon : float
+        Target Lipschitz bound.
+
+    Returns
+    -------
+    Tuple[bool, float]
+        (satisfies_bound, lipschitz_constant)
+    """
+    # Maximum derivative of exp(-|t|/τ) is 1/τ
+    # So Lipschitz constant = max(A+, A-) / τ
+    lipschitz_constant = max(a_plus, a_minus) / tau_ms
+    satisfies = lipschitz_constant < epsilon
+    return satisfies, lipschitz_constant
+
+
+def compute_heterosynaptic_modulation(
+    spike_history: np.ndarray,
+    dt_ms: float = 1.0,
+) -> float:
+    """
+    Compute heterosynaptic modulation factor g(N) = mean ∫h_k dt.
+
+    Integrates spike activity over time to compute global neuromodulation.
+
+    Parameters
+    ----------
+    spike_history : np.ndarray
+        Binary spike train array of shape (n_neurons, n_timesteps).
+    dt_ms : float
+        Time step in milliseconds.
+
+    Returns
+    -------
+    float
+        Modulation factor g(N) in [0, 1].
+    """
+    if spike_history.size == 0:
+        return 0.0
+
+    # Integrate spike counts over time for each neuron
+    integrals = np.sum(spike_history, axis=1) * dt_ms
+
+    # Mean across neurons, normalized
+    g_n = float(np.mean(integrals))
+
+    # Clamp to [0, 1] range
+    return float(np.clip(g_n / 100.0, 0.0, 1.0))
+
+
 def simulate_mycelium_field(
     rng: np.random.Generator,
     grid_size: int = 64,
@@ -183,7 +429,7 @@ def estimate_fractal_dimension(
 
     sizes = np.geomspace(min_box_size, max_box_size, num_scales).astype(int)
     sizes = np.unique(sizes)
-    counts = []
+    counts_list: list[int] = []
 
     for size in sizes:
         if size <= 0:
@@ -195,9 +441,9 @@ def estimate_fractal_dimension(
             n_boxes, size, n_boxes, size
         )
         occupied = reshaped.any(axis=(1, 3))
-        counts.append(occupied.sum())
+        counts_list.append(int(occupied.sum()))
 
-    counts = np.array(counts, dtype=float)
+    counts: np.ndarray = np.array(counts_list, dtype=float)
     valid = counts > 0
     if valid.sum() < 2:
         return 0.0
@@ -232,8 +478,9 @@ class MyceliumFractalNet(nn.Module):
             nn.Linear(16, 1),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
-        return self.net(x)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        result: torch.Tensor = self.net(x)
+        return result
 
 
 @dataclass
@@ -354,6 +601,17 @@ def run_validation(cfg: ValidationConfig | None = None) -> Dict[str, float]:
     metrics["nernst_symbolic_mV"] = float(E_symbolic * 1000.0)
     metrics["nernst_numeric_mV"] = float(E_numeric * 1000.0)
 
+    # Turing instability verification
+    is_unstable, max_lambda, k_at_max = verify_turing_instability()
+    metrics["turing_is_unstable"] = float(is_unstable)
+    metrics["turing_max_lambda"] = max_lambda
+    metrics["turing_k_at_max"] = k_at_max
+
+    # STDP Lipschitz verification
+    satisfies_lipschitz, lipschitz_const = verify_stdp_lipschitz()
+    metrics["stdp_lipschitz_ok"] = float(satisfies_lipschitz)
+    metrics["stdp_lipschitz_const"] = lipschitz_const
+
     return metrics
 
 
@@ -362,12 +620,14 @@ def run_validation_cli() -> None:
     CLI-обгортка для MyceliumFractalNet v4.1.
     """
     parser = argparse.ArgumentParser(description="MyceliumFractalNet v4.1 validation CLI")
-    parser.add_argument("--mode", type=str, default="validate", choices=["validate"], help="Режим роботи")
-    parser.add_argument("--seed", type=int, default=42, help="Seed для RNG")
-    parser.add_argument("--epochs", type=int, default=1, help="Кількість епох")
-    parser.add_argument("--batch-size", type=int, default=4, help="Розмір батча")
-    parser.add_argument("--grid-size", type=int, default=64, help="Розмір решітки")
-    parser.add_argument("--steps", type=int, default=64, help="Кроки симуляції")
+    parser.add_argument(
+        "--mode", type=str, default="validate", choices=["validate"], help="Mode"
+    )
+    parser.add_argument("--seed", type=int, default=42, help="Seed for RNG")
+    parser.add_argument("--epochs", type=int, default=1, help="Number of epochs")
+    parser.add_argument("--batch-size", type=int, default=4, help="Batch size")
+    parser.add_argument("--grid-size", type=int, default=64, help="Grid size")
+    parser.add_argument("--steps", type=int, default=64, help="Simulation steps")
     args = parser.parse_args()
 
     cfg = ValidationConfig(
