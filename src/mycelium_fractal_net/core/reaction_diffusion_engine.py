@@ -154,7 +154,7 @@ class ReactionDiffusionEngine:
             field[:, -1] = 0.0
             return field
 
-    def _compute_laplacian(self, field: NDArray[Any]) -> NDArray[Any]:
+    def _compute_laplacian(self, field: NDArray[Any]) -> NDArray[np.float64]:
         """
         Compute discrete Laplacian using 5-point stencil.
 
@@ -171,7 +171,7 @@ class ReactionDiffusionEngine:
 
         laplacian = up + down + left + right - 4.0 * field
 
-        return laplacian  # dx² = 1.0
+        return np.asarray(laplacian, dtype=np.float64)
 
     def _check_stability(
         self,

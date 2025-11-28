@@ -163,7 +163,7 @@ class MembraneEngine:
 
         return E
 
-    def _derivative(self, V: NDArray[Any], I_ext: NDArray[Any]) -> NDArray[Any]:
+    def _derivative(self, V: NDArray[Any], I_ext: NDArray[Any]) -> NDArray[np.float64]:
         """
         Compute dV/dt for membrane potential ODE.
 
@@ -171,24 +171,27 @@ class MembraneEngine:
 
         For simplicity, we normalize C_m = 1 and assume I_ext is in V/s.
         """
-        return (self.config.v_rest - V) / self.config.tau + I_ext
+        result = (self.config.v_rest - V) / self.config.tau + I_ext
+        return np.asarray(result, dtype=np.float64)
 
     def _euler_step(
         self, V: NDArray[Any], I_ext: NDArray[Any], dt: float
-    ) -> NDArray[Any]:
+    ) -> NDArray[np.float64]:
         """Forward Euler integration step."""
         dVdt = self._derivative(V, I_ext)
-        return V + dt * dVdt
+        result = V + dt * dVdt
+        return np.asarray(result, dtype=np.float64)
 
     def _rk4_step(
         self, V: NDArray[Any], I_ext: NDArray[Any], dt: float
-    ) -> NDArray[Any]:
+    ) -> NDArray[np.float64]:
         """Runge-Kutta 4th order integration step."""
         k1 = self._derivative(V, I_ext)
         k2 = self._derivative(V + 0.5 * dt * k1, I_ext)
         k3 = self._derivative(V + 0.5 * dt * k2, I_ext)
         k4 = self._derivative(V + dt * k3, I_ext)
-        return V + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        result = V + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        return np.asarray(result, dtype=np.float64)
 
     def _check_stability(self, V: NDArray[Any], step: int) -> int:
         """
@@ -261,13 +264,13 @@ class MembraneEngine:
 
         # Initialize external current
         if I_ext is None:
-            I_ext_arr = np.zeros((n_neurons,))
+            I_ext_arr: NDArray[Any] = np.zeros((n_neurons,), dtype=np.float64)
             I_ext_time_varying = False
         elif I_ext.ndim == 1:
-            I_ext_arr = I_ext
+            I_ext_arr = np.asarray(I_ext, dtype=np.float64)
             I_ext_time_varying = False
         else:
-            I_ext_arr = I_ext
+            I_ext_arr = np.asarray(I_ext, dtype=np.float64)
             I_ext_time_varying = True
 
         # Select integration method
