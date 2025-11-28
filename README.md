@@ -155,7 +155,8 @@ FROM python:3.10-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
+COPY src/ ./src/
+COPY mycelium_fractal_net_v4_1.py .
 CMD ["python", "mycelium_fractal_net_v4_1.py", "--mode", "validate"]
 ```
 
@@ -163,12 +164,17 @@ CMD ["python", "mycelium_fractal_net_v4_1.py", "--mode", "validate"]
 
 Для продакшн-рівня рекомендовано:
 - **GPU**: NVIDIA RTX 3080+ або A100
-- **CUDA**: 11.8+
-- **PyTorch**: з підтримкою CUDA (`torch>=2.0+cu118`)
+- **CUDA**: 11.x або 12.x (сумісна з PyTorch)
+- **PyTorch**: `torch>=2.0` з підтримкою CUDA
+
+Встановлення з GPU-підтримкою:
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu118
+```
 
 ### Kubernetes
 
-Готові Helm-чарти та маніфести для масштабування до **1M+ запитів/день** — див. `docs/DEPLOYMENT_GUIDE.md`.
+MFN підтримує горизонтальне масштабування через стандартні Kubernetes Deployments та Helm-чарти.
 
 -----
 
