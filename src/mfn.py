@@ -12,6 +12,8 @@ Designed for PyTorch 2.1+ with production-ready implementations.
 
 import json
 import math
+import sys
+import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -692,13 +694,11 @@ def validate_model(config_path: Optional[str] = None) -> bool:
 
     except Exception as e:
         print(f"\n✗ Validation failed: {e}")
-        import traceback
         traceback.print_exc()
         return False
 
 
 if __name__ == "__main__":
-    import sys
     config_path = sys.argv[1] if len(sys.argv) > 1 else None
     success = validate_model(config_path)
     sys.exit(0 if success else 1)
