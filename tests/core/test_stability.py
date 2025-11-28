@@ -328,7 +328,7 @@ class TestFractalGrowthStability:
         empty = np.zeros((64, 64), dtype=bool)
         dim = engine.estimate_fractal_dimension(empty)
 
-        assert dim == 0.0 or dim >= 0.0  # Empty field has no fractal structure
+        assert dim >= 0.0, "Fractal dimension should be non-negative"
 
     def test_box_counting_full_field(self) -> None:
         """Test box-counting handles full field (D ≈ 2)."""

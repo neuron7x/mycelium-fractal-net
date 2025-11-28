@@ -290,7 +290,7 @@ class MembraneEngine:
             # Add random spikes
             if spike_probability > 0:
                 spike_mask = self._rng.random(n_neurons) < spike_probability
-                I_current = I_current.copy() if np.isscalar(I_current) else I_current.copy()
+                I_current = I_current.copy()
                 if spike_mask.any():
                     spike_current = spike_amplitude / dt  # Impulse current
                     I_current = np.where(spike_mask, spike_current, I_current)

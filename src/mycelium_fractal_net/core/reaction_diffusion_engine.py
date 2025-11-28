@@ -287,7 +287,7 @@ class ReactionDiffusionEngine:
 
         # Compute pattern fraction
         pattern_mask = activator > self.config.turing_threshold
-        pattern_fraction = float(pattern_mask.sum()) / (N * N)
+        pattern_fraction = float(pattern_mask.mean())
 
         # Collect metrics
         self._metrics.steps_completed = self.config.steps
@@ -379,7 +379,7 @@ class ReactionDiffusionEngine:
         self._metrics.inhibitor_min = float(inhibitor.min())
         self._metrics.inhibitor_max = float(inhibitor.max())
         self._metrics.inhibitor_mean = float(inhibitor.mean())
-        self._metrics.pattern_fraction = float(pattern_mask.sum()) / (N * N)
+        self._metrics.pattern_fraction = float(pattern_mask.mean())
         self._metrics.values_clamped = total_clamped
         self._metrics.execution_time_s = time.perf_counter() - start_time
 
