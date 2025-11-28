@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/header.svg" alt="Mycelium Fractal Net - Bioluminescent Neural Network" width="100%" />
+</p>
+
 # 🍄 M Y C E L I U M F R A C T A L N E T (MFN) v4.1
 
 ### **ЕКЗОКОРА, ЩО САМА СЕБЕ ОРГАНІЗОВУЄ: ЖИВА АРХІТЕКТУРА.**
