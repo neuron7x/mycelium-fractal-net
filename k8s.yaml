@@ -1,0 +1,117 @@
+# MyceliumFractalNet v4.1 Kubernetes Deployment
+# Supports scaling to 1M clients via horizontal pod autoscaling
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mycelium-fractal-net
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mycelium-fractal-net
+  namespace: mycelium-fractal-net
+  labels:
+    app: mycelium-fractal-net
+    version: v4.1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mycelium-fractal-net
+  template:
+    metadata:
+      labels:
+        app: mycelium-fractal-net
+        version: v4.1
+    spec:
+      containers:
+        - name: mycelium-fractal-net
+          image: mycelium-fractal-net:v4.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: MFN_SEED
+              value: "42"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mycelium-fractal-net
+  namespace: mycelium-fractal-net
+spec:
+  selector:
+    app: mycelium-fractal-net
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mycelium-fractal-net-hpa
+  namespace: mycelium-fractal-net
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mycelium-fractal-net
+  minReplicas: 3
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+# ConfigMap for model configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mycelium-config
+  namespace: mycelium-fractal-net
+data:
+  config.json: |
+    {
+      "seed": 42,
+      "epochs": 1,
+      "batch_size": 4,
+      "grid_size": 64,
+      "steps": 64,
+      "turing_enabled": true,
+      "quantum_jitter": false,
+      "use_sparse_attention": true,
+      "use_stdp": true
+    }

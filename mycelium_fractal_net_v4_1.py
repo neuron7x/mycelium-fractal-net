@@ -18,6 +18,5 @@ if str(SRC) not in sys.path:
 
 from mycelium_fractal_net import run_validation_cli
 
-
 if __name__ == "__main__":
     run_validation_cli()
