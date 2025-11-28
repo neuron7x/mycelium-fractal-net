@@ -1,416 +1,558 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <!-- 
+    MYCELIUM FRACTAL NET - Engineering-Academic Visualization
+    Multi-Layered Recursive Network Topology with L-System Fractal Geometry
+    
+    Design Specifications:
+    - Orthographic projection for technical readability
+    - Near-absolute-zero black background (#010101)
+    - Polyhedral nodes (truncated octahedrons) as computational units
+    - High-bandwidth fiber pathways with data intensity via line thickness
+    - Color scheme: grey metallic (structure), cyan/electric blue (data flow), magenta/violet (control)
+    - Parametric instability indicators at periphery
+    - 16:9 aspect ratio with analytical lighting
+  -->
+  
   <defs>
-    <!-- Enhanced gradients for bioluminescent effects -->
-    <radialGradient id="vortexCore" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-      <stop offset="5%" stop-color="#00ffff" stop-opacity="0.95"/>
-      <stop offset="20%" stop-color="#8b00ff" stop-opacity="0.7"/>
-      <stop offset="40%" stop-color="#00ff88" stop-opacity="0.4"/>
-      <stop offset="70%" stop-color="#1a0a2e" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
-    </radialGradient>
-    
-    <radialGradient id="vortexOuter" cx="50%" cy="50%" r="60%">
-      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.3"/>
-      <stop offset="40%" stop-color="#8b00ff" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
-    </radialGradient>
-    
-    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00ffff" stop-opacity="1"/>
-      <stop offset="40%" stop-color="#00ccff" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
-    </radialGradient>
-    
-    <radialGradient id="nodeGlowViolet" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#cc00ff" stop-opacity="1"/>
-      <stop offset="40%" stop-color="#8b00ff" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
-    </radialGradient>
-    
-    <radialGradient id="nodeGlowEmerald" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00ff88" stop-opacity="1"/>
-      <stop offset="40%" stop-color="#00cc66" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
-    </radialGradient>
-    
-    <radialGradient id="nodeGlowWhite" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-      <stop offset="30%" stop-color="#aaffff" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
-    </radialGradient>
-    
-    <linearGradient id="tendrilBlue" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.05"/>
-      <stop offset="50%" stop-color="#00ccff" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#00ffff" stop-opacity="0.05"/>
+    <!-- Structural metallic gradients (deep cold grey) -->
+    <linearGradient id="metallicNode" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5a6270"/>
+      <stop offset="35%" stop-color="#3d424a"/>
+      <stop offset="65%" stop-color="#2a2e34"/>
+      <stop offset="100%" stop-color="#1a1d21"/>
     </linearGradient>
     
-    <linearGradient id="tendrilViolet" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#cc00ff" stop-opacity="0.05"/>
-      <stop offset="50%" stop-color="#8b00ff" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#cc00ff" stop-opacity="0.05"/>
+    <linearGradient id="metallicNodeHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6b7280"/>
+      <stop offset="40%" stop-color="#4b5563"/>
+      <stop offset="100%" stop-color="#374151"/>
     </linearGradient>
     
-    <linearGradient id="tendrilEmerald" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.05"/>
-      <stop offset="50%" stop-color="#00cc66" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#00ff88" stop-opacity="0.05"/>
+    <!-- Data flow gradients (Electric Blue/Cyan - λ ≈ 470nm) -->
+    <linearGradient id="dataFlowPrimary" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0088cc" stop-opacity="0.1"/>
+      <stop offset="25%" stop-color="#00a8e8" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#00d4ff" stop-opacity="1"/>
+      <stop offset="75%" stop-color="#00a8e8" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0088cc" stop-opacity="0.1"/>
     </linearGradient>
     
-    <!-- Nebula gradients -->
-    <radialGradient id="nebula1" cx="30%" cy="40%" r="40%">
-      <stop offset="0%" stop-color="#8b00ff" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
+    <linearGradient id="dataFlowSecondary" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0066aa" stop-opacity="0.05"/>
+      <stop offset="50%" stop-color="#0099cc" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0066aa" stop-opacity="0.05"/>
+    </linearGradient>
+    
+    <!-- Control/Feedback gradients (Magenta/Violet) -->
+    <linearGradient id="controlFlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7700aa" stop-opacity="0.1"/>
+      <stop offset="25%" stop-color="#9900cc" stop-opacity="0.75"/>
+      <stop offset="50%" stop-color="#cc00ff" stop-opacity="1"/>
+      <stop offset="75%" stop-color="#9900cc" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#7700aa" stop-opacity="0.1"/>
+    </linearGradient>
+    
+    <!-- Node glow effects (analytical, minimal) -->
+    <radialGradient id="nodeGlowCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#00a8e8" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#0088cc" stop-opacity="0"/>
     </radialGradient>
     
-    <radialGradient id="nebula2" cx="70%" cy="60%" r="35%">
-      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.1"/>
-      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
+    <radialGradient id="nodeGlowMagenta" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#cc00ff" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#9900cc" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#7700aa" stop-opacity="0"/>
     </radialGradient>
     
-    <radialGradient id="nebula3" cx="85%" cy="30%" r="25%">
-      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
+    <!-- Instability indicator gradients -->
+    <radialGradient id="instabilityPulse" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.4">
+        <animate attributeName="stop-opacity" values="0.2;0.5;0.2" dur="2.5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0">
+        <animate attributeName="stop-opacity" values="0;0.15;0" dur="2.5s" repeatCount="indefinite"/>
+      </stop>
     </radialGradient>
     
-    <!-- Volumetric fog gradient -->
-    <radialGradient id="fog" cx="50%" cy="50%" r="70%">
-      <stop offset="0%" stop-color="#1a1a2e" stop-opacity="0"/>
-      <stop offset="60%" stop-color="#0a0a12" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#050508" stop-opacity="0.5"/>
+    <radialGradient id="instabilityPulseMagenta" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#cc00ff" stop-opacity="0.3">
+        <animate attributeName="stop-opacity" values="0.15;0.4;0.15" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#cc00ff" stop-opacity="0">
+        <animate attributeName="stop-opacity" values="0;0.1;0" dur="3s" repeatCount="indefinite"/>
+      </stop>
     </radialGradient>
     
-    <!-- Enhanced glow filters -->
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
+    <!-- Analytical lighting filter -->
+    <filter id="analyticalLight" x="-5%" y="-5%" width="110%" height="110%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
     
-    <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    
-    <filter id="intenseGlow" x="-150%" y="-150%" width="400%" height="400%">
-      <feGaussianBlur stdDeviation="12" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    
-    <filter id="ultraGlow" x="-150%" y="-150%" width="400%" height="400%">
-      <feGaussianBlur stdDeviation="20" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    
-    <!-- Text glow filter -->
-    <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
+    <filter id="sharpGlow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="2" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    
+    <filter id="subtleGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Truncated octahedron symbol (polyhedral computational unit) -->
+    <symbol id="truncatedOctahedron" viewBox="-20 -20 40 40">
+      <!-- Isometric projection of truncated octahedron facets -->
+      <polygon points="0,-16 8,-12 8,-4 0,0 -8,-4 -8,-12" fill="url(#metallicNodeHighlight)" stroke="#5a6270" stroke-width="0.5"/>
+      <polygon points="0,0 8,-4 8,4 0,8 -8,4 -8,-4" fill="url(#metallicNode)" stroke="#4b5563" stroke-width="0.5"/>
+      <polygon points="8,-12 14,-8 14,0 8,4 8,-4" fill="#3d424a" stroke="#4b5563" stroke-width="0.3"/>
+      <polygon points="-8,-12 -14,-8 -14,0 -8,4 -8,-4" fill="#2a2e34" stroke="#374151" stroke-width="0.3"/>
+      <polygon points="0,8 8,4 8,12 0,16 -8,12 -8,4" fill="#1a1d21" stroke="#374151" stroke-width="0.3"/>
+    </symbol>
+    
+    <!-- Smaller node variant -->
+    <symbol id="truncatedOctahedronSmall" viewBox="-15 -15 30 30">
+      <polygon points="0,-12 6,-9 6,-3 0,0 -6,-3 -6,-9" fill="url(#metallicNodeHighlight)" stroke="#5a6270" stroke-width="0.4"/>
+      <polygon points="0,0 6,-3 6,3 0,6 -6,3 -6,-3" fill="url(#metallicNode)" stroke="#4b5563" stroke-width="0.4"/>
+      <polygon points="6,-9 10,-6 10,0 6,3 6,-3" fill="#3d424a" stroke="#4b5563" stroke-width="0.25"/>
+      <polygon points="-6,-9 -10,-6 -10,0 -6,3 -6,-3" fill="#2a2e34" stroke="#374151" stroke-width="0.25"/>
+    </symbol>
+    
+    <!-- Micro node for peripheral elements -->
+    <symbol id="microNode" viewBox="-8 -8 16 16">
+      <polygon points="0,-6 4,-4 4,0 0,2 -4,0 -4,-4" fill="url(#metallicNode)" stroke="#4b5563" stroke-width="0.3"/>
+      <polygon points="0,2 4,0 4,4 0,6 -4,4 -4,0" fill="#2a2e34" stroke="#374151" stroke-width="0.2"/>
+    </symbol>
   </defs>
   
-  <!-- Deep-space obsidian background -->
-  <rect width="100%" height="100%" fill="#030305"/>
+  <!-- Near-absolute-zero background (#010101) -->
+  <rect x="0" y="0" width="1920" height="1080" fill="#010101"/>
   
-  <!-- Nebula clouds -->
-  <ellipse cx="576" cy="432" rx="600" ry="400" fill="url(#nebula1)"/>
-  <ellipse cx="1344" cy="648" rx="500" ry="350" fill="url(#nebula2)"/>
-  <ellipse cx="1632" cy="324" rx="350" ry="250" fill="url(#nebula3)"/>
+  <!-- Subtle grid pattern for technical reference -->
+  <g opacity="0.03" stroke="#3d424a" stroke-width="0.5">
+    <line x1="0" y1="270" x2="1920" y2="270"/>
+    <line x1="0" y1="540" x2="1920" y2="540"/>
+    <line x1="0" y1="810" x2="1920" y2="810"/>
+    <line x1="480" y1="0" x2="480" y2="1080"/>
+    <line x1="960" y1="0" x2="960" y2="1080"/>
+    <line x1="1440" y1="0" x2="1440" y2="1080"/>
+  </g>
   
-  <!-- Extended star field with varying sizes and colors -->
+  <!-- ========================================== -->
+  <!-- LAYER 0: Background L-System Fractal Base -->
+  <!-- ========================================== -->
+  
+  <!-- L-System fractal branches (Tertiary structure - very subtle) -->
+  <g stroke="#1a1d21" stroke-width="0.5" fill="none" opacity="0.4">
+    <!-- Left branch system -->
+    <path d="M120,900 L180,820 L160,740 L200,680 L180,620 L220,560"/>
+    <path d="M180,820 L240,800 L280,720 L260,660"/>
+    <path d="M200,680 L260,700 L300,640 L280,580"/>
+    <path d="M160,740 L120,700 L140,640"/>
+    
+    <!-- Right branch system -->
+    <path d="M1800,180 L1740,260 L1760,340 L1720,400 L1740,460 L1700,520"/>
+    <path d="M1740,260 L1680,280 L1640,360 L1660,420"/>
+    <path d="M1720,400 L1660,380 L1620,440 L1640,500"/>
+    <path d="M1760,340 L1800,380 L1780,440"/>
+  </g>
+  
+  <!-- ========================================== -->
+  <!-- LAYER 1: Outer Peripheral Network Ring   -->
+  <!-- ========================================== -->
+  
+  <!-- Peripheral data pathways (thin, low intensity) -->
+  <g fill="none" filter="url(#subtleGlow)">
+    <!-- Upper-left sector pathways -->
+    <path d="M120,200 Q200,180 280,220 T420,200 T540,260" stroke="url(#dataFlowSecondary)" stroke-width="1.5"/>
+    <path d="M180,320 Q260,280 340,320 T480,300 T600,360" stroke="url(#dataFlowSecondary)" stroke-width="1.2"/>
+    
+    <!-- Upper-right sector pathways -->
+    <path d="M1800,200 Q1720,180 1640,220 T1500,200 T1380,260" stroke="url(#dataFlowSecondary)" stroke-width="1.5"/>
+    <path d="M1740,320 Q1660,280 1580,320 T1440,300 T1320,360" stroke="url(#dataFlowSecondary)" stroke-width="1.2"/>
+    
+    <!-- Lower-left sector pathways -->
+    <path d="M120,880 Q200,900 280,860 T420,880 T540,820" stroke="url(#dataFlowSecondary)" stroke-width="1.5"/>
+    <path d="M180,760 Q260,800 340,760 T480,780 T600,720" stroke="url(#dataFlowSecondary)" stroke-width="1.2"/>
+    
+    <!-- Lower-right sector pathways -->
+    <path d="M1800,880 Q1720,900 1640,860 T1500,880 T1380,820" stroke="url(#dataFlowSecondary)" stroke-width="1.5"/>
+    <path d="M1740,760 Q1660,800 1580,760 T1440,780 T1320,720" stroke="url(#dataFlowSecondary)" stroke-width="1.2"/>
+  </g>
+  
+  <!-- Peripheral control/feedback paths (magenta) -->
+  <g fill="none" filter="url(#subtleGlow)">
+    <path d="M200,420 Q280,380 360,420 T500,400" stroke="url(#controlFlow)" stroke-width="1" opacity="0.6"/>
+    <path d="M1720,420 Q1640,380 1560,420 T1420,400" stroke="url(#controlFlow)" stroke-width="1" opacity="0.6"/>
+    <path d="M200,660 Q280,700 360,660 T500,680" stroke="url(#controlFlow)" stroke-width="1" opacity="0.6"/>
+    <path d="M1720,660 Q1640,700 1560,660 T1420,680" stroke="url(#controlFlow)" stroke-width="1" opacity="0.6"/>
+  </g>
+  
+  <!-- Outer ring peripheral nodes (micro nodes) -->
+  <g filter="url(#analyticalLight)">
+    <use href="#microNode" x="100" y="200" width="20" height="20"/>
+    <use href="#microNode" x="180" y="160" width="20" height="20"/>
+    <use href="#microNode" x="260" y="240" width="20" height="20"/>
+    <use href="#microNode" x="80" y="340" width="20" height="20"/>
+    <use href="#microNode" x="160" y="420" width="20" height="20"/>
+    
+    <use href="#microNode" x="1800" y="200" width="20" height="20"/>
+    <use href="#microNode" x="1720" y="160" width="20" height="20"/>
+    <use href="#microNode" x="1640" y="240" width="20" height="20"/>
+    <use href="#microNode" x="1820" y="340" width="20" height="20"/>
+    <use href="#microNode" x="1740" y="420" width="20" height="20"/>
+    
+    <use href="#microNode" x="100" y="880" width="20" height="20"/>
+    <use href="#microNode" x="180" y="920" width="20" height="20"/>
+    <use href="#microNode" x="260" y="840" width="20" height="20"/>
+    <use href="#microNode" x="80" y="740" width="20" height="20"/>
+    <use href="#microNode" x="160" y="660" width="20" height="20"/>
+    
+    <use href="#microNode" x="1800" y="880" width="20" height="20"/>
+    <use href="#microNode" x="1720" y="920" width="20" height="20"/>
+    <use href="#microNode" x="1640" y="840" width="20" height="20"/>
+    <use href="#microNode" x="1820" y="740" width="20" height="20"/>
+    <use href="#microNode" x="1740" y="660" width="20" height="20"/>
+  </g>
+  
+  <!-- Parametric instability indicators (periphery) -->
+  <g>
+    <circle cx="60" cy="280" r="15" fill="url(#instabilityPulse)"/>
+    <circle cx="140" cy="500" r="12" fill="url(#instabilityPulseMagenta)"/>
+    <circle cx="80" cy="600" r="10" fill="url(#instabilityPulse)"/>
+    <circle cx="1860" cy="280" r="15" fill="url(#instabilityPulse)"/>
+    <circle cx="1780" cy="500" r="12" fill="url(#instabilityPulseMagenta)"/>
+    <circle cx="1840" cy="600" r="10" fill="url(#instabilityPulse)"/>
+    <circle cx="60" cy="800" r="12" fill="url(#instabilityPulseMagenta)"/>
+    <circle cx="1860" cy="800" r="12" fill="url(#instabilityPulseMagenta)"/>
+  </g>
+  
+  <!-- ========================================== -->
+  <!-- LAYER 2: Secondary Network Ring          -->
+  <!-- ========================================== -->
+  
+  <!-- Secondary data pathways (medium intensity) -->
+  <g fill="none" filter="url(#sharpGlow)">
+    <!-- Left quadrant secondary paths -->
+    <path d="M320,280 Q420,240 520,300 T680,280 T800,360" stroke="url(#dataFlowPrimary)" stroke-width="2"/>
+    <path d="M360,400 Q460,360 560,420 T720,400 T840,460" stroke="url(#dataFlowPrimary)" stroke-width="1.8"/>
+    <path d="M320,800 Q420,840 520,780 T680,800 T800,720" stroke="url(#dataFlowPrimary)" stroke-width="2"/>
+    <path d="M360,680 Q460,720 560,660 T720,680 T840,620" stroke="url(#dataFlowPrimary)" stroke-width="1.8"/>
+    
+    <!-- Right quadrant secondary paths -->
+    <path d="M1600,280 Q1500,240 1400,300 T1240,280 T1120,360" stroke="url(#dataFlowPrimary)" stroke-width="2"/>
+    <path d="M1560,400 Q1460,360 1360,420 T1200,400 T1080,460" stroke="url(#dataFlowPrimary)" stroke-width="1.8"/>
+    <path d="M1600,800 Q1500,840 1400,780 T1240,800 T1120,720" stroke="url(#dataFlowPrimary)" stroke-width="2"/>
+    <path d="M1560,680 Q1460,720 1360,660 T1200,680 T1080,620" stroke="url(#dataFlowPrimary)" stroke-width="1.8"/>
+  </g>
+  
+  <!-- Secondary control paths -->
+  <g fill="none" filter="url(#sharpGlow)">
+    <path d="M400,500 Q520,460 640,520 T840,500" stroke="url(#controlFlow)" stroke-width="1.5" opacity="0.7"/>
+    <path d="M400,580 Q520,620 640,560 T840,580" stroke="url(#controlFlow)" stroke-width="1.5" opacity="0.7"/>
+    <path d="M1520,500 Q1400,460 1280,520 T1080,500" stroke="url(#controlFlow)" stroke-width="1.5" opacity="0.7"/>
+    <path d="M1520,580 Q1400,620 1280,560 T1080,580" stroke="url(#controlFlow)" stroke-width="1.5" opacity="0.7"/>
+  </g>
+  
+  <!-- Secondary ring nodes (small truncated octahedrons) -->
+  <g filter="url(#analyticalLight)">
+    <use href="#truncatedOctahedronSmall" x="295" y="265" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="395" y="225" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="495" y="285" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="335" y="385" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="455" y="345" width="35" height="35"/>
+    
+    <use href="#truncatedOctahedronSmall" x="1590" y="265" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1490" y="225" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1390" y="285" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1550" y="385" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1430" y="345" width="35" height="35"/>
+    
+    <use href="#truncatedOctahedronSmall" x="295" y="785" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="395" y="825" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="495" y="765" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="335" y="665" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="455" y="705" width="35" height="35"/>
+    
+    <use href="#truncatedOctahedronSmall" x="1590" y="785" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1490" y="825" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1390" y="765" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1550" y="665" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1430" y="705" width="35" height="35"/>
+    
+    <!-- Additional secondary nodes -->
+    <use href="#truncatedOctahedronSmall" x="575" y="245" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="675" y="305" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="575" y="805" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="675" y="745" width="35" height="35"/>
+    
+    <use href="#truncatedOctahedronSmall" x="1310" y="245" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1210" y="305" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1310" y="805" width="35" height="35"/>
+    <use href="#truncatedOctahedronSmall" x="1210" y="745" width="35" height="35"/>
+  </g>
+  
+  <!-- Secondary node glow indicators -->
   <g opacity="0.6">
-    <!-- Bright stars -->
-    <circle cx="150" cy="120" r="1.5" fill="#ffffff" filter="url(#glow)"/>
-    <circle cx="520" cy="200" r="1.8" fill="#ffffff" filter="url(#glow)"/>
-    <circle cx="890" cy="90" r="1.4" fill="#ffffff" filter="url(#glow)"/>
-    <circle cx="1280" cy="100" r="1.6" fill="#ffffff" filter="url(#glow)"/>
-    <circle cx="1620" cy="130" r="1.5" fill="#ffffff" filter="url(#glow)"/>
-    <circle cx="680" cy="880" r="1.7" fill="#ffffff" filter="url(#glow)"/>
-    <circle cx="1150" cy="920" r="1.4" fill="#ffffff" filter="url(#glow)"/>
+    <circle cx="312" cy="283" r="8" fill="url(#nodeGlowCyan)"/>
+    <circle cx="512" cy="303" r="8" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1607" cy="283" r="8" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1407" cy="303" r="8" fill="url(#nodeGlowCyan)"/>
+    <circle cx="352" cy="403" r="7" fill="url(#nodeGlowMagenta)"/>
+    <circle cx="1567" cy="403" r="7" fill="url(#nodeGlowMagenta)"/>
+  </g>
+  
+  <!-- ========================================== -->
+  <!-- LAYER 3: Primary Network Core Ring       -->
+  <!-- ========================================== -->
+  
+  <!-- Primary high-bandwidth data pathways -->
+  <g fill="none" filter="url(#sharpGlow)">
+    <!-- Horizontal core pathways -->
+    <path d="M640,420 Q720,380 800,420 T920,400 T1000,420 T1080,400 T1200,420 T1280,380" stroke="url(#dataFlowPrimary)" stroke-width="3"/>
+    <path d="M640,540 Q720,500 800,540 T920,520 T1000,540 T1080,520 T1200,540 T1280,500" stroke="url(#dataFlowPrimary)" stroke-width="3.5"/>
+    <path d="M640,660 Q720,700 800,660 T920,680 T1000,660 T1080,680 T1200,660 T1280,700" stroke="url(#dataFlowPrimary)" stroke-width="3"/>
     
-    <!-- Colored stars -->
-    <circle cx="380" cy="80" r="1.2" fill="#00ffff" filter="url(#glow)"/>
-    <circle cx="720" cy="150" r="1" fill="#cc00ff" filter="url(#glow)"/>
-    <circle cx="1100" cy="180" r="1.1" fill="#00ff88" filter="url(#glow)"/>
-    <circle cx="1450" cy="220" r="1" fill="#00ffff" filter="url(#glow)"/>
-    <circle cx="1780" cy="190" r="1.2" fill="#cc00ff" filter="url(#glow)"/>
-    <circle cx="450" cy="950" r="1.1" fill="#00ff88" filter="url(#glow)"/>
-    <circle cx="920" cy="970" r="0.9" fill="#00ffff" filter="url(#glow)"/>
-    <circle cx="1380" cy="990" r="1.1" fill="#cc00ff" filter="url(#glow)"/>
+    <!-- Vertical interconnects -->
+    <path d="M800,340 Q780,400 800,460 T780,540 T800,620 T780,700 T800,760" stroke="url(#dataFlowPrimary)" stroke-width="2.5"/>
+    <path d="M960,300 Q940,380 960,460 T940,540 T960,620 T940,700 T960,780" stroke="url(#dataFlowPrimary)" stroke-width="2.8"/>
+    <path d="M1120,340 Q1140,400 1120,460 T1140,540 T1120,620 T1140,700 T1120,760" stroke="url(#dataFlowPrimary)" stroke-width="2.5"/>
     
-    <!-- Dim background stars -->
-    <circle cx="200" cy="300" r="0.6" fill="#ffffff"/>
-    <circle cx="350" cy="450" r="0.5" fill="#ffffff"/>
-    <circle cx="80" cy="550" r="0.7" fill="#ffffff"/>
-    <circle cx="1800" cy="400" r="0.6" fill="#ffffff"/>
-    <circle cx="1700" cy="650" r="0.5" fill="#ffffff"/>
-    <circle cx="1850" cy="850" r="0.7" fill="#ffffff"/>
-    <circle cx="960" cy="50" r="0.6" fill="#ffffff"/>
-    <circle cx="1500" cy="80" r="0.5" fill="#ffffff"/>
-    <circle cx="600" cy="1000" r="0.6" fill="#ffffff"/>
-    <circle cx="1200" cy="1020" r="0.5" fill="#ffffff"/>
-    <circle cx="300" cy="750" r="0.5" fill="#aaffff"/>
-    <circle cx="1600" cy="550" r="0.5" fill="#ffaaff"/>
-    <circle cx="100" cy="200" r="0.4" fill="#ffffff"/>
-    <circle cx="250" cy="600" r="0.4" fill="#ffffff"/>
-    <circle cx="1750" cy="300" r="0.4" fill="#ffffff"/>
-    <circle cx="1650" cy="900" r="0.4" fill="#ffffff"/>
+    <!-- Diagonal cross-links -->
+    <path d="M720,380 Q800,440 880,380 T1040,380 T1120,440 T1200,380" stroke="url(#dataFlowPrimary)" stroke-width="2"/>
+    <path d="M720,700 Q800,640 880,700 T1040,700 T1120,640 T1200,700" stroke="url(#dataFlowPrimary)" stroke-width="2"/>
   </g>
   
-  <!-- Outer vortex glow -->
-  <ellipse cx="960" cy="540" rx="550" ry="450" fill="url(#vortexOuter)" filter="url(#ultraGlow)" opacity="0.5"/>
-  
-  <!-- Central vortex glow -->
-  <ellipse cx="960" cy="540" rx="380" ry="320" fill="url(#vortexCore)" filter="url(#intenseGlow)" opacity="0.7"/>
-  
-  <!-- Volumetric fog overlay -->
-  <rect width="100%" height="100%" fill="url(#fog)"/>
-  
-  <!-- Layer 1: Background tendrils (faint, distant) -->
-  <g filter="url(#softGlow)" opacity="0.25">
-    <path d="M50,400 Q200,250 400,350 T650,280 T850,380 T960,540" stroke="#00ffff" stroke-width="1" fill="none"/>
-    <path d="M1870,680 Q1720,850 1520,750 T1270,800 T1070,700 T960,540" stroke="#cc00ff" stroke-width="1" fill="none"/>
-    <path d="M960,50 Q700,180 780,350 T830,470 T960,540" stroke="#00ff88" stroke-width="1" fill="none"/>
-    <path d="M960,1030 Q1200,900 1140,730 T1090,610 T960,540" stroke="#00ffff" stroke-width="1" fill="none"/>
-    <path d="M30,800 Q180,700 320,750 T520,680 T750,600 T960,540" stroke="#cc00ff" stroke-width="1" fill="none"/>
-    <path d="M1890,200 Q1740,350 1600,280 T1400,360 T1170,480 T960,540" stroke="#00ff88" stroke-width="1" fill="none"/>
+  <!-- Primary control/feedback pathways -->
+  <g fill="none" filter="url(#sharpGlow)">
+    <path d="M680,460 Q760,420 840,460 T960,440 T1080,460 T1160,420 T1240,460" stroke="url(#controlFlow)" stroke-width="2"/>
+    <path d="M680,620 Q760,660 840,620 T960,640 T1080,620 T1160,660 T1240,620" stroke="url(#controlFlow)" stroke-width="2"/>
+    <path d="M840,380 Q880,440 920,380 T1000,380 T1040,440 T1080,380" stroke="url(#controlFlow)" stroke-width="1.5"/>
+    <path d="M840,700 Q880,640 920,700 T1000,700 T1040,640 T1080,700" stroke="url(#controlFlow)" stroke-width="1.5"/>
   </g>
   
-  <!-- Layer 2: Mid-ground tendrils -->
-  <g filter="url(#glow)" opacity="0.5">
-    <path d="M100,350 Q280,280 450,360 T680,310 T860,430 T960,540" stroke="url(#tendrilBlue)" stroke-width="1.8" fill="none"/>
-    <path d="M1820,730 Q1640,810 1480,730 T1250,780 T1050,660 T960,540" stroke="url(#tendrilViolet)" stroke-width="1.8" fill="none"/>
-    <path d="M350,850 Q500,750 620,800 T780,720 T900,620 T960,540" stroke="url(#tendrilEmerald)" stroke-width="1.8" fill="none"/>
-    <path d="M1580,280 Q1430,380 1350,320 T1180,420 T1030,500 T960,540" stroke="url(#tendrilBlue)" stroke-width="1.8" fill="none"/>
-    <path d="M200,180 Q380,260 480,200 T680,280 T840,400 T960,540" stroke="url(#tendrilViolet)" stroke-width="1.5" fill="none"/>
-    <path d="M1720,920 Q1550,840 1420,900 T1220,820 T1040,680 T960,540" stroke="url(#tendrilEmerald)" stroke-width="1.5" fill="none"/>
-    <path d="M80,620 Q220,560 360,600 T560,540 T780,520 T960,540" stroke="url(#tendrilBlue)" stroke-width="1.5" fill="none"/>
-    <path d="M1840,460 Q1680,510 1550,470 T1340,520 T1140,540 T960,540" stroke="url(#tendrilViolet)" stroke-width="1.5" fill="none"/>
-  </g>
-  
-  <!-- Layer 3: Foreground tendrils (bright, prominent) -->
-  <g filter="url(#glow)">
-    <path d="M180,420 Q380,340 520,400 T720,360 T880,470 T960,540" stroke="#00ffff" stroke-width="2.5" fill="none" opacity="0.85"/>
-    <path d="M1740,660 Q1560,740 1400,670 T1200,720 T1030,620 T960,540" stroke="#cc00ff" stroke-width="2.5" fill="none" opacity="0.85"/>
-    <path d="M450,780 Q580,700 680,740 T820,670 T920,590 T960,540" stroke="#00ff88" stroke-width="2.5" fill="none" opacity="0.85"/>
-    <path d="M1510,340 Q1380,430 1300,370 T1150,460 T1020,520 T960,540" stroke="#00ffff" stroke-width="2.5" fill="none" opacity="0.85"/>
+  <!-- Primary core nodes (full truncated octahedrons) -->
+  <g filter="url(#analyticalLight)">
+    <!-- Upper core row -->
+    <use href="#truncatedOctahedron" x="595" y="380" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="715" y="340" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="835" y="360" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="935" y="320" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1035" y="360" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1155" y="340" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1275" y="380" width="50" height="50"/>
     
-    <!-- Additional prominent tendrils -->
-    <path d="M280,560 Q420,500 540,540 T720,500 T880,530 T960,540" stroke="#00ccff" stroke-width="2" fill="none" opacity="0.75"/>
-    <path d="M1640,540 Q1500,580 1380,540 T1200,580 T1040,550 T960,540" stroke="#aa00ff" stroke-width="2" fill="none" opacity="0.75"/>
-    <path d="M550,620 Q660,580 740,610 T850,570 T930,550 T960,540" stroke="#00cc66" stroke-width="2" fill="none" opacity="0.75"/>
-    <path d="M1370,460 Q1280,500 1220,470 T1100,510 T1000,530 T960,540" stroke="#00ccff" stroke-width="2" fill="none" opacity="0.75"/>
-  </g>
-  
-  <!-- Layer 4: Fine fractal detail tendrils -->
-  <g filter="url(#glow)" opacity="0.6">
-    <path d="M320,380 Q400,350 460,380 T560,360 T660,400" stroke="#00ffff" stroke-width="1" fill="none"/>
-    <path d="M440,450 Q510,420 570,450 T670,430 T760,470" stroke="#00ffff" stroke-width="0.8" fill="none"/>
-    <path d="M600,350 Q660,320 720,350 T820,330 T900,380" stroke="#00ccff" stroke-width="0.8" fill="none"/>
+    <!-- Central core row -->
+    <use href="#truncatedOctahedron" x="595" y="515" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="715" y="495" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="835" y="515" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="935" y="475" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1035" y="515" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1155" y="495" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1275" y="515" width="50" height="50"/>
     
-    <path d="M1600,700 Q1530,730 1470,700 T1370,720 T1280,680" stroke="#cc00ff" stroke-width="1" fill="none"/>
-    <path d="M1480,630 Q1420,660 1360,630 T1260,650 T1170,610" stroke="#cc00ff" stroke-width="0.8" fill="none"/>
-    <path d="M1340,750 Q1280,780 1220,750 T1120,770 T1040,730" stroke="#aa00ff" stroke-width="0.8" fill="none"/>
+    <!-- Lower core row -->
+    <use href="#truncatedOctahedron" x="595" y="650" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="715" y="690" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="835" y="670" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="935" y="710" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1035" y="670" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1155" y="690" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1275" y="650" width="50" height="50"/>
     
-    <path d="M520,720 Q590,750 650,720 T750,740 T840,700" stroke="#00ff88" stroke-width="1" fill="none"/>
-    <path d="M640,670 Q700,700 760,670 T860,690 T940,650" stroke="#00ff88" stroke-width="0.8" fill="none"/>
-    <path d="M380,800 Q450,830 510,800 T610,820 T700,780" stroke="#00cc66" stroke-width="0.8" fill="none"/>
+    <!-- Additional side nodes -->
+    <use href="#truncatedOctahedron" x="555" y="440" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="555" y="590" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1315" y="440" width="50" height="50"/>
+    <use href="#truncatedOctahedron" x="1315" y="590" width="50" height="50"/>
+  </g>
+  
+  <!-- Primary node glow indicators (data flow intensity) -->
+  <g opacity="0.7">
+    <circle cx="620" cy="405" r="12" fill="url(#nodeGlowCyan)"/>
+    <circle cx="740" cy="365" r="12" fill="url(#nodeGlowCyan)"/>
+    <circle cx="860" cy="385" r="14" fill="url(#nodeGlowCyan)"/>
+    <circle cx="960" cy="345" r="16" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1060" cy="385" r="14" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1180" cy="365" r="12" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1300" cy="405" r="12" fill="url(#nodeGlowCyan)"/>
     
-    <path d="M1450,380 Q1390,350 1330,380 T1230,360 T1140,400" stroke="#00ffff" stroke-width="1" fill="none"/>
-    <path d="M1320,440 Q1260,410 1200,440 T1100,420 T1020,460" stroke="#00ffff" stroke-width="0.8" fill="none"/>
-  </g>
-  
-  <!-- Outer ring nodes -->
-  <g filter="url(#softGlow)">
-    <circle cx="100" cy="350" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="180" cy="420" r="5" fill="url(#nodeGlowViolet)"/>
-    <circle cx="200" cy="180" r="4" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="80" cy="620" r="5" fill="url(#nodeGlow)"/>
-    <circle cx="350" cy="850" r="4" fill="url(#nodeGlowViolet)"/>
-    <circle cx="30" cy="800" r="4" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="620" cy="540" r="14" fill="url(#nodeGlowCyan)"/>
+    <circle cx="740" cy="520" r="14" fill="url(#nodeGlowCyan)"/>
+    <circle cx="860" cy="540" r="16" fill="url(#nodeGlowCyan)"/>
+    <circle cx="960" cy="500" r="20" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1060" cy="540" r="16" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1180" cy="520" r="14" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1300" cy="540" r="14" fill="url(#nodeGlowCyan)"/>
     
-    <circle cx="1820" cy="730" r="6" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1740" cy="660" r="5" fill="url(#nodeGlow)"/>
-    <circle cx="1720" cy="920" r="4" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="1840" cy="460" r="5" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1580" cy="280" r="4" fill="url(#nodeGlow)"/>
-    <circle cx="1890" cy="200" r="4" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="620" cy="675" r="12" fill="url(#nodeGlowCyan)"/>
+    <circle cx="740" cy="715" r="12" fill="url(#nodeGlowCyan)"/>
+    <circle cx="860" cy="695" r="14" fill="url(#nodeGlowCyan)"/>
+    <circle cx="960" cy="735" r="16" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1060" cy="695" r="14" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1180" cy="715" r="12" fill="url(#nodeGlowCyan)"/>
+    <circle cx="1300" cy="675" r="12" fill="url(#nodeGlowCyan)"/>
   </g>
   
-  <!-- Middle ring nodes -->
-  <g filter="url(#glow)">
-    <circle cx="450" cy="360" r="7" fill="url(#nodeGlow)"/>
-    <circle cx="520" cy="400" r="6" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="480" cy="200" r="5" fill="url(#nodeGlowViolet)"/>
-    <circle cx="620" cy="800" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="680" cy="740" r="5" fill="url(#nodeGlowViolet)"/>
-    <circle cx="360" cy="600" r="5" fill="url(#nodeGlowEmerald)"/>
+  <!-- Control node indicators (magenta) -->
+  <g opacity="0.5">
+    <circle cx="580" cy="465" r="10" fill="url(#nodeGlowMagenta)"/>
+    <circle cx="580" cy="615" r="10" fill="url(#nodeGlowMagenta)"/>
+    <circle cx="1340" cy="465" r="10" fill="url(#nodeGlowMagenta)"/>
+    <circle cx="1340" cy="615" r="10" fill="url(#nodeGlowMagenta)"/>
+  </g>
+  
+  <!-- ========================================== -->
+  <!-- LAYER 4: Central Processing Core         -->
+  <!-- ========================================== -->
+  
+  <!-- Central core high-intensity pathways -->
+  <g fill="none" filter="url(#sharpGlow)">
+    <path d="M880,480 Q920,440 960,480 T1040,480" stroke="#00d4ff" stroke-width="4" opacity="0.9"/>
+    <path d="M880,540 Q920,500 960,540 T1040,540" stroke="#00d4ff" stroke-width="4.5" opacity="0.95"/>
+    <path d="M880,600 Q920,640 960,600 T1040,600" stroke="#00d4ff" stroke-width="4" opacity="0.9"/>
     
-    <circle cx="1480" cy="730" r="7" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1400" cy="670" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="1420" cy="900" r="5" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="1350" cy="320" r="6" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1300" cy="370" r="5" fill="url(#nodeGlow)"/>
-    <circle cx="1550" cy="470" r="5" fill="url(#nodeGlowEmerald)"/>
+    <path d="M920,440 Q960,480 920,520 T920,600 T960,640" stroke="#00d4ff" stroke-width="3.5" opacity="0.85"/>
+    <path d="M1000,440 Q960,480 1000,520 T1000,600 T960,640" stroke="#00d4ff" stroke-width="3.5" opacity="0.85"/>
   </g>
   
-  <!-- Inner ring nodes -->
-  <g filter="url(#glow)">
-    <circle cx="720" cy="360" r="8" fill="url(#nodeGlow)"/>
-    <circle cx="680" cy="310" r="6" fill="url(#nodeGlowViolet)"/>
-    <circle cx="780" cy="720" r="7" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="820" cy="670" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="720" cy="500" r="6" fill="url(#nodeGlowViolet)"/>
-    <circle cx="540" cy="540" r="5" fill="url(#nodeGlow)"/>
+  <!-- Central feedback loops (magenta) -->
+  <g fill="none" filter="url(#sharpGlow)">
+    <ellipse cx="960" cy="540" rx="100" ry="80" stroke="url(#controlFlow)" stroke-width="2" opacity="0.5"/>
+    <ellipse cx="960" cy="540" rx="60" ry="45" stroke="url(#controlFlow)" stroke-width="1.5" opacity="0.6"/>
+  </g>
+  
+  <!-- Central processing nodes (largest) -->
+  <g filter="url(#analyticalLight)">
+    <use href="#truncatedOctahedron" x="860" y="460" width="55" height="55"/>
+    <use href="#truncatedOctahedron" x="932" y="440" width="60" height="60"/>
+    <use href="#truncatedOctahedron" x="1005" y="460" width="55" height="55"/>
     
-    <circle cx="1200" cy="720" r="8" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1250" cy="780" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="1180" cy="420" r="7" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="1150" cy="460" r="6" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1200" cy="580" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="1380" cy="540" r="5" fill="url(#nodeGlowViolet)"/>
-  </g>
-  
-  <!-- Core region nodes -->
-  <g filter="url(#intenseGlow)">
-    <circle cx="860" cy="430" r="9" fill="url(#nodeGlow)"/>
-    <circle cx="880" cy="470" r="8" fill="url(#nodeGlowViolet)"/>
-    <circle cx="860" cy="600" r="8" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="900" cy="620" r="7" fill="url(#nodeGlow)"/>
-    <circle cx="880" cy="530" r="9" fill="url(#nodeGlowViolet)"/>
+    <use href="#truncatedOctahedron" x="860" y="540" width="55" height="55"/>
+    <use href="#truncatedOctahedron" x="932" y="512" width="60" height="60"/>
+    <use href="#truncatedOctahedron" x="1005" y="540" width="55" height="55"/>
     
-    <circle cx="1060" cy="610" r="9" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1040" cy="570" r="8" fill="url(#nodeGlow)"/>
-    <circle cx="1060" cy="470" r="8" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="1020" cy="450" r="7" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1040" cy="510" r="9" fill="url(#nodeGlow)"/>
+    <use href="#truncatedOctahedron" x="860" y="620" width="55" height="55"/>
+    <use href="#truncatedOctahedron" x="932" y="600" width="60" height="60"/>
+    <use href="#truncatedOctahedron" x="1005" y="620" width="55" height="55"/>
   </g>
   
-  <!-- Central vortex core nodes -->
-  <g filter="url(#ultraGlow)">
-    <circle cx="920" cy="500" r="11" fill="url(#nodeGlow)"/>
-    <circle cx="1000" cy="580" r="11" fill="url(#nodeGlowViolet)"/>
-    <circle cx="930" cy="590" r="10" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="990" cy="490" r="10" fill="url(#nodeGlow)"/>
-    <circle cx="960" cy="540" r="12" fill="url(#nodeGlowWhite)"/>
-  </g>
-  
-  <!-- Central bright core -->
-  <circle cx="960" cy="540" r="25" fill="#ffffff" opacity="0.15" filter="url(#ultraGlow)"/>
-  <circle cx="960" cy="540" r="15" fill="#ffffff" opacity="0.35" filter="url(#intenseGlow)"/>
-  <circle cx="960" cy="540" r="8" fill="#ffffff" opacity="0.65" filter="url(#glow)"/>
-  <circle cx="960" cy="540" r="4" fill="#ffffff" opacity="0.95"/>
-  
-  <!-- Data packets -->
-  <g filter="url(#glow)" opacity="0.9">
-    <!-- Blue pathway packets -->
-    <circle cx="280" cy="390" r="3.5" fill="#00ffff"/>
-    <circle cx="420" cy="370" r="3" fill="#00ffff"/>
-    <circle cx="580" cy="385" r="3.5" fill="#00ffff"/>
-    <circle cx="740" cy="410" r="3" fill="#00ffff"/>
+  <!-- Central core glow (high intensity) -->
+  <g>
+    <circle cx="888" cy="488" r="18" fill="url(#nodeGlowCyan)" opacity="0.8"/>
+    <circle cx="962" cy="470" r="22" fill="url(#nodeGlowCyan)" opacity="0.9"/>
+    <circle cx="1033" cy="488" r="18" fill="url(#nodeGlowCyan)" opacity="0.8"/>
     
-    <!-- Violet pathway packets -->
-    <circle cx="1680" cy="695" r="3.5" fill="#cc00ff"/>
-    <circle cx="1520" cy="710" r="3" fill="#cc00ff"/>
-    <circle cx="1350" cy="690" r="3.5" fill="#cc00ff"/>
-    <circle cx="1180" cy="660" r="3" fill="#cc00ff"/>
+    <circle cx="888" cy="568" r="20" fill="url(#nodeGlowCyan)" opacity="0.85"/>
+    <circle cx="962" cy="542" r="28" fill="url(#nodeGlowCyan)" opacity="1"/>
+    <circle cx="1033" cy="568" r="20" fill="url(#nodeGlowCyan)" opacity="0.85"/>
     
-    <!-- Emerald pathway packets -->
-    <circle cx="500" cy="765" r="3.5" fill="#00ff88"/>
-    <circle cx="630" cy="720" r="3" fill="#00ff88"/>
-    <circle cx="760" cy="695" r="3.5" fill="#00ff88"/>
-    <circle cx="880" cy="640" r="3" fill="#00ff88"/>
+    <circle cx="888" cy="648" r="18" fill="url(#nodeGlowCyan)" opacity="0.8"/>
+    <circle cx="962" cy="630" r="22" fill="url(#nodeGlowCyan)" opacity="0.9"/>
+    <circle cx="1033" cy="648" r="18" fill="url(#nodeGlowCyan)" opacity="0.8"/>
+  </g>
+  
+  <!-- Central core highlight -->
+  <circle cx="962" cy="542" r="35" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.4" filter="url(#subtleGlow)"/>
+  <circle cx="962" cy="542" r="50" fill="none" stroke="#00a8e8" stroke-width="0.5" opacity="0.25" filter="url(#subtleGlow)"/>
+  
+  <!-- ========================================== -->
+  <!-- LAYER 5: Technical Annotations           -->
+  <!-- ========================================== -->
+  
+  <!-- Axis labels and technical markers -->
+  <g font-family="'JetBrains Mono', 'Consolas', 'Monaco', monospace" font-size="9" fill="#4b5563" opacity="0.6">
+    <!-- Layer indicators -->
+    <text x="50" y="120">LAYER 0: L-SYSTEM BASE</text>
+    <text x="50" y="135">LAYER 1: PERIPHERAL RING</text>
+    <text x="50" y="150">LAYER 2: SECONDARY RING</text>
+    <text x="50" y="165">LAYER 3: PRIMARY CORE</text>
+    <text x="50" y="180">LAYER 4: PROCESSING CORE</text>
     
-    <!-- Additional packets -->
-    <circle cx="1460" cy="360" r="3" fill="#00ffff"/>
-    <circle cx="1340" cy="390" r="2.5" fill="#00ffff"/>
-    <circle cx="1200" cy="440" r="3" fill="#00ffff"/>
+    <!-- Technical specifications -->
+    <text x="1650" y="120" text-anchor="end">TOPOLOGY: RECURSIVE FRACTAL</text>
+    <text x="1650" y="135" text-anchor="end">GEOMETRY: L-SYSTEM GROWTH</text>
+    <text x="1650" y="150" text-anchor="end">PROJECTION: ORTHOGRAPHIC</text>
+    <text x="1650" y="165" text-anchor="end">D_box ≈ 1.585</text>
     
-    <circle cx="340" cy="550" r="2.5" fill="#00ccff"/>
-    <circle cx="480" cy="530" r="2.5" fill="#00ccff"/>
-    <circle cx="640" cy="515" r="2.5" fill="#00ccff"/>
+    <!-- Color legend -->
+    <text x="50" y="1000">■ STRUCTURE (METALLIC)</text>
+    <rect x="50" y="1008" width="12" height="12" fill="#4b5563"/>
     
-    <circle cx="1580" cy="525" r="2.5" fill="#aa00ff"/>
-    <circle cx="1420" cy="545" r="2.5" fill="#aa00ff"/>
-    <circle cx="1260" cy="555" r="2.5" fill="#aa00ff"/>
+    <text x="200" y="1000">■ DATA FLOW (CYAN λ≈470nm)</text>
+    <rect x="200" y="1008" width="12" height="12" fill="#00d4ff"/>
+    
+    <text x="400" y="1000">■ CONTROL/FEEDBACK (MAGENTA)</text>
+    <rect x="400" y="1008" width="12" height="12" fill="#cc00ff"/>
+    
+    <text x="620" y="1000">○ INSTABILITY INDICATORS</text>
+    <circle cx="626" cy="1014" r="6" fill="url(#instabilityPulse)"/>
   </g>
   
-  <!-- Circuit geometry -->
-  <g stroke="#00ffff" stroke-width="0.6" fill="none" opacity="0.35">
-    <rect x="60" y="250" width="45" height="45" rx="3"/>
-    <rect x="1815" y="780" width="45" height="45" rx="3"/>
-    <rect x="120" y="850" width="35" height="35" rx="2"/>
-    <rect x="1765" y="180" width="35" height="35" rx="2"/>
-    <line x1="60" y1="272" x2="45" y2="272"/>
-    <line x1="1860" y1="802" x2="1875" y2="802"/>
+  <!-- Scale reference -->
+  <g stroke="#3d424a" stroke-width="0.5" opacity="0.4">
+    <line x1="1750" y1="980" x2="1870" y2="980"/>
+    <line x1="1750" y1="975" x2="1750" y2="985"/>
+    <line x1="1870" y1="975" x2="1870" y2="985"/>
   </g>
-  <g stroke="#cc00ff" stroke-width="0.6" fill="none" opacity="0.35">
-    <rect x="1780" y="420" width="40" height="40" rx="3"/>
-    <rect x="100" y="680" width="40" height="40" rx="3"/>
-    <line x1="1820" y1="440" x2="1835" y2="440"/>
-    <line x1="100" y1="700" x2="85" y2="700"/>
-  </g>
-  <g stroke="#00ff88" stroke-width="0.6" fill="none" opacity="0.35">
-    <rect x="200" y="920" width="30" height="30" rx="2"/>
-    <rect x="1690" y="100" width="30" height="30" rx="2"/>
-    <line x1="215" y1="920" x2="215" y2="905"/>
-    <line x1="1705" y1="130" x2="1705" y2="145"/>
+  <text x="1810" y="995" font-family="'JetBrains Mono', 'Consolas', monospace" font-size="8" fill="#4b5563" text-anchor="middle" opacity="0.5">120 UNITS</text>
+  
+  <!-- ========================================== -->
+  <!-- LAYER 6: Title and Branding              -->
+  <!-- ========================================== -->
+  
+  <!-- Main title -->
+  <g filter="url(#sharpGlow)">
+    <text x="960" y="60" font-family="'JetBrains Mono', 'Consolas', 'Monaco', monospace" font-size="28" fill="#00d4ff" text-anchor="middle" letter-spacing="8" font-weight="300">
+      MULTI-LAYERED RECURSIVE NETWORK TOPOLOGY
+    </text>
   </g>
   
-  <!-- Micro-tendrils -->
-  <g stroke="#00ffff" stroke-width="0.4" fill="none" opacity="0.3">
-    <path d="M380,350 Q420,330 460,350"/>
-    <path d="M520,380 Q560,360 600,380"/>
-    <path d="M660,400 Q700,380 740,400"/>
-  </g>
-  <g stroke="#cc00ff" stroke-width="0.4" fill="none" opacity="0.3">
-    <path d="M1540,720 Q1500,740 1460,720"/>
-    <path d="M1400,690 Q1360,710 1320,690"/>
-    <path d="M1260,660 Q1220,680 1180,660"/>
-  </g>
-  <g stroke="#00ff88" stroke-width="0.4" fill="none" opacity="0.3">
-    <path d="M580,760 Q620,780 660,760"/>
-    <path d="M720,720 Q760,740 800,720"/>
-    <path d="M860,680 Q900,700 940,680"/>
+  <!-- Subtitle -->
+  <text x="960" y="88" font-family="'JetBrains Mono', 'Consolas', 'Monaco', monospace" font-size="14" fill="#6b7280" text-anchor="middle" letter-spacing="4">
+    L-SYSTEM FRACTAL GEOMETRY • DYNAMICALLY RECONFIGURABLE ARCHITECTURE
+  </text>
+  
+  <!-- Project name -->
+  <g filter="url(#sharpGlow)">
+    <text x="960" y="1055" font-family="'JetBrains Mono', 'Consolas', 'Monaco', monospace" font-size="20" fill="#00d4ff" text-anchor="middle" letter-spacing="6">
+      M Y C E L I U M   F R A C T A L   N E T
+    </text>
   </g>
   
-  <!-- Project branding -->
-  <g filter="url(#textGlow)" opacity="0.7">
-    <text x="960" y="1030" font-family="'Courier New', monospace" font-size="18" fill="#00ffff" text-anchor="middle" letter-spacing="5">M Y C E L I U M   F R A C T A L   N E T</text>
+  <!-- Version and architecture type -->
+  <text x="960" y="1075" font-family="'JetBrains Mono', 'Consolas', 'Monaco', monospace" font-size="11" fill="#9900cc" text-anchor="middle" letter-spacing="3" opacity="0.8">
+    v4.1 • BIOMIMETIC GNN • SELF-ORGANIZING EXOCORTEX
+  </text>
+  
+  <!-- Corner technical markers -->
+  <g font-family="'JetBrains Mono', 'Consolas', monospace" font-size="8" fill="#5a6270" opacity="0.5">
+    <text x="30" y="1070">NERNST-PLANCK DYNAMICS</text>
+    <text x="30" y="1055">TURING MORPHOGENESIS</text>
+    <text x="1890" y="1070" text-anchor="end">PRODUCTION-READY</text>
+    <text x="1890" y="1055" text-anchor="end">HETEROSYNAPTIC STDP</text>
   </g>
   
-  <!-- Version indicator -->
-  <g opacity="0.4">
-    <text x="960" y="1055" font-family="'Courier New', monospace" font-size="11" fill="#8b00ff" text-anchor="middle" letter-spacing="3">v4.1 • BIOMIMETIC GRAPH NEURAL NETWORK</text>
+  <!-- Coordinate system indicator -->
+  <g transform="translate(1820, 930)" stroke="#4b5563" stroke-width="1" opacity="0.4">
+    <line x1="0" y1="0" x2="40" y2="0"/>
+    <line x1="0" y1="0" x2="0" y2="-40"/>
+    <line x1="0" y1="0" x2="-20" y2="20"/>
+    <polygon points="40,0 35,-3 35,3" fill="#4b5563"/>
+    <polygon points="0,-40 -3,-35 3,-35" fill="#4b5563"/>
+    <polygon points="-20,20 -14,17 -17,14" fill="#4b5563"/>
+    <text x="45" y="4" font-family="'JetBrains Mono', monospace" font-size="8" fill="#4b5563">X</text>
+    <text x="3" y="-42" font-family="'JetBrains Mono', monospace" font-size="8" fill="#4b5563">Y</text>
+    <text x="-28" y="28" font-family="'JetBrains Mono', monospace" font-size="8" fill="#4b5563">Z</text>
   </g>
-  
-  <!-- Corner accents -->
-  <g opacity="0.25" font-family="'Courier New', monospace" font-size="9" fill="#00ff88">
-    <text x="30" y="30">◉ NERNST-PLANCK DYNAMICS</text>
-    <text x="30" y="45">◉ TURING MORPHOGENESIS</text>
-    <text x="1690" y="30" text-anchor="end">D_box ≈ 1.585 ◉</text>
-    <text x="1690" y="45" text-anchor="end">PRODUCTION-READY ◉</text>
-  </g>
-  
+
 </svg>
