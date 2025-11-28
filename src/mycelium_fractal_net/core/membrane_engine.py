@@ -218,7 +218,7 @@ class MembraneEngine:
         Parameters
         ----------
         z_valence : int
-            Ion valence (K+=+1, Na+=+1, Cl-=-1, Ca2+=+2).
+            Ion valence (K⁺=+1, Na⁺=+1, Cl⁻=-1, Ca²⁺=+2).
         concentration_out_molar : float
             Extracellular concentration (mol/L).
         concentration_in_molar : float

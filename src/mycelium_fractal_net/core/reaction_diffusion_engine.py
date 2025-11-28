@@ -506,11 +506,23 @@ class ReactionDiffusionEngine:
             left = np.roll(field, 1, axis=1)
             right = np.roll(field, -1, axis=1)
         elif self.config.boundary_condition == BoundaryCondition.NEUMANN:
-            # Zero-flux: mirror at boundaries
-            up = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="reflect")
-            down = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode="reflect")
-            left = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="reflect")
-            right = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="reflect")
+            # Zero-flux (Neumann): copy boundary values from interior neighbors
+            # This ensures dV/dn = 0 at boundaries, where n is the normal direction
+            up = np.empty_like(field)
+            up[1:, :] = field[:-1, :]
+            up[0, :] = field[0, :]  # First row copies itself (zero gradient)
+            
+            down = np.empty_like(field)
+            down[:-1, :] = field[1:, :]
+            down[-1, :] = field[-1, :]  # Last row copies itself
+            
+            left = np.empty_like(field)
+            left[:, 1:] = field[:, :-1]
+            left[:, 0] = field[:, 0]  # First column copies itself
+            
+            right = np.empty_like(field)
+            right[:, :-1] = field[:, 1:]
+            right[:, -1] = field[:, -1]  # Last column copies itself
         else:  # DIRICHLET
             # Zero value at boundaries
             up = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant")
