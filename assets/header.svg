@@ -1,57 +1,87 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
   <defs>
-    <!-- Gradients for bioluminescent effects -->
+    <!-- Enhanced gradients for bioluminescent effects -->
     <radialGradient id="vortexCore" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.9"/>
-      <stop offset="30%" stop-color="#8b00ff" stop-opacity="0.6"/>
-      <stop offset="60%" stop-color="#00ff88" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="5%" stop-color="#00ffff" stop-opacity="0.95"/>
+      <stop offset="20%" stop-color="#8b00ff" stop-opacity="0.7"/>
+      <stop offset="40%" stop-color="#00ff88" stop-opacity="0.4"/>
+      <stop offset="70%" stop-color="#1a0a2e" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
+    </radialGradient>
+    
+    <radialGradient id="vortexOuter" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.3"/>
+      <stop offset="40%" stop-color="#8b00ff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
     </radialGradient>
     
     <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#00ffff" stop-opacity="1"/>
-      <stop offset="50%" stop-color="#00ccff" stop-opacity="0.5"/>
+      <stop offset="40%" stop-color="#00ccff" stop-opacity="0.6"/>
       <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
     </radialGradient>
     
     <radialGradient id="nodeGlowViolet" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#cc00ff" stop-opacity="1"/>
-      <stop offset="50%" stop-color="#8b00ff" stop-opacity="0.5"/>
+      <stop offset="40%" stop-color="#8b00ff" stop-opacity="0.6"/>
       <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
     </radialGradient>
     
     <radialGradient id="nodeGlowEmerald" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#00ff88" stop-opacity="1"/>
-      <stop offset="50%" stop-color="#00cc66" stop-opacity="0.5"/>
+      <stop offset="40%" stop-color="#00cc66" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
+    </radialGradient>
+    
+    <radialGradient id="nodeGlowWhite" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="30%" stop-color="#aaffff" stop-opacity="0.7"/>
       <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
     </radialGradient>
     
     <linearGradient id="tendrilBlue" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.1"/>
-      <stop offset="50%" stop-color="#00ccff" stop-opacity="0.8"/>
-      <stop offset="100%" stop-color="#00ffff" stop-opacity="0.1"/>
+      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.05"/>
+      <stop offset="50%" stop-color="#00ccff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#00ffff" stop-opacity="0.05"/>
     </linearGradient>
     
     <linearGradient id="tendrilViolet" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#cc00ff" stop-opacity="0.1"/>
-      <stop offset="50%" stop-color="#8b00ff" stop-opacity="0.8"/>
-      <stop offset="100%" stop-color="#cc00ff" stop-opacity="0.1"/>
+      <stop offset="0%" stop-color="#cc00ff" stop-opacity="0.05"/>
+      <stop offset="50%" stop-color="#8b00ff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#cc00ff" stop-opacity="0.05"/>
     </linearGradient>
     
     <linearGradient id="tendrilEmerald" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.1"/>
-      <stop offset="50%" stop-color="#00cc66" stop-opacity="0.8"/>
-      <stop offset="100%" stop-color="#00ff88" stop-opacity="0.1"/>
+      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.05"/>
+      <stop offset="50%" stop-color="#00cc66" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#00ff88" stop-opacity="0.05"/>
     </linearGradient>
+    
+    <!-- Nebula gradients -->
+    <radialGradient id="nebula1" cx="30%" cy="40%" r="40%">
+      <stop offset="0%" stop-color="#8b00ff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
+    </radialGradient>
+    
+    <radialGradient id="nebula2" cx="70%" cy="60%" r="35%">
+      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
+    </radialGradient>
+    
+    <radialGradient id="nebula3" cx="85%" cy="30%" r="25%">
+      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
+    </radialGradient>
     
     <!-- Volumetric fog gradient -->
     <radialGradient id="fog" cx="50%" cy="50%" r="70%">
       <stop offset="0%" stop-color="#1a1a2e" stop-opacity="0"/>
-      <stop offset="70%" stop-color="#0a0a12" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#050508" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#0a0a12" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050508" stop-opacity="0.5"/>
     </radialGradient>
     
-    <!-- Glow filter for bioluminescence -->
+    <!-- Enhanced glow filters -->
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="3" result="blur"/>
       <feMerge>
@@ -61,7 +91,7 @@
     </filter>
     
     <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feGaussianBlur stdDeviation="6" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="blur"/>
@@ -69,11 +99,31 @@
       </feMerge>
     </filter>
     
-    <filter id="intenseGlow" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="15" result="blur"/>
+    <filter id="intenseGlow" x="-150%" y="-150%" width="400%" height="400%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="ultraGlow" x="-150%" y="-150%" width="400%" height="400%">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Text glow filter -->
+    <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
@@ -81,180 +131,286 @@
   </defs>
   
   <!-- Deep-space obsidian background -->
-  <rect width="100%" height="100%" fill="#050508"/>
+  <rect width="100%" height="100%" fill="#030305"/>
   
-  <!-- Subtle star field -->
-  <g opacity="0.4">
-    <circle cx="150" cy="120" r="1" fill="#ffffff"/>
-    <circle cx="380" cy="80" r="0.8" fill="#00ffff"/>
-    <circle cx="520" cy="200" r="1.2" fill="#ffffff"/>
-    <circle cx="720" cy="150" r="0.6" fill="#cc00ff"/>
-    <circle cx="890" cy="90" r="1" fill="#ffffff"/>
-    <circle cx="1100" cy="180" r="0.8" fill="#00ff88"/>
-    <circle cx="1280" cy="100" r="1.1" fill="#ffffff"/>
-    <circle cx="1450" cy="220" r="0.7" fill="#00ffff"/>
-    <circle cx="1620" cy="130" r="1" fill="#ffffff"/>
-    <circle cx="1780" cy="190" r="0.9" fill="#cc00ff"/>
-    <circle cx="200" cy="900" r="1" fill="#ffffff"/>
-    <circle cx="450" cy="950" r="0.8" fill="#00ff88"/>
-    <circle cx="680" cy="880" r="1.2" fill="#ffffff"/>
-    <circle cx="920" cy="970" r="0.6" fill="#00ffff"/>
-    <circle cx="1150" cy="920" r="1" fill="#ffffff"/>
-    <circle cx="1380" cy="990" r="0.8" fill="#cc00ff"/>
-    <circle cx="1600" cy="860" r="1.1" fill="#ffffff"/>
-    <circle cx="1820" cy="940" r="0.7" fill="#00ff88"/>
+  <!-- Nebula clouds -->
+  <ellipse cx="576" cy="432" rx="600" ry="400" fill="url(#nebula1)"/>
+  <ellipse cx="1344" cy="648" rx="500" ry="350" fill="url(#nebula2)"/>
+  <ellipse cx="1632" cy="324" rx="350" ry="250" fill="url(#nebula3)"/>
+  
+  <!-- Extended star field with varying sizes and colors -->
+  <g opacity="0.6">
+    <!-- Bright stars -->
+    <circle cx="150" cy="120" r="1.5" fill="#ffffff" filter="url(#glow)"/>
+    <circle cx="520" cy="200" r="1.8" fill="#ffffff" filter="url(#glow)"/>
+    <circle cx="890" cy="90" r="1.4" fill="#ffffff" filter="url(#glow)"/>
+    <circle cx="1280" cy="100" r="1.6" fill="#ffffff" filter="url(#glow)"/>
+    <circle cx="1620" cy="130" r="1.5" fill="#ffffff" filter="url(#glow)"/>
+    <circle cx="680" cy="880" r="1.7" fill="#ffffff" filter="url(#glow)"/>
+    <circle cx="1150" cy="920" r="1.4" fill="#ffffff" filter="url(#glow)"/>
+    
+    <!-- Colored stars -->
+    <circle cx="380" cy="80" r="1.2" fill="#00ffff" filter="url(#glow)"/>
+    <circle cx="720" cy="150" r="1" fill="#cc00ff" filter="url(#glow)"/>
+    <circle cx="1100" cy="180" r="1.1" fill="#00ff88" filter="url(#glow)"/>
+    <circle cx="1450" cy="220" r="1" fill="#00ffff" filter="url(#glow)"/>
+    <circle cx="1780" cy="190" r="1.2" fill="#cc00ff" filter="url(#glow)"/>
+    <circle cx="450" cy="950" r="1.1" fill="#00ff88" filter="url(#glow)"/>
+    <circle cx="920" cy="970" r="0.9" fill="#00ffff" filter="url(#glow)"/>
+    <circle cx="1380" cy="990" r="1.1" fill="#cc00ff" filter="url(#glow)"/>
+    
+    <!-- Dim background stars -->
+    <circle cx="200" cy="300" r="0.6" fill="#ffffff"/>
+    <circle cx="350" cy="450" r="0.5" fill="#ffffff"/>
+    <circle cx="80" cy="550" r="0.7" fill="#ffffff"/>
+    <circle cx="1800" cy="400" r="0.6" fill="#ffffff"/>
+    <circle cx="1700" cy="650" r="0.5" fill="#ffffff"/>
+    <circle cx="1850" cy="850" r="0.7" fill="#ffffff"/>
+    <circle cx="960" cy="50" r="0.6" fill="#ffffff"/>
+    <circle cx="1500" cy="80" r="0.5" fill="#ffffff"/>
+    <circle cx="600" cy="1000" r="0.6" fill="#ffffff"/>
+    <circle cx="1200" cy="1020" r="0.5" fill="#ffffff"/>
+    <circle cx="300" cy="750" r="0.5" fill="#aaffff"/>
+    <circle cx="1600" cy="550" r="0.5" fill="#ffaaff"/>
+    <circle cx="100" cy="200" r="0.4" fill="#ffffff"/>
+    <circle cx="250" cy="600" r="0.4" fill="#ffffff"/>
+    <circle cx="1750" cy="300" r="0.4" fill="#ffffff"/>
+    <circle cx="1650" cy="900" r="0.4" fill="#ffffff"/>
   </g>
   
+  <!-- Outer vortex glow -->
+  <ellipse cx="960" cy="540" rx="550" ry="450" fill="url(#vortexOuter)" filter="url(#ultraGlow)" opacity="0.5"/>
+  
   <!-- Central vortex glow -->
-  <ellipse cx="960" cy="540" rx="400" ry="350" fill="url(#vortexCore)" filter="url(#intenseGlow)" opacity="0.6"/>
+  <ellipse cx="960" cy="540" rx="380" ry="320" fill="url(#vortexCore)" filter="url(#intenseGlow)" opacity="0.7"/>
   
   <!-- Volumetric fog overlay -->
   <rect width="100%" height="100%" fill="url(#fog)"/>
   
-  <!-- Fractal network tendrils - Layer 1 (background) -->
-  <g filter="url(#softGlow)" opacity="0.4">
-    <!-- Outer spiral arms -->
-    <path d="M100,540 Q300,300 500,400 T700,350 T900,450 T960,540" stroke="#00ffff" stroke-width="1" fill="none"/>
-    <path d="M1820,540 Q1620,780 1420,680 T1220,730 T1020,630 T960,540" stroke="#cc00ff" stroke-width="1" fill="none"/>
-    <path d="M960,100 Q700,250 800,400 T850,500 T960,540" stroke="#00ff88" stroke-width="1" fill="none"/>
-    <path d="M960,980 Q1220,830 1120,680 T1070,580 T960,540" stroke="#00ffff" stroke-width="1" fill="none"/>
+  <!-- Layer 1: Background tendrils (faint, distant) -->
+  <g filter="url(#softGlow)" opacity="0.25">
+    <path d="M50,400 Q200,250 400,350 T650,280 T850,380 T960,540" stroke="#00ffff" stroke-width="1" fill="none"/>
+    <path d="M1870,680 Q1720,850 1520,750 T1270,800 T1070,700 T960,540" stroke="#cc00ff" stroke-width="1" fill="none"/>
+    <path d="M960,50 Q700,180 780,350 T830,470 T960,540" stroke="#00ff88" stroke-width="1" fill="none"/>
+    <path d="M960,1030 Q1200,900 1140,730 T1090,610 T960,540" stroke="#00ffff" stroke-width="1" fill="none"/>
+    <path d="M30,800 Q180,700 320,750 T520,680 T750,600 T960,540" stroke="#cc00ff" stroke-width="1" fill="none"/>
+    <path d="M1890,200 Q1740,350 1600,280 T1400,360 T1170,480 T960,540" stroke="#00ff88" stroke-width="1" fill="none"/>
   </g>
   
-  <!-- Fractal network tendrils - Layer 2 (mid-ground) -->
-  <g filter="url(#glow)" opacity="0.7">
-    <!-- Primary network branches -->
-    <path d="M200,400 Q400,350 550,420 T750,380 T900,480 T960,540" stroke="url(#tendrilBlue)" stroke-width="2" fill="none"/>
-    <path d="M1720,680 Q1520,730 1370,660 T1170,700 T1020,600 T960,540" stroke="url(#tendrilViolet)" stroke-width="2" fill="none"/>
-    <path d="M400,750 Q550,650 650,700 T800,620 T920,580 T960,540" stroke="url(#tendrilEmerald)" stroke-width="2" fill="none"/>
-    <path d="M1520,350 Q1370,430 1270,380 T1120,460 T1000,500 T960,540" stroke="url(#tendrilBlue)" stroke-width="2" fill="none"/>
-    
-    <!-- Secondary fractal branches -->
-    <path d="M300,250 Q450,320 520,380 T680,420 T820,480 T960,540" stroke="url(#tendrilViolet)" stroke-width="1.5" fill="none"/>
-    <path d="M1620,850 Q1470,780 1380,720 T1200,660 T1040,580 T960,540" stroke="url(#tendrilEmerald)" stroke-width="1.5" fill="none"/>
-    <path d="M150,620 Q320,580 430,540 T620,500 T800,520 T960,540" stroke="url(#tendrilBlue)" stroke-width="1.5" fill="none"/>
-    <path d="M1770,460 Q1600,500 1490,540 T1300,580 T1120,560 T960,540" stroke="url(#tendrilViolet)" stroke-width="1.5" fill="none"/>
+  <!-- Layer 2: Mid-ground tendrils -->
+  <g filter="url(#glow)" opacity="0.5">
+    <path d="M100,350 Q280,280 450,360 T680,310 T860,430 T960,540" stroke="url(#tendrilBlue)" stroke-width="1.8" fill="none"/>
+    <path d="M1820,730 Q1640,810 1480,730 T1250,780 T1050,660 T960,540" stroke="url(#tendrilViolet)" stroke-width="1.8" fill="none"/>
+    <path d="M350,850 Q500,750 620,800 T780,720 T900,620 T960,540" stroke="url(#tendrilEmerald)" stroke-width="1.8" fill="none"/>
+    <path d="M1580,280 Q1430,380 1350,320 T1180,420 T1030,500 T960,540" stroke="url(#tendrilBlue)" stroke-width="1.8" fill="none"/>
+    <path d="M200,180 Q380,260 480,200 T680,280 T840,400 T960,540" stroke="url(#tendrilViolet)" stroke-width="1.5" fill="none"/>
+    <path d="M1720,920 Q1550,840 1420,900 T1220,820 T1040,680 T960,540" stroke="url(#tendrilEmerald)" stroke-width="1.5" fill="none"/>
+    <path d="M80,620 Q220,560 360,600 T560,540 T780,520 T960,540" stroke="url(#tendrilBlue)" stroke-width="1.5" fill="none"/>
+    <path d="M1840,460 Q1680,510 1550,470 T1340,520 T1140,540 T960,540" stroke="url(#tendrilViolet)" stroke-width="1.5" fill="none"/>
   </g>
   
-  <!-- Fractal network tendrils - Layer 3 (foreground, brightest) -->
+  <!-- Layer 3: Foreground tendrils (bright, prominent) -->
   <g filter="url(#glow)">
-    <!-- Core network pathways -->
-    <path d="M350,480 Q500,420 650,460 T820,500 T960,540" stroke="#00ffff" stroke-width="2.5" fill="none" opacity="0.9"/>
-    <path d="M1570,600 Q1420,660 1270,620 T1100,580 T960,540" stroke="#cc00ff" stroke-width="2.5" fill="none" opacity="0.9"/>
-    <path d="M550,680 Q680,620 780,650 T880,590 T960,540" stroke="#00ff88" stroke-width="2.5" fill="none" opacity="0.9"/>
-    <path d="M1370,400 Q1250,460 1160,420 T1050,500 T960,540" stroke="#00ffff" stroke-width="2.5" fill="none" opacity="0.9"/>
+    <path d="M180,420 Q380,340 520,400 T720,360 T880,470 T960,540" stroke="#00ffff" stroke-width="2.5" fill="none" opacity="0.85"/>
+    <path d="M1740,660 Q1560,740 1400,670 T1200,720 T1030,620 T960,540" stroke="#cc00ff" stroke-width="2.5" fill="none" opacity="0.85"/>
+    <path d="M450,780 Q580,700 680,740 T820,670 T920,590 T960,540" stroke="#00ff88" stroke-width="2.5" fill="none" opacity="0.85"/>
+    <path d="M1510,340 Q1380,430 1300,370 T1150,460 T1020,520 T960,540" stroke="#00ffff" stroke-width="2.5" fill="none" opacity="0.85"/>
     
-    <!-- Tertiary branches (self-similar fractal pattern) -->
-    <path d="M450,380 Q520,420 600,400 T720,450" stroke="#00ccff" stroke-width="1" fill="none" opacity="0.6"/>
-    <path d="M1470,700 Q1400,660 1320,680 T1200,630" stroke="#8b00ff" stroke-width="1" fill="none" opacity="0.6"/>
-    <path d="M620,750 Q700,700 760,720 T860,670" stroke="#00cc66" stroke-width="1" fill="none" opacity="0.6"/>
-    <path d="M1300,320 Q1220,370 1180,350 T1080,400" stroke="#00ccff" stroke-width="1" fill="none" opacity="0.6"/>
+    <!-- Additional prominent tendrils -->
+    <path d="M280,560 Q420,500 540,540 T720,500 T880,530 T960,540" stroke="#00ccff" stroke-width="2" fill="none" opacity="0.75"/>
+    <path d="M1640,540 Q1500,580 1380,540 T1200,580 T1040,550 T960,540" stroke="#aa00ff" stroke-width="2" fill="none" opacity="0.75"/>
+    <path d="M550,620 Q660,580 740,610 T850,570 T930,550 T960,540" stroke="#00cc66" stroke-width="2" fill="none" opacity="0.75"/>
+    <path d="M1370,460 Q1280,500 1220,470 T1100,510 T1000,530 T960,540" stroke="#00ccff" stroke-width="2" fill="none" opacity="0.75"/>
   </g>
   
-  <!-- Network nodes - outer ring -->
+  <!-- Layer 4: Fine fractal detail tendrils -->
+  <g filter="url(#glow)" opacity="0.6">
+    <path d="M320,380 Q400,350 460,380 T560,360 T660,400" stroke="#00ffff" stroke-width="1" fill="none"/>
+    <path d="M440,450 Q510,420 570,450 T670,430 T760,470" stroke="#00ffff" stroke-width="0.8" fill="none"/>
+    <path d="M600,350 Q660,320 720,350 T820,330 T900,380" stroke="#00ccff" stroke-width="0.8" fill="none"/>
+    
+    <path d="M1600,700 Q1530,730 1470,700 T1370,720 T1280,680" stroke="#cc00ff" stroke-width="1" fill="none"/>
+    <path d="M1480,630 Q1420,660 1360,630 T1260,650 T1170,610" stroke="#cc00ff" stroke-width="0.8" fill="none"/>
+    <path d="M1340,750 Q1280,780 1220,750 T1120,770 T1040,730" stroke="#aa00ff" stroke-width="0.8" fill="none"/>
+    
+    <path d="M520,720 Q590,750 650,720 T750,740 T840,700" stroke="#00ff88" stroke-width="1" fill="none"/>
+    <path d="M640,670 Q700,700 760,670 T860,690 T940,650" stroke="#00ff88" stroke-width="0.8" fill="none"/>
+    <path d="M380,800 Q450,830 510,800 T610,820 T700,780" stroke="#00cc66" stroke-width="0.8" fill="none"/>
+    
+    <path d="M1450,380 Q1390,350 1330,380 T1230,360 T1140,400" stroke="#00ffff" stroke-width="1" fill="none"/>
+    <path d="M1320,440 Q1260,410 1200,440 T1100,420 T1020,460" stroke="#00ffff" stroke-width="0.8" fill="none"/>
+  </g>
+  
+  <!-- Outer ring nodes -->
   <g filter="url(#softGlow)">
-    <circle cx="200" cy="400" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="350" cy="480" r="5" fill="url(#nodeGlowViolet)"/>
-    <circle cx="300" cy="250" r="4" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="150" cy="620" r="5" fill="url(#nodeGlow)"/>
-    <circle cx="400" cy="750" r="4" fill="url(#nodeGlowViolet)"/>
+    <circle cx="100" cy="350" r="6" fill="url(#nodeGlow)"/>
+    <circle cx="180" cy="420" r="5" fill="url(#nodeGlowViolet)"/>
+    <circle cx="200" cy="180" r="4" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="80" cy="620" r="5" fill="url(#nodeGlow)"/>
+    <circle cx="350" cy="850" r="4" fill="url(#nodeGlowViolet)"/>
+    <circle cx="30" cy="800" r="4" fill="url(#nodeGlowEmerald)"/>
     
-    <circle cx="1720" cy="680" r="6" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1570" cy="600" r="5" fill="url(#nodeGlow)"/>
-    <circle cx="1620" cy="850" r="4" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="1770" cy="460" r="5" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1520" cy="350" r="4" fill="url(#nodeGlow)"/>
+    <circle cx="1820" cy="730" r="6" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1740" cy="660" r="5" fill="url(#nodeGlow)"/>
+    <circle cx="1720" cy="920" r="4" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="1840" cy="460" r="5" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1580" cy="280" r="4" fill="url(#nodeGlow)"/>
+    <circle cx="1890" cy="200" r="4" fill="url(#nodeGlowEmerald)"/>
   </g>
   
-  <!-- Network nodes - middle ring -->
+  <!-- Middle ring nodes -->
   <g filter="url(#glow)">
-    <circle cx="550" cy="420" r="7" fill="url(#nodeGlow)"/>
-    <circle cx="650" cy="460" r="6" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="520" cy="380" r="5" fill="url(#nodeGlowViolet)"/>
-    <circle cx="650" cy="700" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="780" cy="650" r="5" fill="url(#nodeGlowViolet)"/>
+    <circle cx="450" cy="360" r="7" fill="url(#nodeGlow)"/>
+    <circle cx="520" cy="400" r="6" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="480" cy="200" r="5" fill="url(#nodeGlowViolet)"/>
+    <circle cx="620" cy="800" r="6" fill="url(#nodeGlow)"/>
+    <circle cx="680" cy="740" r="5" fill="url(#nodeGlowViolet)"/>
+    <circle cx="360" cy="600" r="5" fill="url(#nodeGlowEmerald)"/>
     
-    <circle cx="1370" cy="660" r="7" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1270" cy="620" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="1380" cy="720" r="5" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="1270" cy="380" r="6" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1160" cy="420" r="5" fill="url(#nodeGlow)"/>
+    <circle cx="1480" cy="730" r="7" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1400" cy="670" r="6" fill="url(#nodeGlow)"/>
+    <circle cx="1420" cy="900" r="5" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="1350" cy="320" r="6" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1300" cy="370" r="5" fill="url(#nodeGlow)"/>
+    <circle cx="1550" cy="470" r="5" fill="url(#nodeGlowEmerald)"/>
   </g>
   
-  <!-- Network nodes - inner ring -->
+  <!-- Inner ring nodes -->
   <g filter="url(#glow)">
-    <circle cx="820" cy="500" r="8" fill="url(#nodeGlow)"/>
-    <circle cx="750" cy="380" r="6" fill="url(#nodeGlowViolet)"/>
-    <circle cx="800" cy="620" r="7" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="880" cy="590" r="6" fill="url(#nodeGlow)"/>
+    <circle cx="720" cy="360" r="8" fill="url(#nodeGlow)"/>
+    <circle cx="680" cy="310" r="6" fill="url(#nodeGlowViolet)"/>
+    <circle cx="780" cy="720" r="7" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="820" cy="670" r="6" fill="url(#nodeGlow)"/>
+    <circle cx="720" cy="500" r="6" fill="url(#nodeGlowViolet)"/>
+    <circle cx="540" cy="540" r="5" fill="url(#nodeGlow)"/>
     
-    <circle cx="1100" cy="580" r="8" fill="url(#nodeGlowViolet)"/>
-    <circle cx="1170" cy="700" r="6" fill="url(#nodeGlow)"/>
-    <circle cx="1120" cy="460" r="7" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="1050" cy="500" r="6" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1200" cy="720" r="8" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1250" cy="780" r="6" fill="url(#nodeGlow)"/>
+    <circle cx="1180" cy="420" r="7" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="1150" cy="460" r="6" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1200" cy="580" r="6" fill="url(#nodeGlow)"/>
+    <circle cx="1380" cy="540" r="5" fill="url(#nodeGlowViolet)"/>
+  </g>
+  
+  <!-- Core region nodes -->
+  <g filter="url(#intenseGlow)">
+    <circle cx="860" cy="430" r="9" fill="url(#nodeGlow)"/>
+    <circle cx="880" cy="470" r="8" fill="url(#nodeGlowViolet)"/>
+    <circle cx="860" cy="600" r="8" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="900" cy="620" r="7" fill="url(#nodeGlow)"/>
+    <circle cx="880" cy="530" r="9" fill="url(#nodeGlowViolet)"/>
+    
+    <circle cx="1060" cy="610" r="9" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1040" cy="570" r="8" fill="url(#nodeGlow)"/>
+    <circle cx="1060" cy="470" r="8" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="1020" cy="450" r="7" fill="url(#nodeGlowViolet)"/>
+    <circle cx="1040" cy="510" r="9" fill="url(#nodeGlow)"/>
   </g>
   
   <!-- Central vortex core nodes -->
-  <g filter="url(#intenseGlow)">
-    <circle cx="920" cy="520" r="10" fill="url(#nodeGlow)"/>
-    <circle cx="1000" cy="560" r="10" fill="url(#nodeGlowViolet)"/>
-    <circle cx="940" cy="580" r="9" fill="url(#nodeGlowEmerald)"/>
-    <circle cx="980" cy="500" r="9" fill="url(#nodeGlow)"/>
+  <g filter="url(#ultraGlow)">
+    <circle cx="920" cy="500" r="11" fill="url(#nodeGlow)"/>
+    <circle cx="1000" cy="580" r="11" fill="url(#nodeGlowViolet)"/>
+    <circle cx="930" cy="590" r="10" fill="url(#nodeGlowEmerald)"/>
+    <circle cx="990" cy="490" r="10" fill="url(#nodeGlow)"/>
+    <circle cx="960" cy="540" r="12" fill="url(#nodeGlowWhite)"/>
   </g>
   
   <!-- Central bright core -->
-  <circle cx="960" cy="540" r="15" fill="#ffffff" opacity="0.3" filter="url(#intenseGlow)"/>
-  <circle cx="960" cy="540" r="8" fill="#ffffff" opacity="0.6" filter="url(#glow)"/>
-  <circle cx="960" cy="540" r="4" fill="#ffffff" opacity="0.9"/>
+  <circle cx="960" cy="540" r="25" fill="#ffffff" opacity="0.15" filter="url(#ultraGlow)"/>
+  <circle cx="960" cy="540" r="15" fill="#ffffff" opacity="0.35" filter="url(#intenseGlow)"/>
+  <circle cx="960" cy="540" r="8" fill="#ffffff" opacity="0.65" filter="url(#glow)"/>
+  <circle cx="960" cy="540" r="4" fill="#ffffff" opacity="0.95"/>
   
-  <!-- Data packet particles flowing along pathways -->
-  <g filter="url(#glow)" opacity="0.8">
-    <circle cx="420" cy="445" r="3" fill="#00ffff"/>
-    <circle cx="580" cy="435" r="2.5" fill="#00ffff"/>
-    <circle cx="730" cy="470" r="3" fill="#00ffff"/>
+  <!-- Data packets -->
+  <g filter="url(#glow)" opacity="0.9">
+    <!-- Blue pathway packets -->
+    <circle cx="280" cy="390" r="3.5" fill="#00ffff"/>
+    <circle cx="420" cy="370" r="3" fill="#00ffff"/>
+    <circle cx="580" cy="385" r="3.5" fill="#00ffff"/>
+    <circle cx="740" cy="410" r="3" fill="#00ffff"/>
     
-    <circle cx="1500" cy="635" r="3" fill="#cc00ff"/>
-    <circle cx="1340" cy="645" r="2.5" fill="#cc00ff"/>
-    <circle cx="1180" cy="605" r="3" fill="#cc00ff"/>
+    <!-- Violet pathway packets -->
+    <circle cx="1680" cy="695" r="3.5" fill="#cc00ff"/>
+    <circle cx="1520" cy="710" r="3" fill="#cc00ff"/>
+    <circle cx="1350" cy="690" r="3.5" fill="#cc00ff"/>
+    <circle cx="1180" cy="660" r="3" fill="#cc00ff"/>
     
-    <circle cx="600" cy="695" r="3" fill="#00ff88"/>
-    <circle cx="720" cy="665" r="2.5" fill="#00ff88"/>
-    <circle cx="840" cy="620" r="3" fill="#00ff88"/>
+    <!-- Emerald pathway packets -->
+    <circle cx="500" cy="765" r="3.5" fill="#00ff88"/>
+    <circle cx="630" cy="720" r="3" fill="#00ff88"/>
+    <circle cx="760" cy="695" r="3.5" fill="#00ff88"/>
+    <circle cx="880" cy="640" r="3" fill="#00ff88"/>
     
-    <circle cx="1420" cy="385" r="3" fill="#00ffff"/>
-    <circle cx="1290" cy="405" r="2.5" fill="#00ffff"/>
-    <circle cx="1130" cy="445" r="3" fill="#00ffff"/>
+    <!-- Additional packets -->
+    <circle cx="1460" cy="360" r="3" fill="#00ffff"/>
+    <circle cx="1340" cy="390" r="2.5" fill="#00ffff"/>
+    <circle cx="1200" cy="440" r="3" fill="#00ffff"/>
+    
+    <circle cx="340" cy="550" r="2.5" fill="#00ccff"/>
+    <circle cx="480" cy="530" r="2.5" fill="#00ccff"/>
+    <circle cx="640" cy="515" r="2.5" fill="#00ccff"/>
+    
+    <circle cx="1580" cy="525" r="2.5" fill="#aa00ff"/>
+    <circle cx="1420" cy="545" r="2.5" fill="#aa00ff"/>
+    <circle cx="1260" cy="555" r="2.5" fill="#aa00ff"/>
   </g>
   
-  <!-- Circuit-board geometry accents -->
-  <g stroke="#00ffff" stroke-width="0.5" fill="none" opacity="0.3">
-    <rect x="100" y="300" width="40" height="40" rx="2"/>
-    <rect x="1780" y="740" width="40" height="40" rx="2"/>
-    <rect x="180" y="800" width="30" height="30" rx="2"/>
-    <rect x="1710" y="200" width="30" height="30" rx="2"/>
+  <!-- Circuit geometry -->
+  <g stroke="#00ffff" stroke-width="0.6" fill="none" opacity="0.35">
+    <rect x="60" y="250" width="45" height="45" rx="3"/>
+    <rect x="1815" y="780" width="45" height="45" rx="3"/>
+    <rect x="120" y="850" width="35" height="35" rx="2"/>
+    <rect x="1765" y="180" width="35" height="35" rx="2"/>
+    <line x1="60" y1="272" x2="45" y2="272"/>
+    <line x1="1860" y1="802" x2="1875" y2="802"/>
   </g>
-  <g stroke="#cc00ff" stroke-width="0.5" fill="none" opacity="0.3">
-    <rect x="1750" y="380" width="35" height="35" rx="2"/>
-    <rect x="135" y="700" width="35" height="35" rx="2"/>
+  <g stroke="#cc00ff" stroke-width="0.6" fill="none" opacity="0.35">
+    <rect x="1780" y="420" width="40" height="40" rx="3"/>
+    <rect x="100" y="680" width="40" height="40" rx="3"/>
+    <line x1="1820" y1="440" x2="1835" y2="440"/>
+    <line x1="100" y1="700" x2="85" y2="700"/>
   </g>
-  <g stroke="#00ff88" stroke-width="0.5" fill="none" opacity="0.3">
-    <rect x="250" y="880" width="25" height="25" rx="2"/>
-    <rect x="1645" y="150" width="25" height="25" rx="2"/>
+  <g stroke="#00ff88" stroke-width="0.6" fill="none" opacity="0.35">
+    <rect x="200" y="920" width="30" height="30" rx="2"/>
+    <rect x="1690" y="100" width="30" height="30" rx="2"/>
+    <line x1="215" y1="920" x2="215" y2="905"/>
+    <line x1="1705" y1="130" x2="1705" y2="145"/>
   </g>
   
-  <!-- Fine detail: micro-tendrils (recursive self-similar patterns) -->
-  <g stroke="#00ffff" stroke-width="0.3" fill="none" opacity="0.25">
-    <path d="M480,400 Q510,380 540,395"/>
-    <path d="M620,430 Q650,410 680,425"/>
-    <path d="M760,460 Q790,440 820,455"/>
+  <!-- Micro-tendrils -->
+  <g stroke="#00ffff" stroke-width="0.4" fill="none" opacity="0.3">
+    <path d="M380,350 Q420,330 460,350"/>
+    <path d="M520,380 Q560,360 600,380"/>
+    <path d="M660,400 Q700,380 740,400"/>
   </g>
-  <g stroke="#cc00ff" stroke-width="0.3" fill="none" opacity="0.25">
-    <path d="M1440,680 Q1410,700 1380,685"/>
-    <path d="M1300,650 Q1270,670 1240,655"/>
-    <path d="M1160,610 Q1130,630 1100,615"/>
+  <g stroke="#cc00ff" stroke-width="0.4" fill="none" opacity="0.3">
+    <path d="M1540,720 Q1500,740 1460,720"/>
+    <path d="M1400,690 Q1360,710 1320,690"/>
+    <path d="M1260,660 Q1220,680 1180,660"/>
   </g>
-  <g stroke="#00ff88" stroke-width="0.3" fill="none" opacity="0.25">
-    <path d="M680,720 Q710,740 740,725"/>
-    <path d="M800,680 Q830,700 860,685"/>
-    <path d="M900,630 Q930,650 960,635"/>
+  <g stroke="#00ff88" stroke-width="0.4" fill="none" opacity="0.3">
+    <path d="M580,760 Q620,780 660,760"/>
+    <path d="M720,720 Q760,740 800,720"/>
+    <path d="M860,680 Q900,700 940,680"/>
   </g>
+  
+  <!-- Project branding -->
+  <g filter="url(#textGlow)" opacity="0.7">
+    <text x="960" y="1030" font-family="'Courier New', monospace" font-size="18" fill="#00ffff" text-anchor="middle" letter-spacing="5">M Y C E L I U M   F R A C T A L   N E T</text>
+  </g>
+  
+  <!-- Version indicator -->
+  <g opacity="0.4">
+    <text x="960" y="1055" font-family="'Courier New', monospace" font-size="11" fill="#8b00ff" text-anchor="middle" letter-spacing="3">v4.1 • BIOMIMETIC GRAPH NEURAL NETWORK</text>
+  </g>
+  
+  <!-- Corner accents -->
+  <g opacity="0.25" font-family="'Courier New', monospace" font-size="9" fill="#00ff88">
+    <text x="30" y="30">◉ NERNST-PLANCK DYNAMICS</text>
+    <text x="30" y="45">◉ TURING MORPHOGENESIS</text>
+    <text x="1690" y="30" text-anchor="end">D_box ≈ 1.585 ◉</text>
+    <text x="1690" y="45" text-anchor="end">PRODUCTION-READY ◉</text>
+  </g>
+  
 </svg>
