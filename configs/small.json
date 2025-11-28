@@ -1,0 +1,32 @@
+{
+    "name": "small",
+    "description": "Small configuration for quick experiments and testing",
+    "architecture": {
+        "input_dim": 32,
+        "hidden_dim": 64,
+        "output_dim": 10,
+        "num_layers": 2,
+        "fractal_depth": 2,
+        "dropout_rate": 0.1
+    },
+    "turing": {
+        "enabled": true,
+        "grid_size": 8,
+        "diffusion_activator": 0.16,
+        "diffusion_inhibitor": 0.08,
+        "feed_rate": 0.035,
+        "kill_rate": 0.065
+    },
+    "stdp": {
+        "enabled": true,
+        "tau_plus": 20.0,
+        "tau_minus": 20.0,
+        "a_plus": 0.01,
+        "a_minus": 0.01
+    },
+    "training": {
+        "learning_rate": 0.001,
+        "batch_size": 32,
+        "epochs": 10
+    }
+}

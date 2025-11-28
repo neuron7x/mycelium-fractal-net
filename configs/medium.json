@@ -1,0 +1,32 @@
+{
+    "name": "medium",
+    "description": "Medium configuration for standard training and production use",
+    "architecture": {
+        "input_dim": 128,
+        "hidden_dim": 256,
+        "output_dim": 64,
+        "num_layers": 4,
+        "fractal_depth": 3,
+        "dropout_rate": 0.15
+    },
+    "turing": {
+        "enabled": true,
+        "grid_size": 16,
+        "diffusion_activator": 0.14,
+        "diffusion_inhibitor": 0.06,
+        "feed_rate": 0.037,
+        "kill_rate": 0.060
+    },
+    "stdp": {
+        "enabled": true,
+        "tau_plus": 25.0,
+        "tau_minus": 25.0,
+        "a_plus": 0.008,
+        "a_minus": 0.008
+    },
+    "training": {
+        "learning_rate": 0.0005,
+        "batch_size": 64,
+        "epochs": 50
+    }
+}

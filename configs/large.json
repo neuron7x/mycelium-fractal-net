@@ -1,0 +1,32 @@
+{
+    "name": "large",
+    "description": "Large configuration for high-capacity models and complex tasks",
+    "architecture": {
+        "input_dim": 512,
+        "hidden_dim": 1024,
+        "output_dim": 256,
+        "num_layers": 6,
+        "fractal_depth": 4,
+        "dropout_rate": 0.2
+    },
+    "turing": {
+        "enabled": true,
+        "grid_size": 32,
+        "diffusion_activator": 0.12,
+        "diffusion_inhibitor": 0.04,
+        "feed_rate": 0.040,
+        "kill_rate": 0.055
+    },
+    "stdp": {
+        "enabled": true,
+        "tau_plus": 30.0,
+        "tau_minus": 30.0,
+        "a_plus": 0.005,
+        "a_minus": 0.005
+    },
+    "training": {
+        "learning_rate": 0.0001,
+        "batch_size": 128,
+        "epochs": 100
+    }
+}
