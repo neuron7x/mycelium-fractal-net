@@ -30,12 +30,13 @@ from __future__ import annotations
 import argparse
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import sympy as sp
 import torch
 import torch.nn.functional as F
+from numpy.typing import NDArray
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -133,7 +134,7 @@ def generate_fractal_ifs(
     rng: np.random.Generator,
     num_points: int = 10000,
     num_transforms: int = 4,
-) -> Tuple[np.ndarray, float]:
+) -> Tuple[NDArray[Any], float]:
     """
     Generate fractal pattern using Iterated Function System (IFS).
 
@@ -151,7 +152,7 @@ def generate_fractal_ifs(
 
     Returns
     -------
-    points : np.ndarray
+    points : NDArray[Any]
         Generated points of shape (num_points, 2).
     lyapunov : float
         Estimated Lyapunov exponent (negative = stable).
@@ -196,7 +197,7 @@ def generate_fractal_ifs(
 
 
 def compute_lyapunov_exponent(
-    field_history: np.ndarray,
+    field_history: NDArray[Any],
     dt: float = 1.0,
 ) -> float:
     """
@@ -207,7 +208,7 @@ def compute_lyapunov_exponent(
 
     Parameters
     ----------
-    field_history : np.ndarray
+    field_history : NDArray[Any]
         Array of shape (T, N, N) with field states over time.
     dt : float
         Time step between states.
@@ -247,7 +248,7 @@ def simulate_mycelium_field(
     turing_threshold: float = TURING_THRESHOLD,
     quantum_jitter: bool = False,
     jitter_var: float = QUANTUM_JITTER_VAR,
-) -> Tuple[np.ndarray, int]:
+) -> Tuple[NDArray[Any], int]:
     """
     Simulate mycelium-like potential field on 2D lattice with Turing morphogenesis.
 
@@ -285,7 +286,7 @@ def simulate_mycelium_field(
 
     Returns
     -------
-    field : np.ndarray
+    field : NDArray[Any]
         Array of shape (N, N) in volts.
     growth_events : int
         Number of growth events.
@@ -359,7 +360,7 @@ def simulate_mycelium_field(
 
 
 def estimate_fractal_dimension(
-    binary_field: np.ndarray,
+    binary_field: NDArray[Any],
     min_box_size: int = 2,
     max_box_size: int | None = None,
     num_scales: int = 5,
@@ -371,7 +372,7 @@ def estimate_fractal_dimension(
 
     Parameters
     ----------
-    binary_field : np.ndarray
+    binary_field : NDArray[Any]
         Boolean array of shape (N, N).
     min_box_size : int
         Minimum box size.
