@@ -33,6 +33,20 @@ from mycelium_fractal_net import (
     simulate_mycelium_field,
 )
 
+# === Test Constants (from MATH_MODEL.md) ===
+
+# Physiological Ca2+ concentrations (mol/L)
+CA_OUT_PHYSIOLOGICAL_MOLAR: float = 2e-3      # ~2 mM extracellular
+CA_IN_PHYSIOLOGICAL_MOLAR: float = 100e-9    # ~100 nM intracellular
+
+# Expected Lyapunov exponent range for contractive IFS
+LYAPUNOV_MIN_EXPECTED: float = -4.0  # More contractive
+LYAPUNOV_MAX_EXPECTED: float = -0.5  # Less contractive (but still stable)
+
+# Biological fractal dimension range for mycelial networks
+FRACTAL_DIMENSION_BIO_MIN: float = 1.0
+FRACTAL_DIMENSION_BIO_MAX: float = 2.2
+
 
 class TestNernstMathematicalProperties:
     """Validate Nernst equation against MATH_MODEL.md specifications."""
@@ -83,8 +97,8 @@ class TestNernstMathematicalProperties:
         """
         e_ca = compute_nernst_potential(
             z_valence=2,
-            concentration_out_molar=2e-3,
-            concentration_in_molar=100e-9,
+            concentration_out_molar=CA_OUT_PHYSIOLOGICAL_MOLAR,
+            concentration_in_molar=CA_IN_PHYSIOLOGICAL_MOLAR,
         )
         e_ca_mv = e_ca * 1000.0
         assert e_ca_mv > 100.0, f"E_Ca = {e_ca_mv:.2f} mV, expected >100 mV"
@@ -272,7 +286,10 @@ class TestFractalMathematicalProperties:
         
         mean_lyap = np.mean(lyapunov_values)
         # Should be negative and in reasonable range
-        assert -4.0 < mean_lyap < -0.5, f"Mean Lyapunov = {mean_lyap:.2f} outside expected range"
+        assert LYAPUNOV_MIN_EXPECTED < mean_lyap < LYAPUNOV_MAX_EXPECTED, (
+            f"Mean Lyapunov = {mean_lyap:.2f} outside expected range "
+            f"[{LYAPUNOV_MIN_EXPECTED}, {LYAPUNOV_MAX_EXPECTED}]"
+        )
 
     def test_fractal_dimension_bounds(self) -> None:
         """Verify fractal dimension is in valid range 0 < D < 2.
@@ -294,7 +311,9 @@ class TestFractalMathematicalProperties:
         dimensions = []
         for seed in range(10):
             rng = np.random.default_rng(seed + 100)
-            field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
+            field, _ = simulate_mycelium_field(
+                rng, grid_size=64, steps=100, turing_enabled=True
+            )
             binary = field > np.percentile(field, 50)
             if binary.sum() > 100:
                 d = estimate_fractal_dimension(binary)
@@ -304,7 +323,10 @@ class TestFractalMathematicalProperties:
         if len(dimensions) >= 5:
             mean_d = np.mean(dimensions)
             # Allow wider range for stochastic simulation
-            assert 1.0 <= mean_d <= 2.2, f"Mean D = {mean_d:.3f} outside biological range"
+            assert FRACTAL_DIMENSION_BIO_MIN <= mean_d <= FRACTAL_DIMENSION_BIO_MAX, (
+                f"Mean D = {mean_d:.3f} outside biological range "
+                f"[{FRACTAL_DIMENSION_BIO_MIN}, {FRACTAL_DIMENSION_BIO_MAX}]"
+            )
 
     def test_reproducibility_same_seed(self) -> None:
         """Verify same seed produces identical fractal dimension.
