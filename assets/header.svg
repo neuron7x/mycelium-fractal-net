@@ -138,7 +138,7 @@
   <rect x="0" y="0" width="1920" height="1080" fill="#010101"/>
   
   <!-- Subtle grid pattern for technical reference -->
-  <g opacity="0.03" stroke="#3d424a" stroke-width="0.5">
+  <g opacity="0.05" stroke="#3d424a" stroke-width="0.5">
     <line x1="0" y1="270" x2="1920" y2="270"/>
     <line x1="0" y1="540" x2="1920" y2="540"/>
     <line x1="0" y1="810" x2="1920" y2="810"/>
@@ -470,7 +470,7 @@
   <!-- ========================================== -->
   
   <!-- Axis labels and technical markers -->
-  <g font-family="'JetBrains Mono', 'Consolas', 'Monaco', monospace" font-size="9" fill="#4b5563" opacity="0.6">
+  <g font-family="'JetBrains Mono', 'Consolas', 'Monaco', monospace" font-size="10" fill="#4b5563" opacity="0.7">
     <!-- Layer indicators -->
     <text x="50" y="120">LAYER 0: L-SYSTEM BASE</text>
     <text x="50" y="135">LAYER 1: PERIPHERAL RING</text>
@@ -535,7 +535,7 @@
   </text>
   
   <!-- Corner technical markers -->
-  <g font-family="'JetBrains Mono', 'Consolas', monospace" font-size="8" fill="#5a6270" opacity="0.5">
+  <g font-family="'JetBrains Mono', 'Consolas', monospace" font-size="9" fill="#5a6270" opacity="0.65">
     <text x="30" y="1070">NERNST-PLANCK DYNAMICS</text>
     <text x="30" y="1055">TURING MORPHOGENESIS</text>
     <text x="1890" y="1070" text-anchor="end">PRODUCTION-READY</text>
