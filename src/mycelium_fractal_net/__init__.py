@@ -10,10 +10,26 @@ New in v4.1:
   - Membrane potential (Nernst equation, ODE integration)
   - Reaction-diffusion (Turing morphogenesis)
   - Fractal growth (IFS, box-counting)
+- config module with centralized configuration management
 """
 
 # Import core engines (new numerical implementations)
 from .analytics import FeatureVector, compute_fractal_features
+
+# Import centralized config module
+from .config import (
+    DatasetConfig,
+    FeatureConfig,
+    make_dataset_config_default,
+    make_dataset_config_demo,
+    make_feature_config_default,
+    make_feature_config_demo,
+    make_simulation_config_default,
+    make_simulation_config_demo,
+    validate_dataset_config,
+    validate_feature_config,
+    validate_simulation_config,
+)
 from .core import (
     FractalConfig,
     FractalGrowthEngine,
@@ -112,6 +128,18 @@ __all__ = [
     "StabilityError",
     "ValueOutOfRangeError",
     "NumericalInstabilityError",
+    # Config module (centralized configuration)
+    "DatasetConfig",
+    "FeatureConfig",
+    "validate_simulation_config",
+    "validate_feature_config",
+    "validate_dataset_config",
+    "make_simulation_config_demo",
+    "make_simulation_config_default",
+    "make_feature_config_demo",
+    "make_feature_config_default",
+    "make_dataset_config_demo",
+    "make_dataset_config_default",
 ]
 
 __version__ = "4.1.0"
