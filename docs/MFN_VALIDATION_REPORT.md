@@ -1,6 +1,6 @@
 # MFN Validation Report — Experimental Validation & Falsification
 
-**Document Version**: 1.0  
+**Document Version**: 1.1  
 **Last Updated**: 2025-11-29  
 **Applies to**: MyceliumFractalNet v4.1.0
 
@@ -9,10 +9,16 @@
 ## Executive Summary
 
 This report documents the experimental validation and potential falsification of 
-the MyceliumFractalNet mathematical models. All core invariants have been tested 
-and verified. No falsification signals were detected.
+the MyceliumFractalNet mathematical models. All core invariants have been tested and verified.
 
 **Overall Status**: ✅ **VALIDATED**
+
+| Metric | Value |
+|--------|-------|
+| Total experiments | 16 |
+| Passed | 16 |
+| Failed | 0 |
+| Needs work | 0 |
 
 | Component | Status | Confidence |
 |-----------|--------|------------|
@@ -30,190 +36,103 @@ and verified. No falsification signals were detected.
 
 ### 1.1 Scenario: Stability Under Pure Diffusion
 
-**Configuration**:
-- `spike_probability = 0.0`
-- `turing_enabled = False`
-- `quantum_jitter = False`
-- `alpha = 0.18`
-
-**Expectation**: Field variance should decrease (diffusion homogenizes).
+**Expectation**: Field variance should decrease (diffusion homogenizes)
 
 **Result**: ✅ **PASS**
 
-| Metric | Initial | Final | Status |
-|--------|---------|-------|--------|
-| Variance | 9.9e-5 | 5.3e-6 | ✅ Decreased |
-| NaN/Inf | False | False | ✅ None |
-| Bounds | [-95, 40] mV | [-95, 40] mV | ✅ Within |
-
-**Conclusion**: Diffusion equation correctly implemented; smoothing behavior verified.
+Variance reduced from 9.67e-05 to 3.21e-08 (100%)
 
 ---
 
 ### 1.2 Scenario: Growth with Spike Events
 
-**Configuration**:
-- `spike_probability = 0.5`
-- `turing_enabled = False`
-- `steps = 100`
-
-**Expectation**: Growth events should occur (>0), field evolution observed.
+**Expectation**: Growth events should occur (>0) with spike probability 0.5
 
 **Result**: ✅ **PASS**
 
-| Metric | Expected | Actual | Status |
-|--------|----------|--------|--------|
-| Growth events | >0 | ~50 | ✅ |
-| Field bounded | Yes | Yes | ✅ |
-
-**Conclusion**: Spike event mechanism works as expected.
+50 growth events occurred, field bounded [-69.9, -66.7] mV
 
 ---
 
 ### 1.3 Scenario: Turing Pattern Formation
 
-**Configuration**:
-- `turing_enabled = True`
-- `steps = 200`
-- `grid_size = 64`
-
-**Expectation**: Turing patterns produce measurably different field than baseline.
+**Expectation**: Turing-enabled should produce different field than non-Turing
 
 **Result**: ✅ **PASS**
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Max difference from baseline | 2.2 mV | ✅ >0 |
-| Field finite | True | ✅ |
-
-**Conclusion**: Turing morphogenesis produces distinct spatial patterns.
+Max difference = 2.22 mV (threshold: >0.001 mV)
 
 ---
 
 ### 1.4 Scenario: Quantum Jitter Stability
 
-**Configuration**:
-- `quantum_jitter = True`
-- `jitter_var = 0.0005`
-- `steps = 500`
-
-**Expectation**: System remains stable with stochastic noise.
+**Expectation**: System remains stable with stochastic noise over 500 steps
 
 **Result**: ✅ **PASS**
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| NaN/Inf | None | ✅ |
-| Within bounds | Yes | ✅ |
-
-**Conclusion**: Stochastic term properly bounded and integrated.
+Field finite=True, bounded=[-95.0, 40.0] mV
 
 ---
 
-### 1.5 Scenario: Near-CFL Stability
+### 1.5 Scenario: Near-CFL Stability (α=0.24)
 
-**Configuration**:
-- `alpha = 0.24` (CFL limit = 0.25)
-- `steps = 200`
-
-**Expectation**: System stable at near-limit diffusion coefficient.
+**Expectation**: System stable at diffusion coefficient near CFL limit
 
 **Result**: ✅ **PASS**
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Finite | True | ✅ |
-| Bounded | Yes | ✅ |
-
-**Conclusion**: Numerical scheme stable up to CFL boundary.
+Stable=True at α=0.24
 
 ---
 
 ### 1.6 Scenario: Long-Run Stability (1000 steps)
 
-**Configuration**:
-- `steps = 1000`
-- `turing_enabled = True`
-- `quantum_jitter = True`
-
-**Expectation**: No numerical drift or explosion.
+**Expectation**: No numerical drift or explosion over 1000 steps
 
 **Result**: ✅ **PASS**
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Finite after 1000 steps | True | ✅ |
-| Growth events | ~247 | ✅ Expected |
-
-**Conclusion**: Extended simulations numerically stable.
+Stable after 1000 steps, 247 growth events
 
 ---
 
 ## 2. Core Invariants Testing
 
-### 2.1 Nernst Equation Physical Bounds
+### 2.1 Nernst Equation Physical Accuracy
 
-**Test**: Membrane potentials should be in [-150, +150] mV for physiological concentrations.
+**Test**: Computed potentials within ±5mV of literature values
 
-| Ion | Computed | Expected | Error | Status |
-|-----|----------|----------|-------|--------|
-| K⁺ | -89.0 mV | -89 mV | 0.0 mV | ✅ |
-| Na⁺ | +66.6 mV | +66 mV | 0.6 mV | ✅ |
-| Cl⁻ | -90.9 mV | -89 mV | 1.9 mV | ✅ |
-| Ca²⁺ | +101.5 mV | +102 mV | 0.5 mV | ✅ |
-
-**Conclusion**: ✅ Nernst equation correctly implemented per MFN_MATH_MODEL.md.
+**Result**: ✅ All ions within tolerance
 
 ---
 
 ### 2.2 Field Clamping Enforcement
 
-**Test**: Field values always clamped to [-95, 40] mV.
+**Test**: Field values always within [-95, 40] mV
 
-| Condition | Min (mV) | Max (mV) | Status |
-|-----------|----------|----------|--------|
-| Extreme spikes (p=0.9) | -95.0 | 40.0 | ✅ |
-| Long run (1000 steps) | -95.0 | 40.0 | ✅ |
-
-**Conclusion**: ✅ Clamping enforced under all tested conditions.
+**Result**: ✅ Range [-95.0, 40.0] mV across 10 seeds
 
 ---
 
 ### 2.3 IFS Contraction Guarantee
 
-**Test**: Lyapunov exponent should be negative (contractive dynamics).
+**Test**: Lyapunov exponent λ < 0 (contractive dynamics)
 
-| Trials | Mean λ | Min λ | Max λ | All Negative | Status |
-|--------|--------|-------|-------|--------------|--------|
-| 10 | -2.22 | -2.53 | -1.89 | ✅ Yes | ✅ |
-
-**Conclusion**: ✅ IFS always produces stable, contractive fractals.
+**Result**: ✅ Mean λ = -2.22, range [-2.50, -1.77]
 
 ---
 
 ### 2.4 Fractal Dimension Bounds
 
-**Test**: D ∈ [0, 2] for 2D binary fields.
+**Test**: D ∈ [0, 2] for 2D binary fields
 
-| Threshold Method | Mean D | Std D | In Range | Status |
-|------------------|--------|-------|----------|--------|
-| Percentile (50%) | 1.766 | 0.007 | ✅ | ✅ |
-
-**Conclusion**: ✅ Fractal dimension within valid mathematical bounds.
+**Result**: ✅ D = 1.767 ± 0.010
 
 ---
 
 ### 2.5 Reproducibility
 
-**Test**: Same seed produces identical results.
+**Test**: Same seed produces identical results
 
-| Metric | Identical | Status |
-|--------|-----------|--------|
-| Field values | ✅ | ✅ |
-| Growth events | ✅ | ✅ |
-| Fractal dimension | ✅ | ✅ |
-
-**Conclusion**: ✅ Determinism preserved.
+**Result**: ✅ Verified
 
 ---
 
@@ -221,49 +140,41 @@ and verified. No falsification signals were detected.
 
 ### 3.1 Diffusion Smoothing Effect
 
-**Hypothesis**: Diffusion should reduce spatial variance.
-
-**Test**: Compare initial vs final variance under pure diffusion.
+**Hypothesis**: Pure diffusion reduces spatial variance
 
 **Result**: ✅ **NOT FALSIFIED**
 
-Initial variance: 9.9e-5, Final variance: 5.3e-6 (94% reduction).
+std: 0.0197 → 0.0008
 
 ---
 
 ### 3.2 Nernst Sign Consistency
 
-**Hypothesis**: If [X]_out > [X]_in and z > 0, then E > 0.
-
-**Test**: Verify sign for multiple ion configurations.
+**Hypothesis**: [X]_out > [X]_in and z > 0 → E > 0
 
 **Result**: ✅ **NOT FALSIFIED**
 
-All tested configurations show correct sign relationship.
+All sign tests passed
 
 ---
 
 ### 3.3 IFS Bounded Attractor
 
-**Hypothesis**: Contractive IFS must have bounded attractor.
-
-**Test**: Check max coordinate magnitude after 10,000 iterations.
+**Hypothesis**: Contractive IFS has bounded attractor (max coord < 100)
 
 **Result**: ✅ **NOT FALSIFIED**
 
-Max coordinate: <10 (well bounded).
+λ=-2.34, max_coord=1.1
 
 ---
 
 ### 3.4 CFL Stability Boundary
 
-**Hypothesis**: System stable below CFL limit (α < 0.25).
-
-**Test**: Run at α = 0.24.
+**Hypothesis**: System stable at α=0.24 (CFL limit is 0.25)
 
 **Result**: ✅ **NOT FALSIFIED**
 
-System remains finite and bounded.
+Stable=True at α=0.24
 
 ---
 
@@ -272,11 +183,6 @@ System remains finite and bounded.
 ### 4.1 Threshold Sensitivity Issue
 
 **Finding**: The default -60 mV threshold for fractal dimension calculation may not capture any active cells when field values concentrate around -70 mV.
-
-**Observation**:
-- Field range: typically [-71, -66] mV
-- At -60 mV threshold: 0% active cells → D = 0 (invalid)
-- At 50th percentile threshold: 50% active cells → D ≈ 1.77 (valid)
 
 **Recommendation**: Use adaptive (percentile-based) thresholding for robust feature extraction.
 
@@ -288,13 +194,7 @@ System remains finite and bounded.
 
 **Test**: Features should differentiate between simulation regimes.
 
-| Regime | Field Std (mV) | Observation |
-|--------|----------------|-------------|
-| Stable (no activity) | 0.23 ± 0.01 | Baseline |
-| Active (spikes) | 0.33 ± 0.04 | Higher variance |
-| Turing | 0.29 ± 0.02 | Intermediate |
-
-**Conclusion**: ✅ Standard deviation discriminates between regimes.
+**Result**: ✅ D variance=0.0822, std variance=12.2250
 
 ---
 
@@ -302,17 +202,22 @@ System remains finite and bounded.
 
 | Scenario | Expectation | Result | Status |
 |----------|-------------|--------|--------|
-| Stability (diffusion only) | Variance decreases | Variance reduced 94% | ✅ PASS |
-| Growth events | Events occur with p>0 | ~50 events at p=0.5 | ✅ PASS |
-| Turing patterns | Different from baseline | Max diff = 2.2 mV | ✅ PASS |
-| Quantum jitter | System stable | No NaN/Inf | ✅ PASS |
-| Near-CFL (α=0.24) | Stable below limit | No instability | ✅ PASS |
-| Long-run (1000 steps) | No drift | Bounded and finite | ✅ PASS |
-| Nernst accuracy | ±5 mV of literature | All within tolerance | ✅ PASS |
-| Field clamping | [-95, 40] mV | Enforced | ✅ PASS |
-| IFS contraction | λ < 0 | Mean λ = -2.22 | ✅ PASS |
-| Fractal dimension | D ∈ [0, 2] | D = 1.77 | ✅ PASS |
-| Reproducibility | Same seed → same result | Verified | ✅ PASS |
+| Stability Under Pure Diffusion | Field variance should decrease (diffusio... | Variance reduced from 9.67e-05... | ✅ PASS |
+| Growth with Spike Events | Growth events should occur (>0) with spi... | 50 growth events occurred, fie... | ✅ PASS |
+| Turing Pattern Formation | Turing-enabled should produce different ... | Max difference = 2.22 mV (thre... | ✅ PASS |
+| Quantum Jitter Stability | System remains stable with stochastic no... | Field finite=True, bounded=[-9... | ✅ PASS |
+| Near-CFL Stability (α=0.24) | System stable at diffusion coefficient n... | Stable=True at α=0.24 | ✅ PASS |
+| Long-Run Stability (1000 steps) | No numerical drift or explosion over 100... | Stable after 1000 steps, 247 g... | ✅ PASS |
+| Nernst Equation Physical Accuracy | Computed potentials within ±5mV of liter... | All ions within tolerance | ✅ PASS |
+| Field Clamping Enforcement | Field values always within [-95, 40] mV | Range [-95.0, 40.0] mV across ... | ✅ PASS |
+| IFS Contraction Guarantee | Lyapunov exponent λ < 0 (contractive dyn... | Mean λ = -2.22, range [-2.50, ... | ✅ PASS |
+| Fractal Dimension Bounds | D ∈ [0, 2] for 2D binary fields | D = 1.767 ± 0.010 | ✅ PASS |
+| Reproducibility | Same seed produces identical results | Verified | ✅ PASS |
+| Diffusion Smoothing Effect | Pure diffusion reduces spatial variance | std: 0.0197 → 0.0008 | ✅ PASS |
+| Nernst Sign Consistency | [X]_out > [X]_in and z > 0 → E > 0 | All sign tests passed | ✅ PASS |
+| IFS Bounded Attractor | Contractive IFS has bounded attractor (m... | λ=-2.34, max_coord=1.1 | ✅ PASS |
+| CFL Stability Boundary | System stable at α=0.24 (CFL limit is 0.... | Stable=True at α=0.24 | ✅ PASS |
+| Regime Discrimination | Features vary meaningfully across regime... | D variance=0.0822, std varianc... | ✅ PASS |
 
 ---
 
@@ -338,15 +243,7 @@ All core mathematical models have been experimentally validated:
    - Field clamping properly enforced
    - Long-run stability verified
 
-### 6.2 Items for Future Improvement
-
-1. **Threshold Calibration**: Consider dynamic thresholding for fractal dimension to handle varying field distributions.
-
-2. **Feature Normalization**: Feature values depend on grid size and step count; normalization may improve cross-experiment comparability.
-
-3. **Statistical Power**: Current validation uses 10 seeds; larger sample sizes could increase confidence.
-
-### 6.3 Falsification Status
+### 6.2 Falsification Status
 
 **No falsification signals detected.** All tested predictions align with model expectations.
 
@@ -358,11 +255,13 @@ The validation tests are implemented in:
 - `tests/validation/test_model_falsification.py` — Control scenarios and falsification tests
 - `tests/test_math_model_validation.py` — Mathematical property tests
 - `validation/scientific_validation.py` — Literature comparison
+- `validation/run_validation_experiments.py` — This validation runner
 
 Run all validation tests:
 ```bash
 pytest tests/validation/ tests/test_math_model_validation.py -v
 python validation/scientific_validation.py
+python validation/run_validation_experiments.py
 ```
 
 ---
