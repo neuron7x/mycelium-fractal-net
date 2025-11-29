@@ -100,3 +100,8 @@ Thumbs.db
 
 # Benchmark results
 benchmarks/results/
+
+# Generated datasets
+data/*.parquet
+data/*.npz
+data/*.csv

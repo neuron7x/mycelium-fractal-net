@@ -187,7 +187,15 @@ pip install torch --index-url https://download.pytorch.org/whl/cu118
 mycelium-fractal-net/
 ├── src/mycelium_fractal_net/
 │   ├── __init__.py          # Public API
-│   └── model.py             # Core implementation
+│   ├── model.py             # Core implementation
+│   └── core/                # Numerical engines
+├── analytics/               # Feature extraction module
+│   ├── __init__.py
+│   └── fractal_features.py  # 18 fractal features
+├── experiments/             # Dataset generation
+│   ├── generate_dataset.py  # Parameter sweep pipeline
+│   └── inspect_features.py  # Exploratory analysis
+├── data/                    # Generated datasets
 ├── api.py                   # FastAPI server
 ├── mycelium_fractal_net_v4_1.py  # CLI
 ├── tests/                   # pytest suite
@@ -195,6 +203,8 @@ mycelium-fractal-net/
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── MATH_MODEL.md
+│   ├── NUMERICAL_CORE.md
+│   ├── FEATURE_SCHEMA.md
 │   └── ROADMAP.md
 ├── Dockerfile
 └── k8s.yaml
@@ -229,7 +239,40 @@ Coverage: Nernst • Turing • STDP • Fractal • Federated • Determinism
 |:---------|:-----|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архітектура системи |
 | [MATH_MODEL.md](docs/MATH_MODEL.md) | Математична формалізація |
+| [NUMERICAL_CORE.md](docs/NUMERICAL_CORE.md) | Чисельне ядро |
+| [FEATURE_SCHEMA.md](docs/FEATURE_SCHEMA.md) | Схема фрактальних ознак |
 | [ROADMAP.md](docs/ROADMAP.md) | План розвитку |
+
+---
+
+## Analytics Module
+
+Модуль `analytics` надає інструменти для витягування фрактальних ознак:
+
+```python
+from analytics import compute_features, FeatureConfig
+
+# Extract all 18 features from field history
+features = compute_features(field_history, config=FeatureConfig())
+
+# Access individual features
+print(f"Fractal dimension: {features.D_box:.3f}")
+print(f"Mean potential: {features.V_mean:.1f} mV")
+print(f"Active fraction: {features.f_active:.3f}")
+
+# Convert to numpy array for ML
+feature_array = features.to_array()  # shape: (18,)
+```
+
+### Dataset Generation
+
+```bash
+# Generate experimental dataset
+python -m experiments.generate_dataset --output data/mycelium_dataset.parquet
+
+# Inspect features
+python -m experiments.inspect_features --input data/mycelium_dataset.parquet
+```
 
 ---
 
