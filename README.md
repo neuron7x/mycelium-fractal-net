@@ -233,10 +233,31 @@ Coverage: Nernst • Turing • STDP • Fractal • Federated • Determinism
 
 ---
 
+## System Role
+
+MyceliumFractalNet (MFN) — це **фрактальний морфогенетичний енжин фіч**, який трансформує параметри симуляції у структуровані вектори ознак для машинного навчання та аналізу.
+
+**Що MFN робить:**
+- Генерація 2D полів потенціалів з Turing morphogenesis
+- Витягування 18 стандартизованих фрактальних ознак
+- Byzantine-robust федеративне агрегування (Hierarchical Krum)
+- Обчислення Nernst потенціалів, фрактальної розмірності, Lyapunov експонент
+
+**Що MFN НЕ робить:**
+- Виконання ордерів та торгівля
+- Управління портфелем та ризиками
+- Збереження даних (окрім parquet export)
+- UI/візуалізація
+
+[Деталі див. docs/MFN_SYSTEM_ROLE.md](docs/MFN_SYSTEM_ROLE.md)
+
+---
+
 ## Документація
 
 | Документ | Опис |
 |:---------|:-----|
+| [MFN_SYSTEM_ROLE.md](docs/MFN_SYSTEM_ROLE.md) | Системна роль та зовнішній контракт |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архітектура системи |
 | [MFN_MATH_MODEL.md](docs/MFN_MATH_MODEL.md) | Математична формалізація |
 | [NUMERICAL_CORE.md](docs/NUMERICAL_CORE.md) | Чисельне ядро |
