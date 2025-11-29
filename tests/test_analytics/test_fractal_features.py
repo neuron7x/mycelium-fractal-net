@@ -461,13 +461,14 @@ class TestStabilitySmoke:
 
     def test_extreme_values(self) -> None:
         """Handle extreme but valid values."""
+        rng = np.random.default_rng(42)
         # Very low variance field
-        low_var = np.full((32, 32), -0.070) + np.random.random((32, 32)) * 1e-8
+        low_var = np.full((32, 32), -0.070) + rng.random((32, 32)) * 1e-8
         features_low = compute_features(low_var)
         assert not np.any(np.isnan(features_low.to_array()))
 
         # High variance field
-        high_var = np.random.uniform(-0.095, 0.040, size=(32, 32))
+        high_var = rng.uniform(-0.095, 0.040, size=(32, 32))
         features_high = compute_features(high_var)
         assert not np.any(np.isnan(features_high.to_array()))
 

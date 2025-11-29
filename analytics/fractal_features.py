@@ -19,7 +19,7 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Tuple
 
 import numpy as np
@@ -123,77 +123,14 @@ class FeatureVector:
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
 
-    # Feature names (class attribute)
-    _feature_names: list[str] = field(
-        default_factory=lambda: [
-            "D_box",
-            "D_r2",
-            "V_min",
-            "V_max",
-            "V_mean",
-            "V_std",
-            "V_skew",
-            "V_kurt",
-            "dV_mean",
-            "dV_max",
-            "T_stable",
-            "E_trend",
-            "f_active",
-            "N_clusters_low",
-            "N_clusters_med",
-            "N_clusters_high",
-            "max_cluster_size",
-            "cluster_size_std",
-        ],
-        repr=False,
-    )
-
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary with float values."""
-        return {
-            "D_box": self.D_box,
-            "D_r2": self.D_r2,
-            "V_min": self.V_min,
-            "V_max": self.V_max,
-            "V_mean": self.V_mean,
-            "V_std": self.V_std,
-            "V_skew": self.V_skew,
-            "V_kurt": self.V_kurt,
-            "dV_mean": self.dV_mean,
-            "dV_max": self.dV_max,
-            "T_stable": float(self.T_stable),
-            "E_trend": self.E_trend,
-            "f_active": self.f_active,
-            "N_clusters_low": float(self.N_clusters_low),
-            "N_clusters_med": float(self.N_clusters_med),
-            "N_clusters_high": float(self.N_clusters_high),
-            "max_cluster_size": float(self.max_cluster_size),
-            "cluster_size_std": self.cluster_size_std,
-        }
+        return {name: float(getattr(self, name)) for name in self.feature_names()}
 
     def to_array(self) -> NDArray[np.float64]:
         """Convert to numpy array (fixed order as per FEATURE_SCHEMA.md)."""
         return np.array(
-            [
-                self.D_box,
-                self.D_r2,
-                self.V_min,
-                self.V_max,
-                self.V_mean,
-                self.V_std,
-                self.V_skew,
-                self.V_kurt,
-                self.dV_mean,
-                self.dV_max,
-                float(self.T_stable),
-                self.E_trend,
-                self.f_active,
-                float(self.N_clusters_low),
-                float(self.N_clusters_med),
-                float(self.N_clusters_high),
-                float(self.max_cluster_size),
-                self.cluster_size_std,
-            ],
+            [float(getattr(self, name)) for name in self.feature_names()],
             dtype=np.float64,
         )
 

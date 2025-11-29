@@ -51,13 +51,13 @@ class SweepConfig:
     """Configuration for parameter sweep."""
 
     # Grid sizes to test
-    grid_sizes: list[int] = None  # type: ignore
+    grid_sizes: list[int] | None = None
     # Simulation steps
-    steps_list: list[int] = None  # type: ignore
+    steps_list: list[int] | None = None
     # Diffusion coefficients (must be < 0.25 for CFL stability)
-    alpha_values: list[float] = None  # type: ignore
+    alpha_values: list[float] | None = None
     # Turing enabled/disabled
-    turing_values: list[bool] = None  # type: ignore
+    turing_values: list[bool] | None = None
     # Number of random seeds per configuration
     seeds_per_config: int = 3
     # Base random seed for reproducibility
@@ -275,7 +275,7 @@ def generate_dataset(
 
         except ImportError:
             logger.warning("pandas not installed, saving as npz instead")
-            if output_path is not None:
+            if output_path is not None and all_rows:
                 npz_path = output_path.with_suffix(".npz")
                 np.savez(
                     npz_path,

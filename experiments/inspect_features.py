@@ -16,6 +16,7 @@ Features:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from analytics import FeatureVector
+
+logger = logging.getLogger(__name__)
 
 
 def load_dataset(path: Path) -> tuple[Any, list[str]]:
@@ -59,6 +62,7 @@ def compute_descriptive_stats(df: Any, feature_names: list[str]) -> dict[str, di
 
     for fname in feature_names:
         if fname not in df.columns:
+            logger.warning(f"Expected feature '{fname}' not found in dataset")
             continue
 
         values = df[fname].values
