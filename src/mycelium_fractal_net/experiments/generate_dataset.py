@@ -38,8 +38,19 @@ from mycelium_fractal_net.core import (
 )
 from mycelium_fractal_net.core.exceptions import NumericalInstabilityError
 
-# Get version from the module
-MFN_VERSION = "4.1.0"  # Match __version__ in mycelium_fractal_net/__init__.py
+
+def _get_mfn_version() -> str:
+    """Get MyceliumFractalNet version dynamically."""
+    try:
+        from importlib.metadata import version
+
+        return version("mycelium-fractal-net")
+    except Exception:
+        # Fallback if package metadata not available
+        return "4.1.0"
+
+
+MFN_VERSION = _get_mfn_version()
 
 # === Logging Setup ===
 logging.basicConfig(
