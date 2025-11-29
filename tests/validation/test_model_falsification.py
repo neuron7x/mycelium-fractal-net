@@ -240,7 +240,11 @@ class TestControlScenarios:
         Scenario: Turing morphogenesis produces distinct patterns.
         
         Expectation: Field with Turing differs from field without Turing.
+        
+        Note: Using same seed is intentional here to ensure the ONLY difference
+        between the two runs is the Turing flag, allowing us to isolate the effect.
         """
+        # Use identical seeds to isolate the effect of turing_enabled flag
         rng1 = np.random.default_rng(42)
         rng2 = np.random.default_rng(42)
         
@@ -388,9 +392,14 @@ class TestCoreInvariants:
     def test_fractal_dimension_bounds(self, rng: np.random.Generator) -> None:
         """
         Invariant: Fractal dimension is bounded [0, 2] for 2D fields.
+        
+        Uses percentile-based thresholding for robust dimension estimation.
         """
         field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100)
-        binary = field > -0.060
+        
+        # Use percentile-based threshold for robustness (see threshold sensitivity issue)
+        threshold = np.percentile(field, 50)
+        binary = field > threshold
         
         D = estimate_fractal_dimension(binary)
         
@@ -471,18 +480,22 @@ class TestFeatureDiscrimination:
     def test_high_vs_low_activity_discrimination(self, rng: np.random.Generator) -> None:
         """
         Features should differentiate high-activity vs low-activity regimes.
+        
+        Note: Uses same seed for both runs to isolate the effect of spike_probability.
         """
-        # High activity: many spikes
+        # High activity: many spikes (use same seed to isolate spike_probability effect)
+        rng_high = np.random.default_rng(42)
         field_high, events_high = simulate_mycelium_field(
-            np.random.default_rng(42),
+            rng_high,
             grid_size=64,
             steps=100,
             spike_probability=0.8,
         )
         
         # Low activity: no spikes
+        rng_low = np.random.default_rng(42)
         field_low, events_low = simulate_mycelium_field(
-            np.random.default_rng(42),
+            rng_low,
             grid_size=64,
             steps=100,
             spike_probability=0.0,
@@ -646,7 +659,9 @@ class TestDatasetRegimeDiscrimination:
                     **params,
                 )
                 
-                binary = field > -0.060
+                # Use percentile-based threshold for robust dimension estimation
+                threshold = np.percentile(field, 50)
+                binary = field > threshold
                 D = estimate_fractal_dimension(binary)
                 mean_v = field.mean() * 1000  # mV
                 std_v = field.std() * 1000    # mV
