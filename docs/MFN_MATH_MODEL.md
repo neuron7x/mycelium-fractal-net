@@ -405,6 +405,9 @@ and experimental/hypothetical aspects of the MFN model.
 | Box-counting dimension | **Established** | Fractal geometry, 1980s+ |
 | Discrete Laplacian | **Established** | Numerical analysis |
 | IFS fractals | **Established** | Chaos theory, 1980s+ |
+| STDP learning rule | **Established** | Neurophysiology, Bi & Poo 1998 |
+| Scaled dot-product attention | **Established** | Vaswani et al. 2017 |
+| Krum aggregation | **Established** | Blanchard et al. 2017 |
 
 ### Experimental/Hypothetical Aspects
 
@@ -415,6 +418,9 @@ and experimental/hypothetical aspects of the MFN model.
 | Mycelium fractal dimension range | **Hypothesis** | Based on analogy to biological mycelium, not direct measurement |
 | "Quantum jitter" | **Metaphor** | Gaussian noise; not actual quantum effects |
 | Coupling between Turing and potential field | **Design choice** | Not claimed to model real biology precisely |
+| STDP parameter values (τ=20ms, A±) | **Tuned** | Based on Bi & Poo (1998) but simplified |
+| Sparse attention topk=4 | **Empirical** | Chosen for efficiency vs. expressiveness tradeoff |
+| Hierarchical Krum 70/30 weighting | **Design choice** | Balances Krum robustness with median stability |
 
 ---
 
@@ -477,6 +483,182 @@ pattern formation without numerical instability.
 
 ---
 
-*Document Version: 1.0*
+## Appendix C: STDP Mathematical Model
+
+### C.1 Physical Background
+
+Spike-Timing Dependent Plasticity (STDP) is a biological learning rule discovered
+in hippocampal neurons (Bi & Poo, 1998). Weight changes depend on relative spike
+timing between pre- and postsynaptic neurons.
+
+### C.2 Governing Equations
+
+The STDP weight update rule:
+
+$$
+\Delta w = \begin{cases}
+A_+ e^{-\Delta t / \tau_+} & \text{if } \Delta t > 0 \text{ (LTP)} \\
+-A_- e^{\Delta t / \tau_-} & \text{if } \Delta t < 0 \text{ (LTD)}
+\end{cases}
+$$
+
+where:
+- $\Delta t = t_{\text{post}} - t_{\text{pre}}$ (spike timing difference)
+- $\tau_+, \tau_-$ = time constants
+- $A_+, A_-$ = learning rate magnitudes
+
+### C.3 Parameter Table
+
+| Parameter | Symbol | Value | Units | Valid Range | Physical Meaning |
+|-----------|--------|-------|-------|-------------|------------------|
+| LTP time constant | $\tau_+$ | 20 | ms | 5–100 | NMDA receptor decay |
+| LTD time constant | $\tau_-$ | 20 | ms | 5–100 | Calcium decay time |
+| LTP magnitude | $A_+$ | 0.01 | – | 0.001–0.1 | Potentiation strength |
+| LTD magnitude | $A_-$ | 0.012 | – | 0.001–0.1 | Depression strength |
+| **Asymmetry ratio** | $A_-/A_+$ | 1.2 | – | > 1 | Network stability |
+
+### C.4 Stability Constraint
+
+The asymmetry $A_- > A_+$ is critical for network stability:
+- Prevents runaway LTP (unbounded weight growth)
+- Ensures homeostatic equilibrium
+- Empirically observed ratio: 1.0–1.5 (Bi & Poo, 1998)
+
+### C.5 Numerical Stability
+
+For large $|\Delta t|$, exponential terms can underflow/overflow.
+Implementation uses clamped exponential arguments with `EXP_CLAMP_MAX = 50`:
+
+$$
+\text{exp\_arg} = \text{clamp}(-\Delta t / \tau, -\text{EXP\_CLAMP\_MAX}, +\text{EXP\_CLAMP\_MAX})
+$$
+
+This ensures $e^{-50} \approx 10^{-22}$ (effectively zero) without NaN issues.
+
+---
+
+## Appendix D: Sparse Attention Mathematical Model
+
+### D.1 Standard Attention
+
+Scaled dot-product attention (Vaswani et al., 2017):
+
+$$
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+$$
+
+where:
+- $Q, K, V$ = query, key, value matrices
+- $d_k$ = key dimension
+- $\sqrt{d_k}$ = scaling factor
+
+### D.2 Scaling Factor Justification
+
+For random $Q, K$ with unit variance:
+$$
+\text{Var}(Q \cdot K) = d_k
+$$
+
+Without scaling, large $d_k$ causes softmax saturation. Division by $\sqrt{d_k}$
+normalizes variance to 1, ensuring gradient flow.
+
+### D.3 Sparse Top-K Selection
+
+For each query position $i$, retain only top-$k$ attention scores:
+
+$$
+\text{SparseAttn}_i = \text{softmax}(\text{top}_k(s_i))V
+$$
+
+where $s_i = Q_i K^T / \sqrt{d_k}$ are the attention scores for query $i$.
+
+### D.4 Complexity Analysis
+
+| Operation | Time | Space |
+|-----------|------|-------|
+| Standard attention | $O(n^2 d)$ | $O(n^2)$ |
+| Sparse attention (top-k) | $O(n \cdot k \cdot d)$ | $O(n \cdot k)$ |
+
+Speedup factor: $n/k$ (e.g., 8× for $n=32$, $k=4$)
+
+### D.5 Parameter Constraints
+
+| Parameter | Valid Range | Default | Notes |
+|-----------|-------------|---------|-------|
+| $k$ (topk) | $[1, n]$ | 4 | At least 1 for valid softmax |
+| $d_k$ (embed_dim) | $> 0$ | – | Must be positive |
+
+---
+
+## Appendix E: Byzantine-Robust Aggregation
+
+### E.1 Krum Algorithm (Blanchard et al., 2017)
+
+For $n$ gradients $g_1, \ldots, g_n$ with $f$ Byzantine (adversarial) gradients,
+Krum selects the gradient closest to the majority:
+
+$$
+\text{Krum}(g_1, \ldots, g_n) = g_i \text{ where } i = \arg\min_j s(g_j)
+$$
+
+$$
+s(g_j) = \sum_{k \in N_j} \|g_j - g_k\|^2
+$$
+
+where $N_j$ is the set of $(n - f - 2)$ nearest neighbors of $g_j$.
+
+### E.2 Byzantine Tolerance Guarantee
+
+Krum provides convergence guarantees when:
+
+$$
+f < \frac{n - 2}{2}
+$$
+
+This means for $n$ clients, at most $\lfloor(n-2)/2\rfloor$ can be Byzantine.
+
+| Clients $n$ | Max Byzantine $f$ |
+|-------------|-------------------|
+| 4 | 0 |
+| 5 | 1 |
+| 6 | 1 |
+| 10 | 3 |
+| 100 | 48 |
+
+### E.3 Hierarchical Extension
+
+Two-level aggregation for scalability:
+
+1. **Level 1 (Cluster):** Apply Krum within each of $C$ clusters
+   $$
+   g_c^{(1)} = \text{Krum}(\{g_i : i \in \text{cluster}_c\})
+   $$
+
+2. **Level 2 (Global):** Combine cluster representatives
+   $$
+   g^* = 0.7 \cdot \text{Krum}(g_1^{(1)}, \ldots, g_C^{(1)}) + 0.3 \cdot \text{Median}(g_1^{(1)}, \ldots, g_C^{(1)})
+   $$
+
+The median component provides additional robustness against coordinate-wise attacks.
+
+### E.4 Complexity Analysis
+
+| Configuration | Time Complexity |
+|---------------|-----------------|
+| Single Krum | $O(n^2 \cdot d)$ |
+| Hierarchical ($C$ clusters) | $O(n^2/C \cdot d + C^2 \cdot d)$ |
+| Optimal $C$ | $\approx n^{2/3}$ |
+
+### E.5 Parameter Table
+
+| Parameter | Symbol | Default | Valid Range | Notes |
+|-----------|--------|---------|-------------|-------|
+| Clusters | $C$ | 100 | $[1, n]$ | Number of aggregation groups |
+| Byzantine fraction | $f_{\text{frac}}$ | 0.2 | $[0, 0.5)$ | Must be < 50% |
+| Sample fraction | – | 0.1 | $(0, 1]$ | For large $n > 1000$ |
+
+---
+
+*Document Version: 1.1*
 *Last Updated: 2025*
 *Applies to: MyceliumFractalNet v4.1.0*
