@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 
 from analytics import FeatureConfig, FeatureVector, compute_features
 from mycelium_fractal_net.core import (
@@ -219,7 +220,7 @@ def to_record(
 
 def run_simulation(
     params: Dict[str, Any],
-) -> Tuple[np.ndarray, ReactionDiffusionMetrics] | None:
+) -> Tuple[NDArray[np.floating[Any]], ReactionDiffusionMetrics] | None:
     """
     Run a single simulation with given parameters.
 

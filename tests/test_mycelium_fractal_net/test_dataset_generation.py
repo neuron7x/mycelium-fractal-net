@@ -23,12 +23,20 @@ from mycelium_fractal_net.experiments.generate_dataset import (
     to_record,
 )
 
+# Check if pandas is available
+try:
+    import pandas as pd  # noqa: F401
+
+    HAS_PANDAS = True
+except ImportError:
+    HAS_PANDAS = False
+
 
 class TestGenerateDatasetCreatesFileAndSchema:
     """Test that generate_dataset creates valid files with correct schema."""
 
-    def test_creates_parquet_file(self) -> None:
-        """Dataset generation should create a parquet file at specified path."""
+    def test_creates_output_file(self) -> None:
+        """Dataset generation should create a file at specified path (parquet or npz)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_dataset.parquet"
 
@@ -46,11 +54,13 @@ class TestGenerateDatasetCreatesFileAndSchema:
                 output_path=output_path,
             )
 
-            # Verify file was created
-            assert output_path.exists(), f"Dataset file not created at {output_path}"
+            # Verify file was created (either parquet or npz fallback)
+            actual_path = Path(stats["output_path"]) if stats["output_path"] else None
+            assert actual_path is not None, "No output path returned"
+            assert actual_path.exists(), f"Dataset file not created at {actual_path}"
             assert stats["successful"] > 0, "No simulations succeeded"
-            assert stats["output_path"] == str(output_path)
 
+    @pytest.mark.skipif(not HAS_PANDAS, reason="pandas not installed")
     def test_schema_has_expected_columns(self) -> None:
         """Generated dataset should have all columns from MFN_DATASET_SPEC.md."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -118,6 +128,7 @@ class TestGenerateDatasetCreatesFileAndSchema:
             for col in all_expected:
                 assert col in df.columns, f"Missing expected column: {col}"
 
+    @pytest.mark.skipif(not HAS_PANDAS, reason="pandas not installed")
     def test_no_nan_or_inf_in_feature_columns(self) -> None:
         """Feature columns should not contain NaN or Inf values."""
         with tempfile.TemporaryDirectory() as tmpdir:
