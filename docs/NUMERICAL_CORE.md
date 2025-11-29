@@ -5,7 +5,7 @@ This document describes the numerically stable core engines added in Phase 2.
 ## Overview
 
 The `core/` module provides three specialized engines that implement the mathematical
-models described in [`MATH_MODEL.md`](./MATH_MODEL.md) with:
+models described in [`MFN_MATH_MODEL.md`](./MFN_MATH_MODEL.md) with:
 
 - **Numerical stability guarantees** (CFL conditions, clamping, NaN/Inf detection)
 - **Reproducibility** (fixed random seeds)
@@ -29,7 +29,7 @@ src/mycelium_fractal_net/core/
 
 Implements Nernst equation and ODE integration for membrane potentials.
 
-**Reference:** MATH_MODEL.md Section 1
+**Reference:** MFN_MATH_MODEL.md Section 1
 
 ### Configuration
 
@@ -98,7 +98,7 @@ print(f"Clamping events: {metrics.clamping_events}")
 
 Implements Turing morphogenesis with activator-inhibitor dynamics.
 
-**Reference:** MATH_MODEL.md Section 2
+**Reference:** MFN_MATH_MODEL.md Section 2
 
 ### Configuration
 
@@ -176,7 +176,7 @@ except StabilityError as e:
 
 Implements IFS fractals and box-counting dimension estimation.
 
-**Reference:** MATH_MODEL.md Section 3
+**Reference:** MFN_MATH_MODEL.md Section 3
 
 ### Configuration
 
@@ -370,6 +370,6 @@ pytest tests/core/ -k "performance"
 
 ## References
 
-- [MATH_MODEL.md](./MATH_MODEL.md) - Mathematical formulations
+- [MFN_MATH_MODEL.md](./MFN_MATH_MODEL.md) - Mathematical formulations
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture
 - [VALIDATION_NOTES.md](./VALIDATION_NOTES.md) - Expected metric ranges

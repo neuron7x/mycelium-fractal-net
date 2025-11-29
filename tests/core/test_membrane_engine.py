@@ -2,7 +2,7 @@
 Tests for MembraneEngine — Nernst potential and ODE integration.
 
 Validates:
-- Nernst equation correctness (MATH_MODEL.md Section 1)
+- Nernst equation correctness (MFN_MATH_MODEL.md Section 1)
 - Numerical stability (no NaN/Inf)
 - Ion clamping behavior
 - ODE integration schemes (Euler, RK4)
@@ -61,7 +61,7 @@ class TestNernstPotential:
     def test_potassium_standard(self) -> None:
         """Test K+ potential at standard conditions: E_K ≈ -89 mV.
         
-        Reference: MATH_MODEL.md Section 1.4
+        Reference: MFN_MATH_MODEL.md Section 1.4
         [K]_in = 140 mM, [K]_out = 5 mM → E_K ≈ -89 mV
         """
         engine = MembraneEngine()
@@ -76,7 +76,7 @@ class TestNernstPotential:
     def test_sodium_standard(self) -> None:
         """Test Na+ potential at standard conditions: E_Na ≈ +65 mV.
         
-        Reference: MATH_MODEL.md Section 1.4
+        Reference: MFN_MATH_MODEL.md Section 1.4
         [Na]_in = 12 mM, [Na]_out = 145 mM → E_Na ≈ +65 mV
         """
         engine = MembraneEngine()
@@ -91,7 +91,7 @@ class TestNernstPotential:
     def test_calcium_standard(self) -> None:
         """Test Ca2+ potential at standard conditions: E_Ca ≈ +129 mV.
         
-        Reference: MATH_MODEL.md Section 1.4
+        Reference: MFN_MATH_MODEL.md Section 1.4
         [Ca]_in = 0.0001 mM, [Ca]_out = 2 mM, z=2 → E_Ca ≈ +129 mV
         """
         engine = MembraneEngine()
@@ -106,7 +106,7 @@ class TestNernstPotential:
     def test_chloride_standard(self) -> None:
         """Test Cl- potential at standard conditions.
         
-        Reference: MATH_MODEL.md Section 1.4
+        Reference: MFN_MATH_MODEL.md Section 1.4
         [Cl]_in = 4 mM, [Cl]_out = 120 mM, z=-1 → E_Cl ≈ -89 mV
         """
         engine = MembraneEngine()

@@ -257,7 +257,7 @@ class FeatureConfig:
 
 ## 6. Expected Ranges (Validation)
 
-Based on MATH_MODEL.md and empirical validation:
+Based on MFN_MATH_MODEL.md and empirical validation:
 
 | Feature | Expected Range | Notes |
 |---------|----------------|-------|

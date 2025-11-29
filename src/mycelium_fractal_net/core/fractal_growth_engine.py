@@ -6,7 +6,7 @@ Implements stable numerical methods for fractal generation and analysis:
 - Box-counting dimension estimation
 - Lyapunov exponent computation for stability analysis
 
-Reference: MATH_MODEL.md Section 3 (Fractal Growth and Dimension Analysis)
+Reference: MFN_MATH_MODEL.md Section 3 (Fractal Growth and Dimension Analysis)
 
 Equations Implemented:
     IFS transformation: [x', y'] = [[a,b],[c,d]] * [x,y] + [e,f]
@@ -17,7 +17,7 @@ Equations Implemented:
     
     Box-counting dimension: D = lim(ε→0) ln(N(ε)) / ln(1/ε)
 
-Parameters (from MATH_MODEL.md Section 3.5):
+Parameters (from MFN_MATH_MODEL.md Section 3.5):
     Scale factor s ∈ [0.2, 0.5]    - Contraction strength
     Rotation θ ∈ [0, 2π]          - Transformation angle
     Translation e,f ∈ [-1, 1]     - Pattern offset
@@ -34,7 +34,7 @@ from numpy.typing import NDArray
 
 from .exceptions import NumericalInstabilityError, StabilityError, ValueOutOfRangeError
 
-# === Default Parameters (from MATH_MODEL.md Section 3.5) ===
+# === Default Parameters (from MFN_MATH_MODEL.md Section 3.5) ===
 DEFAULT_NUM_POINTS: int = 10000
 DEFAULT_NUM_TRANSFORMS: int = 4
 DEFAULT_SCALE_MIN: float = 0.2
@@ -45,7 +45,7 @@ DEFAULT_TRANSLATION_RANGE: float = 1.0
 DEFAULT_MIN_BOX_SIZE: int = 2
 DEFAULT_NUM_SCALES: int = 5
 
-# === Expected ranges (from MATH_MODEL.md) ===
+# === Expected ranges (from MFN_MATH_MODEL.md) ===
 # Lyapunov should be negative for stable (contractive) IFS
 LYAPUNOV_STABLE_MAX: float = 0.0
 EXPECTED_LYAPUNOV_MEAN: float = -2.1  # Approximate expected value
@@ -62,7 +62,7 @@ class FractalConfig:
     """
     Configuration for fractal growth engine.
 
-    All parameters have defaults from MATH_MODEL.md.
+    All parameters have defaults from MFN_MATH_MODEL.md.
 
     Attributes
     ----------
@@ -206,7 +206,7 @@ class FractalGrowthEngine:
     Implements IFS fractals with contractive mappings and
     box-counting dimension estimation.
 
-    Reference: MATH_MODEL.md Section 3
+    Reference: MFN_MATH_MODEL.md Section 3
 
     Example
     -------
@@ -264,7 +264,7 @@ class FractalGrowthEngine:
         Uses affine transformations with random contractive mappings.
         Computes Lyapunov exponent to verify stability.
 
-        Reference: MATH_MODEL.md Section 3.2
+        Reference: MFN_MATH_MODEL.md Section 3.2
 
         Parameters
         ----------
@@ -376,7 +376,7 @@ class FractalGrowthEngine:
         """
         Estimate fractal dimension using box-counting method.
 
-        Reference: MATH_MODEL.md Section 3.4
+        Reference: MFN_MATH_MODEL.md Section 3.4
 
         D = lim(ε→0) ln(N(ε)) / ln(1/ε)
 
@@ -486,7 +486,7 @@ class FractalGrowthEngine:
 
         Measures exponential divergence/convergence of trajectories.
 
-        Reference: MATH_MODEL.md Section 3.3
+        Reference: MFN_MATH_MODEL.md Section 3.3
 
         Parameters
         ----------
@@ -526,7 +526,7 @@ class FractalGrowthEngine:
         """
         Validate that stored transforms satisfy contraction requirement.
 
-        Reference: MATH_MODEL.md Section 3.2
+        Reference: MFN_MATH_MODEL.md Section 3.2
         Contraction requirement: |ad - bc| < 1
 
         Returns
@@ -552,7 +552,7 @@ class FractalGrowthEngine:
         """
         Validate that dimension is within expected range.
 
-        Reference: MATH_MODEL.md Section 3.6
+        Reference: MFN_MATH_MODEL.md Section 3.6
 
         Parameters
         ----------

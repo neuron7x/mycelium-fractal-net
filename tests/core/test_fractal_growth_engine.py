@@ -2,7 +2,7 @@
 Tests for FractalGrowthEngine — IFS generation and box-counting.
 
 Validates:
-- IFS contraction requirement (MATH_MODEL.md Section 3.2)
+- IFS contraction requirement (MFN_MATH_MODEL.md Section 3.2)
 - Lyapunov exponent negativity for stability
 - Fractal dimension bounds [0, 2]
 - No NaN/Inf in generated points
@@ -88,7 +88,7 @@ class TestIFSGeneration:
     def test_lyapunov_negative(self) -> None:
         """Lyapunov exponent should be negative (contractive).
         
-        Reference: MATH_MODEL.md Section 3.3 - λ < 0 indicates stable dynamics
+        Reference: MFN_MATH_MODEL.md Section 3.3 - λ < 0 indicates stable dynamics
         """
         config = FractalConfig(num_points=10000, random_seed=42)
         engine = FractalGrowthEngine(config)
@@ -101,7 +101,7 @@ class TestIFSGeneration:
     def test_lyapunov_range(self) -> None:
         """Lyapunov should be in expected range ~-2.1.
         
-        Reference: MATH_MODEL.md Section 3.3 - Expected λ ≈ -2.1
+        Reference: MFN_MATH_MODEL.md Section 3.3 - Expected λ ≈ -2.1
         """
         lyap_values = []
         for seed in range(10):

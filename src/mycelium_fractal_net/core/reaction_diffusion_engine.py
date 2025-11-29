@@ -6,7 +6,7 @@ Implements stable numerical schemes for Turing pattern formation:
 - Discrete Laplacian with periodic boundaries
 - CFL stability condition enforcement
 
-Reference: MATH_MODEL.md Section 2 (Reaction-Diffusion Processes)
+Reference: MFN_MATH_MODEL.md Section 2 (Reaction-Diffusion Processes)
 
 Equations Implemented:
     ∂a/∂t = D_a ∇²a + r_a * a(1-a) - i     # Activator
@@ -14,14 +14,14 @@ Equations Implemented:
 
     ∇²u ≈ u[i+1,j] + u[i-1,j] + u[i,j+1] + u[i,j-1] - 4*u[i,j]
 
-Parameters (from MATH_MODEL.md Section 2.3):
+Parameters (from MFN_MATH_MODEL.md Section 2.3):
     D_a = 0.1         - Activator diffusion (grid²/step)
     D_i = 0.05        - Inhibitor diffusion (grid²/step)
     r_a = 0.01        - Activator reaction rate (1/step)
     r_i = 0.02        - Inhibitor reaction rate (1/step)
     θ = 0.75          - Turing activation threshold
 
-Stability Constraint (MATH_MODEL.md Section 2.5):
+Stability Constraint (MFN_MATH_MODEL.md Section 2.5):
     dt * D * 4/dx² ≤ 1
     With dx=1, dt=1: D_max = 0.25
 """
@@ -37,7 +37,7 @@ from numpy.typing import NDArray
 
 from .exceptions import NumericalInstabilityError, StabilityError, ValueOutOfRangeError
 
-# === Default Parameters (from MATH_MODEL.md Section 2.3) ===
+# === Default Parameters (from MFN_MATH_MODEL.md Section 2.3) ===
 DEFAULT_D_ACTIVATOR: float = 0.1
 DEFAULT_D_INHIBITOR: float = 0.05
 DEFAULT_R_ACTIVATOR: float = 0.01
@@ -50,7 +50,7 @@ DEFAULT_QUANTUM_JITTER_VAR: float = 0.0005
 # CFL condition: D * dt * 4/dx² ≤ 1 → D ≤ 0.25 for dt=dx=1
 MAX_STABLE_DIFFUSION: float = 0.25
 
-# === Field Bounds (MATH_MODEL.md Section 4.3) ===
+# === Field Bounds (MFN_MATH_MODEL.md Section 4.3) ===
 FIELD_V_MIN: float = -0.095  # -95 mV
 FIELD_V_MAX: float = 0.040  # +40 mV
 INITIAL_POTENTIAL_MEAN: float = -0.070  # -70 mV (resting potential)
@@ -70,7 +70,7 @@ class ReactionDiffusionConfig:
     """
     Configuration for reaction-diffusion engine.
 
-    All parameters have physically meaningful defaults from MATH_MODEL.md.
+    All parameters have physically meaningful defaults from MFN_MATH_MODEL.md.
 
     Attributes
     ----------
@@ -244,7 +244,7 @@ class ReactionDiffusionEngine:
     on a 2D lattice. Uses explicit Euler integration with CFL-stable
     parameters.
 
-    Reference: MATH_MODEL.md Section 2
+    Reference: MFN_MATH_MODEL.md Section 2
 
     Example
     -------
@@ -308,7 +308,7 @@ class ReactionDiffusionEngine:
         """
         Initialize potential field with Gaussian distribution.
 
-        Reference: MATH_MODEL.md Section 2.6
+        Reference: MFN_MATH_MODEL.md Section 2.6
         - Initial condition: V ~ N(-70 mV, 5 mV)
 
         Parameters
@@ -446,7 +446,7 @@ class ReactionDiffusionEngine:
         """
         Perform Turing reaction-diffusion update.
 
-        Reference: MATH_MODEL.md Section 2.2
+        Reference: MFN_MATH_MODEL.md Section 2.2
 
         ∂a/∂t = D_a ∇²a + r_a * a(1-a) - i
         ∂i/∂t = D_i ∇²i + r_i * (a - i)
@@ -487,7 +487,7 @@ class ReactionDiffusionEngine:
         """
         Compute discrete Laplacian using 5-point stencil.
 
-        Reference: MATH_MODEL.md Section 2.4
+        Reference: MFN_MATH_MODEL.md Section 2.4
 
         ∇²u ≈ u[i+1,j] + u[i-1,j] + u[i,j+1] + u[i,j-1] - 4*u[i,j]
 
@@ -586,7 +586,7 @@ class ReactionDiffusionEngine:
         """
         Validate CFL stability condition for current parameters.
 
-        Reference: MATH_MODEL.md Section 2.5
+        Reference: MFN_MATH_MODEL.md Section 2.5
         dt * D * 4/dx² ≤ 1, with dt=dx=1 → D ≤ 0.25
 
         Returns

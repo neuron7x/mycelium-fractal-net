@@ -2,8 +2,8 @@
 Tests for ReactionDiffusionEngine — Turing morphogenesis.
 
 Validates:
-- CFL stability condition enforcement (MATH_MODEL.md Section 2.5)
-- Field bounds [-95, 40] mV (MATH_MODEL.md Section 4.3)
+- CFL stability condition enforcement (MFN_MATH_MODEL.md Section 2.5)
+- Field bounds [-95, 40] mV (MFN_MATH_MODEL.md Section 4.3)
 - No NaN/Inf after long simulations
 - Turing pattern formation
 - Determinism with fixed seeds
@@ -94,7 +94,7 @@ class TestReactionDiffusionSimulation:
     def test_field_bounds_enforced(self) -> None:
         """Field should stay within [-95, 40] mV bounds.
         
-        Reference: MATH_MODEL.md Section 4.3
+        Reference: MFN_MATH_MODEL.md Section 4.3
         """
         config = ReactionDiffusionConfig(
             grid_size=32,
@@ -270,7 +270,7 @@ class TestStabilitySmoke:
     def test_smoke_1000_steps(self) -> None:
         """Run 1000 steps without NaN/Inf.
         
-        Reference: MATH_MODEL.md Section 2.9 - Stability: No NaN/Inf after 1000+ steps
+        Reference: MFN_MATH_MODEL.md Section 2.9 - Stability: No NaN/Inf after 1000+ steps
         """
         config = ReactionDiffusionConfig(
             grid_size=32,

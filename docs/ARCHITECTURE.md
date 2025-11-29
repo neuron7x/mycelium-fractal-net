@@ -13,7 +13,7 @@ MyceliumFractalNet v4.1 is a bio-inspired adaptive neural network that combines:
 
 > **For detailed mathematical formalization**, including explicit equations, parameter
 > tables with units and valid ranges, and discretization details, see
-> **[MATH_MODEL.md](MATH_MODEL.md)**.
+> **[MFN_MATH_MODEL.md](MFN_MATH_MODEL.md)**.
 
 ## 1. Nernst Equation
 
