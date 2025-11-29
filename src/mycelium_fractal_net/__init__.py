@@ -30,6 +30,8 @@ from .core import (
     SimulationResult,
     StabilityError,
     ValueOutOfRangeError,
+    run_mycelium_simulation,
+    run_mycelium_simulation_with_history,
 )
 from .model import (
     BODY_TEMPERATURE_K,
@@ -80,6 +82,9 @@ __all__ = [
     "compute_lyapunov_exponent",
     "run_validation",
     "run_validation_cli",
+    # Simulation API (new)
+    "run_mycelium_simulation",
+    "run_mycelium_simulation_with_history",
     # Classes (legacy)
     "STDPPlasticity",
     "SparseAttention",
