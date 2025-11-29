@@ -45,6 +45,27 @@ DEFAULT_TRANSLATION_RANGE: float = 1.0
 DEFAULT_MIN_BOX_SIZE: int = 2
 DEFAULT_NUM_SCALES: int = 5
 
+# === Biophysical Parameter Bounds (from MFN_MATH_MODEL.md Section 3.5) ===
+# IFS point count bounds
+NUM_POINTS_MIN: int = 1000     # Minimum for meaningful fractal structure
+NUM_POINTS_MAX: int = 100000   # Upper limit for computational feasibility
+
+# Number of transforms bounds
+NUM_TRANSFORMS_MIN: int = 2    # Minimum for interesting patterns
+NUM_TRANSFORMS_MAX: int = 8    # Upper limit for complexity
+
+# Scale factor bounds (contraction requirement)
+SCALE_MIN_BOUND: float = 0.0   # Must be > 0 (exclusive)
+SCALE_MAX_BOUND: float = 1.0   # Must be < 1 for contraction (exclusive)
+
+# Translation bounds
+TRANSLATION_RANGE_MAX: float = 2.0  # e, f ∈ [-2, 2] per MFN_MATH_MODEL.md
+
+# Box-counting bounds
+MIN_BOX_SIZE_BOUND: int = 1    # Minimum sensible box size
+NUM_SCALES_MIN: int = 3        # Minimum for reliable regression
+NUM_SCALES_MAX: int = 10       # Upper limit for log-regression points
+
 # === Expected ranges (from MFN_MATH_MODEL.md) ===
 # Lyapunov should be negative for stable (contractive) IFS
 LYAPUNOV_STABLE_MAX: float = 0.0
@@ -53,8 +74,8 @@ EXPECTED_LYAPUNOV_MEAN: float = -2.1  # Approximate expected value
 # Fractal dimension bounds
 FRACTAL_DIM_MIN: float = 0.0
 FRACTAL_DIM_MAX: float = 2.0
-BIOLOGICAL_DIM_MIN: float = 1.4  # Mycelium networks
-BIOLOGICAL_DIM_MAX: float = 1.9
+BIOLOGICAL_DIM_MIN: float = 1.4  # Mycelium networks (empirical)
+BIOLOGICAL_DIM_MAX: float = 1.9  # Mycelium networks (empirical)
 
 
 @dataclass
@@ -106,34 +127,46 @@ class FractalConfig:
     random_seed: int | None = None
 
     def __post_init__(self) -> None:
-        """Validate configuration parameters."""
-        # Point count validation
-        if self.num_points < 100:
+        """Validate configuration parameters against biophysical constraints.
+
+        Invariants enforced:
+        - num_points: [1000, 100000] for meaningful fractal structure
+        - num_transforms: [2, 8] for interesting patterns
+        - scale factors: (0, 1) for contraction (IFS stability)
+        - translation_range: <= 2.0
+        - num_scales: [3, 10] for reliable dimension estimation
+        """
+        # Point count validation with biophysical bounds
+        if not (NUM_POINTS_MIN <= self.num_points <= NUM_POINTS_MAX):
             raise ValueOutOfRangeError(
-                "Number of points must be at least 100",
+                f"num_points must be in [{NUM_POINTS_MIN}, {NUM_POINTS_MAX}] "
+                "for meaningful fractal structure",
                 value=float(self.num_points),
-                min_bound=100.0,
+                min_bound=float(NUM_POINTS_MIN),
+                max_bound=float(NUM_POINTS_MAX),
                 parameter_name="num_points",
             )
 
-        # Transform count validation
-        if self.num_transforms < 1:
+        # Transform count validation with biophysical bounds
+        if not (NUM_TRANSFORMS_MIN <= self.num_transforms <= NUM_TRANSFORMS_MAX):
             raise ValueOutOfRangeError(
-                "Number of transforms must be at least 1",
+                f"num_transforms must be in [{NUM_TRANSFORMS_MIN}, {NUM_TRANSFORMS_MAX}] "
+                "for interesting patterns",
                 value=float(self.num_transforms),
-                min_bound=1.0,
+                min_bound=float(NUM_TRANSFORMS_MIN),
+                max_bound=float(NUM_TRANSFORMS_MAX),
                 parameter_name="num_transforms",
             )
 
         # Scale factor validation (contraction requirement)
-        if self.scale_min <= 0:
+        if self.scale_min <= SCALE_MIN_BOUND:
             raise ValueOutOfRangeError(
-                "Minimum scale must be positive",
+                "Minimum scale must be positive (> 0)",
                 value=self.scale_min,
-                min_bound=0.0,
+                min_bound=SCALE_MIN_BOUND,
                 parameter_name="scale_min",
             )
-        if self.scale_max >= 1.0:
+        if self.scale_max >= SCALE_MAX_BOUND:
             raise StabilityError(
                 "Maximum scale must be < 1 for contractive IFS. "
                 f"scale_max={self.scale_max} would cause divergence."
@@ -144,19 +177,37 @@ class FractalConfig:
                 parameter_name="scale_min",
             )
 
-        # Box-counting validation
-        if self.min_box_size < 1:
+        # Translation range validation
+        if self.translation_range < 0:
             raise ValueOutOfRangeError(
-                "Minimum box size must be at least 1",
+                "translation_range must be non-negative",
+                value=self.translation_range,
+                min_bound=0.0,
+                parameter_name="translation_range",
+            )
+        if self.translation_range > TRANSLATION_RANGE_MAX:
+            raise ValueOutOfRangeError(
+                f"translation_range must be <= {TRANSLATION_RANGE_MAX}",
+                value=self.translation_range,
+                max_bound=TRANSLATION_RANGE_MAX,
+                parameter_name="translation_range",
+            )
+
+        # Box-counting validation with biophysical bounds
+        if self.min_box_size < MIN_BOX_SIZE_BOUND:
+            raise ValueOutOfRangeError(
+                f"min_box_size must be >= {MIN_BOX_SIZE_BOUND}",
                 value=float(self.min_box_size),
-                min_bound=1.0,
+                min_bound=float(MIN_BOX_SIZE_BOUND),
                 parameter_name="min_box_size",
             )
-        if self.num_scales < 2:
+        if not (NUM_SCALES_MIN <= self.num_scales <= NUM_SCALES_MAX):
             raise ValueOutOfRangeError(
-                "Number of scales must be at least 2 for regression",
+                f"num_scales must be in [{NUM_SCALES_MIN}, {NUM_SCALES_MAX}] "
+                "for reliable dimension estimation",
                 value=float(self.num_scales),
-                min_bound=2.0,
+                min_bound=float(NUM_SCALES_MIN),
+                max_bound=float(NUM_SCALES_MAX),
                 parameter_name="num_scales",
             )
 

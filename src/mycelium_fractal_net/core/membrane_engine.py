@@ -39,16 +39,36 @@ from .exceptions import NumericalInstabilityError, ValueOutOfRangeError
 
 # === Physical Constants (SI) ===
 # Reference: MFN_MATH_MODEL.md Section 1.3
-R_GAS_CONSTANT: float = 8.314  # J/(mol·K)
-FARADAY_CONSTANT: float = 96485.33212  # C/mol
-BODY_TEMPERATURE_K: float = 310.0  # K (~37°C)
+# These are well-established physical constants (CODATA 2018)
+R_GAS_CONSTANT: float = 8.314  # J/(mol·K) - Universal gas constant
+FARADAY_CONSTANT: float = 96485.33212  # C/mol - Charge per mole electrons
+BODY_TEMPERATURE_K: float = 310.0  # K (~37°C) - Mammalian body temperature
+
+# === Biophysical Parameter Bounds ===
+# Reference: MFN_MATH_MODEL.md Section 1.3
+# Temperature bounds cover hypothermic to hyperthermic conditions
+TEMPERATURE_MIN_K: float = 273.0  # 0°C - hypothermic limit
+TEMPERATURE_MAX_K: float = 320.0  # 47°C - hyperthermic limit
+
+# Ion valence: typical biological ions are ±1 or ±2
+ION_VALENCE_ALLOWED: tuple[int, ...] = (-2, -1, 1, 2)
+
+# Ion concentration bounds (mol/L)
+# Min: 1e-6 M prevents log(0); Max: 1.0 M is extreme physiological limit
+ION_CLAMP_MIN: float = 1e-6  # mol/L - prevents log(0)
+ION_CONCENTRATION_MAX: float = 1.0  # mol/L - physiological upper limit
 
 # === Numerical Stability Constants ===
-ION_CLAMP_MIN: float = 1e-6  # mol/L - prevents log(0)
-POTENTIAL_MIN_V: float = -0.150  # -150 mV
-POTENTIAL_MAX_V: float = 0.150  # +150 mV
-PHYSIOLOGICAL_V_MIN: float = -0.095  # -95 mV
-PHYSIOLOGICAL_V_MAX: float = 0.040  # +40 mV
+# Reference: MFN_MATH_MODEL.md Section 1.6
+# Membrane potential bounds based on electrochemistry limits
+POTENTIAL_MIN_V: float = -0.150  # -150 mV - physical lower limit
+POTENTIAL_MAX_V: float = 0.150  # +150 mV - physical upper limit
+PHYSIOLOGICAL_V_MIN: float = -0.095  # -95 mV - neuronal hyperpolarization limit
+PHYSIOLOGICAL_V_MAX: float = 0.040  # +40 mV - action potential peak
+
+# Time step bounds for numerical integration
+DT_MIN: float = 1e-7  # 0.1 μs - minimum sensible time step
+DT_MAX: float = 1e-2  # 10 ms - maximum for stability
 
 
 class IntegrationScheme(Enum):
@@ -96,32 +116,66 @@ class MembraneConfig:
     random_seed: int | None = None
 
     def __post_init__(self) -> None:
-        """Validate configuration parameters."""
-        if self.temperature_k <= 0:
+        """Validate configuration parameters against biophysical constraints.
+
+        Invariants enforced:
+        - Temperature: [273, 320] K (hypothermic to hyperthermic)
+        - Ion clamp: > 0 (prevents log(0))
+        - Time step: (0, 10 ms] for numerical stability
+        - Potential bounds: min < max and within physical limits
+        """
+        # Temperature validation with biophysical bounds
+        if not (TEMPERATURE_MIN_K <= self.temperature_k <= TEMPERATURE_MAX_K):
             raise ValueOutOfRangeError(
-                "Temperature must be positive",
+                f"Temperature must be in [{TEMPERATURE_MIN_K}, {TEMPERATURE_MAX_K}] K "
+                "(hypothermic to hyperthermic range)",
                 value=self.temperature_k,
-                min_bound=0.0,
+                min_bound=TEMPERATURE_MIN_K,
+                max_bound=TEMPERATURE_MAX_K,
                 parameter_name="temperature_k",
             )
+
+        # Ion clamp validation
         if self.ion_clamp_min <= 0:
             raise ValueOutOfRangeError(
-                "Ion clamp minimum must be positive",
+                "Ion clamp minimum must be positive to prevent log(0)",
                 value=self.ion_clamp_min,
                 min_bound=0.0,
                 parameter_name="ion_clamp_min",
             )
-        if self.dt <= 0:
+
+        # Time step validation with bounds
+        if not (DT_MIN <= self.dt <= DT_MAX):
             raise ValueOutOfRangeError(
-                "Time step must be positive",
+                f"Time step must be in [{DT_MIN:.0e}, {DT_MAX:.0e}] seconds "
+                "for numerical stability",
                 value=self.dt,
-                min_bound=0.0,
+                min_bound=DT_MIN,
+                max_bound=DT_MAX,
                 parameter_name="dt",
             )
+
+        # Potential range validation
         if self.potential_min_v >= self.potential_max_v:
             raise ValueOutOfRangeError(
                 "potential_min_v must be less than potential_max_v",
                 parameter_name="potential_min_v",
+            )
+
+        # Ensure potential bounds are within physical limits
+        if self.potential_min_v < POTENTIAL_MIN_V:
+            raise ValueOutOfRangeError(
+                f"potential_min_v cannot be below {POTENTIAL_MIN_V * 1000:.0f} mV",
+                value=self.potential_min_v,
+                min_bound=POTENTIAL_MIN_V,
+                parameter_name="potential_min_v",
+            )
+        if self.potential_max_v > POTENTIAL_MAX_V:
+            raise ValueOutOfRangeError(
+                f"potential_max_v cannot exceed {POTENTIAL_MAX_V * 1000:.0f} mV",
+                value=self.potential_max_v,
+                max_bound=POTENTIAL_MAX_V,
+                parameter_name="potential_max_v",
             )
 
 
@@ -245,6 +299,15 @@ class MembraneEngine:
                 parameter_name="z_valence",
             )
 
+        # Validate ion valence is biophysically plausible
+        if z_valence not in ION_VALENCE_ALLOWED:
+            raise ValueOutOfRangeError(
+                f"Ion valence must be one of {ION_VALENCE_ALLOWED} "
+                "(biological ions: K⁺=+1, Na⁺=+1, Cl⁻=-1, Ca²⁺=+2)",
+                value=float(z_valence),
+                parameter_name="z_valence",
+            )
+
         temp = temperature_k if temperature_k is not None else self.config.temperature_k
 
         # Clamp concentrations to prevent log(0) or log(negative)
@@ -309,6 +372,15 @@ class MembraneEngine:
             raise ValueOutOfRangeError(
                 "Ion valence cannot be zero",
                 value=0,
+                parameter_name="z_valence",
+            )
+
+        # Validate ion valence is biophysically plausible
+        if z_valence not in ION_VALENCE_ALLOWED:
+            raise ValueOutOfRangeError(
+                f"Ion valence must be one of {ION_VALENCE_ALLOWED} "
+                "(biological ions: K⁺=+1, Na⁺=+1, Cl⁻=-1, Ca²⁺=+2)",
+                value=float(z_valence),
                 parameter_name="z_valence",
             )
 

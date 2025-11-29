@@ -7,6 +7,7 @@ Validates:
 - No NaN/Inf after long simulations
 - Turing pattern formation
 - Determinism with fixed seeds
+- Biophysical parameter calibration and invariants
 """
 
 import time
@@ -21,10 +22,25 @@ from mycelium_fractal_net.core import (
     ValueOutOfRangeError,
 )
 from mycelium_fractal_net.core.reaction_diffusion_engine import (
+    ALPHA_MIN,
+    D_ACTIVATOR_MIN,
+    D_INHIBITOR_MIN,
     DEFAULT_D_ACTIVATOR,
     DEFAULT_D_INHIBITOR,
     DEFAULT_FIELD_ALPHA,
     DEFAULT_TURING_THRESHOLD,
+    FIELD_V_MAX,
+    FIELD_V_MIN,
+    GRID_SIZE_MAX,
+    GRID_SIZE_MIN,
+    JITTER_VAR_MAX,
+    MAX_STABLE_DIFFUSION,
+    R_ACTIVATOR_MAX,
+    R_ACTIVATOR_MIN,
+    R_INHIBITOR_MAX,
+    R_INHIBITOR_MIN,
+    TURING_THRESHOLD_MAX,
+    TURING_THRESHOLD_MIN,
     BoundaryCondition,
 )
 
@@ -381,3 +397,199 @@ class TestPerformance:
         
         # Should complete in < 10 seconds
         assert elapsed < 10.0, f"Took {elapsed:.2f}s, expected < 10s"
+
+
+class TestBiophysicalCalibration:
+    """Test biophysical parameter calibration and invariants.
+    
+    Reference: MFN_MATH_MODEL.md Section 2 - Reaction-Diffusion Processes
+    
+    These tests verify that:
+    1. Parameters outside biophysical ranges trigger hard failures
+    2. Normal parameters produce stable dynamics without NaN/Inf
+    """
+
+    def test_diffusion_below_minimum_raises(self) -> None:
+        """Diffusion coefficients below minimum should raise.
+        
+        Biophysical constraint: D_a >= 0.01 and D_i >= 0.01 are minimum
+        for observable diffusion effects on the grid scale.
+        """
+        with pytest.raises(ValueOutOfRangeError, match="d_activator"):
+            ReactionDiffusionConfig(d_activator=D_ACTIVATOR_MIN / 2)
+
+        with pytest.raises(ValueOutOfRangeError, match="d_inhibitor"):
+            ReactionDiffusionConfig(d_inhibitor=D_INHIBITOR_MIN / 2)
+
+        with pytest.raises(ValueOutOfRangeError, match="alpha"):
+            ReactionDiffusionConfig(alpha=ALPHA_MIN / 2)
+
+    def test_reaction_rate_outside_bounds_raises(self) -> None:
+        """Reaction rates outside [0.001, 0.1] should raise.
+        
+        Biophysical constraint: Reaction rates outside this range
+        lead to either imperceptible dynamics or numerical instability.
+        """
+        # Below minimum
+        with pytest.raises(ValueOutOfRangeError, match="r_activator"):
+            ReactionDiffusionConfig(r_activator=R_ACTIVATOR_MIN / 2)
+
+        with pytest.raises(ValueOutOfRangeError, match="r_inhibitor"):
+            ReactionDiffusionConfig(r_inhibitor=R_INHIBITOR_MIN / 2)
+
+        # Above maximum
+        with pytest.raises(ValueOutOfRangeError, match="r_activator"):
+            ReactionDiffusionConfig(r_activator=R_ACTIVATOR_MAX * 2)
+
+        with pytest.raises(ValueOutOfRangeError, match="r_inhibitor"):
+            ReactionDiffusionConfig(r_inhibitor=R_INHIBITOR_MAX * 2)
+
+    def test_turing_threshold_outside_bounds_raises(self) -> None:
+        """Turing threshold outside [0.5, 0.95] should raise.
+        
+        Biophysical constraint: Threshold < 0.5 triggers patterns too easily;
+        threshold > 0.95 makes pattern formation nearly impossible.
+        """
+        with pytest.raises(ValueOutOfRangeError, match="turing_threshold"):
+            ReactionDiffusionConfig(turing_threshold=TURING_THRESHOLD_MIN - 0.1)
+
+        with pytest.raises(ValueOutOfRangeError, match="turing_threshold"):
+            ReactionDiffusionConfig(turing_threshold=TURING_THRESHOLD_MAX + 0.1)
+
+    def test_jitter_variance_above_maximum_raises(self) -> None:
+        """Jitter variance above maximum should raise.
+        
+        Biophysical constraint: Excessive jitter destabilizes dynamics.
+        """
+        with pytest.raises(ValueOutOfRangeError, match="jitter_var"):
+            ReactionDiffusionConfig(jitter_var=JITTER_VAR_MAX * 2)
+
+    def test_grid_size_outside_bounds_raises(self) -> None:
+        """Grid size outside [4, 1024] should raise.
+        
+        Biophysical constraint: Grid < 4 cannot form meaningful patterns;
+        grid > 1024 is computationally prohibitive.
+        """
+        with pytest.raises(ValueOutOfRangeError, match="Grid"):
+            ReactionDiffusionConfig(grid_size=GRID_SIZE_MIN - 1)
+
+    def test_parameters_at_boundaries_valid(self) -> None:
+        """Parameters at boundary values should be valid."""
+        # Test minimum values (except CFL limit which is exclusive)
+        config_min = ReactionDiffusionConfig(
+            grid_size=GRID_SIZE_MIN,
+            d_activator=D_ACTIVATOR_MIN,
+            d_inhibitor=D_INHIBITOR_MIN,
+            r_activator=R_ACTIVATOR_MIN,
+            r_inhibitor=R_INHIBITOR_MIN,
+            turing_threshold=TURING_THRESHOLD_MIN,
+            alpha=ALPHA_MIN,
+        )
+        assert config_min.grid_size == GRID_SIZE_MIN
+
+        # Test maximum values (except CFL limit)
+        config_max = ReactionDiffusionConfig(
+            r_activator=R_ACTIVATOR_MAX,
+            r_inhibitor=R_INHIBITOR_MAX,
+            turing_threshold=TURING_THRESHOLD_MAX,
+            jitter_var=JITTER_VAR_MAX,
+        )
+        assert config_max.r_activator == R_ACTIVATOR_MAX
+
+
+class TestInvariantsVerification:
+    """Test mathematical invariants from MFN_MATH_MODEL.md Section 2."""
+
+    def test_field_bounds_invariant(self) -> None:
+        """Field values should stay within [-95, +40] mV.
+        
+        Invariant: V ∈ [-0.095, 0.040] V (enforced by clamping)
+        Reference: MFN_MATH_MODEL.md Section 2.9
+        """
+        config = ReactionDiffusionConfig(
+            grid_size=32,
+            spike_probability=0.5,  # Many spikes to stress test
+            quantum_jitter=True,
+            random_seed=42,
+        )
+        engine = ReactionDiffusionEngine(config)
+        field, metrics = engine.simulate(steps=500)
+        
+        # Convert to mV for comparison
+        field_mv = field * 1000.0
+        assert field_mv.min() >= FIELD_V_MIN * 1000 - 0.5, \
+            f"Min {field_mv.min():.2f} mV < {FIELD_V_MIN * 1000:.0f} mV"
+        assert field_mv.max() <= FIELD_V_MAX * 1000 + 0.5, \
+            f"Max {field_mv.max():.2f} mV > {FIELD_V_MAX * 1000:.0f} mV"
+
+    def test_no_nan_inf_invariant(self) -> None:
+        """No NaN/Inf after 1000+ steps.
+        
+        Invariant: Stability - No NaN/Inf after 1000+ steps
+        Reference: MFN_MATH_MODEL.md Section 2.9
+        """
+        config = ReactionDiffusionConfig(
+            grid_size=32,
+            quantum_jitter=True,
+            random_seed=42,
+        )
+        engine = ReactionDiffusionEngine(config)
+        field, metrics = engine.simulate(steps=1000)
+        
+        assert np.isfinite(field).all(), "Field contains NaN/Inf"
+        assert metrics.nan_detected is False
+        assert metrics.inf_detected is False
+        assert metrics.steps_to_instability is None
+
+    def test_activator_inhibitor_bounds_invariant(self) -> None:
+        """Activator and inhibitor fields should stay in [0, 1].
+        
+        Invariant: a, i ∈ [0, 1] (enforced by clamping)
+        Reference: MFN_MATH_MODEL.md Section 4.3
+        """
+        config = ReactionDiffusionConfig(
+            grid_size=32,
+            random_seed=42,
+        )
+        engine = ReactionDiffusionEngine(config)
+        engine.simulate(steps=500, turing_enabled=True)
+        
+        assert engine.activator is not None
+        assert engine.inhibitor is not None
+        
+        assert engine.activator.min() >= 0.0, "Activator below 0"
+        assert engine.activator.max() <= 1.0, "Activator above 1"
+        assert engine.inhibitor.min() >= 0.0, "Inhibitor below 0"
+        assert engine.inhibitor.max() <= 1.0, "Inhibitor above 1"
+
+    def test_cfl_stability_invariant(self) -> None:
+        """CFL condition: D < 0.25 for stable explicit Euler.
+        
+        Invariant: dt * D * 4/dx² ≤ 1 (with dt=dx=1 → D ≤ 0.25)
+        Reference: MFN_MATH_MODEL.md Section 2.5
+        """
+        config = ReactionDiffusionConfig()
+        engine = ReactionDiffusionEngine(config)
+        
+        assert engine.validate_cfl_condition()
+        assert config.d_activator < MAX_STABLE_DIFFUSION
+        assert config.d_inhibitor < MAX_STABLE_DIFFUSION
+        assert config.alpha < MAX_STABLE_DIFFUSION
+
+    def test_growth_events_expected_rate(self) -> None:
+        """Growth events should occur at expected rate.
+        
+        Invariant: With p=0.25, expect ~25 events per 100 steps
+        Reference: MFN_MATH_MODEL.md Section 2.9
+        """
+        config = ReactionDiffusionConfig(
+            grid_size=32,
+            spike_probability=0.25,
+            random_seed=42,
+        )
+        engine = ReactionDiffusionEngine(config)
+        _, metrics = engine.simulate(steps=100)
+        
+        # Expect ~25 events, allow 10-40 range for randomness
+        assert 10 <= metrics.growth_events <= 40, \
+            f"Expected ~25 events, got {metrics.growth_events}"
