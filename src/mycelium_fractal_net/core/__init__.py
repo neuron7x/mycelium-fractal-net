@@ -18,6 +18,7 @@ from .exceptions import (
     StabilityError,
     ValueOutOfRangeError,
 )
+from .field import MyceliumField
 from .fractal_growth_engine import (
     FractalConfig,
     FractalGrowthEngine,
@@ -33,12 +34,17 @@ from .reaction_diffusion_engine import (
     ReactionDiffusionEngine,
     ReactionDiffusionMetrics,
 )
+from .types import SimulationConfig, SimulationResult
 
 __all__ = [
     # Exceptions
     "StabilityError",
     "ValueOutOfRangeError",
     "NumericalInstabilityError",
+    # Simulation Types
+    "SimulationConfig",
+    "SimulationResult",
+    "MyceliumField",
     # Membrane Engine
     "MembraneEngine",
     "MembraneConfig",

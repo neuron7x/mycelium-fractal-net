@@ -13,6 +13,7 @@ New in v4.1:
 """
 
 # Import core engines (new numerical implementations)
+from .analytics import FeatureVector
 from .core import (
     FractalConfig,
     FractalGrowthEngine,
@@ -20,10 +21,13 @@ from .core import (
     MembraneConfig,
     MembraneEngine,
     MembraneMetrics,
+    MyceliumField,
     NumericalInstabilityError,
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
     ReactionDiffusionMetrics,
+    SimulationConfig,
+    SimulationResult,
     StabilityError,
     ValueOutOfRangeError,
 )
@@ -82,6 +86,11 @@ __all__ = [
     "HierarchicalKrumAggregator",
     "MyceliumFractalNet",
     "ValidationConfig",
+    # Simulation Types (new)
+    "SimulationConfig",
+    "SimulationResult",
+    "MyceliumField",
+    "FeatureVector",
     # Core Engines (new)
     "MembraneEngine",
     "MembraneConfig",
