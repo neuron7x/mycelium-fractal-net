@@ -28,44 +28,45 @@ def run_mycelium_simulation(config: SimulationConfig) -> SimulationResult:
     the field, runs the configured number of steps, and returns structured
     results including the final field state and optional history.
 
-    Parameters
-    ----------
-    config : SimulationConfig
-        Configuration parameters for the simulation including:
-        - grid_size: Size of the 2D grid (N × N)
-        - steps: Number of simulation steps
-        - alpha: Diffusion coefficient (must satisfy CFL condition α ≤ 0.25)
-        - spike_probability: Probability of spike events per step
-        - turing_enabled: Enable Turing morphogenesis patterns
-        - turing_threshold: Threshold for pattern activation
-        - quantum_jitter: Enable quantum noise jitter
-        - jitter_var: Variance of quantum jitter
-        - seed: Random seed for reproducibility
+    Args:
+        config: SimulationConfig with simulation parameters including:
+            - grid_size: Size of the 2D grid (N × N). Range: [4, 512].
+            - steps: Number of simulation steps. Range: [1, 10000].
+            - alpha: Diffusion coefficient. Range: (0, 0.25] for CFL stability.
+            - spike_probability: Probability of spike events per step. Range: [0, 1].
+            - turing_enabled: Enable Turing morphogenesis patterns.
+            - turing_threshold: Threshold for pattern activation. Range: [0, 1].
+            - quantum_jitter: Enable quantum noise jitter.
+            - jitter_var: Variance of quantum jitter. Range: [0, 0.01].
+            - seed: Random seed for reproducibility. None for random seed.
 
-    Returns
-    -------
-    SimulationResult
-        Structured result containing:
-        - field: Final 2D potential field in Volts (N × N)
-        - history: Time series of field snapshots (T × N × N) if store_history=True
-        - growth_events: Total number of growth events during simulation
-        - metadata: Additional simulation metadata (timing, parameters, etc.)
+    Returns:
+        SimulationResult containing:
+            - field: Final 2D potential field in Volts (N × N). No NaN/Inf values.
+            - history: None (use run_mycelium_simulation_with_history for history).
+            - growth_events: Total number of growth events during simulation.
+            - metadata: Dict with timing, parameters, and simulation metrics.
 
-    Examples
-    --------
-    >>> from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation
-    >>> config = SimulationConfig(grid_size=32, steps=10, seed=42)
-    >>> result = run_mycelium_simulation(config)
-    >>> result.field.shape
-    (32, 32)
-    >>> result.grid_size
-    32
+    Raises:
+        TypeError: If config is not a SimulationConfig instance.
+        ValueError: If config parameters are invalid (propagated from SimulationConfig).
+        StabilityError: If numerical instability is detected during simulation.
 
-    Notes
-    -----
-    - The simulation uses periodic boundary conditions by default.
-    - Field values are clamped to physiological bounds [-95 mV, +40 mV].
-    - For reproducible results, always set the seed parameter.
+    Examples:
+        >>> from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation
+        >>> config = SimulationConfig(grid_size=32, steps=10, seed=42)
+        >>> result = run_mycelium_simulation(config)
+        >>> result.field.shape
+        (32, 32)
+        >>> result.grid_size
+        32
+
+    Notes:
+        - The simulation uses periodic boundary conditions.
+        - Field values are clamped to physiological bounds [-95 mV, +40 mV].
+        - For reproducible results, always set the seed parameter.
+        - Does not modify the input config object.
+        - Deterministic: same config + seed produces identical results.
     """
     # Validate config type
     if not isinstance(config, SimulationConfig):
@@ -139,24 +140,40 @@ def run_mycelium_simulation_with_history(
     """
     Run a mycelium field simulation with full history tracking.
 
-    Similar to `run_mycelium_simulation` but stores the field state at each
-    timestep, enabling analysis of temporal dynamics.
+    Similar to run_mycelium_simulation but stores the field state at each
+    timestep, enabling analysis of temporal dynamics and feature extraction.
 
-    Parameters
-    ----------
-    config : SimulationConfig
-        Configuration parameters for the simulation.
+    Args:
+        config: SimulationConfig with simulation parameters. See
+            run_mycelium_simulation for parameter details.
 
-    Returns
-    -------
-    SimulationResult
-        Result with history array of shape (steps, grid_size, grid_size).
+    Returns:
+        SimulationResult containing:
+            - field: Final 2D potential field in Volts (N × N).
+            - history: Time series array of shape (steps, grid_size, grid_size).
+            - growth_events: Total number of growth events during simulation.
+            - metadata: Dict with timing, parameters, and simulation metrics.
 
-    Notes
-    -----
-    This function uses more memory than `run_mycelium_simulation` as it
-    stores the complete field history. For large grids or many steps,
-    consider using the base function instead.
+    Raises:
+        TypeError: If config is not a SimulationConfig instance.
+        ValueError: If config parameters are invalid.
+        StabilityError: If numerical instability is detected during simulation.
+
+    Examples:
+        >>> from mycelium_fractal_net import SimulationConfig
+        >>> from mycelium_fractal_net import run_mycelium_simulation_with_history
+        >>> config = SimulationConfig(grid_size=32, steps=10, seed=42)
+        >>> result = run_mycelium_simulation_with_history(config)
+        >>> result.history.shape
+        (10, 32, 32)
+        >>> result.has_history
+        True
+
+    Notes:
+        - Uses more memory than run_mycelium_simulation (O(steps * N²)).
+        - For large grids or many steps, consider using the base function.
+        - History is required for temporal feature extraction (dV_mean, etc.).
+        - Does not modify the input config object.
     """
     if not isinstance(config, SimulationConfig):
         raise TypeError(f"config must be SimulationConfig, got {type(config).__name__}")
