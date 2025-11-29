@@ -13,6 +13,7 @@ All implementations follow MATH_MODEL.md specifications with:
 - Configurable parameters via dataclasses
 """
 
+from .engine import run_mycelium_simulation, run_mycelium_simulation_with_history
 from .exceptions import (
     NumericalInstabilityError,
     StabilityError,
@@ -45,6 +46,9 @@ __all__ = [
     "SimulationConfig",
     "SimulationResult",
     "MyceliumField",
+    # Simulation API
+    "run_mycelium_simulation",
+    "run_mycelium_simulation_with_history",
     # Membrane Engine
     "MembraneEngine",
     "MembraneConfig",

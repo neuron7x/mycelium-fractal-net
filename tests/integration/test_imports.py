@@ -30,6 +30,8 @@ def test_public_api_functions() -> None:
         compute_nernst_potential,
         estimate_fractal_dimension,
         generate_fractal_ifs,
+        run_mycelium_simulation,
+        run_mycelium_simulation_with_history,
         run_validation,
         run_validation_cli,
         simulate_mycelium_field,
@@ -43,6 +45,8 @@ def test_public_api_functions() -> None:
     assert callable(compute_lyapunov_exponent)
     assert callable(run_validation)
     assert callable(run_validation_cli)
+    assert callable(run_mycelium_simulation)
+    assert callable(run_mycelium_simulation_with_history)
 
 
 def test_public_api_classes() -> None:
