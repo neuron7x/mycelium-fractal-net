@@ -1178,17 +1178,29 @@ def run_validation(cfg: ValidationConfig | None = None) -> Dict[str, float]:
 
 def run_validation_cli() -> None:
     """
-    CLI-обгортка для MyceliumFractalNet v4.1.
+    CLI wrapper for MyceliumFractalNet v4.1.
+
+    Provides command-line interface for validation using the same
+    schemas as the HTTP API (via integration layer).
     """
     parser = argparse.ArgumentParser(description="MyceliumFractalNet v4.1 validation CLI")
     parser.add_argument(
-        "--mode", type=str, default="validate", choices=["validate"], help="Режим роботи"
+        "--mode", type=str, default="validate", choices=["validate"], help="Operation mode"
     )
-    parser.add_argument("--seed", type=int, default=42, help="Seed для RNG")
-    parser.add_argument("--epochs", type=int, default=1, help="Кількість епох")
-    parser.add_argument("--batch-size", type=int, default=4, help="Розмір батча")
-    parser.add_argument("--grid-size", type=int, default=64, help="Розмір решітки")
-    parser.add_argument("--steps", type=int, default=64, help="Кроки симуляції")
+    parser.add_argument("--seed", type=int, default=42, help="Seed for RNG")
+    parser.add_argument("--epochs", type=int, default=1, help="Number of epochs")
+    parser.add_argument("--batch-size", type=int, default=4, help="Batch size")
+    parser.add_argument("--grid-size", type=int, default=64, help="Grid size")
+    parser.add_argument("--steps", type=int, default=64, help="Simulation steps")
+    parser.add_argument(
+        "--turing-enabled", action="store_true", default=True, help="Enable Turing morphogenesis"
+    )
+    parser.add_argument(
+        "--no-turing", action="store_false", dest="turing_enabled", help="Disable Turing"
+    )
+    parser.add_argument(
+        "--quantum-jitter", action="store_true", default=False, help="Enable quantum jitter"
+    )
     args = parser.parse_args()
 
     cfg = ValidationConfig(
@@ -1197,6 +1209,8 @@ def run_validation_cli() -> None:
         batch_size=args.batch_size,
         grid_size=args.grid_size,
         steps=args.steps,
+        turing_enabled=args.turing_enabled,
+        quantum_jitter=args.quantum_jitter,
     )
 
     metrics = run_validation(cfg)
