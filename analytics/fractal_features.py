@@ -1,7 +1,7 @@
 """
 Fractal Feature Extraction Module.
 
-Implements the feature extraction pipeline as defined in FEATURE_SCHEMA.md.
+Implements the feature extraction pipeline as defined in MFN_FEATURE_SCHEMA.md.
 
 Features extracted:
 1. Fractal: D_box (box-counting dimension), D_r2 (regression quality)
@@ -9,7 +9,7 @@ Features extracted:
 3. Temporal: dV_mean, dV_max, T_stable, E_trend
 4. Structural: f_active, N_clusters_*, max_cluster_size, cluster_size_std
 
-Reference: docs/FEATURE_SCHEMA.md
+Reference: docs/MFN_FEATURE_SCHEMA.md
 
 Usage:
     >>> from analytics import compute_features, FeatureConfig

@@ -13,7 +13,7 @@ New in v4.1:
 """
 
 # Import core engines (new numerical implementations)
-from .analytics import FeatureVector
+from .analytics import FeatureVector, compute_fractal_features
 from .core import (
     FractalConfig,
     FractalGrowthEngine,
@@ -96,6 +96,8 @@ __all__ = [
     "SimulationResult",
     "MyceliumField",
     "FeatureVector",
+    # Analytics API (new)
+    "compute_fractal_features",
     # Core Engines (new)
     "MembraneEngine",
     "MembraneConfig",
