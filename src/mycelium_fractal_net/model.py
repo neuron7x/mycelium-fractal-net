@@ -432,7 +432,7 @@ def estimate_fractal_dimension(
     return fractal_dim
 
 
-class STDPPlasticity(nn.Module):
+class STDPPlasticity(nn.Module):  # type: ignore[misc]
     """
     Spike-Timing Dependent Plasticity (STDP) module.
 
@@ -505,7 +505,7 @@ class STDPPlasticity(nn.Module):
         return x
 
 
-class SparseAttention(nn.Module):
+class SparseAttention(nn.Module):  # type: ignore[misc]
     """
     Sparse attention mechanism with top-k selection.
 
@@ -710,7 +710,7 @@ class HierarchicalKrumAggregator:
         return result
 
 
-class MyceliumFractalNet(nn.Module):
+class MyceliumFractalNet(nn.Module):  # type: ignore[misc]
     """
     Neural network with fractal dynamics, STDP plasticity, and sparse attention.
 

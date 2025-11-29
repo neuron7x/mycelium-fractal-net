@@ -30,6 +30,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -530,7 +531,7 @@ class ReactionDiffusionEngine:
             left = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant")
             right = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant")
 
-        return up + down + left + right - 4.0 * field
+        return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
 
     def _check_stability(self, step: int) -> None:
         """Check for NaN/Inf values and raise error if found."""

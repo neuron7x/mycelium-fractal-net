@@ -30,7 +30,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
+from typing import Any, Callable, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -353,7 +353,7 @@ class MembraneEngine:
         self._metrics.potential_mean_v = float(np.mean(potential))
         self._metrics.potential_std_v = float(np.std(potential))
 
-        return potential
+        return cast(NDArray[np.floating[Any]], potential)
 
     def integrate_ode(
         self,
@@ -386,11 +386,20 @@ class MembraneEngine:
         self.reset_metrics()
         v = v0 if isinstance(v0, np.ndarray) else np.array([v0])
 
+        # Create a wrapper that ensures the derivative_fn works with NDArray
+        def _derivative_wrapper(
+            arr: NDArray[np.floating[Any]],
+        ) -> NDArray[np.floating[Any]]:
+            result = derivative_fn(arr)
+            if isinstance(result, np.ndarray):
+                return cast(NDArray[np.floating[Any]], result)
+            return np.array([result])
+
         for step in range(steps):
             if self.config.integration_scheme == IntegrationScheme.EULER:
-                v = self._euler_step(v, derivative_fn)
+                v = self._euler_step(v, _derivative_wrapper)
             else:  # RK4
-                v = self._rk4_step(v, derivative_fn)
+                v = self._rk4_step(v, _derivative_wrapper)
 
             # Clamping
             if clamp:
@@ -434,9 +443,9 @@ class MembraneEngine:
 
     def _euler_step(
         self,
-        v: NDArray[np.floating],
-        derivative_fn: Callable[[NDArray[np.floating]], NDArray[np.floating]],
-    ) -> NDArray[np.floating]:
+        v: NDArray[np.floating[Any]],
+        derivative_fn: Callable[[NDArray[np.floating[Any]]], NDArray[np.floating[Any]]],
+    ) -> NDArray[np.floating[Any]]:
         """
         Perform one explicit Euler integration step.
 
@@ -446,13 +455,13 @@ class MembraneEngine:
         Stability: Requires dt * |dV/dt| < 1 for stability
         """
         dv_dt = derivative_fn(v)
-        return v + self.config.dt * dv_dt
+        return cast(NDArray[np.floating[Any]], v + self.config.dt * dv_dt)
 
     def _rk4_step(
         self,
-        v: NDArray[np.floating],
-        derivative_fn: Callable[[NDArray[np.floating]], NDArray[np.floating]],
-    ) -> NDArray[np.floating]:
+        v: NDArray[np.floating[Any]],
+        derivative_fn: Callable[[NDArray[np.floating[Any]]], NDArray[np.floating[Any]]],
+    ) -> NDArray[np.floating[Any]]:
         """
         Perform one 4th-order Runge-Kutta integration step.
 
@@ -467,7 +476,7 @@ class MembraneEngine:
         k3 = derivative_fn(v + 0.5 * dt * k2)
         k4 = derivative_fn(v + dt * k3)
 
-        return v + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        return cast(NDArray[np.floating[Any]], v + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4))
 
     def validate_potential_range(
         self,
