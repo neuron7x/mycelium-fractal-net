@@ -17,6 +17,20 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+# Check if pandas is available
+try:
+    import pandas as pd  # noqa: F401
+    HAS_PANDAS = True
+except ImportError:
+    HAS_PANDAS = False
+
+# Check if fastapi is available
+try:
+    import fastapi  # noqa: F401
+    HAS_FASTAPI = True
+except ImportError:
+    HAS_FASTAPI = False
+
 
 class TestPipeline1SimulationToResult:
     """Pipeline 1: SimulationConfig → run_mycelium_simulation → SimulationResult."""
@@ -164,16 +178,10 @@ class TestPipeline3DatasetGeneration:
             assert stats["failed"] == 0
             assert stats["success_rate"] == 1.0
 
-    @pytest.mark.skipif(
-        True,  # Pandas check happens at runtime
-        reason="Test requires pandas"
-    )
+    @pytest.mark.skipif(not HAS_PANDAS, reason="Test requires pandas")
     def test_dataset_schema_compliance(self) -> None:
         """Test generated dataset has correct schema per DATASET_SPEC.md."""
-        try:
-            import pandas as pd
-        except ImportError:
-            pytest.skip("pandas required")
+        import pandas as pd
 
         from experiments import SweepConfig, generate_dataset
 
@@ -319,14 +327,6 @@ class TestEndToEndPipeline:
         for record in records:
             arr = np.array([v for v in record.values() if isinstance(v, (int, float))])
             assert np.all(np.isfinite(arr))
-
-
-# Check if fastapi is available
-try:
-    import fastapi  # noqa: F401
-    HAS_FASTAPI = True
-except ImportError:
-    HAS_FASTAPI = False
 
 
 class TestAPIEndpoints:
