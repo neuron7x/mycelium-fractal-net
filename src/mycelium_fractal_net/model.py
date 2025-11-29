@@ -481,6 +481,9 @@ class STDPPlasticity(nn.Module):
     A_MIN: float = 0.001
     A_MAX: float = 0.100
 
+    # Numerical stability constants
+    EXP_CLAMP_MAX: float = 50.0  # exp(-50) ≈ 1.9e-22, prevents underflow/overflow
+
     def __init__(
         self,
         tau_plus: float = STDP_TAU_PLUS,
@@ -504,8 +507,12 @@ class STDPPlasticity(nn.Module):
     def _validate_time_constant(self, tau: float, name: str) -> None:
         """Validate time constant is within biophysical range."""
         if not (self.TAU_MIN <= tau <= self.TAU_MAX):
+            tau_min_ms = self.TAU_MIN * 1000
+            tau_max_ms = self.TAU_MAX * 1000
+            tau_ms = tau * 1000
             raise ValueError(
-                f"{name}={tau}s outside biophysical range [{self.TAU_MIN}, {self.TAU_MAX}]s"
+                f"{name}={tau_ms:.1f}ms outside biophysical range "
+                f"[{tau_min_ms:.0f}, {tau_max_ms:.0f}]ms"
             )
 
     def _validate_amplitude(self, a: float, name: str) -> None:
@@ -543,18 +550,18 @@ class STDPPlasticity(nn.Module):
         delta_t = post_times.unsqueeze(-2) - pre_times.unsqueeze(-1)
 
         # Clamp exponential arguments to prevent underflow/overflow
-        # exp(-50) ≈ 1.9e-22 (effectively zero), exp(50) ≈ 5e21 (overflow risk)
-        exp_clamp_max = 50.0
+        # Uses class constant EXP_CLAMP_MAX for consistency
+        clamp = self.EXP_CLAMP_MAX
 
         # LTP: pre before post (delta_t > 0)
         ltp_mask = delta_t > 0
-        ltp_exp_arg = torch.clamp(-delta_t / self.tau_plus, min=-exp_clamp_max, max=exp_clamp_max)
+        ltp_exp_arg = torch.clamp(-delta_t / self.tau_plus, min=-clamp, max=clamp)
         ltp = self.a_plus * torch.exp(ltp_exp_arg)
         ltp = ltp * ltp_mask.float()
 
         # LTD: post before pre (delta_t < 0)
         ltd_mask = delta_t < 0
-        ltd_exp_arg = torch.clamp(delta_t / self.tau_minus, min=-exp_clamp_max, max=exp_clamp_max)
+        ltd_exp_arg = torch.clamp(delta_t / self.tau_minus, min=-clamp, max=clamp)
         ltd = -self.a_minus * torch.exp(ltd_exp_arg)
         ltd = ltd * ltd_mask.float()
 

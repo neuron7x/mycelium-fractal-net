@@ -61,12 +61,12 @@ class TestSTDPParameterValidation:
 
     def test_stdp_rejects_tau_below_min(self) -> None:
         """Verify rejection of time constants below biophysical minimum."""
-        with pytest.raises(ValueError, match="biophysical range"):
+        with pytest.raises(ValueError, match=r"\d+.*ms.*biophysical range"):
             STDPPlasticity(tau_plus=0.001)  # 1 ms < 5 ms minimum
 
     def test_stdp_rejects_tau_above_max(self) -> None:
         """Verify rejection of time constants above biophysical maximum."""
-        with pytest.raises(ValueError, match="biophysical range"):
+        with pytest.raises(ValueError, match=r"\d+.*ms.*biophysical range"):
             STDPPlasticity(tau_minus=0.200)  # 200 ms > 100 ms maximum
 
     def test_stdp_rejects_amplitude_below_min(self) -> None:
