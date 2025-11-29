@@ -199,8 +199,8 @@ def compute_box_counting_dimension(
     if field.shape[0] != field.shape[1]:
         raise ValueError(f"field must be square, got shape {field.shape}")
 
-    # Convert threshold to same units as field (already in V)
-    threshold_mv = threshold * 1000.0  # Convert to mV for config
+    # Convert threshold from Volts (user API) to mV (internal FeatureConfig expects mV)
+    threshold_mv = threshold * 1000.0
     config = FeatureConfig(num_scales=num_scales, threshold_low_mv=threshold_mv)
 
     D_box, _ = _compute_fractal_dim(field, config)

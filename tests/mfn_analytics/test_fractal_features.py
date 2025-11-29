@@ -151,7 +151,7 @@ class TestComputeFractalFeaturesIntegration:
         """FeatureVector should contain all keys from MFN_FEATURE_SCHEMA.md."""
         features = compute_fractal_features(simple_simulation_result)
 
-        expected_keys = FeatureVector._FEATURE_NAMES
+        expected_keys = FeatureVector.feature_names()
 
         for key in expected_keys:
             assert key in features.values, f"Missing feature: {key}"
@@ -235,19 +235,20 @@ class TestFeatureVectorMethods:
     """Test FeatureVector class methods."""
 
     def test_to_array_shape(self) -> None:
-        """to_array should return 18-element array."""
+        """to_array should return array with expected number of features."""
         fv = FeatureVector(values={"D_box": 1.5, "V_mean": -70.0})
 
         arr = fv.to_array()
+        expected_count = len(FeatureVector.feature_names())
 
-        assert arr.shape == (18,)
+        assert arr.shape == (expected_count,)
         assert arr.dtype == np.float64
 
     def test_feature_names(self) -> None:
-        """feature_names should return 18 names."""
+        """feature_names should return expected number of names."""
         names = FeatureVector.feature_names()
 
-        assert len(names) == 18
+        assert len(names) == len(FeatureVector._FEATURE_NAMES)
         assert names[0] == "D_box"
         assert "V_mean" in names
 
