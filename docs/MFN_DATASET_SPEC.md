@@ -137,44 +137,36 @@ values = data["data"]
 
 ### 4.1 Configuration Sampling
 
-The `ConfigSampler` class generates valid simulation configurations within stable parameter ranges:
+The `SweepConfig` dataclass generates valid simulation configurations within stable parameter ranges:
 
 ```python
-from mycelium_fractal_net.experiments.generate_dataset import (
-    ConfigSampler,
-    generate_dataset,
-)
+from experiments import SweepConfig, generate_dataset
 
-# Create sampler with parameter ranges
-sampler = ConfigSampler(
+# Create sweep configuration
+sweep = SweepConfig(
     grid_sizes=[32, 64],
-    steps_range=(50, 200),
-    alpha_range=(0.10, 0.20),
+    steps_list=[50, 100],
+    alpha_values=[0.10, 0.15, 0.20],
     turing_values=[True, False],
+    seeds_per_config=3,
     base_seed=42,
 )
 
 # Generate dataset
-generate_dataset(
-    num_samples=200,
-    config_sampler=sampler,
-    output_path="data/mfn_dataset.parquet",
-)
+stats = generate_dataset(sweep, output_path="data/mfn_dataset.parquet")
 ```
 
 ### 4.2 Command Line Interface
 
 ```bash
-# Generate with defaults (200 samples)
-python -m mycelium_fractal_net.experiments.generate_dataset \
-    --num-samples 200 \
+# Generate with defaults
+python -m experiments.generate_dataset \
     --output data/mfn_dataset.parquet
 
 # With custom seed and preset
-python -m mycelium_fractal_net.experiments.generate_dataset \
-    --num-samples 500 \
-    --seed 123 \
+python -m experiments.generate_dataset \
     --sweep extended \
+    --seed 123 \
     --output data/mfn_dataset_extended.parquet
 ```
 
