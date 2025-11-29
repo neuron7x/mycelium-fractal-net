@@ -192,7 +192,7 @@ def aggregate_gradients_adapter(
     Raises:
         ValueError: If no gradients provided or gradients have inconsistent dimensions.
     """
-    if len(request.gradients) == 0:
+    if not request.gradients:
         raise ValueError("No gradients provided")
 
     # Convert to tensors

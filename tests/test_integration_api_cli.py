@@ -1,7 +1,7 @@
 """
 Integration tests for API and CLI consistency.
 
-Tests that CLI validate and HTTP /validate produce consistent results
+Tests that CLI validation and HTTP /validate produce consistent results
 for the same seed and configuration, and that all API endpoints correctly
 marshal/demarshal data through the integration layer schemas.
 
@@ -33,6 +33,11 @@ from mycelium_fractal_net.integration import (
 def client() -> TestClient:
     """Create test client for FastAPI app."""
     return TestClient(app)
+
+
+# Test data constants
+SAMPLE_GRADIENTS_4D = [[1.0, 2.0, 3.0], [1.1, 2.1, 3.1], [1.2, 2.2, 3.2], [10.0, 10.0, 10.0]]
+SAMPLE_GRADIENTS_2D = [[1.0, 2.0], [1.1, 2.1], [1.2, 2.2]]
 
 
 class TestCLIAPIConsistency:
@@ -145,13 +150,10 @@ class TestAPIEndpoints:
 
     def test_federated_aggregate_endpoint_marshaling(self, client: TestClient) -> None:
         """Test /federated/aggregate endpoint marshals data correctly."""
-        # Create sample gradients
-        gradients = [[1.0, 2.0, 3.0], [1.1, 2.1, 3.1], [1.2, 2.2, 3.2], [10.0, 10.0, 10.0]]
-
         response = client.post(
             "/federated/aggregate",
             json={
-                "gradients": gradients,
+                "gradients": SAMPLE_GRADIENTS_4D,
                 "num_clusters": 2,
                 "byzantine_fraction": 0.2,
             },
@@ -219,7 +221,7 @@ class TestAdapters:
     def test_federated_adapter(self) -> None:
         """Test federated aggregation adapter converts correctly."""
         request = FederatedAggregateRequest(
-            gradients=[[1.0, 2.0], [1.1, 2.1], [1.2, 2.2]],
+            gradients=SAMPLE_GRADIENTS_2D,
             num_clusters=2,
             byzantine_fraction=0.2,
         )
