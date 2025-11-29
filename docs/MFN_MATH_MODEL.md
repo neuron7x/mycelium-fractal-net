@@ -41,12 +41,18 @@ where:
 | Parameter | Symbol | Value | Units | Valid Range | Physical Meaning |
 |-----------|--------|-------|-------|-------------|------------------|
 | Gas constant | $R$ | 8.314 | J/(mol·K) | (constant) | Thermodynamic constant |
-| Faraday constant | $F$ | 96485.33 | C/mol | (constant) | Charge per mole of electrons |
-| Body temperature | $T$ | 310 | K | 273–320 | Physiological temperature (~37°C) |
-| Ion valence | $z$ | ±1, ±2 | – | ≠ 0 | K⁺=+1, Na⁺=+1, Cl⁻=−1, Ca²⁺=+2 |
-| Concentration (out) | $[X]_{\text{out}}$ | varies | mol/L | > 0 | Extracellular concentration |
-| Concentration (in) | $[X]_{\text{in}}$ | varies | mol/L | > 0 | Intracellular concentration |
+| Faraday constant | $F$ | 96485.33 | C/mol | (constant) | Charge per mole electrons |
+| Body temperature | $T$ | 310 | K | [273, 320] | Physiological temperature (~37°C) |
+| Ion valence | $z$ | ±1, ±2 | – | {-2, -1, 1, 2} | K⁺=+1, Na⁺=+1, Cl⁻=−1, Ca²⁺=+2 |
+| Concentration (out) | $[X]_{\text{out}}$ | varies | mol/L | ≥ 1e-6 | Extracellular concentration |
+| Concentration (in) | $[X]_{\text{in}}$ | varies | mol/L | ≥ 1e-6 | Intracellular concentration |
 | **RT/zF at 37°C, z=1** | – | 26.73 | mV | – | Nernst factor (natural log) |
+| Time step | $\Delta t$ | 1e-4 | s | [1e-7, 1e-2] | Integration step (0.1 μs – 10 ms) |
+
+**Biophysical Constraints (ENFORCED in code):**
+- Temperature [273, 320] K covers hypothermic (0°C) to hyperthermic (47°C) limits
+- Ion valence ∈ {-2, -1, 1, 2} covers biological ions (K⁺, Na⁺, Cl⁻, Ca²⁺, Mg²⁺)
+- Concentration clamp ≥ 1e-6 mol/L prevents log(0) numerical errors
 
 ### 1.4 Physiological Reference Values
 
@@ -60,12 +66,22 @@ where:
 ### 1.5 Implementation Mapping
 
 ```
-Code Location: src/mycelium_fractal_net/model.py
+Code Location: src/mycelium_fractal_net/core/membrane_engine.py
 
 Constants:
 - R_GAS_CONSTANT = 8.314      # J/(mol·K)
 - FARADAY_CONSTANT = 96485.33 # C/mol
 - BODY_TEMPERATURE_K = 310.0  # K
+- TEMPERATURE_MIN_K = 273.0   # K (hypothermic limit)
+- TEMPERATURE_MAX_K = 320.0   # K (hyperthermic limit)
+- ION_VALENCE_ALLOWED = (-2, -1, 1, 2)
+- ION_CLAMP_MIN = 1e-6        # mol/L
+- DT_MIN = 1e-7               # s (0.1 μs)
+- DT_MAX = 1e-2               # s (10 ms)
+
+Classes:
+- MembraneConfig: Configuration with validated bounds
+- MembraneEngine: Nernst computation with stability checks
 
 Function: compute_nernst_potential(z_valence, concentration_out_molar, 
                                    concentration_in_molar, temperature_k)
@@ -74,6 +90,8 @@ Returns: Membrane potential in Volts
 Numerical Stability:
 - Ion concentrations clamped to min = 1e-6 mol/L (ION_CLAMP_MIN)
 - Prevents log(0) and log(negative) errors
+- Ion valence validated against allowed set
+- Temperature validated against physiological range
 ```
 
 ### 1.6 Validation Invariants
@@ -125,17 +143,27 @@ where:
 
 ### 2.3 Parameter Table
 
-| Parameter | Symbol | Value | Units | Valid Range | Physical Meaning |
-|-----------|--------|-------|-------|-------------|------------------|
-| Activator diffusion | $D_a$ | 0.1 | (grid²/step) | 0.01–0.5 | Short-range diffusion |
-| Inhibitor diffusion | $D_i$ | 0.05 | (grid²/step) | 0.01–0.3 | Long-range diffusion |
-| Activator reaction rate | $r_a$ | 0.01 | 1/step | 0.001–0.1 | Growth rate |
-| Inhibitor reaction rate | $r_i$ | 0.02 | 1/step | 0.001–0.1 | Damping rate |
-| Turing threshold | $\theta$ | 0.75 | – | 0.5–0.95 | Pattern activation threshold |
-| Field diffusion | $\alpha$ | 0.18 | – | 0.05–0.24 | Potential diffusion coefficient |
+| Parameter | Symbol | Default | Units | Valid Range | Physical Meaning |
+|-----------|--------|---------|-------|-------------|------------------|
+| Activator diffusion | $D_a$ | 0.1 | (grid²/step) | [0.01, 0.25) | Short-range diffusion |
+| Inhibitor diffusion | $D_i$ | 0.05 | (grid²/step) | [0.01, 0.25) | Long-range diffusion |
+| Activator reaction rate | $r_a$ | 0.01 | 1/step | [0.001, 0.1] | Growth rate |
+| Inhibitor reaction rate | $r_i$ | 0.02 | 1/step | [0.001, 0.1] | Damping rate |
+| Turing threshold | $\theta$ | 0.75 | – | [0.5, 0.95] | Pattern activation threshold |
+| Field diffusion | $\alpha$ | 0.18 | – | [0.05, 0.25) | Potential diffusion coefficient |
+| Jitter variance | $\sigma^2$ | 0.0005 | – | [0, 0.01] | Stochastic noise strength |
+| Grid size | $N$ | 64 | – | [4, 1024] | Spatial resolution |
 
-**Critical constraint for Turing instability:**
-$D_i > D_a$ (inhibitor must diffuse faster than activator)
+**Biophysical Constraints (ENFORCED in code):**
+- All diffusion coefficients < 0.25 for CFL stability
+- Reaction rates ∈ [0.001, 0.1] for stable pattern dynamics
+- Turing threshold ∈ [0.5, 0.95] for meaningful pattern activation
+- Jitter variance ≤ 0.01 to prevent noise-induced instability
+
+**Critical constraint for Turing instability (SIMPLIFICATION):**
+For classical Turing patterns: $D_i > D_a$ (inhibitor must diffuse faster).
+Our simplified model uses $D_i / D_a = 0.5$, which is tuned for visual patterns
+rather than strict adherence to classical Turing instability conditions.
 
 ### 2.4 Discrete Laplacian (5-Point Stencil)
 
@@ -174,23 +202,33 @@ where:
 ### 2.7 Implementation Mapping
 
 ```
-Code Location: src/mycelium_fractal_net/model.py
+Code Location: src/mycelium_fractal_net/core/reaction_diffusion_engine.py
 
-Function: simulate_mycelium_field(rng, grid_size, steps, alpha, 
-                                   spike_probability, turing_enabled, ...)
+Classes:
+- ReactionDiffusionConfig: Configuration with validated bounds
+- ReactionDiffusionEngine: Simulation with stability checks
+- ReactionDiffusionMetrics: Runtime statistics
 
-Constants:
-- TURING_THRESHOLD = 0.75
-- D_a = 0.1, D_i = 0.05
-- r_a = 0.01, r_i = 0.02
-- Field clamp: [-0.095, 0.040] V
+Constants (with enforced bounds):
+- DEFAULT_D_ACTIVATOR = 0.1    # D_a ∈ [0.01, 0.25)
+- DEFAULT_D_INHIBITOR = 0.05   # D_i ∈ [0.01, 0.25)
+- DEFAULT_R_ACTIVATOR = 0.01   # r_a ∈ [0.001, 0.1]
+- DEFAULT_R_INHIBITOR = 0.02   # r_i ∈ [0.001, 0.1]
+- DEFAULT_TURING_THRESHOLD = 0.75  # θ ∈ [0.5, 0.95]
+- DEFAULT_FIELD_ALPHA = 0.18   # α ∈ [0.05, 0.25)
+- FIELD_V_MIN = -0.095 V       # Field clamp lower bound
+- FIELD_V_MAX = 0.040 V        # Field clamp upper bound
+- MAX_STABLE_DIFFUSION = 0.25  # CFL limit
 
 Discretization:
-- Spatial: Uniform grid, periodic boundaries (np.roll)
+- Spatial: Uniform grid, periodic/Neumann/Dirichlet boundaries
 - Temporal: Explicit Euler, dt = 1 step
 ```
 
 ### 2.8 Optional Stochastic Term (Quantum Jitter)
+
+**SIMPLIFICATION:** The term "quantum jitter" is a **metaphor** for thermal/stochastic
+fluctuations. No actual quantum effects are modeled.
 
 For stochastic dynamics, Gaussian noise is added:
 
@@ -198,14 +236,17 @@ $$
 V^{n+1} = V^n + \alpha \nabla^2 V^n + \xi
 $$
 
-where $\xi \sim \mathcal{N}(0, \sigma^2)$ with $\sigma^2 = 0.0005$.
+where $\xi \sim \mathcal{N}(0, \sigma^2)$ with $\sigma^2 \in [0, 0.01]$ (default 0.0005).
 
 ### 2.9 Validation Invariants
 
+These invariants are **tested and enforced** in `tests/core/test_reaction_diffusion_engine.py`:
+
 1. **Boundedness**: $V \in [-95, 40]$ mV (enforced by clamping)
 2. **Stability**: No NaN/Inf after 1000+ steps
-3. **Pattern formation**: Turing-enabled runs show measurably different statistics
-4. **Growth events**: With $p = 0.25$, expect ~25 events per 100 steps
+3. **Activator/Inhibitor bounds**: $a, i \in [0, 1]$ (enforced by clamping)
+4. **CFL compliance**: All D < 0.25 (checked at configuration time)
+5. **Growth events**: With $p = 0.25$, expect ~25 events per 100 steps
 
 ---
 
@@ -272,16 +313,23 @@ where $N(\epsilon)$ is the number of boxes of size $\epsilon$ needed to cover th
 
 ### 3.5 Parameter Table
 
-| Parameter | Symbol | Value | Units | Valid Range | Physical Meaning |
-|-----------|--------|-------|-------|-------------|------------------|
+| Parameter | Symbol | Default | Units | Valid Range | Physical Meaning |
+|-----------|--------|---------|-------|-------------|------------------|
 | IFS scale factor | $s$ | 0.2–0.5 | – | (0, 1) | Contraction strength |
-| IFS rotation | $\theta$ | 0–2π | rad | [0, 2π] | Transformation angle |
-| IFS translation | $e, f$ | ±1 | – | [-2, 2] | Pattern offset |
-| Number of transforms | $n_T$ | 4 | – | 2–8 | Complexity of IFS |
-| Number of points | $n_P$ | 10000 | – | 1000–100000 | Resolution |
+| IFS rotation | $\theta$ | random | rad | [0, 2π] | Transformation angle |
+| IFS translation | $e, f$ | ±1 | – | [-range, +range] | Pattern offset |
+| Translation range | – | 1.0 | – | [0, 2] | Max translation magnitude |
+| Number of transforms | $n_T$ | 4 | – | [2, 8] | Complexity of IFS |
+| Number of points | $n_P$ | 10000 | – | [1000, 100000] | Resolution |
 | Min box size | – | 2 | grid | ≥ 1 | Smallest scale |
 | Max box size | – | N/2 | grid | ≤ N | Largest scale |
-| Number of scales | – | 5 | – | 3–10 | Log-regression points |
+| Number of scales | – | 5 | – | [3, 10] | Log-regression points |
+
+**Biophysical Constraints (ENFORCED in code):**
+- Scale factors strictly < 1 for contraction (IFS stability)
+- Number of transforms ∈ [2, 8] for meaningful patterns
+- Number of points ∈ [1000, 100000] for fractal resolution
+- Number of scales ∈ [3, 10] for reliable dimension regression
 
 ### 3.6 Expected Dimension Values
 
@@ -292,33 +340,52 @@ where $N(\epsilon)$ is the number of boxes of size $\epsilon$ needed to cover th
 | Mycelium (observed) | 1.4–1.9 | Empirical |
 | MFN simulation | 1.4–1.9 | Validated |
 
+**SIMPLIFICATION:** The "mycelium" dimension range [1.4, 1.9] is based on
+analogy to biological mycelium, not direct measurement of the simulated patterns.
+
 ### 3.7 Implementation Mapping
 
 ```
-Code Location: src/mycelium_fractal_net/model.py
+Code Location: src/mycelium_fractal_net/core/fractal_growth_engine.py
+
+Classes:
+- FractalConfig: Configuration with validated bounds
+- FractalGrowthEngine: IFS generation and dimension analysis
+- FractalMetrics: Runtime statistics
+
+Constants (with enforced bounds):
+- NUM_POINTS_MIN = 1000, NUM_POINTS_MAX = 100000
+- NUM_TRANSFORMS_MIN = 2, NUM_TRANSFORMS_MAX = 8
+- SCALE_MIN_BOUND = 0.0 (exclusive), SCALE_MAX_BOUND = 1.0 (exclusive)
+- TRANSLATION_RANGE_MAX = 2.0
+- NUM_SCALES_MIN = 3, NUM_SCALES_MAX = 10
+- LYAPUNOV_STABLE_MAX = 0.0
 
 Functions:
-- generate_fractal_ifs(rng, num_points, num_transforms)
+- generate_ifs(num_points, num_transforms)
   Returns: (points, lyapunov_exponent)
 
-- estimate_fractal_dimension(binary_field, min_box_size, max_box_size, num_scales)
+- estimate_dimension(binary_field, min_box_size, max_box_size, num_scales)
   Returns: Estimated D
 
-- compute_lyapunov_exponent(field_history, dt)
+- compute_lyapunov_from_history(field_history, dt)
   Returns: Lyapunov exponent from time series
 
 Algorithm:
 - Box counting uses geometric scale spacing (np.geomspace)
-- Linear regression via np.polyfit
-- Handles edge cases: uniform field → D = 0
+- Linear regression via np.polyfit with R² quality metric
+- Handles edge cases: uniform field → D = 0, empty field → D = 0
 ```
 
 ### 3.8 Validation Invariants
 
-1. **Dimension bounds**: $0 < D < 2$ for 2D binary fields
-2. **Lyapunov stability**: $\lambda < 0$ for contractive IFS
-3. **Scale invariance**: D should be approximately constant across resolutions
-4. **Reproducibility**: Same seed → identical D
+These invariants are **tested and enforced** in `tests/core/test_fractal_growth_engine.py`:
+
+1. **Dimension bounds**: $0 \leq D \leq 2$ for 2D binary fields
+2. **Lyapunov stability**: $\lambda < 0$ for contractive IFS (always enforced)
+3. **Contraction requirement**: $|ad - bc| < 1$ for all transforms
+4. **Point boundedness**: All IFS points finite (no divergence)
+5. **Reproducibility**: Same seed → identical D
 
 ---
 
@@ -329,9 +396,9 @@ Algorithm:
 | Component | Spatial Discretization | Temporal Discretization | Stability Constraint |
 |-----------|------------------------|-------------------------|----------------------|
 | Laplacian diffusion | 5-point stencil | Explicit Euler | $D < 0.25$ |
-| Turing reaction | Point-wise | Explicit Euler | $r < 0.1$ |
+| Turing reaction | Point-wise | Explicit Euler | $r \leq 0.1$ |
 | IFS iteration | Random choice | – | $s < 1$ |
-| Box-counting | Grid-based | – | min_size ≥ 2 |
+| Box-counting | Grid-based | – | min_size ≥ 1 |
 
 ### 4.2 Memory and Complexity
 
