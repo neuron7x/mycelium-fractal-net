@@ -332,7 +332,7 @@ def apply_turing_to_field(
     if activation_count > 0:
         field_new[turing_mask] += contribution_v
     
-    return cast(NDArray[np.floating[Any]], field_new), activation_count
+    return field_new, activation_count
 
 
 def apply_growth_event(
@@ -374,7 +374,7 @@ def apply_growth_event(
     field_new = field.copy()
     field_new[i, j] += spike_magnitude
     
-    return cast(NDArray[np.floating[Any]], field_new), True
+    return field_new, True
 
 
 def apply_quantum_jitter(
@@ -551,9 +551,9 @@ def full_simulation_step(
         validate_field_stability(inhibitor, field_name="inhibitor")
     
     return (
-        cast(NDArray[np.floating[Any]], field),
-        cast(NDArray[np.floating[Any]], activator),
-        cast(NDArray[np.floating[Any]], inhibitor),
+        field,
+        activator,
+        inhibitor,
         metrics,
     )
 
