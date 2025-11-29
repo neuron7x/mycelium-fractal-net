@@ -242,7 +242,7 @@ class TestPerformanceSmoke:
 # ============================================================================
 
 
-@pytest.mark.skipif(True, reason="Benchmark tests are for manual profiling only")
+@pytest.mark.skip(reason="Benchmark tests are for manual profiling only")
 class TestBenchmarks:
     """Detailed benchmark tests for profiling."""
 

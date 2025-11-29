@@ -414,9 +414,9 @@ def validate_dataset_config(config: DatasetConfig) -> None:
         raise ValueError("alpha_range values must be numeric")
     if amin >= amax:
         raise ValueError(f"alpha_range min ({amin}) must be < max ({amax})")
-    if not (ALPHA_MIN < amin and amax < ALPHA_MAX):
+    if not (ALPHA_MIN < amin and amax <= ALPHA_MAX):
         raise ValueError(
-            f"alpha_range must be in ({ALPHA_MIN}, {ALPHA_MAX}) for CFL stability"
+            f"alpha_range must be in ({ALPHA_MIN}, {ALPHA_MAX}] for CFL stability"
         )
 
     # turing_values
