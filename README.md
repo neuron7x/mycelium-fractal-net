@@ -26,15 +26,15 @@
 ## Архітектура
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    MyceliumFractalNet v4.1                      │
-├─────────────────┬─────────────────┬─────────────────────────────┤
-│  Nernst-Planck  │     Turing      │      Federated Learning     │
-│   Electrochemistry   │   Morphogenesis  │     Byzantine-Krum      │
-├─────────────────┼─────────────────┼─────────────────────────────┤
-│ E = RT/zF·ln()  │ ∂a/∂t = D∇²a+f │   Krum(g₁...gₙ) → g*        │
-│ K⁺: -89 mV      │ threshold: 0.75│   tolerance: 20%            │
-└─────────────────┴─────────────────┴─────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│                     MyceliumFractalNet v4.1                        │
+├──────────────────┬──────────────────┬──────────────────────────────┤
+│   Nernst-Planck  │      Turing      │      Federated Learning      │
+│  Electrochemistry│   Morphogenesis  │       Byzantine-Krum         │
+├──────────────────┼──────────────────┼──────────────────────────────┤
+│  E = RT/zF·ln()  │  ∂a/∂t = D∇²a+f  │    Krum(g₁...gₙ) → g*        │
+│  K⁺: -89 mV      │  threshold: 0.75 │    tolerance: 20%            │
+└──────────────────┴──────────────────┴──────────────────────────────┘
 ```
 
 ---
@@ -162,8 +162,8 @@ uvicorn api:app --host 0.0.0.0 --port 8000
 | `/health` | GET | — | `{status, version}` |
 | `/validate` | POST | `{seed, epochs, grid_size}` | `{loss_*, pot_*, fractal_dim}` |
 | `/simulate` | POST | `{seed, grid_size, steps}` | `{field_stats, growth_events}` |
-| `/nernst` | POST | `{z, c_out, c_in, T}` | `{potential_mV}` |
-| `/federated/aggregate` | POST | `{gradients[], clusters}` | `{aggregated_gradient}` |
+| `/nernst` | POST | `{z_valence, concentration_out_molar, concentration_in_molar, temperature_k}` | `{potential_mV}` |
+| `/federated/aggregate` | POST | `{gradients[], num_clusters, byzantine_fraction}` | `{aggregated_gradient}` |
 
 ---
 
