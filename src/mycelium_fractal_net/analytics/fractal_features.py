@@ -254,41 +254,41 @@ def compute_fractal_features(result: "SimulationResult") -> FeatureVector:
 
     This function does not modify the input result.
 
-    Parameters
-    ----------
-    result : SimulationResult
-        Simulation output containing at minimum the final field.
-        If history is available, temporal features will be computed;
-        otherwise temporal features will be set to defaults.
+    Args:
+        result: SimulationResult containing at minimum the final field.
+            If history is available (result.has_history is True), temporal
+            features will be computed from the history array. Otherwise,
+            temporal features will be set to default values (0.0).
 
-    Returns
-    -------
-    FeatureVector
-        Complete feature vector with all 18 features:
-        - Fractal: D_box, D_r2
-        - Basic stats: V_min, V_max, V_mean, V_std, V_skew, V_kurt
-        - Temporal: dV_mean, dV_max, T_stable, E_trend
-        - Structural: f_active, N_clusters_low/med/high, max_cluster_size, cluster_size_std
+    Returns:
+        FeatureVector with all 18 features in values dict:
+            - Fractal: D_box (box-counting dimension), D_r2 (regression fit)
+            - Basic stats: V_min, V_max, V_mean, V_std, V_skew, V_kurt (mV)
+            - Temporal: dV_mean, dV_max, T_stable, E_trend
+            - Structural: f_active, N_clusters_low/med/high, max_cluster_size, cluster_size_std
 
-    Notes
-    -----
-    - All voltage values are converted to mV in the output
-    - NaN/Inf values are not expected (controlled by numerical core)
-    - For valid results, D_box should be in [0, 2.5], biological range [1.4, 1.9]
+    Raises:
+        TypeError: If result is not a SimulationResult instance.
+        ValueError: If result.field has invalid shape (must be 2D square).
 
-    Examples
-    --------
-    >>> from mycelium_fractal_net import run_mycelium_simulation, SimulationConfig
-    >>> from mycelium_fractal_net.analytics.fractal_features import compute_fractal_features
-    >>> result = run_mycelium_simulation(SimulationConfig(steps=50, seed=42))
-    >>> features = compute_fractal_features(result)
-    >>> print(f"D_box: {features.values['D_box']:.3f}")
-    >>> print(f"V_mean: {features.values['V_mean']:.1f} mV")
+    Examples:
+        >>> from mycelium_fractal_net import run_mycelium_simulation, SimulationConfig
+        >>> from mycelium_fractal_net import compute_fractal_features
+        >>> result = run_mycelium_simulation(SimulationConfig(steps=50, seed=42))
+        >>> features = compute_fractal_features(result)
+        >>> print(f"D_box: {features.values['D_box']:.3f}")
+        >>> print(f"V_mean: {features.values['V_mean']:.1f} mV")
 
-    See Also
-    --------
-    MFN_FEATURE_SCHEMA.md : Complete feature specification
-    compute_box_counting_dimension : Box-counting algorithm details
+    Notes:
+        - All voltage values are converted to mV in the output.
+        - NaN/Inf values are not expected (controlled by numerical core).
+        - For valid results, D_box should be in [0, 2.5], biological range [1.4, 1.9].
+        - Does not modify the input result object.
+        - For temporal features, use run_mycelium_simulation_with_history.
+
+    See Also:
+        MFN_FEATURE_SCHEMA.md: Complete feature specification.
+        compute_box_counting_dimension: Box-counting algorithm details.
     """
     # Import here to avoid circular imports
     from mycelium_fractal_net.core.types import SimulationResult as SR
