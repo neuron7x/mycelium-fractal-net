@@ -21,7 +21,7 @@ MyceliumFractalNet (MFN) is a **bio-inspired computational module** designed for
 
 ### 2.1 Responsibilities (In-Scope)
 
-Based on the current implementation (see [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) `code_core: READY`):
+Based on the current implementation (see [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), where `code_core` status is READY):
 
 1. **Membrane Potential Computation** — Calculate equilibrium potentials using the Nernst equation with validated biophysical parameters (R, F, T) and ion concentration clamping.
 
@@ -59,11 +59,11 @@ MFN explicitly does **not** handle and should **not** be extended to include:
 
 6. **Data Persistence / Storage** — MFN does not manage databases, time-series stores, or historical data archives. Parquet export for datasets is the only persistence mechanism.
 
-7. **Authentication / Authorization** — MFN API does not implement authentication, authorization, or access control (see TECHNICAL_AUDIT: `code_integration: PARTIAL`).
+7. **Authentication / Authorization** — MFN API does not implement authentication, authorization, or access control (see [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), `code_integration: PARTIAL`).
 
 8. **Orchestration / Workflow Management** — MFN does not coordinate multi-step workflows, job scheduling, or pipeline orchestration.
 
-9. **Monitoring / Alerting** — MFN does not provide Prometheus metrics, structured logging, or alerting infrastructure (see TECHNICAL_AUDIT: `infra: PARTIAL`).
+9. **Monitoring / Alerting** — MFN does not provide Prometheus metrics, structured logging, or alerting infrastructure (see [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), `infra: PARTIAL`).
 
 10. **External Service Integration** — MFN does not integrate with message queues (Kafka, RabbitMQ), cloud services (AWS, GCP), or third-party APIs.
 
