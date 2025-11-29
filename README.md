@@ -202,7 +202,7 @@ mycelium-fractal-net/
 ├── configs/                 # small | medium | large
 ├── docs/
 │   ├── ARCHITECTURE.md
-│   ├── MATH_MODEL.md
+│   ├── MFN_MATH_MODEL.md
 │   ├── NUMERICAL_CORE.md
 │   ├── FEATURE_SCHEMA.md
 │   └── ROADMAP.md
@@ -238,7 +238,7 @@ Coverage: Nernst • Turing • STDP • Fractal • Federated • Determinism
 | Документ | Опис |
 |:---------|:-----|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архітектура системи |
-| [MATH_MODEL.md](docs/MATH_MODEL.md) | Математична формалізація |
+| [MFN_MATH_MODEL.md](docs/MFN_MATH_MODEL.md) | Математична формалізація |
 | [NUMERICAL_CORE.md](docs/NUMERICAL_CORE.md) | Чисельне ядро |
 | [FEATURE_SCHEMA.md](docs/FEATURE_SCHEMA.md) | Схема фрактальних ознак |
 | [ROADMAP.md](docs/ROADMAP.md) | План розвитку |

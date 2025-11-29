@@ -8,7 +8,7 @@ Usage:
     python -m experiments.generate_dataset --output data/mycelium_dataset.parquet
 
 Features:
-- Parameter sweeps across stable ranges from MATH_MODEL.md
+- Parameter sweeps across stable ranges from MFN_MATH_MODEL.md
 - Reproducible via random_seed control
 - Logging of metrics and failures
 - Output in Parquet format

@@ -6,14 +6,14 @@ Implements stable numerical schemes for membrane potential computation:
 - Explicit Euler and RK4 integration for potential dynamics
 - Ion concentration clamping for numerical stability
 
-Reference: MATH_MODEL.md Section 1 (Membrane Potentials)
+Reference: MFN_MATH_MODEL.md Section 1 (Membrane Potentials)
 
 Equations Implemented:
     E_X = (RT/zF) * ln([X]_out / [X]_in)   # Nernst equation
 
     dV/dt = f(V, I)                         # Membrane ODE (optional)
 
-Parameters (from MATH_MODEL.md Section 1.3):
+Parameters (from MFN_MATH_MODEL.md Section 1.3):
     R = 8.314 J/(mol·K)       - Gas constant
     F = 96485.33 C/mol        - Faraday constant
     T = 310 K                 - Body temperature (37°C)
@@ -38,7 +38,7 @@ from numpy.typing import NDArray
 from .exceptions import NumericalInstabilityError, ValueOutOfRangeError
 
 # === Physical Constants (SI) ===
-# Reference: MATH_MODEL.md Section 1.3
+# Reference: MFN_MATH_MODEL.md Section 1.3
 R_GAS_CONSTANT: float = 8.314  # J/(mol·K)
 FARADAY_CONSTANT: float = 96485.33212  # C/mol
 BODY_TEMPERATURE_K: float = 310.0  # K (~37°C)
@@ -64,7 +64,7 @@ class MembraneConfig:
     Configuration for membrane potential engine.
 
     All parameters have physically meaningful defaults derived from
-    MATH_MODEL.md or are clearly marked as tunable.
+    MFN_MATH_MODEL.md or are clearly marked as tunable.
 
     Attributes
     ----------
@@ -169,7 +169,7 @@ class MembraneEngine:
     Implements Nernst equation and optional ODE integration for
     membrane potential dynamics.
 
-    Reference: MATH_MODEL.md Section 1
+    Reference: MFN_MATH_MODEL.md Section 1
 
     Example
     -------
@@ -213,7 +213,7 @@ class MembraneEngine:
 
         E = (RT/zF) * ln([X]_out / [X]_in)
 
-        Reference: MATH_MODEL.md Section 1.2
+        Reference: MFN_MATH_MODEL.md Section 1.2
 
         Parameters
         ----------

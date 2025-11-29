@@ -6,7 +6,7 @@ This module provides numerically stable implementations of:
 2. Reaction-diffusion field evolution (Turing morphogenesis PDEs)
 3. Fractal growth models (IFS, DLA with stability guarantees)
 
-All implementations follow MATH_MODEL.md specifications with:
+All implementations follow MFN_MATH_MODEL.md specifications with:
 - Explicit stability constraints (CFL conditions, clamping)
 - NaN/Inf prevention via validation and clamping
 - Reproducible results via seeded RNG

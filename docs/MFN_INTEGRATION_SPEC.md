@@ -73,7 +73,7 @@ tests/
 docs/
 ├── ARCHITECTURE.md                      # System architecture overview
 ├── FEATURE_SCHEMA.md                    # 18-feature extraction schema
-├── MATH_MODEL.md                        # Mathematical formalization (PDEs, Nernst)
+├── MFN_MATH_MODEL.md                        # Mathematical formalization (PDEs, Nernst)
 ├── MFN_INTEGRATION_SPEC.md              # This document (NEW in PR-1)
 ├── NUMERICAL_CORE.md                    # Numerical stability and discretization
 ├── ROADMAP.md                           # Development roadmap
@@ -573,7 +573,7 @@ python validation/scientific_validation.py
 | Document | Path | Description |
 |----------|------|-------------|
 | Architecture | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | System architecture, module interactions |
-| Math Model | [docs/MATH_MODEL.md](MATH_MODEL.md) | PDEs, Nernst equation, stability analysis |
+| Math Model | [docs/MFN_MATH_MODEL.md](MFN_MATH_MODEL.md) | PDEs, Nernst equation, stability analysis |
 | Numerical Core | [docs/NUMERICAL_CORE.md](NUMERICAL_CORE.md) | Discretization, CFL conditions |
 | Feature Schema | [docs/FEATURE_SCHEMA.md](FEATURE_SCHEMA.md) | 18-feature extraction specification |
 | Roadmap | [docs/ROADMAP.md](ROADMAP.md) | v4.1 → v4.2+ development plan |

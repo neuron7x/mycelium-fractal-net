@@ -6,7 +6,7 @@ These exceptions provide clear error reporting for:
 - Values outside physically/logically valid ranges
 - Stability constraint violations
 
-Reference: MATH_MODEL.md Section 4.3 (Clamping and Bounds)
+Reference: MFN_MATH_MODEL.md Section 4.3 (Clamping and Bounds)
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ class ValueOutOfRangeError(Exception):
     """
     Raised when a value exceeds physically/logically allowed bounds.
 
-    Reference bounds from MATH_MODEL.md:
+    Reference bounds from MFN_MATH_MODEL.md:
     - Membrane potential: [-95, 40] mV
     - Ion concentration: > 1e-6 M (ION_CLAMP_MIN)
     - Activator/Inhibitor: [0, 1]
