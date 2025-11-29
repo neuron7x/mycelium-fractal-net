@@ -4,8 +4,29 @@ MyceliumFractalNet v4.1 package.
 
 Bio-inspired adaptive network with fractal dynamics, STDP plasticity,
 sparse attention, and Byzantine-robust federated learning.
+
+New in v4.1:
+- core/ module with numerically stable engines for:
+  - Membrane potential (Nernst equation, ODE integration)
+  - Reaction-diffusion (Turing morphogenesis)
+  - Fractal growth (IFS, box-counting)
 """
 
+# Import core engines (new numerical implementations)
+from .core import (
+    FractalConfig,
+    FractalGrowthEngine,
+    FractalMetrics,
+    MembraneConfig,
+    MembraneEngine,
+    MembraneMetrics,
+    NumericalInstabilityError,
+    ReactionDiffusionConfig,
+    ReactionDiffusionEngine,
+    ReactionDiffusionMetrics,
+    StabilityError,
+    ValueOutOfRangeError,
+)
 from .model import (
     BODY_TEMPERATURE_K,
     FARADAY_CONSTANT,
@@ -55,12 +76,26 @@ __all__ = [
     "compute_lyapunov_exponent",
     "run_validation",
     "run_validation_cli",
-    # Classes
+    # Classes (legacy)
     "STDPPlasticity",
     "SparseAttention",
     "HierarchicalKrumAggregator",
     "MyceliumFractalNet",
     "ValidationConfig",
+    # Core Engines (new)
+    "MembraneEngine",
+    "MembraneConfig",
+    "MembraneMetrics",
+    "ReactionDiffusionEngine",
+    "ReactionDiffusionConfig",
+    "ReactionDiffusionMetrics",
+    "FractalGrowthEngine",
+    "FractalConfig",
+    "FractalMetrics",
+    # Exceptions
+    "StabilityError",
+    "ValueOutOfRangeError",
+    "NumericalInstabilityError",
 ]
 
 __version__ = "4.1.0"
