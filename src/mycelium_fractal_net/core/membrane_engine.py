@@ -255,6 +255,33 @@ class MembraneEngine:
         """Reset all metrics to initial values."""
         self._metrics = MembraneMetrics()
 
+    def _validate_ion_valence(self, z_valence: int) -> None:
+        """Validate ion valence against biophysical constraints.
+        
+        Parameters
+        ----------
+        z_valence : int
+            Ion valence to validate.
+            
+        Raises
+        ------
+        ValueOutOfRangeError
+            If valence is zero or not in allowed biological set.
+        """
+        if z_valence == 0:
+            raise ValueOutOfRangeError(
+                "Ion valence cannot be zero",
+                value=0,
+                parameter_name="z_valence",
+            )
+        if z_valence not in ION_VALENCE_ALLOWED:
+            raise ValueOutOfRangeError(
+                f"Ion valence must be one of {ION_VALENCE_ALLOWED} "
+                "(biological ions: K⁺=+1, Na⁺=+1, Cl⁻=-1, Ca²⁺=+2)",
+                value=float(z_valence),
+                parameter_name="z_valence",
+            )
+
     def compute_nernst_potential(
         self,
         z_valence: int,
@@ -288,25 +315,11 @@ class MembraneEngine:
         Raises
         ------
         ValueOutOfRangeError
-            If valence is zero.
+            If valence is zero or not biologically valid.
         NumericalInstabilityError
             If result is NaN or Inf (should not happen with clamping).
         """
-        if z_valence == 0:
-            raise ValueOutOfRangeError(
-                "Ion valence cannot be zero",
-                value=0,
-                parameter_name="z_valence",
-            )
-
-        # Validate ion valence is biophysically plausible
-        if z_valence not in ION_VALENCE_ALLOWED:
-            raise ValueOutOfRangeError(
-                f"Ion valence must be one of {ION_VALENCE_ALLOWED} "
-                "(biological ions: K⁺=+1, Na⁺=+1, Cl⁻=-1, Ca²⁺=+2)",
-                value=float(z_valence),
-                parameter_name="z_valence",
-            )
+        self._validate_ion_valence(z_valence)
 
         temp = temperature_k if temperature_k is not None else self.config.temperature_k
 
@@ -368,21 +381,7 @@ class MembraneEngine:
         NDArray
             Membrane potentials in Volts.
         """
-        if z_valence == 0:
-            raise ValueOutOfRangeError(
-                "Ion valence cannot be zero",
-                value=0,
-                parameter_name="z_valence",
-            )
-
-        # Validate ion valence is biophysically plausible
-        if z_valence not in ION_VALENCE_ALLOWED:
-            raise ValueOutOfRangeError(
-                f"Ion valence must be one of {ION_VALENCE_ALLOWED} "
-                "(biological ions: K⁺=+1, Na⁺=+1, Cl⁻=-1, Ca²⁺=+2)",
-                value=float(z_valence),
-                parameter_name="z_valence",
-            )
+        self._validate_ion_valence(z_valence)
 
         temp = temperature_k if temperature_k is not None else self.config.temperature_k
 

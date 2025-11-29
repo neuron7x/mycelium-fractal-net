@@ -94,6 +94,47 @@ class BoundaryCondition(Enum):
     DIRICHLET = "dirichlet"  # Fixed value at boundary
 
 
+def _validate_diffusion_coefficient(
+    name: str,
+    value: float,
+    min_bound: float,
+    cfl_limit: float = MAX_STABLE_DIFFUSION,
+) -> None:
+    """Validate diffusion coefficient against biophysical and CFL bounds.
+    
+    Parameters
+    ----------
+    name : str
+        Parameter name for error messages.
+    value : float
+        Diffusion coefficient value.
+    min_bound : float
+        Minimum allowed value.
+    cfl_limit : float
+        CFL stability limit (default 0.25).
+        
+    Raises
+    ------
+    StabilityError
+        If value exceeds CFL limit.
+    ValueOutOfRangeError
+        If value is below minimum.
+    """
+    if value >= cfl_limit:
+        raise StabilityError(
+            f"{name}={value} exceeds CFL stability limit "
+            f"of {cfl_limit}. Reduce to maintain numerical stability."
+        )
+    if value < min_bound:
+        raise ValueOutOfRangeError(
+            f"{name} must be in [{min_bound}, {cfl_limit})",
+            value=value,
+            min_bound=min_bound,
+            max_bound=cfl_limit,
+            parameter_name=name,
+        )
+
+
 @dataclass
 class ReactionDiffusionConfig:
     """
@@ -171,50 +212,10 @@ class ReactionDiffusionConfig:
                 parameter_name="grid_size",
             )
 
-        # Activator diffusion validation with biophysical bounds
-        if not (D_ACTIVATOR_MIN <= self.d_activator < MAX_STABLE_DIFFUSION):
-            if self.d_activator >= MAX_STABLE_DIFFUSION:
-                raise StabilityError(
-                    f"d_activator={self.d_activator} exceeds CFL stability limit "
-                    f"of {MAX_STABLE_DIFFUSION}. Reduce to maintain numerical stability."
-                )
-            raise ValueOutOfRangeError(
-                f"d_activator must be in [{D_ACTIVATOR_MIN}, {MAX_STABLE_DIFFUSION})",
-                value=self.d_activator,
-                min_bound=D_ACTIVATOR_MIN,
-                max_bound=MAX_STABLE_DIFFUSION,
-                parameter_name="d_activator",
-            )
-
-        # Inhibitor diffusion validation with biophysical bounds
-        if not (D_INHIBITOR_MIN <= self.d_inhibitor < MAX_STABLE_DIFFUSION):
-            if self.d_inhibitor >= MAX_STABLE_DIFFUSION:
-                raise StabilityError(
-                    f"d_inhibitor={self.d_inhibitor} exceeds CFL stability limit "
-                    f"of {MAX_STABLE_DIFFUSION}. Reduce to maintain numerical stability."
-                )
-            raise ValueOutOfRangeError(
-                f"d_inhibitor must be in [{D_INHIBITOR_MIN}, {MAX_STABLE_DIFFUSION})",
-                value=self.d_inhibitor,
-                min_bound=D_INHIBITOR_MIN,
-                max_bound=MAX_STABLE_DIFFUSION,
-                parameter_name="d_inhibitor",
-            )
-
-        # Alpha (field diffusion) validation with biophysical bounds
-        if not (ALPHA_MIN <= self.alpha < MAX_STABLE_DIFFUSION):
-            if self.alpha >= MAX_STABLE_DIFFUSION:
-                raise StabilityError(
-                    f"alpha={self.alpha} exceeds CFL stability limit "
-                    f"of {MAX_STABLE_DIFFUSION}. Reduce to maintain numerical stability."
-                )
-            raise ValueOutOfRangeError(
-                f"alpha must be in [{ALPHA_MIN}, {MAX_STABLE_DIFFUSION})",
-                value=self.alpha,
-                min_bound=ALPHA_MIN,
-                max_bound=MAX_STABLE_DIFFUSION,
-                parameter_name="alpha",
-            )
+        # Diffusion coefficient validation using helper
+        _validate_diffusion_coefficient("d_activator", self.d_activator, D_ACTIVATOR_MIN)
+        _validate_diffusion_coefficient("d_inhibitor", self.d_inhibitor, D_INHIBITOR_MIN)
+        _validate_diffusion_coefficient("alpha", self.alpha, ALPHA_MIN)
 
         # Reaction rate validation with biophysical bounds
         if not (R_ACTIVATOR_MIN <= self.r_activator <= R_ACTIVATOR_MAX):
