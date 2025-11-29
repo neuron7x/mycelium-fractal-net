@@ -296,10 +296,10 @@ class TestRunSimulationVariants:
         assert result.metadata["config"]["quantum_jitter"] is True
 
     def test_minimal_grid_size(self) -> None:
-        """Test with minimum valid grid size."""
+        """Test with minimum valid grid size for RD engine."""
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation
 
-        # Minimum grid size for RD engine is 4
+        # Note: SimulationConfig allows grid_size >= 2, but RD engine requires >= 4
         config = SimulationConfig(grid_size=4, steps=3, seed=42)
         result = run_mycelium_simulation(config)
 
