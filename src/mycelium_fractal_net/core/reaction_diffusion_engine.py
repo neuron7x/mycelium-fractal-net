@@ -46,15 +46,44 @@ DEFAULT_TURING_THRESHOLD: float = 0.75
 DEFAULT_FIELD_ALPHA: float = 0.18
 DEFAULT_QUANTUM_JITTER_VAR: float = 0.0005
 
+# === Biophysical Parameter Bounds (from MFN_MATH_MODEL.md Section 2.3) ===
+# Diffusion coefficient bounds
+D_ACTIVATOR_MIN: float = 0.01   # grid²/step - short-range diffusion lower bound
+D_ACTIVATOR_MAX: float = 0.5    # grid²/step - should not exceed 2x CFL limit
+D_INHIBITOR_MIN: float = 0.01   # grid²/step - long-range diffusion lower bound
+D_INHIBITOR_MAX: float = 0.3    # grid²/step - should be bounded below activator typical max
+
+# Reaction rate bounds
+R_ACTIVATOR_MIN: float = 0.001  # 1/step - minimum meaningful growth rate
+R_ACTIVATOR_MAX: float = 0.1    # 1/step - upper bound for stability
+R_INHIBITOR_MIN: float = 0.001  # 1/step - minimum damping rate
+R_INHIBITOR_MAX: float = 0.1    # 1/step - upper bound for stability
+
+# Turing threshold bounds
+TURING_THRESHOLD_MIN: float = 0.5   # Below this, patterns trigger too easily
+TURING_THRESHOLD_MAX: float = 0.95  # Above this, patterns rarely form
+
+# Field diffusion coefficient bounds
+ALPHA_MIN: float = 0.05   # Minimum for observable diffusion
+ALPHA_MAX: float = 0.24   # Just below CFL limit (0.25)
+
+# Jitter variance bounds
+JITTER_VAR_MIN: float = 0.0       # No jitter
+JITTER_VAR_MAX: float = 0.01      # Upper limit for stability
+
+# Grid size bounds
+GRID_SIZE_MIN: int = 4    # Minimum for meaningful patterns
+GRID_SIZE_MAX: int = 1024 # Upper limit for computational feasibility
+
 # === Stability Limits ===
 # CFL condition: D * dt * 4/dx² ≤ 1 → D ≤ 0.25 for dt=dx=1
 MAX_STABLE_DIFFUSION: float = 0.25
 
 # === Field Bounds (MFN_MATH_MODEL.md Section 4.3) ===
-FIELD_V_MIN: float = -0.095  # -95 mV
-FIELD_V_MAX: float = 0.040  # +40 mV
+FIELD_V_MIN: float = -0.095  # -95 mV - hyperpolarization limit
+FIELD_V_MAX: float = 0.040   # +40 mV - action potential peak
 INITIAL_POTENTIAL_MEAN: float = -0.070  # -70 mV (resting potential)
-INITIAL_POTENTIAL_STD: float = 0.005  # 5 mV
+INITIAL_POTENTIAL_STD: float = 0.005    # 5 mV initial variance
 
 
 class BoundaryCondition(Enum):
@@ -63,6 +92,47 @@ class BoundaryCondition(Enum):
     PERIODIC = "periodic"  # Wrap around (np.roll)
     NEUMANN = "neumann"  # Zero-flux (mirror at boundary)
     DIRICHLET = "dirichlet"  # Fixed value at boundary
+
+
+def _validate_diffusion_coefficient(
+    name: str,
+    value: float,
+    min_bound: float,
+    cfl_limit: float = MAX_STABLE_DIFFUSION,
+) -> None:
+    """Validate diffusion coefficient against biophysical and CFL bounds.
+    
+    Parameters
+    ----------
+    name : str
+        Parameter name for error messages.
+    value : float
+        Diffusion coefficient value.
+    min_bound : float
+        Minimum allowed value.
+    cfl_limit : float
+        CFL stability limit (default 0.25).
+        
+    Raises
+    ------
+    StabilityError
+        If value exceeds CFL limit.
+    ValueOutOfRangeError
+        If value is below minimum.
+    """
+    if value >= cfl_limit:
+        raise StabilityError(
+            f"{name}={value} exceeds CFL stability limit "
+            f"of {cfl_limit}. Reduce to maintain numerical stability."
+        )
+    if value < min_bound:
+        raise ValueOutOfRangeError(
+            f"{name} must be in [{min_bound}, {cfl_limit})",
+            value=value,
+            min_bound=min_bound,
+            max_bound=cfl_limit,
+            parameter_name=name,
+        )
 
 
 @dataclass
@@ -123,59 +193,63 @@ class ReactionDiffusionConfig:
     random_seed: int | None = None
 
     def __post_init__(self) -> None:
-        """Validate configuration parameters against stability constraints."""
-        # Grid size validation
-        if self.grid_size < 4:
+        """Validate configuration parameters against biophysical and stability constraints.
+
+        Invariants enforced:
+        - Grid size: [4, 1024] for computational feasibility
+        - Diffusion coefficients: < 0.25 for CFL stability, within biophysical ranges
+        - Reaction rates: [0.001, 0.1] for stable pattern formation
+        - Turing threshold: [0.5, 0.95] for meaningful pattern activation
+        - Jitter variance: [0, 0.01] for stability
+        """
+        # Grid size validation with biophysical bounds
+        if not (GRID_SIZE_MIN <= self.grid_size <= GRID_SIZE_MAX):
             raise ValueOutOfRangeError(
-                "Grid size must be at least 4",
+                f"Grid size must be in [{GRID_SIZE_MIN}, {GRID_SIZE_MAX}]",
                 value=float(self.grid_size),
-                min_bound=4.0,
+                min_bound=float(GRID_SIZE_MIN),
+                max_bound=float(GRID_SIZE_MAX),
                 parameter_name="grid_size",
             )
 
-        # CFL stability condition check
-        for name, value in [
-            ("d_activator", self.d_activator),
-            ("d_inhibitor", self.d_inhibitor),
-            ("alpha", self.alpha),
-        ]:
-            if value >= MAX_STABLE_DIFFUSION:
-                raise StabilityError(
-                    f"Diffusion coefficient {name}={value} exceeds CFL stability "
-                    f"limit of {MAX_STABLE_DIFFUSION}. Reduce to maintain numerical stability."
-                )
-            if value < 0:
-                raise ValueOutOfRangeError(
-                    "Diffusion coefficient must be non-negative",
-                    value=value,
-                    min_bound=0.0,
-                    parameter_name=name,
-                )
+        # Diffusion coefficient validation using helper
+        _validate_diffusion_coefficient("d_activator", self.d_activator, D_ACTIVATOR_MIN)
+        _validate_diffusion_coefficient("d_inhibitor", self.d_inhibitor, D_INHIBITOR_MIN)
+        _validate_diffusion_coefficient("alpha", self.alpha, ALPHA_MIN)
 
-        # Reaction rate validation
-        for name, value in [
-            ("r_activator", self.r_activator),
-            ("r_inhibitor", self.r_inhibitor),
-        ]:
-            if value < 0:
-                raise ValueOutOfRangeError(
-                    "Reaction rate must be non-negative",
-                    value=value,
-                    min_bound=0.0,
-                    parameter_name=name,
-                )
-
-        # Threshold validation
-        if not (0 <= self.turing_threshold <= 1):
+        # Reaction rate validation with biophysical bounds
+        if not (R_ACTIVATOR_MIN <= self.r_activator <= R_ACTIVATOR_MAX):
             raise ValueOutOfRangeError(
-                "Turing threshold must be in [0, 1]",
+                f"r_activator must be in [{R_ACTIVATOR_MIN}, {R_ACTIVATOR_MAX}] "
+                "for stable pattern formation",
+                value=self.r_activator,
+                min_bound=R_ACTIVATOR_MIN,
+                max_bound=R_ACTIVATOR_MAX,
+                parameter_name="r_activator",
+            )
+
+        if not (R_INHIBITOR_MIN <= self.r_inhibitor <= R_INHIBITOR_MAX):
+            raise ValueOutOfRangeError(
+                f"r_inhibitor must be in [{R_INHIBITOR_MIN}, {R_INHIBITOR_MAX}] "
+                "for stable damping",
+                value=self.r_inhibitor,
+                min_bound=R_INHIBITOR_MIN,
+                max_bound=R_INHIBITOR_MAX,
+                parameter_name="r_inhibitor",
+            )
+
+        # Turing threshold validation with biophysical bounds
+        if not (TURING_THRESHOLD_MIN <= self.turing_threshold <= TURING_THRESHOLD_MAX):
+            raise ValueOutOfRangeError(
+                f"turing_threshold must be in [{TURING_THRESHOLD_MIN}, {TURING_THRESHOLD_MAX}] "
+                "for meaningful pattern activation",
                 value=self.turing_threshold,
-                min_bound=0.0,
-                max_bound=1.0,
+                min_bound=TURING_THRESHOLD_MIN,
+                max_bound=TURING_THRESHOLD_MAX,
                 parameter_name="turing_threshold",
             )
 
-        # Probability validation
+        # Spike probability validation
         if not (0 <= self.spike_probability <= 1):
             raise ValueOutOfRangeError(
                 "Spike probability must be in [0, 1]",
@@ -183,6 +257,16 @@ class ReactionDiffusionConfig:
                 min_bound=0.0,
                 max_bound=1.0,
                 parameter_name="spike_probability",
+            )
+
+        # Jitter variance validation
+        if not (JITTER_VAR_MIN <= self.jitter_var <= JITTER_VAR_MAX):
+            raise ValueOutOfRangeError(
+                f"jitter_var must be in [{JITTER_VAR_MIN}, {JITTER_VAR_MAX}] for stability",
+                value=self.jitter_var,
+                min_bound=JITTER_VAR_MIN,
+                max_bound=JITTER_VAR_MAX,
+                parameter_name="jitter_var",
             )
 
 

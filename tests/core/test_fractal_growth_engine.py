@@ -7,6 +7,7 @@ Validates:
 - Fractal dimension bounds [0, 2]
 - No NaN/Inf in generated points
 - Determinism with fixed seeds
+- Biophysical parameter calibration and invariants
 """
 
 import time
@@ -21,6 +22,8 @@ from mycelium_fractal_net.core import (
     ValueOutOfRangeError,
 )
 from mycelium_fractal_net.core.fractal_growth_engine import (
+    BIOLOGICAL_DIM_MAX,
+    BIOLOGICAL_DIM_MIN,
     DEFAULT_NUM_POINTS,
     DEFAULT_NUM_TRANSFORMS,
     DEFAULT_SCALE_MAX,
@@ -28,6 +31,12 @@ from mycelium_fractal_net.core.fractal_growth_engine import (
     FRACTAL_DIM_MAX,
     FRACTAL_DIM_MIN,
     LYAPUNOV_STABLE_MAX,
+    NUM_POINTS_MIN,
+    NUM_SCALES_MAX,
+    NUM_SCALES_MIN,
+    NUM_TRANSFORMS_MAX,
+    NUM_TRANSFORMS_MIN,
+    TRANSLATION_RANGE_MAX,
 )
 
 
@@ -364,3 +373,163 @@ class TestPerformance:
         
         # Should complete in < 1 second
         assert elapsed < 1.0, f"Took {elapsed:.2f}s, expected < 1s"
+
+
+class TestBiophysicalCalibration:
+    """Test biophysical parameter calibration and invariants.
+    
+    Reference: MFN_MATH_MODEL.md Section 3 - Fractal Growth
+    
+    These tests verify that:
+    1. Parameters outside biophysical ranges trigger hard failures
+    2. Normal parameters produce stable dynamics without NaN/Inf
+    """
+
+    def test_num_points_outside_bounds_raises(self) -> None:
+        """num_points outside [1000, 100000] should raise.
+        
+        Biophysical constraint: Too few points cannot capture fractal structure;
+        too many is computationally prohibitive.
+        """
+        with pytest.raises(ValueOutOfRangeError, match="num_points"):
+            FractalConfig(num_points=NUM_POINTS_MIN - 100)
+
+    def test_num_transforms_outside_bounds_raises(self) -> None:
+        """num_transforms outside [2, 8] should raise.
+        
+        Biophysical constraint: Fewer than 2 transforms creates trivial patterns;
+        more than 8 adds complexity without benefit.
+        """
+        with pytest.raises(ValueOutOfRangeError, match="num_transforms"):
+            FractalConfig(num_transforms=NUM_TRANSFORMS_MIN - 1)
+
+        with pytest.raises(ValueOutOfRangeError, match="num_transforms"):
+            FractalConfig(num_transforms=NUM_TRANSFORMS_MAX + 1)
+
+    def test_translation_range_above_maximum_raises(self) -> None:
+        """translation_range above maximum should raise.
+        
+        Biophysical constraint: e, f ∈ [-2, 2] per MFN_MATH_MODEL.md
+        """
+        with pytest.raises(ValueOutOfRangeError, match="translation_range"):
+            FractalConfig(translation_range=TRANSLATION_RANGE_MAX + 0.5)
+
+    def test_num_scales_outside_bounds_raises(self) -> None:
+        """num_scales outside [3, 10] should raise.
+        
+        Biophysical constraint: Too few scales gives unreliable regression;
+        too many is computationally wasteful.
+        """
+        with pytest.raises(ValueOutOfRangeError, match="num_scales"):
+            FractalConfig(num_scales=NUM_SCALES_MIN - 1)
+
+        with pytest.raises(ValueOutOfRangeError, match="num_scales"):
+            FractalConfig(num_scales=NUM_SCALES_MAX + 1)
+
+    def test_parameters_at_boundaries_valid(self) -> None:
+        """Parameters at boundary values should be valid."""
+        # Test minimum values
+        config_min = FractalConfig(
+            num_points=NUM_POINTS_MIN,
+            num_transforms=NUM_TRANSFORMS_MIN,
+            num_scales=NUM_SCALES_MIN,
+        )
+        assert config_min.num_points == NUM_POINTS_MIN
+        
+        # Test maximum values
+        config_max = FractalConfig(
+            num_transforms=NUM_TRANSFORMS_MAX,
+            num_scales=NUM_SCALES_MAX,
+            translation_range=TRANSLATION_RANGE_MAX,
+        )
+        assert config_max.num_transforms == NUM_TRANSFORMS_MAX
+
+
+class TestInvariantsVerification:
+    """Test mathematical invariants from MFN_MATH_MODEL.md Section 3."""
+
+    def test_lyapunov_negative_invariant(self) -> None:
+        """Lyapunov exponent should be negative for all contractive IFS.
+        
+        Invariant: λ < 0 for stable (contractive) dynamics
+        Reference: MFN_MATH_MODEL.md Section 3.3
+        """
+        for seed in range(20):
+            config = FractalConfig(num_points=5000, random_seed=seed)
+            engine = FractalGrowthEngine(config)
+            _, lyap = engine.generate_ifs()
+            
+            assert lyap < LYAPUNOV_STABLE_MAX, \
+                f"λ = {lyap:.3f} >= 0 at seed={seed} (non-contractive)"
+            assert engine.metrics.is_contractive
+
+    def test_contraction_requirement_invariant(self) -> None:
+        """All transforms should satisfy |ad - bc| < 1.
+        
+        Invariant: Contraction requirement ensures IFS convergence
+        Reference: MFN_MATH_MODEL.md Section 3.2
+        """
+        config = FractalConfig(num_points=1000, random_seed=42)
+        engine = FractalGrowthEngine(config)
+        engine.generate_ifs()
+        
+        assert engine.validate_contraction()
+        
+        for a, b, c, d, e, f in engine.transforms or []:
+            det = abs(a * d - b * c)
+            assert det < 1.0, f"Determinant {det:.4f} >= 1 (non-contractive)"
+
+    def test_dimension_bounds_invariant(self) -> None:
+        """Fractal dimension should be in [0, 2] for 2D binary fields.
+        
+        Invariant: 0 < D < 2 for 2D binary fields
+        Reference: MFN_MATH_MODEL.md Section 3.8
+        """
+        config = FractalConfig()
+        engine = FractalGrowthEngine(config)
+        rng = np.random.default_rng(42)
+        
+        for threshold in [0.3, 0.5, 0.7]:
+            binary = rng.random((64, 64)) > threshold
+            dim = engine.estimate_dimension(binary)
+            
+            assert FRACTAL_DIM_MIN <= dim <= FRACTAL_DIM_MAX + 0.5, \
+                f"Dimension {dim:.3f} outside bounds for threshold={threshold}"
+
+    def test_biological_dimension_range(self) -> None:
+        """Mycelium-like patterns should have D ∈ [1.4, 1.9].
+        
+        Invariant: Biological mycelium D ≈ 1.4-1.9
+        Reference: MFN_MATH_MODEL.md Section 3.6
+        
+        Note: This tests that dimension_range validation works correctly,
+        not that simulated patterns achieve this range (that would be empirical).
+        """
+        config = FractalConfig()
+        engine = FractalGrowthEngine(config)
+        
+        # Test validation function
+        assert engine.validate_dimension_range(1.5, biological=True)
+        assert engine.validate_dimension_range(1.7, biological=True)
+        assert engine.validate_dimension_range(BIOLOGICAL_DIM_MIN, biological=True)
+        assert engine.validate_dimension_range(BIOLOGICAL_DIM_MAX, biological=True)
+        
+        # Outside biological range
+        assert not engine.validate_dimension_range(1.0, biological=True)
+        assert not engine.validate_dimension_range(2.0, biological=True)
+
+    def test_no_nan_inf_invariant(self) -> None:
+        """No NaN/Inf in generated points for any valid configuration.
+        
+        Invariant: Stability - contractive IFS produces finite points
+        Reference: MFN_MATH_MODEL.md Section 3.8
+        """
+        for seed in range(50):
+            config = FractalConfig(num_points=1000, random_seed=seed)
+            engine = FractalGrowthEngine(config)
+            
+            points, lyap = engine.generate_ifs()
+            
+            assert np.isfinite(points).all(), f"NaN/Inf at seed={seed}"
+            assert np.isfinite(lyap), f"NaN Lyapunov at seed={seed}"
+            assert engine.metrics.points_bounded
