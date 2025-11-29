@@ -170,9 +170,8 @@ class TestMyceliumField:
         config = SimulationConfig(grid_size=8, seed=42)
         mf = MyceliumField(config)
 
-        # Modify field
-        mf._field[0, 0] = 0.0
-        mf._step_count = 100
+        # Modify field via public property (numpy array is mutable)
+        mf.field[0, 0] = 0.0
 
         # Reset
         mf.reset()
