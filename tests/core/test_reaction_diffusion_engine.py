@@ -31,7 +31,6 @@ from mycelium_fractal_net.core.reaction_diffusion_engine import (
     DEFAULT_TURING_THRESHOLD,
     FIELD_V_MAX,
     FIELD_V_MIN,
-    GRID_SIZE_MAX,
     GRID_SIZE_MIN,
     JITTER_VAR_MAX,
     MAX_STABLE_DIFFUSION,

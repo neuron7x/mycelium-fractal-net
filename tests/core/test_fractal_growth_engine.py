@@ -31,7 +31,6 @@ from mycelium_fractal_net.core.fractal_growth_engine import (
     FRACTAL_DIM_MAX,
     FRACTAL_DIM_MIN,
     LYAPUNOV_STABLE_MAX,
-    NUM_POINTS_MAX,
     NUM_POINTS_MIN,
     NUM_SCALES_MAX,
     NUM_SCALES_MIN,

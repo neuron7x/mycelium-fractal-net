@@ -25,11 +25,11 @@ from mycelium_fractal_net.core.membrane_engine import (
     DT_MIN,
     ION_CLAMP_MIN,
     ION_VALENCE_ALLOWED,
-    IntegrationScheme,
     POTENTIAL_MAX_V,
     POTENTIAL_MIN_V,
     TEMPERATURE_MAX_K,
     TEMPERATURE_MIN_K,
+    IntegrationScheme,
 )
 
 
