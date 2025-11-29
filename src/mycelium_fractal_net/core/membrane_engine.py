@@ -392,7 +392,7 @@ class MembraneEngine:
         ) -> NDArray[np.floating[Any]]:
             result = derivative_fn(arr)
             if isinstance(result, np.ndarray):
-                return cast(NDArray[np.floating[Any]], result)
+                return result
             return np.array([result])
 
         for step in range(steps):
