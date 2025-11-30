@@ -4,14 +4,23 @@ Dataset Generation Pipeline for MyceliumFractalNet.
 Generates experimental datasets by running simulations with parameter sweeps
 and extracting features as defined in FEATURE_SCHEMA.md.
 
-Usage:
-    python -m experiments.generate_dataset --output data/mycelium_dataset.parquet
+Usage (scenario-based - recommended):
+    python -m experiments.generate_dataset --preset small
+    python -m experiments.generate_dataset --preset medium
+    python -m experiments.generate_dataset --preset large
+
+Usage (legacy sweep mode):
+    python -m experiments.generate_dataset --output data/mycelium_dataset.parquet --sweep default
 
 Features:
+- Scenario-based data generation with small/medium/large presets
 - Parameter sweeps across stable ranges from MFN_MATH_MODEL.md
 - Reproducible via random_seed control
+- Atomic file writes for data integrity
 - Logging of metrics and failures
 - Output in Parquet format
+
+Reference: docs/MFN_DATA_PIPELINES.md
 """
 
 from __future__ import annotations
@@ -34,6 +43,11 @@ from analytics import FeatureConfig, FeatureVector, compute_features
 from mycelium_fractal_net.core import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
+)
+from mycelium_fractal_net.pipelines import (
+    get_preset_config,
+    list_presets,
+    run_scenario,
 )
 
 # === Logging Setup ===
@@ -314,21 +328,43 @@ def generate_dataset(
 def main() -> None:
     """Main entry point for dataset generation."""
     parser = argparse.ArgumentParser(
-        description="Generate MyceliumFractalNet experimental dataset"
+        description="Generate MyceliumFractalNet experimental dataset",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Run with a preset (recommended)
+  python -m experiments.generate_dataset --preset small
+  python -m experiments.generate_dataset --preset medium
+
+  # Legacy sweep mode
+  python -m experiments.generate_dataset --sweep default --output data/my_dataset.parquet
+
+Available presets: small, medium, large, benchmark
+        """,
     )
+
+    # Scenario-based arguments
+    parser.add_argument(
+        "--preset",
+        "-p",
+        type=str,
+        choices=list_presets(),
+        help="Scenario preset: small (quick test), medium (standard), large (production)",
+    )
+
+    # Legacy sweep arguments
     parser.add_argument(
         "--output",
         "-o",
         type=Path,
         default=Path("data/mycelium_dataset.parquet"),
-        help="Output path for dataset",
+        help="Output path for dataset (legacy sweep mode)",
     )
     parser.add_argument(
         "--sweep",
         type=str,
         choices=["minimal", "default", "extended"],
-        default="default",
-        help="Sweep configuration preset",
+        help="Sweep configuration preset (legacy mode, use --preset instead)",
     )
     parser.add_argument(
         "--seed",
@@ -342,41 +378,80 @@ def main() -> None:
         action="store_true",
         help="Verbose output",
     )
+    parser.add_argument(
+        "--list-presets",
+        action="store_true",
+        help="List available presets and exit",
+    )
 
     args = parser.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # Select sweep configuration
-    if args.sweep == "minimal":
-        sweep = _create_minimal_sweep()
-    elif args.sweep == "extended":
-        sweep = _create_extended_sweep()
-    else:
-        sweep = _create_default_sweep()
+    # Handle --list-presets
+    if args.list_presets:
+        print("Available presets:")
+        for preset_name in list_presets():
+            config = get_preset_config(preset_name)
+            print(f"  {preset_name}: {config.description}")
+        return
 
-    sweep.base_seed = args.seed
+    # Scenario-based mode (preferred)
+    if args.preset:
+        config = get_preset_config(args.preset)
+        config.base_seed = args.seed
 
-    # Generate dataset
-    stats = generate_dataset(sweep, args.output)
+        print(f"\n=== Running Scenario: {config.name} ===")
+        print(f"Description: {config.description}")
+        print(f"Grid: {config.grid_size}x{config.grid_size}, Steps: {config.steps}")
+        print(f"Samples: {config.num_samples}")
+        print()
 
-    # Print summary
-    print("\n=== Dataset Generation Summary ===")
-    print(f"Total configurations: {stats['total_configs']}")
-    print(f"Successful: {stats['successful']}")
-    print(f"Failed: {stats['failed']}")
-    print(f"Success rate: {stats['success_rate']:.1%}")
-    print(f"Time: {stats['elapsed_seconds']:.1f}s")
+        meta = run_scenario(config, data_root=Path("data"))
 
-    if stats["successful"] > 0:
-        print("\n=== Feature Ranges ===")
-        for key in ["D_box", "V_mean", "f_active"]:
-            if f"{key}_mean" in stats:
-                print(
-                    f"{key}: [{stats[f'{key}_min']:.3f}, {stats[f'{key}_max']:.3f}] "
-                    f"(mean: {stats[f'{key}_mean']:.3f})"
-                )
+        print("\n=== Scenario Complete ===")
+        print(f"Output: {meta.output_path}")
+        print(f"Rows: {meta.num_rows}")
+        print(f"Columns: {meta.num_columns}")
+        print(f"Time: {meta.elapsed_seconds:.1f}s")
+        return
+
+    # Legacy sweep mode
+    if args.sweep:
+        if args.sweep == "minimal":
+            sweep = _create_minimal_sweep()
+        elif args.sweep == "extended":
+            sweep = _create_extended_sweep()
+        else:
+            sweep = _create_default_sweep()
+
+        sweep.base_seed = args.seed
+
+        # Generate dataset
+        stats = generate_dataset(sweep, args.output)
+
+        # Print summary
+        print("\n=== Dataset Generation Summary ===")
+        print(f"Total configurations: {stats['total_configs']}")
+        print(f"Successful: {stats['successful']}")
+        print(f"Failed: {stats['failed']}")
+        print(f"Success rate: {stats['success_rate']:.1%}")
+        print(f"Time: {stats['elapsed_seconds']:.1f}s")
+
+        if stats["successful"] > 0:
+            print("\n=== Feature Ranges ===")
+            for key in ["D_box", "V_mean", "f_active"]:
+                if f"{key}_mean" in stats:
+                    print(
+                        f"{key}: [{stats[f'{key}_min']:.3f}, {stats[f'{key}_max']:.3f}] "
+                        f"(mean: {stats[f'{key}_mean']:.3f})"
+                    )
+        return
+
+    # Default: show help
+    parser.print_help()
+    print("\nTip: Use --preset small for a quick test run.")
 
 
 if __name__ == "__main__":

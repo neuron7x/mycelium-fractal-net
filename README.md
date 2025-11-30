@@ -262,8 +262,55 @@ MyceliumFractalNet (MFN) — це **фрактальний морфогенет�
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архітектура системи |
 | [MFN_MATH_MODEL.md](docs/MFN_MATH_MODEL.md) | Математична формалізація |
 | [NUMERICAL_CORE.md](docs/NUMERICAL_CORE.md) | Чисельне ядро |
-| [FEATURE_SCHEMA.md](docs/FEATURE_SCHEMA.md) | Схема фрактальних ознак |
+| [MFN_FEATURE_SCHEMA.md](docs/MFN_FEATURE_SCHEMA.md) | Схема фрактальних ознак |
+| [MFN_DATA_PIPELINES.md](docs/MFN_DATA_PIPELINES.md) | Data pipelines та сценарії |
 | [ROADMAP.md](docs/ROADMAP.md) | План розвитку |
+
+---
+
+## Datasets & Scenarios
+
+MFN provides a scenario-based data generation pipeline for creating datasets
+with 18 standardized fractal features. See [docs/MFN_DATA_PIPELINES.md](docs/MFN_DATA_PIPELINES.md) for full documentation.
+
+### Quick Start
+
+```bash
+# List available presets
+python -m experiments.generate_dataset --list-presets
+
+# Generate a small test dataset (~10 samples, <10 seconds)
+python -m experiments.generate_dataset --preset small
+
+# Generate a medium dataset (~100 samples, ~1-2 minutes)
+python -m experiments.generate_dataset --preset medium
+
+# Generate a large production dataset (~500 samples)
+python -m experiments.generate_dataset --preset large
+```
+
+### Preset Summary
+
+| Preset | Samples | Grid | Steps | Use Case |
+|:-------|:--------|:-----|:------|:---------|
+| `small` | 10 | 32×32 | 50 | Quick tests, CI/CD |
+| `medium` | 100 | 64×64 | 100 | Development, ML training |
+| `large` | 500 | 128×128 | 200 | Production datasets |
+
+### Output Format
+
+Datasets are saved as Parquet files with:
+- **7 simulation parameters** (grid_size, steps, alpha, seed, etc.)
+- **18 fractal features** (D_box, V_mean, f_active, etc.)
+- **3 metadata columns** (growth_events, turing_activations, clamping_events)
+
+```python
+import pandas as pd
+
+# Load generated dataset
+df = pd.read_parquet("data/scenarios/features_medium/20250530_120000/dataset.parquet")
+print(df[["D_box", "V_mean", "f_active"]].describe())
+```
 
 ---
 
@@ -289,8 +336,11 @@ feature_array = features.to_array()  # shape: (18,)
 ### Dataset Generation
 
 ```bash
-# Generate experimental dataset
-python -m experiments.generate_dataset --output data/mycelium_dataset.parquet
+# Scenario-based generation (recommended)
+python -m experiments.generate_dataset --preset small
+
+# Legacy sweep mode
+python -m experiments.generate_dataset --sweep default --output data/mycelium_dataset.parquet
 
 # Inspect features
 python -m experiments.inspect_features --input data/mycelium_dataset.parquet
