@@ -13,13 +13,28 @@
   <img src="https://img.shields.io/badge/v4.1.0-stable-0969da?style=flat-square" alt="v4.1.0" />
   <img src="https://img.shields.io/badge/Python-≥3.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/PyTorch-≥2.0-ee4c2c?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch" />
-  <img src="https://img.shields.io/badge/tests-passing-2da44e?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-807%20passed-2da44e?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/coverage-84%25-2da44e?style=flat-square" alt="Coverage" />
   <img src="https://img.shields.io/badge/license-MIT-97ca00?style=flat-square" alt="MIT" />
 </p>
 
 <p align="center">
   <img src="assets/morphogenesis.gif" alt="Turing morphogenesis" width="380" />
 </p>
+
+---
+
+## Test & Validation Status
+
+| Category | Status | Details |
+|----------|--------|---------|
+| **Unit Tests** | ✅ 807 passed | 1 skipped (manual profiling) |
+| **Coverage** | ✅ 84% | Core modules >90% |
+| **Scientific Validation** | ✅ 11/11 | Nernst, Turing, fractal dimension |
+| **Benchmarks** | ✅ 8/8 | All targets exceeded by 5-200x |
+| **Linting** | ✅ passed | ruff + mypy |
+
+📊 [Latest Test Health Report](docs/reports/MFN_TEST_HEALTH_2025-11-30.md) | 📈 [Performance Baselines](docs/MFN_PERFORMANCE_BASELINES.md) | 📋 [Technical Audit](docs/TECHNICAL_AUDIT.md)
 
 ---
 
