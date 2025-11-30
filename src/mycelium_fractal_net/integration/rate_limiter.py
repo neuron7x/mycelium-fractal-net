@@ -165,7 +165,7 @@ class RateLimiter:
         # Check for specific endpoint limit
         for path, limit in self.config.per_endpoint_limits.items():
             if endpoint.startswith(path):
-                return int(limit)
+                return limit
 
         # Fall back to default
         return self.config.max_requests
