@@ -26,6 +26,9 @@ from typing import Optional
 import numpy as np
 from numpy.random import Generator
 
+# Default seed for reproducibility when not specified
+DEFAULT_SEED: int = 42
+
 
 @dataclass
 class RNGContext:
@@ -149,7 +152,7 @@ def create_rng(seed: int | None = None) -> RNGContext:
     Parameters
     ----------
     seed : int | None
-        The seed for reproducibility. If None, uses a default seed of 42.
+        The seed for reproducibility. If None, uses DEFAULT_SEED (42).
 
     Returns
     -------
@@ -162,7 +165,7 @@ def create_rng(seed: int | None = None) -> RNGContext:
     >>> values = rng_ctx.numpy_rng.random(5)
     """
     if seed is None:
-        seed = 42
+        seed = DEFAULT_SEED
     return RNGContext.create(seed)
 
 
@@ -228,11 +231,12 @@ def get_numpy_rng(seed: int | None = None) -> Generator:
     >>> values = rng.random(10)
     """
     if seed is None:
-        seed = 42
+        seed = DEFAULT_SEED
     return np.random.default_rng(seed)
 
 
 __all__ = [
+    "DEFAULT_SEED",
     "RNGContext",
     "create_rng",
     "set_global_seed",

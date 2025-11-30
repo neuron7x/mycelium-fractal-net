@@ -10,6 +10,7 @@ Reference:
 """
 
 from .rng import (
+    DEFAULT_SEED,
     RNGContext,
     create_rng,
     get_numpy_rng,
@@ -26,6 +27,7 @@ from .run_registry import (
 
 __all__ = [
     # RNG control
+    "DEFAULT_SEED",
     "RNGContext",
     "create_rng",
     "set_global_seed",

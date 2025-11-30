@@ -169,26 +169,25 @@ class RunRegistry:
 
         self.root_dir = Path(root_dir)
 
-    def _get_git_commit(self) -> Optional[str]:
-        """Get the current git commit hash."""
-        try:
-            result = subprocess.run(
-                ["git", "rev-parse", "--short", "HEAD"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            if result.returncode == 0:
-                return result.stdout.strip()
-        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-            pass
-        return None
+    def _get_git_commit(self, short: bool = True) -> Optional[str]:
+        """Get the current git commit hash.
 
-    def _get_git_commit_full(self) -> Optional[str]:
-        """Get the full current git commit hash."""
+        Parameters
+        ----------
+        short : bool
+            If True, return short hash (7 chars). If False, return full hash.
+
+        Returns
+        -------
+        str | None
+            Git commit hash or None if not in a git repo.
+        """
         try:
+            args = ["git", "rev-parse", "HEAD"]
+            if short:
+                args.insert(2, "--short")
             result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
+                args,
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -295,7 +294,7 @@ class RunRegistry:
             run_id=run_id,
             run_type=run_type,
             timestamp=timestamp.isoformat(),
-            git_commit=self._get_git_commit_full(),
+            git_commit=self._get_git_commit(short=False),
             command=command,
             env=env,
             seed=seed,
