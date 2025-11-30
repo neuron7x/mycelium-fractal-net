@@ -90,7 +90,75 @@ Configuration: `make_dataset_config_demo()` (5 samples)
 
 ---
 
-## 5. Notes
+## 5. API Load Tests
+
+### 5.1 Overview
+
+API load testing is performed using Locust. Test scenarios are defined in
+`load_tests/locustfile.py` and cover all API endpoints.
+
+### 5.2 Running Locust Tests
+
+```bash
+# Start the API server
+uvicorn api:app --host 0.0.0.0 --port 8000
+
+# Run Locust with web UI (in another terminal)
+locust -f load_tests/locustfile.py --host http://localhost:8000
+
+# Run headless with specific parameters
+locust -f load_tests/locustfile.py --host http://localhost:8000 \
+    --headless -u 10 -r 2 -t 1m
+```
+
+### 5.3 Endpoint Baselines
+
+| Endpoint | Method | p50 (ms) | p95 (ms) | p99 (ms) | Max RPS |
+|----------|--------|----------|----------|----------|---------|
+| /health | GET | <10 | <50 | <100 | 1000+ |
+| /metrics | GET | <10 | <50 | <100 | 500+ |
+| /nernst | POST | <50 | <200 | <500 | 100+ |
+| /simulate (32x32) | POST | <1000 | <2000 | <5000 | 10+ |
+| /validate | POST | <5000 | <10000 | <15000 | 5+ |
+
+### 5.4 Load Test Scenarios
+
+| Scenario | Users | Duration | Target RPS | Error Rate |
+|----------|-------|----------|------------|------------|
+| Smoke | 1 | 30s | - | 0% |
+| Steady | 10 | 5m | 50 | <1% |
+| Spike | 50 | 1m | 100 | <5% |
+
+### 5.5 Monitoring During Tests
+
+Use the `/metrics` endpoint to observe:
+- `mfn_http_requests_total` - Request count by endpoint/status
+- `mfn_http_request_duration_seconds` - Latency histogram
+- `mfn_http_requests_in_progress` - Active requests
+
+Example Prometheus queries:
+```promql
+# Request rate
+rate(mfn_http_requests_total[1m])
+
+# P95 latency
+histogram_quantile(0.95, rate(mfn_http_request_duration_seconds_bucket[5m]))
+
+# Error rate
+rate(mfn_http_requests_total{status=~"5.."}[1m])
+```
+
+### 5.6 Environment Variables for Load Tests
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| MFN_LOADTEST_BASE_URL | API base URL | http://localhost:8000 |
+| MFN_LOADTEST_API_KEY | API key for authentication | (none) |
+| MFN_LOADTEST_DURATION | Test duration (headless) | (via CLI) |
+
+---
+
+## 6. Notes
 
 ### Measurement Guidelines
 
@@ -113,12 +181,18 @@ When optimizing code:
 
 ---
 
-## 6. Commands
+## 7. Commands
 
 ### Run Performance Tests
 
 ```bash
 pytest tests/perf/test_mfn_performance.py -v
+```
+
+### Run Small Performance Tests (CI)
+
+```bash
+pytest tests/performance/test_api_performance_small.py -v
 ```
 
 ### Profile Key Paths
@@ -138,6 +212,6 @@ print(f'Time: {time.perf_counter() - start:.4f}s')
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: 2025-11-29*
+*Document Version: 1.1*
+*Last Updated: 2025-11-30*
 *Applies to: MyceliumFractalNet v4.1.0*

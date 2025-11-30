@@ -1,7 +1,8 @@
 # MFN Integration Layers & Gaps
 
-**Document Version**: 1.0  
+**Document Version**: 1.1  
 **Analysis Date**: 2025-11-29  
+**Updated**: 2025-11-30  
 **Target Version**: MyceliumFractalNet v4.1.0  
 **Analysis Scope**: External integration layers and components
 
@@ -25,21 +26,21 @@ MFN operates as a **fractal morphogenetic feature engine** — a computational m
 
 | Layer ID | Category | Scope | Readiness | Source(s) | Notes |
 |----------|----------|-------|-----------|-----------|-------|
-| mfn-api-rest | external_api | inbound/outbound | PARTIAL | code, docs | FastAPI with 5 endpoints; lacks auth, rate limiting, CORS |
+| mfn-api-rest | external_api | inbound/outbound | PARTIAL | code, docs | FastAPI with 6 endpoints; CORS configured |
+| mfn-auth | external_api | inbound | **READY** | code | API key authentication middleware |
+| mfn-rate-limiting | external_api | inbound | **READY** | code | Token bucket rate limiting |
+| mfn-monitoring | monitoring_metrics | outbound | **READY** | code | Prometheus metrics at /metrics |
+| mfn-logging | logging_tracing | outbound | **READY** | code | JSON structured logging with request ID |
 | mfn-cli | cli_interface | inbound | READY | code, docs | `mycelium_fractal_net_v4_1.py` — validate/simulate modes |
 | mfn-docker | deployment_layer | infrastructure | READY | code, docs | Multi-stage build with healthcheck |
 | mfn-k8s | deployment_layer | infrastructure | PARTIAL | code, docs | Deployment, Service, HPA, ConfigMap; lacks secrets, ingress, network policies |
 | mfn-ci-cd | deployment_layer | infrastructure | READY | code | GitHub Actions: lint, test, validate, benchmark, scientific-validation |
-| mfn-config-json | config_management | inbound | PARTIAL | code, docs | JSON configs (small/medium/large); lacks environment-specific configs, secrets |
+| mfn-config-json | config_management | inbound | PARTIAL | code, docs | JSON configs (small/medium/large); lacks secrets |
 | mfn-feature-extraction | batch_pipeline_adapter | outbound | READY | code, docs | `analytics/fractal_features.py` — 18 features → FeatureVector |
 | mfn-dataset-generation | batch_pipeline_adapter | outbound | READY | code, docs | `experiments/generate_dataset.py` — parquet output |
 | mfn-api-streaming | streaming_adapter | inbound/outbound | MISSING | roadmap | Planned in v4.3; no implementation |
 | mfn-api-websocket | external_api | inbound/outbound | MISSING | roadmap | Planned in v4.3; no implementation |
 | mfn-api-grpc | external_api | inbound/outbound | MISSING | roadmap | Planned in v4.3; no implementation |
-| mfn-monitoring | monitoring_metrics | outbound | MISSING | docs, system_role | No Prometheus metrics, no structured logging |
-| mfn-logging | logging_tracing | outbound | MISSING | docs | No structured logging, no distributed tracing |
-| mfn-auth | external_api | inbound | MISSING | docs, system_role | API lacks authentication/authorization |
-| mfn-rate-limiting | external_api | inbound | MISSING | docs | No rate limiter for API endpoints |
 | mfn-upstream-connector | batch_pipeline_adapter | inbound | MISSING | system_role | No formal connectors for external data ingestion |
 | mfn-downstream-publisher | streaming_adapter | outbound | MISSING | system_role | No event publishing (Kafka, webhooks, etc.) |
 | mfn-risk-signals | risk_signals_adapter | outbound | MISSING | system_role | No separate risk/regime change signals channel |
@@ -228,21 +229,21 @@ For MFN to operate as a production-ready component within a larger system, the f
 
 ### Tier 1: Critical (Must Have)
 
-1. **One inbound API** — `mfn-api-rest` (PARTIAL) needs completion with:
-   - Authentication (`mfn-auth` — MISSING)
-   - Rate limiting (`mfn-rate-limiting` — MISSING)
+1. **One inbound API** — `mfn-api-rest` (PARTIAL → READY with auth/rate limiting):
+   - Authentication (`mfn-auth` — **READY**)
+   - Rate limiting (`mfn-rate-limiting` — **READY**)
    
 2. **One outbound feature channel** — `mfn-feature-extraction` (READY) + one of:
    - Parquet export (`mfn-dataset-generation` — READY) for batch scenarios
    - Event publishing (`mfn-downstream-publisher` — MISSING) for real-time scenarios
 
-3. **Basic observability** — `mfn-monitoring` (MISSING):
-   - At minimum: /metrics endpoint with latency, error rate, throughput
+3. **Basic observability** — `mfn-monitoring` (**READY**):
+   - /metrics endpoint with latency, error rate, throughput ✅
 
 ### Tier 2: Production Ready
 
-4. **Structured logging** — `mfn-logging` (MISSING):
-   - JSON logs with correlation IDs for debugging
+4. **Structured logging** — `mfn-logging` (**READY**):
+   - JSON logs with correlation IDs for debugging ✅
 
 5. **Config/Secrets management** — `mfn-config-json` (PARTIAL) + `mfn-secrets-mgmt` (MISSING):
    - Environment-specific configs
@@ -270,18 +271,18 @@ For MFN to operate as a production-ready component within a larger system, the f
 
 | Integration Layer | System Role Reference | Implementation Status |
 |-------------------|----------------------|----------------------|
-| REST API | Section 4.1 (Input Channels), Section 4.2 (Output Channels) | PARTIAL |
+| REST API | Section 4.1 (Input Channels), Section 4.2 (Output Channels) | READY (with auth, rate limiting) |
 | CLI interface | Section 4.1 (`simulation_params` via CLI) | READY |
 | Upstream systems | Section 3.1 — Parameter Configurator, Data Preprocessor, Orchestration Layer, Federated Clients | All "(Planned)" = MISSING |
 | Downstream systems | Section 3.2 — ML Model, Risk Module, Analytics Dashboard, Federated Coordinator | All "(Planned)" = MISSING |
-| Monitoring | Section 2.2 item 9 (Non-responsibility), Section 5.3 Gap Summary | MISSING |
-| Authentication | Section 2.2 item 7 (Non-responsibility but needed) | MISSING |
+| Monitoring | Section 2.2 item 9 (Non-responsibility), Section 5.3 Gap Summary | **READY** (Prometheus metrics) |
+| Authentication | Section 2.2 item 7 (Non-responsibility but needed) | **READY** (API key) |
 
 ### Mentioned in ROADMAP.md
 
 | Feature | Roadmap Version | Current Status |
 |---------|-----------------|----------------|
-| FastAPI REST endpoints | v4.1 | PARTIAL (implemented, needs hardening) |
+| FastAPI REST endpoints | v4.1 | **READY** (with auth, rate limiting, metrics) |
 | Docker/Kubernetes | v4.1 | PARTIAL (basic deployment) |
 | Streaming API | v4.3 | MISSING |
 | WebSocket support | v4.3 | MISSING |

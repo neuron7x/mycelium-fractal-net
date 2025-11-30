@@ -160,10 +160,41 @@ uvicorn api:app --host 0.0.0.0 --port 8000
 | Endpoint | Method | Input | Output |
 |:---------|:-------|:------|:-------|
 | `/health` | GET | — | `{status, version}` |
+| `/metrics` | GET | — | Prometheus metrics |
 | `/validate` | POST | `{seed, epochs, grid_size}` | `{loss_*, pot_*, fractal_dim}` |
 | `/simulate` | POST | `{seed, grid_size, steps}` | `{field_stats, growth_events}` |
 | `/nernst` | POST | `{z_valence, concentration_out_molar, concentration_in_molar, temperature_k}` | `{potential_mV}` |
 | `/federated/aggregate` | POST | `{gradients[], num_clusters, byzantine_fraction}` | `{aggregated_gradient}` |
+
+### Production Features
+
+**Authentication (X-API-Key)**: In staging/production environments, API endpoints (except `/health` and `/metrics`) require authentication via the `X-API-Key` header.
+
+```bash
+# Set API key
+export MFN_API_KEY="your-secret-key"
+export MFN_API_KEY_REQUIRED="true"
+
+# Make authenticated request
+curl -H "X-API-Key: your-secret-key" http://localhost:8000/validate
+```
+
+**Rate Limiting**: API rate limiting is enabled by default in staging/production (configurable via `MFN_RATE_LIMIT_ENABLED`). Returns 429 with `Retry-After` header when exceeded.
+
+**Prometheus Metrics**: The `/metrics` endpoint exposes:
+- `mfn_http_requests_total` - Request count by endpoint/method/status
+- `mfn_http_request_duration_seconds` - Latency histogram
+- `mfn_http_requests_in_progress` - Active requests gauge
+
+**Request Tracing**: All requests include `X-Request-ID` header for correlation.
+
+| Environment Variable | Description | Default |
+|---------------------|-------------|---------|
+| `MFN_ENV` | Environment (dev/staging/prod) | dev |
+| `MFN_API_KEY_REQUIRED` | Require API key authentication | false (dev), true (prod) |
+| `MFN_API_KEY` | Primary API key | — |
+| `MFN_RATE_LIMIT_ENABLED` | Enable rate limiting | false (dev), true (prod) |
+| `MFN_LOG_FORMAT` | Log format (json/text) | text (dev), json (prod) |
 
 ---
 
