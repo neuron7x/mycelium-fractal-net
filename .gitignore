@@ -106,3 +106,6 @@ data/*.parquet
 data/*.npz
 data/*.csv
 data/scenarios/
+
+# Run registry
+runs/

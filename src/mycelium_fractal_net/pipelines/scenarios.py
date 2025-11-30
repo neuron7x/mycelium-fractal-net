@@ -113,6 +113,64 @@ class ScenarioConfig:
                     f"alpha must be in (0, 0.25) for CFL stability, got {alpha}"
                 )
 
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Serialize configuration to a dictionary.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary representation of the configuration.
+        """
+        return {
+            "name": self.name,
+            "scenario_type": self.scenario_type.value,
+            "grid_size": self.grid_size,
+            "steps": self.steps,
+            "num_samples": self.num_samples,
+            "seeds_per_config": self.seeds_per_config,
+            "base_seed": self.base_seed,
+            "alpha_values": self.alpha_values,
+            "turing_enabled": self.turing_enabled,
+            "output_format": self.output_format,
+            "output_dir": self.output_dir,
+            "description": self.description,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ScenarioConfig":
+        """
+        Create configuration from a dictionary.
+
+        Parameters
+        ----------
+        data : dict[str, Any]
+            Dictionary with configuration values.
+
+        Returns
+        -------
+        ScenarioConfig
+            New configuration instance.
+        """
+        scenario_type = data.get("scenario_type", "features")
+        if isinstance(scenario_type, str):
+            scenario_type = ScenarioType(scenario_type)
+
+        return cls(
+            name=data["name"],
+            scenario_type=scenario_type,
+            grid_size=data.get("grid_size", 64),
+            steps=data.get("steps", 100),
+            num_samples=data.get("num_samples", 100),
+            seeds_per_config=data.get("seeds_per_config", 3),
+            base_seed=data.get("base_seed", 42),
+            alpha_values=data.get("alpha_values", [0.10, 0.15, 0.20]),
+            turing_enabled=data.get("turing_enabled", True),
+            output_format=data.get("output_format", "parquet"),
+            output_dir=data.get("output_dir", "scenarios"),
+            description=data.get("description", ""),
+        )
+
 
 @dataclass
 class DatasetMeta:

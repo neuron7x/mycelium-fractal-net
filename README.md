@@ -269,6 +269,32 @@ Coverage: Nernst • Turing • STDP • Fractal • Federated • Determinism
 
 ---
 
+## Reproducibility
+
+MFN забезпечує детермінізм та відтворюваність через:
+
+- **Seed Control** — Усі симуляції підтримують параметр `seed` для повторюваності
+- **RNG Context** — Централізоване управління random state через `create_rng(seed)`
+- **Run Registry** — Файлова система для логування запусків з конфігами та метриками
+- **Config Serialization** — `to_dict()` / `from_dict()` для всіх конфігурацій
+
+```python
+from mycelium_fractal_net import SimulationConfig, create_rng, RunRegistry
+
+# Детерміністична симуляція
+config = SimulationConfig(grid_size=64, steps=100, seed=42)
+
+# Логування запуску
+registry = RunRegistry()
+run = registry.start_run(config, run_type="simulation")
+# ... виконання ...
+registry.end_run(run, status="success")
+```
+
+📚 [Детальна документація](docs/MFN_REPRODUCIBILITY.md)
+
+---
+
 ## Залежності
 
 | Package | Version | Purpose |

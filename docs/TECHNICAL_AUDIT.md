@@ -294,3 +294,41 @@ These reports include:
 - Coverage analysis with gap identification
 - Benchmark results and trends
 - Scientific validation status
+
+---
+
+## 9. REPRODUCIBILITY
+
+MFN v4.1 includes a comprehensive reproducibility framework:
+
+### RNG Control Layer
+
+The `mycelium_fractal_net.infra.rng` module provides:
+- `RNGContext` class for synchronized random state
+- `create_rng(seed)` for creating seeded RNG contexts
+- `set_global_seed(seed)` for global seeding (numpy, random, torch)
+
+### Run Registry
+
+File-based tracking of experimental runs (`mycelium_fractal_net.infra.run_registry`):
+- Automatic directory creation for each run
+- Config serialization to `config.json`
+- Metadata tracking in `meta.json` (run_id, timestamp, git_commit, seed, status)
+- Metrics logging to `metrics.json`
+- Controllable via `MFN_RUN_REGISTRY_ENABLED` environment variable
+
+### Configuration Serialization
+
+All config types support `to_dict()` / `from_dict()`:
+- `SimulationConfig`
+- `FeatureConfig`
+- `DatasetConfig`
+- `ScenarioConfig`
+
+### Reproducibility Tests
+
+Located in `tests/repro/`:
+- `test_determinism_small.py` — Verifies same seed → same results
+- `test_run_registry_basics.py` — Verifies run registry functionality
+
+See [MFN_REPRODUCIBILITY.md](MFN_REPRODUCIBILITY.md) for detailed documentation.

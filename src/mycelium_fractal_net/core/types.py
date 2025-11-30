@@ -66,6 +66,54 @@ class SimulationConfig:
         if self.jitter_var < 0.0:
             raise ValueError("jitter_var must be non-negative")
 
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Serialize configuration to a dictionary.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary representation of the configuration.
+        """
+        return {
+            "grid_size": self.grid_size,
+            "steps": self.steps,
+            "alpha": self.alpha,
+            "spike_probability": self.spike_probability,
+            "turing_enabled": self.turing_enabled,
+            "turing_threshold": self.turing_threshold,
+            "quantum_jitter": self.quantum_jitter,
+            "jitter_var": self.jitter_var,
+            "seed": self.seed,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SimulationConfig":
+        """
+        Create configuration from a dictionary.
+
+        Parameters
+        ----------
+        data : dict[str, Any]
+            Dictionary with configuration values.
+
+        Returns
+        -------
+        SimulationConfig
+            New configuration instance.
+        """
+        return cls(
+            grid_size=data.get("grid_size", 64),
+            steps=data.get("steps", 64),
+            alpha=data.get("alpha", 0.18),
+            spike_probability=data.get("spike_probability", 0.25),
+            turing_enabled=data.get("turing_enabled", True),
+            turing_threshold=data.get("turing_threshold", 0.75),
+            quantum_jitter=data.get("quantum_jitter", False),
+            jitter_var=data.get("jitter_var", 0.0005),
+            seed=data.get("seed"),
+        )
+
 
 @dataclass
 class SimulationResult:

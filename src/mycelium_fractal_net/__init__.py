@@ -95,6 +95,20 @@ from .core import (
     simulate_mycelium_field,
 )
 
+# === Infrastructure (Reproducibility) ===
+from .infra import (
+    RNGContext,
+    RunHandle,
+    RunMeta,
+    RunRegistry,
+    RunStatus,
+    create_rng,
+    get_numpy_rng,
+    get_registry,
+    reset_global_registry,
+    set_global_seed,
+)
+
 # === Model Layer (Neural Network, Validation) ===
 from .model import (
     BODY_TEMPERATURE_K,
@@ -218,6 +232,17 @@ __all__ = [
     # Scenario types
     "ScenarioConfig",
     "ScenarioType",
+    # === INFRASTRUCTURE (Reproducibility) ===
+    "RNGContext",
+    "create_rng",
+    "set_global_seed",
+    "get_numpy_rng",
+    "RunRegistry",
+    "RunHandle",
+    "RunMeta",
+    "RunStatus",
+    "get_registry",
+    "reset_global_registry",
 ]
 
 __version__ = "4.1.0"
