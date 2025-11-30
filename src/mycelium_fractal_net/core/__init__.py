@@ -28,21 +28,17 @@ Reference:
     - docs/MFN_CODE_STRUCTURE.md — Code structure documentation
 """
 
-# Simulation orchestration
 from .engine import run_mycelium_simulation, run_mycelium_simulation_with_history
-
-# Exceptions
 from .exceptions import (
     NumericalInstabilityError,
     StabilityError,
     ValueOutOfRangeError,
 )
-
-# Field types
+from .federated import (
+    HierarchicalKrumAggregator,
+    aggregate_gradients_krum,
+)
 from .field import MyceliumField
-
-# Domain-specific modules (canonical imports)
-# These provide the cleaner conceptual interface
 from .fractal import (
     estimate_fractal_dimension,
     generate_fractal_ifs,
@@ -51,10 +47,6 @@ from .fractal_growth_engine import (
     FractalConfig,
     FractalGrowthEngine,
     FractalMetrics,
-)
-from .federated import (
-    HierarchicalKrumAggregator,
-    aggregate_gradients_krum,
 )
 from .membrane_engine import (
     MembraneConfig,

@@ -64,46 +64,37 @@ from .config import (
 
 # === Core Domain Modules (Canonical API) ===
 from .core import (
-    # Exceptions
-    NumericalInstabilityError,
-    StabilityError,
-    ValueOutOfRangeError,
-    # Simulation orchestration
-    MyceliumField,
-    SimulationConfig,
-    SimulationResult,
-    run_mycelium_simulation,
-    run_mycelium_simulation_with_history,
-    # Nernst (membrane potentials)
-    compute_nernst_potential,
-    MembraneConfig,
-    MembraneEngine,
-    MembraneMetrics,
-    # Turing (reaction-diffusion)
-    simulate_mycelium_field,
-    ReactionDiffusionConfig,
-    ReactionDiffusionEngine,
-    ReactionDiffusionMetrics,
-    # Fractal (dimension analysis)
-    estimate_fractal_dimension,
-    generate_fractal_ifs,
     FractalConfig,
     FractalGrowthEngine,
     FractalMetrics,
-    # STDP (plasticity)
-    STDPPlasticity,
-    # Federated (Byzantine-robust aggregation)
     HierarchicalKrumAggregator,
+    MembraneConfig,
+    MembraneEngine,
+    MembraneMetrics,
+    MyceliumField,
+    NumericalInstabilityError,
+    ReactionDiffusionConfig,
+    ReactionDiffusionEngine,
+    ReactionDiffusionMetrics,
+    SimulationConfig,
+    SimulationResult,
+    StabilityError,
+    STDPPlasticity,
+    ValueOutOfRangeError,
     aggregate_gradients_krum,
-    # Stability (Lyapunov analysis)
     compute_lyapunov_exponent,
+    compute_nernst_potential,
     compute_stability_metrics,
+    estimate_fractal_dimension,
+    generate_fractal_ifs,
     is_stable,
+    run_mycelium_simulation,
+    run_mycelium_simulation_with_history,
+    simulate_mycelium_field,
 )
 
 # === Model Layer (Neural Network, Validation) ===
 from .model import (
-    # Physical constants
     BODY_TEMPERATURE_K,
     FARADAY_CONSTANT,
     ION_CLAMP_MIN,
@@ -116,10 +107,8 @@ from .model import (
     STDP_TAU_MINUS,
     STDP_TAU_PLUS,
     TURING_THRESHOLD,
-    # Neural network
     MyceliumFractalNet,
     SparseAttention,
-    # Validation pipeline
     ValidationConfig,
     run_validation,
     run_validation_cli,

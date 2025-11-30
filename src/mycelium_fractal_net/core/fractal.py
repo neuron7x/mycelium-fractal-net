@@ -36,11 +36,7 @@ Example:
 
 from __future__ import annotations
 
-# Re-export the original implementations from model.py
-# to maintain exact backward compatibility
 from ..model import estimate_fractal_dimension, generate_fractal_ifs
-
-# Re-export validated fractal engine for advanced use
 from .fractal_growth_engine import (
     DEFAULT_MIN_BOX_SIZE,
     DEFAULT_NUM_POINTS,
@@ -53,7 +49,6 @@ from .fractal_growth_engine import (
     FractalGrowthEngine,
     FractalMetrics,
 )
-
 
 __all__ = [
     # Constants
