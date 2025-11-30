@@ -5,18 +5,49 @@ MyceliumFractalNet v4.1 package.
 Bio-inspired adaptive network with fractal dynamics, STDP plasticity,
 sparse attention, and Byzantine-robust federated learning.
 
-New in v4.1:
-- core/ module with numerically stable engines for:
-  - Membrane potential (Nernst equation, ODE integration)
-  - Reaction-diffusion (Turing morphogenesis)
-  - Fractal growth (IFS, box-counting)
-- config module with centralized configuration management
+Public API (matching README examples):
+--------------------------------------
+
+**Nernst-Planck Electrochemistry:**
+    >>> from mycelium_fractal_net import compute_nernst_potential
+    >>> E_K = compute_nernst_potential(z_valence=1, concentration_out_molar=5e-3,
+    ...                                concentration_in_molar=140e-3, temperature_k=310.0)
+    >>> # E_K ≈ -89 mV
+
+**Turing Morphogenesis:**
+    >>> from mycelium_fractal_net import simulate_mycelium_field
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(42)
+    >>> field, growth_events = simulate_mycelium_field(rng, grid_size=64, steps=64)
+
+**Fractal Analysis:**
+    >>> from mycelium_fractal_net import estimate_fractal_dimension
+    >>> binary = field > -0.060  # threshold -60 mV
+    >>> D = estimate_fractal_dimension(binary)
+    >>> # D ∈ [1.4, 1.9]
+
+**Federated Learning:**
+    >>> from mycelium_fractal_net import aggregate_gradients_krum
+    >>> import torch
+    >>> gradients = [torch.randn(100) for _ in range(50)]
+    >>> aggregated = aggregate_gradients_krum(gradients)
+
+Architecture Layers:
+-------------------
+- **core/** — Pure mathematical/dynamical engines (no HTTP dependencies)
+- **integration/** — Schemas, adapters for API/CLI
+- **analytics/** — Feature extraction module
+
+Reference:
+    - docs/MFN_SYSTEM_ROLE.md — System capabilities and boundaries
+    - docs/ARCHITECTURE.md — System architecture
+    - docs/MFN_CODE_STRUCTURE.md — Code structure documentation
 """
 
-# Import core engines (new numerical implementations)
+# === Analytics API ===
 from .analytics import FeatureVector, compute_fractal_features
 
-# Import centralized config module
+# === Centralized Configuration ===
 from .config import (
     DatasetConfig,
     FeatureConfig,
@@ -30,10 +61,13 @@ from .config import (
     validate_feature_config,
     validate_simulation_config,
 )
+
+# === Core Domain Modules (Canonical API) ===
 from .core import (
     FractalConfig,
     FractalGrowthEngine,
     FractalMetrics,
+    HierarchicalKrumAggregator,
     MembraneConfig,
     MembraneEngine,
     MembraneMetrics,
@@ -45,10 +79,21 @@ from .core import (
     SimulationConfig,
     SimulationResult,
     StabilityError,
+    STDPPlasticity,
     ValueOutOfRangeError,
+    aggregate_gradients_krum,
+    compute_lyapunov_exponent,
+    compute_nernst_potential,
+    compute_stability_metrics,
+    estimate_fractal_dimension,
+    generate_fractal_ifs,
+    is_stable,
     run_mycelium_simulation,
     run_mycelium_simulation_with_history,
+    simulate_mycelium_field,
 )
+
+# === Model Layer (Neural Network, Validation) ===
 from .model import (
     BODY_TEMPERATURE_K,
     FARADAY_CONSTANT,
@@ -62,22 +107,61 @@ from .model import (
     STDP_TAU_MINUS,
     STDP_TAU_PLUS,
     TURING_THRESHOLD,
-    HierarchicalKrumAggregator,
     MyceliumFractalNet,
     SparseAttention,
-    STDPPlasticity,
     ValidationConfig,
-    compute_lyapunov_exponent,
-    compute_nernst_potential,
-    estimate_fractal_dimension,
-    generate_fractal_ifs,
     run_validation,
     run_validation_cli,
-    simulate_mycelium_field,
 )
 
 __all__ = [
-    # Constants
+    # === PUBLIC API (as shown in README) ===
+    # Nernst-Planck (membrane potentials)
+    "compute_nernst_potential",
+    # Turing (reaction-diffusion)
+    "simulate_mycelium_field",
+    # Fractal (dimension analysis)
+    "estimate_fractal_dimension",
+    "generate_fractal_ifs",
+    # Federated (Byzantine-robust aggregation)
+    "aggregate_gradients_krum",
+    "HierarchicalKrumAggregator",
+    # Stability (Lyapunov analysis)
+    "compute_lyapunov_exponent",
+    "compute_stability_metrics",
+    "is_stable",
+    # === VALIDATION & NEURAL NETWORK ===
+    "run_validation",
+    "run_validation_cli",
+    "MyceliumFractalNet",
+    "ValidationConfig",
+    # === SIMULATION API ===
+    "run_mycelium_simulation",
+    "run_mycelium_simulation_with_history",
+    "SimulationConfig",
+    "SimulationResult",
+    "MyceliumField",
+    # === ANALYTICS API ===
+    "FeatureVector",
+    "compute_fractal_features",
+    # === CORE ENGINE CLASSES ===
+    # Nernst
+    "MembraneEngine",
+    "MembraneConfig",
+    "MembraneMetrics",
+    # Turing
+    "ReactionDiffusionEngine",
+    "ReactionDiffusionConfig",
+    "ReactionDiffusionMetrics",
+    # Fractal
+    "FractalGrowthEngine",
+    "FractalConfig",
+    "FractalMetrics",
+    # STDP
+    "STDPPlasticity",
+    # Attention
+    "SparseAttention",
+    # === PHYSICAL CONSTANTS ===
     "R_GAS_CONSTANT",
     "FARADAY_CONSTANT",
     "BODY_TEMPERATURE_K",
@@ -90,45 +174,11 @@ __all__ = [
     "STDP_A_MINUS",
     "SPARSE_TOPK",
     "QUANTUM_JITTER_VAR",
-    # Functions
-    "compute_nernst_potential",
-    "simulate_mycelium_field",
-    "estimate_fractal_dimension",
-    "generate_fractal_ifs",
-    "compute_lyapunov_exponent",
-    "run_validation",
-    "run_validation_cli",
-    # Simulation API (new)
-    "run_mycelium_simulation",
-    "run_mycelium_simulation_with_history",
-    # Classes (legacy)
-    "STDPPlasticity",
-    "SparseAttention",
-    "HierarchicalKrumAggregator",
-    "MyceliumFractalNet",
-    "ValidationConfig",
-    # Simulation Types (new)
-    "SimulationConfig",
-    "SimulationResult",
-    "MyceliumField",
-    "FeatureVector",
-    # Analytics API (new)
-    "compute_fractal_features",
-    # Core Engines (new)
-    "MembraneEngine",
-    "MembraneConfig",
-    "MembraneMetrics",
-    "ReactionDiffusionEngine",
-    "ReactionDiffusionConfig",
-    "ReactionDiffusionMetrics",
-    "FractalGrowthEngine",
-    "FractalConfig",
-    "FractalMetrics",
-    # Exceptions
+    # === EXCEPTIONS ===
     "StabilityError",
     "ValueOutOfRangeError",
     "NumericalInstabilityError",
-    # Config module (centralized configuration)
+    # === CONFIGURATION ===
     "DatasetConfig",
     "FeatureConfig",
     "validate_simulation_config",

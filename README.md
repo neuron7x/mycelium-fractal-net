@@ -260,6 +260,7 @@ MyceliumFractalNet (MFN) — це **фрактальний морфогенет�
 |:---------|:-----|
 | [MFN_SYSTEM_ROLE.md](docs/MFN_SYSTEM_ROLE.md) | Системна роль та зовнішній контракт |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архітектура системи |
+| [MFN_CODE_STRUCTURE.md](docs/MFN_CODE_STRUCTURE.md) | Структура коду та публічний API |
 | [MFN_MATH_MODEL.md](docs/MFN_MATH_MODEL.md) | Математична формалізація |
 | [NUMERICAL_CORE.md](docs/NUMERICAL_CORE.md) | Чисельне ядро |
 | [MFN_FEATURE_SCHEMA.md](docs/MFN_FEATURE_SCHEMA.md) | Схема фрактальних ознак |
