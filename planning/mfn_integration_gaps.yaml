@@ -119,9 +119,10 @@ layers:
     sources: ["code", "docs"]
     description: >
       FastAPI REST server with 5 endpoints: /health, /validate, /simulate, 
-      /nernst, /federated/aggregate. Functional but lacks production hardening.
+      /nernst, /federated/aggregate. CORS middleware added. OpenAPI exported.
     files:
       - api.py
+      - docs/openapi.json
     upstream_systems:
       - name: HTTP Clients
         role: Send requests to API endpoints
@@ -131,13 +132,17 @@ layers:
     missing_features:
       - Authentication/Authorization middleware
       - Rate limiting
-      - CORS configuration
+      # CORS configuration - DONE (2025-11-30)
       - Request validation logging
-      - OpenAPI spec export in production
+      # OpenAPI spec export in production - DONE (2025-11-30)
       - Error handling standardization
+    completed_features:
+      - "CORS configuration via CORSMiddleware (MFN_CORS_ORIGINS, MFN_ENV)"
+      - "OpenAPI spec export to docs/openapi.json"
+      - "Swagger UI at /docs, ReDoc at /redoc"
     notes: >
       TECHNICAL_AUDIT.md classifies code_integration as PARTIAL.
-      Endpoints functional but not production-ready.
+      CORS and OpenAPI completed in concept-implementation sweep.
 
   - id: mfn-k8s
     category: deployment_layer
@@ -169,11 +174,14 @@ layers:
     sources: ["code", "docs"]
     description: >
       Predefined JSON configuration files for different computational budgets.
-      Three profiles: small (dev), medium (test), large (prod).
+      Six profiles: small, medium, large (computation), dev, staging, prod (environment).
     files:
       - configs/small.json
       - configs/medium.json
       - configs/large.json
+      - configs/dev.json
+      - configs/staging.json
+      - configs/prod.json
     upstream_systems:
       - name: Operator
         role: Selects configuration profile
@@ -181,13 +189,15 @@ layers:
       - name: MFN Core
         role: Receives simulation parameters
     missing_features:
-      - Environment-specific configs (dev/staging/prod)
+      # Environment-specific configs (dev/staging/prod) - DONE (2025-11-30)
       - Secrets management integration
       - Config validation at runtime
       - Dynamic config reload
       - Environment variable overrides
+    completed_features:
+      - "Environment-specific configs: dev.json, staging.json, prod.json"
     notes: >
-      Configs define grid_size, steps, clusters. No differentiation between environments.
+      Configs define grid_size, steps, clusters. Environment configs added.
 
   # ============================================================================
   # MISSING LAYERS
