@@ -25,11 +25,9 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
+from numpy.typing import NDArray
 
-from mycelium_fractal_net.core import (
-    ReactionDiffusionConfig,
-    ReactionDiffusionEngine,
-)
+from mycelium_fractal_net.core import ReactionDiffusionConfig, ReactionDiffusionEngine
 
 logger = logging.getLogger(__name__)
 
@@ -97,10 +95,14 @@ class ScenarioConfig:
         if self.num_samples < 1:
             raise ValueError(f"num_samples must be >= 1, got {self.num_samples}")
         if self.seeds_per_config < 1:
-            raise ValueError(f"seeds_per_config must be >= 1, got {self.seeds_per_config}")
+            raise ValueError(
+                f"seeds_per_config must be >= 1, got {self.seeds_per_config}"
+            )
         for alpha in self.alpha_values:
             if alpha <= 0 or alpha >= 0.25:
-                raise ValueError(f"alpha must be in (0, 0.25) for CFL stability, got {alpha}")
+                raise ValueError(
+                    f"alpha must be in (0, 0.25) for CFL stability, got {alpha}"
+                )
 
 
 @dataclass
@@ -318,7 +320,9 @@ def _generate_param_configs(config: ScenarioConfig) -> list[dict[str, Any]]:
     return configs
 
 
-def _run_single_simulation(params: dict[str, Any]) -> tuple[np.ndarray, dict[str, Any]] | None:
+def _run_single_simulation(
+    params: dict[str, Any],
+) -> tuple[NDArray[Any], dict[str, Any]] | None:
     """Run a single simulation with given parameters."""
     try:
         rd_config = ReactionDiffusionConfig(
@@ -447,7 +451,9 @@ def run_scenario(
         try:
             features = compute_features(history, feature_config)
         except Exception as e:
-            logger.warning(f"Feature extraction failed for sim_id={params['sim_id']}: {e}")
+            logger.warning(
+                f"Feature extraction failed for sim_id={params['sim_id']}: {e}"
+            )
             n_failed += 1
             continue
 
