@@ -37,11 +37,13 @@ Architecture Layers:
 - **core/** — Pure mathematical/dynamical engines (no HTTP dependencies)
 - **integration/** — Schemas, adapters for API/CLI
 - **analytics/** — Feature extraction module
+- **types/** — Canonical data structures (see docs/MFN_DATA_MODEL.md)
 
 Reference:
     - docs/MFN_SYSTEM_ROLE.md — System capabilities and boundaries
     - docs/ARCHITECTURE.md — System architecture
     - docs/MFN_CODE_STRUCTURE.md — Code structure documentation
+    - docs/MFN_DATA_MODEL.md — Canonical data model
 """
 
 # === Analytics API ===
@@ -112,6 +114,19 @@ from .model import (
     ValidationConfig,
     run_validation,
     run_validation_cli,
+)
+
+# === Types Module (Canonical Data Structures) ===
+from .types import (
+    BoundaryCondition,
+    DatasetMeta,
+    DatasetRow,
+    DatasetStats,
+    FieldHistory,
+    FieldState,
+    GridShape,
+    ScenarioConfig,
+    ScenarioType,
 )
 
 __all__ = [
@@ -190,6 +205,19 @@ __all__ = [
     "make_feature_config_default",
     "make_dataset_config_demo",
     "make_dataset_config_default",
+    # === TYPES MODULE (Canonical Data Structures) ===
+    # Field types
+    "FieldState",
+    "FieldHistory",
+    "GridShape",
+    "BoundaryCondition",
+    # Dataset types
+    "DatasetRow",
+    "DatasetMeta",
+    "DatasetStats",
+    # Scenario types
+    "ScenarioConfig",
+    "ScenarioType",
 ]
 
 __version__ = "4.1.0"
