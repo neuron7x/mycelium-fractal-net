@@ -1,0 +1,252 @@
+"""
+Prometheus metrics for MyceliumFractalNet API.
+
+Provides HTTP request metrics, latency histograms, and a /metrics endpoint
+for Prometheus scraping.
+
+Metrics Exposed:
+    mfn_http_requests_total: Counter of HTTP requests (labels: endpoint, method, status)
+    mfn_http_request_duration_seconds: Histogram of request latency (labels: endpoint, method)
+    mfn_http_requests_in_progress: Gauge of currently processing requests
+
+Usage:
+    from mycelium_fractal_net.integration.metrics import MetricsMiddleware, metrics_endpoint
+    
+    app.add_middleware(MetricsMiddleware)
+    app.add_route("/metrics", metrics_endpoint)
+
+Reference: docs/MFN_BACKLOG.md#MFN-OBS-001
+"""
+
+from __future__ import annotations
+
+import time
+from typing import Callable, Optional
+
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.responses import Response as StarletteResponse
+
+from .api_config import MetricsConfig, get_api_config
+
+# Try to import prometheus_client, provide fallback if not available
+try:
+    from prometheus_client import (
+        CONTENT_TYPE_LATEST,
+        Counter,
+        Gauge,
+        Histogram,
+        generate_latest,
+    )
+
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+    CONTENT_TYPE_LATEST = "text/plain; charset=utf-8"
+
+    # Fallback no-op implementations
+    class Counter:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def labels(self, **kwargs):
+            return self
+
+        def inc(self, amount=1):
+            pass
+
+    class Histogram:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def labels(self, **kwargs):
+            return self
+
+        def observe(self, amount):
+            pass
+
+    class Gauge:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def labels(self, **kwargs):
+            return self
+
+        def inc(self, amount=1):
+            pass
+
+        def dec(self, amount=1):
+            pass
+
+    def generate_latest():  # type: ignore
+        return b"# prometheus_client not installed\n"
+
+
+# Define metrics
+
+# Request counter
+REQUEST_COUNTER = Counter(
+    "mfn_http_requests_total",
+    "Total number of HTTP requests",
+    ["endpoint", "method", "status"],
+) if PROMETHEUS_AVAILABLE else Counter()
+
+# Request latency histogram
+REQUEST_LATENCY = Histogram(
+    "mfn_http_request_duration_seconds",
+    "HTTP request latency in seconds",
+    ["endpoint", "method"],
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+) if PROMETHEUS_AVAILABLE else Histogram()
+
+# In-progress requests gauge
+REQUESTS_IN_PROGRESS = Gauge(
+    "mfn_http_requests_in_progress",
+    "Number of HTTP requests currently being processed",
+    ["endpoint", "method"],
+) if PROMETHEUS_AVAILABLE else Gauge()
+
+
+class MetricsMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware for collecting HTTP request metrics.
+
+    Records:
+        - Request count (by endpoint, method, status)
+        - Request latency (by endpoint, method)
+        - In-progress requests (by endpoint, method)
+
+    Attributes:
+        config: Metrics configuration.
+    """
+
+    def __init__(
+        self,
+        app: Callable,
+        config: Optional[MetricsConfig] = None,
+    ) -> None:
+        """
+        Initialize metrics middleware.
+
+        Args:
+            app: The ASGI application.
+            config: Metrics configuration. If None, uses global config.
+        """
+        super().__init__(app)
+        self.config = config or get_api_config().metrics
+
+    def _normalize_endpoint(self, path: str) -> str:
+        """
+        Normalize endpoint path for metric labels.
+
+        Removes path parameters to prevent label explosion.
+
+        Args:
+            path: Request path.
+
+        Returns:
+            str: Normalized endpoint path.
+        """
+        # Keep known endpoints as-is
+        known_endpoints = [
+            "/health",
+            "/validate",
+            "/simulate",
+            "/nernst",
+            "/federated/aggregate",
+            "/metrics",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+        ]
+
+        for endpoint in known_endpoints:
+            if path == endpoint or path.startswith(endpoint + "/"):
+                return endpoint
+
+        # For unknown paths, use a generic label
+        return "/other"
+
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> StarletteResponse:
+        """
+        Process request and collect metrics.
+
+        Args:
+            request: Incoming request.
+            call_next: Next middleware or route handler.
+
+        Returns:
+            Response: Route response.
+        """
+        if not self.config.enabled:
+            return await call_next(request)
+
+        endpoint = self._normalize_endpoint(request.url.path)
+        method = request.method
+
+        # Track in-progress requests
+        REQUESTS_IN_PROGRESS.labels(endpoint=endpoint, method=method).inc()
+        start_time = time.perf_counter()
+
+        try:
+            response = await call_next(request)
+            status_code = str(response.status_code)
+        except Exception:
+            status_code = "500"
+            raise
+        finally:
+            # Record duration
+            duration = time.perf_counter() - start_time
+            REQUEST_LATENCY.labels(endpoint=endpoint, method=method).observe(duration)
+
+            # Decrement in-progress
+            REQUESTS_IN_PROGRESS.labels(endpoint=endpoint, method=method).dec()
+
+            # Increment request counter
+            REQUEST_COUNTER.labels(
+                endpoint=endpoint, method=method, status=status_code
+            ).inc()
+
+        return response
+
+
+async def metrics_endpoint(request: Request) -> Response:
+    """
+    Endpoint handler for /metrics.
+
+    Returns Prometheus-formatted metrics.
+
+    Args:
+        request: Incoming request.
+
+    Returns:
+        Response: Prometheus metrics in text format.
+    """
+    metrics_output = generate_latest()
+
+    return Response(
+        content=metrics_output,
+        media_type=CONTENT_TYPE_LATEST,
+    )
+
+
+def is_prometheus_available() -> bool:
+    """
+    Check if prometheus_client is available.
+
+    Returns:
+        bool: True if prometheus_client is installed.
+    """
+    return PROMETHEUS_AVAILABLE
+
+
+__all__ = [
+    "MetricsMiddleware",
+    "metrics_endpoint",
+    "REQUEST_COUNTER",
+    "REQUEST_LATENCY",
+    "REQUESTS_IN_PROGRESS",
+    "is_prometheus_available",
+]
