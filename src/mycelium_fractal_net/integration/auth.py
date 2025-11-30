@@ -18,7 +18,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-001
 from __future__ import annotations
 
 import secrets
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse

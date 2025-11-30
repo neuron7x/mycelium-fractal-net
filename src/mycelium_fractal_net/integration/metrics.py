@@ -82,29 +82,77 @@ except ImportError:
         return b"# prometheus_client not installed\n"
 
 
-# Define metrics
+# Define metrics (singleton pattern to avoid duplicate registration)
+# Using a module-level dict to store created metrics
 
-# Request counter
-REQUEST_COUNTER = Counter(
-    "mfn_http_requests_total",
-    "Total number of HTTP requests",
-    ["endpoint", "method", "status"],
-) if PROMETHEUS_AVAILABLE else Counter()
+_METRICS_CREATED = False
+REQUEST_COUNTER = None
+REQUEST_LATENCY = None
+REQUESTS_IN_PROGRESS = None
 
-# Request latency histogram
-REQUEST_LATENCY = Histogram(
-    "mfn_http_request_duration_seconds",
-    "HTTP request latency in seconds",
-    ["endpoint", "method"],
-    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
-) if PROMETHEUS_AVAILABLE else Histogram()
 
-# In-progress requests gauge
-REQUESTS_IN_PROGRESS = Gauge(
-    "mfn_http_requests_in_progress",
-    "Number of HTTP requests currently being processed",
-    ["endpoint", "method"],
-) if PROMETHEUS_AVAILABLE else Gauge()
+def _create_metrics():
+    """Create metrics if not already created."""
+    global _METRICS_CREATED, REQUEST_COUNTER, REQUEST_LATENCY, REQUESTS_IN_PROGRESS
+
+    if _METRICS_CREATED:
+        return
+
+    if PROMETHEUS_AVAILABLE:
+        from prometheus_client import REGISTRY
+
+        # Check if metrics already exist in registry
+        try:
+            REQUEST_COUNTER = Counter(
+                "mfn_http_requests_total",
+                "Total number of HTTP requests",
+                ["endpoint", "method", "status"],
+            )
+        except ValueError:
+            # Already registered - get existing
+            for collector in REGISTRY._names_to_collectors.values():
+                if hasattr(collector, '_name') and collector._name == "mfn_http_requests":
+                    REQUEST_COUNTER = collector
+                    break
+
+        try:
+            REQUEST_LATENCY = Histogram(
+                "mfn_http_request_duration_seconds",
+                "HTTP request latency in seconds",
+                ["endpoint", "method"],
+                buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+            )
+        except ValueError:
+            # Already registered
+            metric_name = "mfn_http_request_duration_seconds"
+            for collector in REGISTRY._names_to_collectors.values():
+                if hasattr(collector, '_name') and collector._name == metric_name:
+                    REQUEST_LATENCY = collector
+                    break
+
+        try:
+            REQUESTS_IN_PROGRESS = Gauge(
+                "mfn_http_requests_in_progress",
+                "Number of HTTP requests currently being processed",
+                ["endpoint", "method"],
+            )
+        except ValueError:
+            # Already registered
+            metric_name = "mfn_http_requests_in_progress"
+            for collector in REGISTRY._names_to_collectors.values():
+                if hasattr(collector, '_name') and collector._name == metric_name:
+                    REQUESTS_IN_PROGRESS = collector
+                    break
+    else:
+        REQUEST_COUNTER = Counter()
+        REQUEST_LATENCY = Histogram()
+        REQUESTS_IN_PROGRESS = Gauge()
+
+    _METRICS_CREATED = True
+
+
+# Initialize metrics on module load
+_create_metrics()
 
 
 class MetricsMiddleware(BaseHTTPMiddleware):

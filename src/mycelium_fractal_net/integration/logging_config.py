@@ -172,7 +172,8 @@ class TextFormatter(logging.Formatter):
         request_id_str = f"[{request_id[:8]}] " if request_id else ""
 
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        message = f"{timestamp} {record.levelname:8} {request_id_str}{record.name}: {record.getMessage()}"
+        msg = record.getMessage()
+        message = f"{timestamp} {record.levelname:8} {request_id_str}{record.name}: {msg}"
 
         if record.exc_info:
             message += "\n" + self.formatException(record.exc_info)

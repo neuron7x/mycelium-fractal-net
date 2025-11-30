@@ -64,8 +64,8 @@ from .metrics import (
     metrics_endpoint,
 )
 from .rate_limiter import (
-    RateLimitMiddleware,
     RateLimiter,
+    RateLimitMiddleware,
 )
 from .schemas import (
     ErrorResponse,
