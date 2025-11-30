@@ -105,3 +105,4 @@ benchmarks/results/
 data/*.parquet
 data/*.npz
 data/*.csv
+data/scenarios/
