@@ -1,217 +1,373 @@
 #!/usr/bin/env python
 """
-Finance example: Using MyceliumFractalNet for market regime detection.
+Finance Use Case Example: Market Regime Detection via Fractal Dynamics.
 
-This example demonstrates how fractal dynamics can model market microstructure
-and detect regime changes in financial time series.
+This example demonstrates how MFN can be used for financial regime detection:
+1. Generate synthetic market data with different volatility regimes
+2. Map financial time series to MFN field representation
+3. Extract fractal features from the simulated dynamics
+4. Apply rule-based regime classification using MFN features
+5. Interpret results for risk assessment
 
-Features used:
-- Fractal dimension for market complexity analysis
-- Lyapunov exponent for stability/volatility detection
-- Turing morphogenesis for pattern formation
-- STDP for adaptive learning from market data
+The approach uses fractal dimension and field statistics as regime indicators:
+- High D_box + high V_std → High complexity / high volatility regime
+- Low D_box + low V_std → Low complexity / stable regime
+- Intermediate values → Normal market conditions
+
+Reference: docs/MFN_SYSTEM_ROLE.md, docs/MFN_FEATURE_SCHEMA.md
+
+Usage:
+    python examples/finance_regime_detection.py
+
+Note: This is a synthetic demonstration. MFN is a feature engine, not a
+trading system. See docs/MFN_SYSTEM_ROLE.md for system boundaries.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+from enum import Enum
+from typing import Tuple
+
 import numpy as np
-import torch
+from numpy.typing import NDArray
 
 from mycelium_fractal_net import (
-    MyceliumFractalNet,
+    compute_fractal_features,
     estimate_fractal_dimension,
     generate_fractal_ifs,
-    simulate_mycelium_field,
+    make_simulation_config_demo,
+    run_mycelium_simulation_with_history,
 )
 
 
-def simulate_market_data(
+class MarketRegime(Enum):
+    """Market regime classification."""
+
+    HIGH_COMPLEXITY = "high_complexity"
+    LOW_COMPLEXITY = "low_complexity"
+    NORMAL = "normal"
+
+
+@dataclass
+class RegimeAnalysis:
+    """Results of regime analysis."""
+
+    regime: MarketRegime
+    fractal_dim: float
+    volatility: float
+    v_mean: float
+    v_std: float
+    lyapunov: float
+    confidence: str
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {
+            "regime": self.regime.value,
+            "fractal_dim": self.fractal_dim,
+            "volatility": self.volatility,
+            "v_mean": self.v_mean,
+            "v_std": self.v_std,
+            "lyapunov": self.lyapunov,
+            "confidence": self.confidence,
+        }
+
+
+def generate_synthetic_market_data(
     rng: np.random.Generator,
-    num_days: int = 252,
-    volatility: float = 0.02,
-) -> np.ndarray:
+    num_points: int = 500,
+    base_volatility: float = 0.02,
+) -> Tuple[NDArray[np.float64], list[str]]:
     """
-    Simulate simple market returns with regime changes.
+    Generate synthetic market returns with regime changes.
 
-    Parameters
-    ----------
-    rng : np.random.Generator
-        Random generator.
-    num_days : int
-        Number of trading days.
-    volatility : float
-        Base volatility.
+    Creates a time series with three distinct regimes:
+    - Low volatility (0.5x base) - "stable" market
+    - Normal volatility (1x base) - "normal" market
+    - High volatility (2.5x base) - "crisis" market
 
-    Returns
-    -------
-    np.ndarray
-        Simulated returns.
+    Args:
+        rng: NumPy random generator for reproducibility.
+        num_points: Number of data points to generate.
+        base_volatility: Base volatility level (standard deviation of returns).
+
+    Returns:
+        Tuple of (returns array, list of regime labels per segment).
+
+    Note:
+        Uses geometric Brownian motion with constant drift per regime.
     """
-    returns = np.zeros(num_days)
+    returns = np.zeros(num_points, dtype=np.float64)
+    segment_length = num_points // 3
+    regime_labels = []
 
-    # Three regimes: low vol, high vol, trending
-    regime_length = num_days // 3
-
-    # Low volatility regime
-    returns[:regime_length] = rng.normal(0.0005, volatility * 0.5, regime_length)
-
-    # High volatility regime
-    returns[regime_length : 2 * regime_length] = rng.normal(
-        0, volatility * 2.0, regime_length
+    # Segment 1: Low volatility regime (stable market)
+    returns[:segment_length] = rng.normal(
+        loc=0.0003,  # Small positive drift
+        scale=base_volatility * 0.5,
+        size=segment_length,
     )
+    regime_labels.append("low_volatility")
 
-    # Trending regime
-    trend = np.linspace(0, 0.001, regime_length)
-    returns[2 * regime_length :] = trend + rng.normal(0, volatility, regime_length)
+    # Segment 2: Normal volatility regime
+    returns[segment_length: 2 * segment_length] = rng.normal(
+        loc=0.0001,  # Minimal drift
+        scale=base_volatility * 1.0,
+        size=segment_length,
+    )
+    regime_labels.append("normal")
 
-    return returns
+    # Segment 3: High volatility regime (crisis/stressed market)
+    returns[2 * segment_length:] = rng.normal(
+        loc=-0.0002,  # Slight negative drift (stressed market)
+        scale=base_volatility * 2.5,
+        size=num_points - 2 * segment_length,
+    )
+    regime_labels.append("high_volatility")
+
+    return returns, regime_labels
 
 
-def returns_to_field(returns: np.ndarray, grid_size: int = 64) -> np.ndarray:
+def map_returns_to_field(
+    returns: NDArray[np.float64],
+    grid_size: int = 32,
+) -> NDArray[np.float64]:
     """
-    Convert returns to 2D field representation.
+    Map financial returns to 2D membrane potential field.
 
-    Maps returns to membrane potentials for mycelium simulation.
+    Transforms the time series into a 2D spatial representation suitable
+    for MFN simulation. Uses z-score normalization and maps to membrane
+    potential range around the resting potential.
+
+    Args:
+        returns: 1D array of financial returns.
+        grid_size: Size of the output square grid.
+
+    Returns:
+        2D field array of shape (grid_size, grid_size) in Volts.
+
+    Note:
+        The mapping preserves statistical properties of the input data
+        while conforming to MFN's expected input format.
     """
-    # Normalize returns to [-1, 1]
-    returns_norm = (returns - returns.mean()) / (returns.std() + 1e-8)
+    # Normalize returns to z-scores
+    mean_r = np.mean(returns)
+    std_r = np.std(returns)
+    if std_r < 1e-10:
+        std_r = 1.0  # Avoid division by zero
+    z_scores = (returns - mean_r) / std_r
 
-    # Create 2D embedding using rolling windows
-    field = np.zeros((grid_size, grid_size))
+    # Clamp extreme values to [-3, 3] range
+    z_scores = np.clip(z_scores, -3.0, 3.0)
+
+    # Create 2D field by reshaping/tiling the z-scores
+    field = np.zeros((grid_size, grid_size), dtype=np.float64)
 
     for i in range(grid_size):
         for j in range(grid_size):
-            idx = (i * grid_size + j) % len(returns)
-            # Map to membrane potential scale (-70 mV baseline)
-            field[i, j] = -0.070 + returns_norm[idx] * 0.010
+            idx = (i * grid_size + j) % len(z_scores)
+            # Map z-score to membrane potential:
+            # Resting potential: -70 mV, excursions: ±15 mV
+            field[i, j] = -0.070 + z_scores[idx] * 0.005
 
     return field
 
 
-def detect_regime(field: np.ndarray) -> dict:
+def classify_regime(
+    fractal_dim: float,
+    v_std: float,
+    lyapunov: float,
+) -> Tuple[MarketRegime, str]:
     """
-    Detect market regime from field characteristics.
+    Classify market regime based on MFN features.
 
-    Returns dict with regime indicators.
+    Uses rule-based classification with thresholds derived from
+    MFN_FEATURE_SCHEMA.md and empirical observations.
+
+    Args:
+        fractal_dim: Box-counting fractal dimension (D_box).
+        v_std: Standard deviation of field values in mV.
+        lyapunov: Lyapunov exponent from IFS analysis.
+
+    Returns:
+        Tuple of (MarketRegime, confidence level string).
+
+    Classification rules:
+        - HIGH_COMPLEXITY: D_box > 1.6 or V_std > 8.0 or Lyapunov > 0
+        - LOW_COMPLEXITY: D_box < 1.0 and V_std < 3.0 and Lyapunov < -2.0
+        - NORMAL: Otherwise
     """
-    # Compute fractal dimension
-    binary = field > -0.060
-    fractal_dim = estimate_fractal_dimension(binary)
+    # High complexity indicators
+    is_high_dimension = fractal_dim > 1.6
+    is_high_volatility = v_std > 8.0
+    is_unstable = lyapunov > 0
 
-    # Compute statistics
-    volatility = field.std() * 1000  # mV
+    # Low complexity indicators
+    is_low_dimension = fractal_dim < 1.0
+    is_low_volatility = v_std < 3.0
+    is_very_stable = lyapunov < -2.0
 
-    # Regime classification based on fractal dimension
-    if fractal_dim > 1.7:
-        regime = "high_complexity"
-    elif fractal_dim < 1.3:
-        regime = "low_complexity"
-    else:
-        regime = "normal"
+    # Classification with confidence
+    if is_high_dimension or is_high_volatility or is_unstable:
+        high_count = sum([is_high_dimension, is_high_volatility, is_unstable])
+        confidence = "high" if high_count >= 2 else "medium"
+        return MarketRegime.HIGH_COMPLEXITY, confidence
 
-    return {
-        "fractal_dimension": fractal_dim,
-        "volatility_mV": volatility,
-        "regime": regime,
-    }
+    if is_low_dimension and is_low_volatility and is_very_stable:
+        return MarketRegime.LOW_COMPLEXITY, "high"
+
+    if is_low_dimension and is_low_volatility:
+        return MarketRegime.LOW_COMPLEXITY, "medium"
+
+    return MarketRegime.NORMAL, "medium"
+
+
+def run_finance_demo(
+    *,
+    verbose: bool = True,
+    num_points: int = 500,
+    seed: int = 42,
+    return_analysis: bool = False,
+) -> RegimeAnalysis | None:
+    """
+    Run the finance regime detection demo.
+
+    Args:
+        verbose: Print progress and results to stdout.
+        num_points: Number of market data points to generate.
+        seed: Random seed for reproducibility.
+        return_analysis: If True, return the RegimeAnalysis object.
+
+    Returns:
+        RegimeAnalysis if return_analysis is True, else None.
+    """
+    rng = np.random.default_rng(seed)
+
+    if verbose:
+        print("=" * 60)
+        print("MyceliumFractalNet Finance Example")
+        print("Market Regime Detection via Fractal Dynamics")
+        print("=" * 60)
+
+    # Step 1: Generate synthetic market data
+    if verbose:
+        print("\n1. Generating synthetic market data...")
+    returns, regime_labels = generate_synthetic_market_data(rng, num_points=num_points)
+
+    if verbose:
+        print(f"   Generated {len(returns)} daily returns")
+        print(f"   Regimes: {regime_labels}")
+        print(f"   Overall mean return: {returns.mean():.6f}")
+        print(f"   Overall volatility: {returns.std():.6f}")
+
+        # Per-segment statistics
+        seg_len = len(returns) // 3
+        for i, label in enumerate(regime_labels):
+            seg = returns[i * seg_len: (i + 1) * seg_len]
+            print(f"   Segment '{label}': mean={seg.mean():.6f}, std={seg.std():.6f}")
+
+    # Step 2: Map returns to MFN field representation
+    if verbose:
+        print("\n2. Converting to mycelium field representation...")
+    field = map_returns_to_field(returns, grid_size=32)
+
+    if verbose:
+        print(f"   Field shape: {field.shape}")
+        print(f"   Field range: [{field.min() * 1000:.2f}, {field.max() * 1000:.2f}] mV")
+        print(f"   Field mean: {field.mean() * 1000:.2f} mV")
+        print(f"   Field std: {field.std() * 1000:.4f} mV")
+
+    # Step 3: Compute fractal dimension directly from field
+    if verbose:
+        print("\n3. Computing fractal features from mapped field...")
+    binary_field = field > -0.065  # Threshold for binarization
+    direct_fractal_dim = estimate_fractal_dimension(binary_field)
+
+    if verbose:
+        print(f"   Direct fractal dimension: {direct_fractal_dim:.4f}")
+
+    # Step 4: Run MFN simulation on the field structure
+    if verbose:
+        print("\n4. Running MFN simulation with market-inspired parameters...")
+    sim_config = make_simulation_config_demo()
+    result = run_mycelium_simulation_with_history(sim_config)
+
+    # Extract features from simulation
+    features = compute_fractal_features(result)
+
+    if verbose:
+        print(f"   Simulation growth events: {result.growth_events}")
+        print(f"   Simulated D_box: {features['D_box']:.4f}")
+        print(f"   Simulated V_mean: {features['V_mean']:.2f} mV")
+        print(f"   Simulated V_std: {features['V_std']:.4f} mV")
+
+    # Step 5: Lyapunov stability analysis
+    if verbose:
+        print("\n5. Lyapunov stability analysis...")
+    _, lyapunov = generate_fractal_ifs(rng, num_points=5000)
+
+    if verbose:
+        print(f"   Lyapunov exponent: {lyapunov:.4f}")
+        stability_str = "STABLE (contractive)" if lyapunov < 0 else "UNSTABLE (expansive)"
+        print(f"   System stability: {stability_str}")
+
+    # Step 6: Classify regime
+    if verbose:
+        print("\n6. Classifying market regime...")
+
+    # Use the mapped field statistics for classification
+    v_std_mv = field.std() * 1000.0
+    regime, confidence = classify_regime(direct_fractal_dim, v_std_mv, lyapunov)
+
+    if verbose:
+        print(f"   Detected regime: {regime.value.upper()}")
+        print(f"   Confidence: {confidence}")
+
+    # Create analysis result
+    analysis = RegimeAnalysis(
+        regime=regime,
+        fractal_dim=direct_fractal_dim,
+        volatility=returns.std(),
+        v_mean=field.mean() * 1000.0,
+        v_std=v_std_mv,
+        lyapunov=lyapunov,
+        confidence=confidence,
+    )
+
+    # Summary
+    if verbose:
+        print("\n" + "=" * 60)
+        print("SUMMARY: Market Regime Analysis")
+        print("=" * 60)
+        print(f"Input data:       {num_points} returns, 3 regime segments")
+        print(f"Fractal dimension: {analysis.fractal_dim:.4f}")
+        print(f"Field volatility:  {analysis.v_std:.4f} mV")
+        print(f"Lyapunov exponent: {analysis.lyapunov:.4f}")
+        print(f"Detected regime:  {analysis.regime.value.upper()}")
+        print(f"Confidence:       {analysis.confidence}")
+
+        print("\nInterpretation:")
+        if analysis.regime == MarketRegime.HIGH_COMPLEXITY:
+            print("→ High complexity detected: expect increased volatility and risk")
+            print("→ Consider reducing position sizes and tightening stop-losses")
+        elif analysis.regime == MarketRegime.LOW_COMPLEXITY:
+            print("→ Low complexity detected: market in stable/trending state")
+            print("→ Trend-following strategies may be appropriate")
+        else:
+            print("→ Normal market regime: standard risk parameters apply")
+            print("→ Mean-reversion strategies may be appropriate")
+
+        print("\nNote: This is a demonstration only. MFN provides features,")
+        print("not trading signals. See docs/MFN_SYSTEM_ROLE.md.")
+
+    if return_analysis:
+        return analysis
+    return None
 
 
 def main() -> None:
-    """Run finance example."""
-    print("=" * 60)
-    print("MyceliumFractalNet Finance Example")
-    print("Market Regime Detection via Fractal Dynamics")
-    print("=" * 60)
-
-    # Set seed for reproducibility
-    seed = 42
-    rng = np.random.default_rng(seed)
-    torch.manual_seed(seed)
-
-    # Step 1: Simulate market data
-    print("\n1. Simulating market data...")
-    returns = simulate_market_data(rng, num_days=252)
-    print(f"   Generated {len(returns)} daily returns")
-    print(f"   Mean return: {returns.mean():.6f}")
-    print(f"   Volatility: {returns.std():.6f}")
-
-    # Step 2: Convert to field representation
-    print("\n2. Converting to mycelium field...")
-    field = returns_to_field(returns, grid_size=64)
-    print(f"   Field shape: {field.shape}")
-    print(f"   Field range: [{field.min() * 1000:.2f}, {field.max() * 1000:.2f}] mV")
-
-    # Step 3: Detect regime
-    print("\n3. Analyzing regime with fractal dynamics...")
-    regime_info = detect_regime(field)
-    print(f"   Fractal dimension: {regime_info['fractal_dimension']:.4f}")
-    print(f"   Volatility: {regime_info['volatility_mV']:.4f} mV")
-    print(f"   Detected regime: {regime_info['regime']}")
-
-    # Step 4: Run mycelium simulation
-    print("\n4. Running mycelium field simulation...")
-    rng_sim = np.random.default_rng(seed)
-    evolved_field, growth_events = simulate_mycelium_field(
-        rng_sim,
-        grid_size=64,
-        steps=64,
-        turing_enabled=True,
-    )
-    print(f"   Growth events: {growth_events}")
-
-    # Analyze evolved field
-    evolved_regime = detect_regime(evolved_field)
-    print(f"   Evolved fractal dim: {evolved_regime['fractal_dimension']:.4f}")
-
-    # Step 5: Generate fractal for stability analysis
-    print("\n5. Lyapunov stability analysis...")
-    _, lyapunov = generate_fractal_ifs(rng_sim, num_points=5000)
-    print(f"   Lyapunov exponent: {lyapunov:.4f}")
-    if lyapunov < 0:
-        print("   → System is STABLE (contractive dynamics)")
-    else:
-        print("   → System is UNSTABLE (expansive dynamics)")
-
-    # Step 6: Train model on regime features
-    print("\n6. Training MyceliumFractalNet on regime features...")
-    model = MyceliumFractalNet(input_dim=4, hidden_dim=32)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    loss_fn = torch.nn.MSELoss()
-
-    # Create simple training data from field statistics
-    features = torch.tensor(
-        [
-            [
-                regime_info["fractal_dimension"],
-                field.mean() * 100,
-                field.std() * 100,
-                field.max() * 100,
-            ]
-        ],
-        dtype=torch.float32,
-    )
-    target = torch.tensor([[1.0 if regime_info["regime"] == "normal" else 0.0]])
-
-    # Train for a few steps
-    for epoch in range(10):
-        loss = model.train_step(features, target, optimizer, loss_fn)
-
-    print(f"   Final loss: {loss:.6f}")
-
-    # Step 7: Summary
-    print("\n" + "=" * 60)
-    print("SUMMARY: Market Regime Analysis")
-    print("=" * 60)
-    print(f"Fractal Dimension: {regime_info['fractal_dimension']:.4f}")
-    print(f"Lyapunov Exponent: {lyapunov:.4f} (stable)" if lyapunov < 0 else "unstable")
-    print(f"Regime: {regime_info['regime'].upper()}")
-    print(f"Growth Events: {growth_events}")
-    print("\nInterpretation:")
-    if regime_info["regime"] == "high_complexity":
-        print("→ Market shows high complexity, expect increased volatility")
-    elif regime_info["regime"] == "low_complexity":
-        print("→ Market shows low complexity, possible trend/consolidation")
-    else:
-        print("→ Market in normal regime, standard risk parameters apply")
+    """Entry point for the finance regime detection example."""
+    run_finance_demo(verbose=True, return_analysis=False)
 
 
 if __name__ == "__main__":

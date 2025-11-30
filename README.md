@@ -254,6 +254,53 @@ MyceliumFractalNet (MFN) — це **фрактальний морфогенет�
 
 ---
 
+## Examples & Use Cases
+
+MFN provides three canonical examples demonstrating practical use cases.
+See [docs/MFN_USE_CASES.md](docs/MFN_USE_CASES.md) for detailed documentation.
+
+| Example | Purpose | Runtime |
+|:--------|:--------|:--------|
+| `simple_simulation.py` | E2E pipeline: Config → Simulation → Features | ~1-2s |
+| `finance_regime_detection.py` | Market regime classification via fractal features | ~2-3s |
+| `rl_exploration.py` | MFN-guided exploration in GridWorld | ~3-5s |
+
+### Quick Start
+
+```bash
+# Run simple E2E pipeline demo
+python examples/simple_simulation.py
+
+# Run finance regime detection demo
+python examples/finance_regime_detection.py
+
+# Run RL exploration demo
+python examples/rl_exploration.py
+```
+
+### Example: Simple Simulation
+
+```python
+from mycelium_fractal_net import (
+    make_simulation_config_demo,
+    run_mycelium_simulation_with_history,
+    compute_fractal_features,
+)
+
+# Create configuration
+config = make_simulation_config_demo()
+
+# Run simulation
+result = run_mycelium_simulation_with_history(config)
+
+# Extract 18 fractal features
+features = compute_fractal_features(result)
+print(f"Fractal dimension: {features['D_box']:.3f}")
+print(f"Active fraction: {features['f_active']:.3f}")
+```
+
+---
+
 ## Документація
 
 | Документ | Опис |
@@ -265,7 +312,8 @@ MyceliumFractalNet (MFN) — це **фрактальний морфогенет�
 | [NUMERICAL_CORE.md](docs/NUMERICAL_CORE.md) | Чисельне ядро |
 | [MFN_FEATURE_SCHEMA.md](docs/MFN_FEATURE_SCHEMA.md) | Схема фрактальних ознак |
 | [MFN_DATA_PIPELINES.md](docs/MFN_DATA_PIPELINES.md) | Data pipelines та сценарії |
-| [ROADMAP.md](docs/ROADMAP.md) | План розвитку |
+| [MFN_USE_CASES.md](docs/MFN_USE_CASES.md) | Use cases та демо-приклади |
+| [ROADMAP.md](docs/ROADMAP.md) | План розвитку | |
 
 ---
 
