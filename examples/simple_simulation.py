@@ -28,7 +28,6 @@ from mycelium_fractal_net import (
     FeatureVector,
     compute_fractal_features,
     compute_nernst_potential,
-    make_feature_config_demo,
     make_simulation_config_demo,
     run_mycelium_simulation_with_history,
 )
@@ -73,7 +72,7 @@ def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureV
     if verbose:
         print("\n2. Creating simulation configuration (demo preset)...")
     sim_config = make_simulation_config_demo()
-    feat_config = make_feature_config_demo()
+    # Note: Feature config uses defaults; demo config available via make_feature_config_demo()
     if verbose:
         print(f"   Grid size: {sim_config.grid_size}x{sim_config.grid_size}")
         print(f"   Steps: {sim_config.steps}")
@@ -170,8 +169,8 @@ def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureV
     }
     if verbose:
         print(f"   Record has {len(record)} fields")
-        print(f"   Config fields: 8 (simulation parameters)")
-        print(f"   Feature fields: 18 (fractal features)")
+        print("   Config fields: 8 (simulation parameters)")
+        print("   Feature fields: 18 (fractal features)")
 
     # Summary
     if verbose:

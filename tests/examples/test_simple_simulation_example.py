@@ -63,7 +63,7 @@ class TestSimpleSimulationExample:
         assert 0.0 <= features["D_r2"] <= 1.0, f"D_r2={features['D_r2']} out of range"
 
         # Active fraction check
-        assert 0.0 <= features["f_active"] <= 1.0, f"f_active out of range"
+        assert 0.0 <= features["f_active"] <= 1.0, "f_active out of range"
 
         # Voltage checks (physiological bounds)
         assert features["V_min"] >= -100.0, f"V_min={features['V_min']} below -100mV"
