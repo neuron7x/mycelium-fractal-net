@@ -86,7 +86,7 @@
 
 ### 3.2 PARTIAL
 
-- **[code_integration] REST API** — 5 endpoints реалізовано; бракує authentication, rate limiting, CORS configuration, request validation logging  
+- **[code_integration] REST API** — 5 endpoints реалізовано; ✅ CORS configuration додано; бракує authentication, rate limiting, request validation logging  
   *Файли:* `api.py`
 
 - **[infra] Kubernetes** — базовий deployment, service, HPA, ConfigMap; бракує secrets, ingress, network policies, PodDisruptionBudget  
@@ -95,8 +95,8 @@
 - **[examples/demo] Demo scripts** — 3 приклади є; бракує інтерактивних Jupyter notebooks, візуалізацій результатів  
   *Файли:* `examples/simple_simulation.py`, `examples/finance_regime_detection.py`, `examples/rl_exploration.py`
 
-- **[infra] Configuration management** — JSON конфіги (small/medium/large); бракує environment-specific configs, secrets management  
-  *Файли:* `configs/small.json`, `configs/medium.json`, `configs/large.json`
+- **[infra] Configuration management** — ✅ Environment-specific configs (dev/staging/prod) додано; бракує secrets management, runtime validation  
+  *Файли:* `configs/small.json`, `configs/medium.json`, `configs/large.json`, `configs/dev.json`, `configs/staging.json`, `configs/prod.json`
 
 - **[docs] Usage guides** — базові інструкції в README; бракує детальних туторіалів, troubleshooting guide  
   *Файли:* `README.md`
@@ -122,7 +122,7 @@
 
 - **[examples/demo] Interactive visualizations** — відсутні візуалізації для fractal patterns, field evolution
 
-- **[docs] API documentation** — відсутній OpenAPI spec export, Swagger UI в production
+- ~~**[docs] API documentation** — відсутній OpenAPI spec export, Swagger UI в production~~ ✅ **READY**: `docs/openapi.json` експортовано, Swagger UI доступний на `/docs`
 
 - **[infra] Database/State persistence** — відсутнє збереження результатів симуляцій (крім parquet export)
 

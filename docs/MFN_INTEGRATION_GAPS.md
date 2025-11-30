@@ -100,9 +100,9 @@ MFN operates as a **fractal morphogenetic feature engine** — a computational m
 - **What's Missing**:
   - Authentication/Authorization middleware
   - Rate limiting
-  - CORS configuration
+  - ~~CORS configuration~~ ✅ **READY** — Added via `CORSMiddleware`, configurable via `MFN_CORS_ORIGINS` and `MFN_ENV`
   - Request validation logging
-  - OpenAPI spec export / Swagger UI in production
+  - ~~OpenAPI spec export / Swagger UI in production~~ ✅ **READY** — Exported to `docs/openapi.json`, Swagger UI at `/docs`
 - **Evidence**: TECHNICAL_AUDIT.md classifies `code_integration` as PARTIAL
 
 ### [deployment_layer] Kubernetes Deployment
@@ -124,14 +124,14 @@ MFN operates as a **fractal morphogenetic feature engine** — a computational m
 
 ### [config_management] Configuration Management
 - **Layer ID**: `mfn-config-json`
-- **Files**: `configs/small.json`, `configs/medium.json`, `configs/large.json`
+- **Files**: `configs/small.json`, `configs/medium.json`, `configs/large.json`, `configs/dev.json`, `configs/staging.json`, `configs/prod.json`
 - **Description**: Predefined simulation configurations for different computational budgets.
 - **What's Missing**:
-  - Environment-specific configs (dev/staging/prod)
+  - ~~Environment-specific configs (dev/staging/prod)~~ ✅ **READY** — Added `configs/dev.json`, `configs/staging.json`, `configs/prod.json`
   - Secrets management integration
   - Config validation at runtime
   - Dynamic config reload
-- **Evidence**: JSON configs exist but lack environment differentiation
+- **Evidence**: JSON configs exist with environment differentiation added
 
 ---
 
