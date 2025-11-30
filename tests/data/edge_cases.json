@@ -28,7 +28,8 @@
       "temperature_k": 273.0,
       "expected_mv": -78.3,
       "tolerance_mv": 2.0,
-      "reference": "K+ at 0°C (hypothermic limit)"
+      "reference": "K+ at 0°C (hypothermic limit)",
+      "note": "273K (0°C) represents the lower physiological boundary; most biological systems operate at higher temperatures but this tests numerical stability at edge conditions"
     },
     "temperature_max": {
       "z_valence": 1,

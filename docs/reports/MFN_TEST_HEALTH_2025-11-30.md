@@ -4,7 +4,7 @@
 
 **Date:** 2025-11-30  
 **CI Status:** ✅ All Passing  
-**Tests:** 758 passed, 1 skipped, 1585 warnings  
+**Tests:** 807 passed, 1 skipped  
 **Coverage:** 84% overall
 
 This report documents the test health analysis for MyceliumFractalNet v4.1 based on today's CI runs.
