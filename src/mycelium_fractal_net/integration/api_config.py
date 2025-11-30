@@ -23,7 +23,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 class Environment(str, Enum):
@@ -110,7 +110,7 @@ class RateLimitConfig:
     max_requests: int = 100
     window_seconds: int = 60
     enabled: bool = True
-    per_endpoint_limits: dict = field(default_factory=dict)
+    per_endpoint_limits: Dict[str, int] = field(default_factory=dict)
 
     @classmethod
     def from_env(cls, env: Environment) -> "RateLimitConfig":

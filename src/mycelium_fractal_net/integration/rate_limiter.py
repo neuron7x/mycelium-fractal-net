@@ -22,7 +22,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from threading import Lock
-from typing import Callable, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
@@ -131,11 +131,11 @@ class RateLimiter:
         forwarded = request.headers.get("X-Forwarded-For", "")
         if forwarded:
             # Take the first IP in the chain (original client)
-            return forwarded.split(",")[0].strip()
+            return str(forwarded.split(",")[0].strip())
 
         # Fall back to direct client IP
         if request.client:
-            return request.client.host
+            return str(request.client.host)
 
         return "unknown"
 
@@ -165,7 +165,7 @@ class RateLimiter:
         # Check for specific endpoint limit
         for path, limit in self.config.per_endpoint_limits.items():
             if endpoint.startswith(path):
-                return limit
+                return int(limit)
 
         # Fall back to default
         return self.config.max_requests
@@ -256,7 +256,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app: Callable,
+        app: Any,
         config: Optional[RateLimitConfig] = None,
     ) -> None:
         """

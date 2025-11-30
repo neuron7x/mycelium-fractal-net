@@ -39,7 +39,7 @@ import time
 import uuid
 from contextvars import ContextVar
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -208,6 +208,7 @@ def setup_logging(config: Optional[LoggingConfig] = None) -> None:
     handler.setLevel(level)
 
     # Set formatter based on config
+    formatter: Union[JSONFormatter, TextFormatter]
     if config.format.lower() == "json":
         formatter = JSONFormatter(env=api_config.env.value)
     else:
@@ -287,7 +288,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app: Callable,
+        app: Any,
         config: Optional[LoggingConfig] = None,
     ) -> None:
         """

@@ -21,7 +21,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-OBS-001
 from __future__ import annotations
 
 import time
-from typing import Callable, Optional
+from typing import Any, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -43,42 +43,11 @@ try:
 except ImportError:
     PROMETHEUS_AVAILABLE = False
     CONTENT_TYPE_LATEST = "text/plain; charset=utf-8"
+    Counter = None  # type: ignore[misc,assignment]
+    Histogram = None  # type: ignore[misc,assignment]
+    Gauge = None  # type: ignore[misc,assignment]
 
-    # Fallback no-op implementations
-    class Counter:  # type: ignore
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def labels(self, **kwargs):
-            return self
-
-        def inc(self, amount=1):
-            pass
-
-    class Histogram:  # type: ignore
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def labels(self, **kwargs):
-            return self
-
-        def observe(self, amount):
-            pass
-
-    class Gauge:  # type: ignore
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def labels(self, **kwargs):
-            return self
-
-        def inc(self, amount=1):
-            pass
-
-        def dec(self, amount=1):
-            pass
-
-    def generate_latest():  # type: ignore
+    def generate_latest() -> bytes:  # type: ignore[misc]
         return b"# prometheus_client not installed\n"
 
 
@@ -86,12 +55,12 @@ except ImportError:
 # Using a module-level dict to store created metrics
 
 _METRICS_CREATED = False
-REQUEST_COUNTER = None
-REQUEST_LATENCY = None
-REQUESTS_IN_PROGRESS = None
+REQUEST_COUNTER: Any = None
+REQUEST_LATENCY: Any = None
+REQUESTS_IN_PROGRESS: Any = None
 
 
-def _create_metrics():
+def _create_metrics() -> None:
     """Create metrics if not already created."""
     global _METRICS_CREATED, REQUEST_COUNTER, REQUEST_LATENCY, REQUESTS_IN_PROGRESS
 
@@ -145,10 +114,8 @@ def _create_metrics():
                 if hasattr(collector, '_name') and collector._name == metric_name:
                     REQUESTS_IN_PROGRESS = collector
                     break
-    else:
-        REQUEST_COUNTER = Counter()
-        REQUEST_LATENCY = Histogram()
-        REQUESTS_IN_PROGRESS = Gauge()
+    # When prometheus_client is not available, metrics stay as None
+    # The middleware will handle None checks
 
     _METRICS_CREATED = True
 
@@ -172,7 +139,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app: Callable,
+        app: Any,
         config: Optional[MetricsConfig] = None,
     ) -> None:
         """
@@ -237,7 +204,8 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         method = request.method
 
         # Track in-progress requests
-        REQUESTS_IN_PROGRESS.labels(endpoint=endpoint, method=method).inc()
+        if REQUESTS_IN_PROGRESS is not None:
+            REQUESTS_IN_PROGRESS.labels(endpoint=endpoint, method=method).inc()
         start_time = time.perf_counter()
 
         try:
@@ -249,15 +217,18 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         finally:
             # Record duration
             duration = time.perf_counter() - start_time
-            REQUEST_LATENCY.labels(endpoint=endpoint, method=method).observe(duration)
+            if REQUEST_LATENCY is not None:
+                REQUEST_LATENCY.labels(endpoint=endpoint, method=method).observe(duration)
 
             # Decrement in-progress
-            REQUESTS_IN_PROGRESS.labels(endpoint=endpoint, method=method).dec()
+            if REQUESTS_IN_PROGRESS is not None:
+                REQUESTS_IN_PROGRESS.labels(endpoint=endpoint, method=method).dec()
 
             # Increment request counter
-            REQUEST_COUNTER.labels(
-                endpoint=endpoint, method=method, status=status_code
-            ).inc()
+            if REQUEST_COUNTER is not None:
+                REQUEST_COUNTER.labels(
+                    endpoint=endpoint, method=method, status=status_code
+                ).inc()
 
         return response
 

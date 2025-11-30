@@ -18,7 +18,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-001
 from __future__ import annotations
 
 import secrets
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -47,7 +47,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app: Callable,
+        app: Any,
         auth_config: Optional[AuthConfig] = None,
     ) -> None:
         """
@@ -152,7 +152,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 def require_api_key(
     api_key: Optional[str] = None,
     config: Optional[AuthConfig] = None,
-) -> Callable:
+) -> Callable[..., Any]:
     """
     Dependency for FastAPI routes requiring API key authentication.
 
