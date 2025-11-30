@@ -256,7 +256,8 @@ class TestAPIStress:
                 else:
                     response = perf_client.post(path, json=body)
 
-                if response.status_code not in (200, 400):  # 400 is expected for bad federated
+                # All payloads above are valid, expect 200 for all
+                if response.status_code != 200:
                     errors += 1
 
         total_requests = 20 * len(payloads)

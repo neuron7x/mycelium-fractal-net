@@ -41,8 +41,6 @@ MFN operates as a **fractal morphogenetic feature engine** — a computational m
 | mfn-api-streaming | streaming_adapter | inbound/outbound | MISSING | roadmap | Planned in v4.3; no implementation |
 | mfn-api-websocket | external_api | inbound/outbound | MISSING | roadmap | Planned in v4.3; no implementation |
 | mfn-api-grpc | external_api | inbound/outbound | MISSING | roadmap | Planned in v4.3; no implementation |
-| mfn-auth | external_api | inbound | MISSING | docs, system_role | API lacks authentication/authorization |
-| mfn-rate-limiting | external_api | inbound | MISSING | docs | No rate limiter for API endpoints |
 | mfn-upstream-connector | batch_pipeline_adapter | inbound | MISSING | system_role | No formal connectors for external data ingestion |
 | mfn-downstream-publisher | streaming_adapter | outbound | MISSING | system_role | No event publishing (Kafka, webhooks, etc.) |
 | mfn-risk-signals | risk_signals_adapter | outbound | MISSING | system_role | No separate risk/regime change signals channel |
@@ -231,21 +229,21 @@ For MFN to operate as a production-ready component within a larger system, the f
 
 ### Tier 1: Critical (Must Have)
 
-1. **One inbound API** — `mfn-api-rest` (PARTIAL) needs completion with:
-   - Authentication (`mfn-auth` — MISSING)
-   - Rate limiting (`mfn-rate-limiting` — MISSING)
+1. **One inbound API** — `mfn-api-rest` (PARTIAL → READY with auth/rate limiting):
+   - Authentication (`mfn-auth` — **READY**)
+   - Rate limiting (`mfn-rate-limiting` — **READY**)
    
 2. **One outbound feature channel** — `mfn-feature-extraction` (READY) + one of:
    - Parquet export (`mfn-dataset-generation` — READY) for batch scenarios
    - Event publishing (`mfn-downstream-publisher` — MISSING) for real-time scenarios
 
-3. **Basic observability** — `mfn-monitoring` (MISSING):
-   - At minimum: /metrics endpoint with latency, error rate, throughput
+3. **Basic observability** — `mfn-monitoring` (**READY**):
+   - /metrics endpoint with latency, error rate, throughput ✅
 
 ### Tier 2: Production Ready
 
-4. **Structured logging** — `mfn-logging` (MISSING):
-   - JSON logs with correlation IDs for debugging
+4. **Structured logging** — `mfn-logging` (**READY**):
+   - JSON logs with correlation IDs for debugging ✅
 
 5. **Config/Secrets management** — `mfn-config-json` (PARTIAL) + `mfn-secrets-mgmt` (MISSING):
    - Environment-specific configs
@@ -273,18 +271,18 @@ For MFN to operate as a production-ready component within a larger system, the f
 
 | Integration Layer | System Role Reference | Implementation Status |
 |-------------------|----------------------|----------------------|
-| REST API | Section 4.1 (Input Channels), Section 4.2 (Output Channels) | PARTIAL |
+| REST API | Section 4.1 (Input Channels), Section 4.2 (Output Channels) | READY (with auth, rate limiting) |
 | CLI interface | Section 4.1 (`simulation_params` via CLI) | READY |
 | Upstream systems | Section 3.1 — Parameter Configurator, Data Preprocessor, Orchestration Layer, Federated Clients | All "(Planned)" = MISSING |
 | Downstream systems | Section 3.2 — ML Model, Risk Module, Analytics Dashboard, Federated Coordinator | All "(Planned)" = MISSING |
-| Monitoring | Section 2.2 item 9 (Non-responsibility), Section 5.3 Gap Summary | MISSING |
-| Authentication | Section 2.2 item 7 (Non-responsibility but needed) | MISSING |
+| Monitoring | Section 2.2 item 9 (Non-responsibility), Section 5.3 Gap Summary | **READY** (Prometheus metrics) |
+| Authentication | Section 2.2 item 7 (Non-responsibility but needed) | **READY** (API key) |
 
 ### Mentioned in ROADMAP.md
 
 | Feature | Roadmap Version | Current Status |
 |---------|-----------------|----------------|
-| FastAPI REST endpoints | v4.1 | PARTIAL (implemented, needs hardening) |
+| FastAPI REST endpoints | v4.1 | **READY** (with auth, rate limiting, metrics) |
 | Docker/Kubernetes | v4.1 | PARTIAL (basic deployment) |
 | Streaming API | v4.3 | MISSING |
 | WebSocket support | v4.3 | MISSING |

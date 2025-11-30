@@ -110,8 +110,10 @@ def _create_metrics():
             )
         except ValueError:
             # Already registered - get existing
+            # Counter stores name without "_total" suffix internally
+            metric_name = "mfn_http_requests"
             for collector in REGISTRY._names_to_collectors.values():
-                if hasattr(collector, '_name') and collector._name == "mfn_http_requests":
+                if hasattr(collector, '_name') and collector._name == metric_name:
                     REQUEST_COUNTER = collector
                     break
 

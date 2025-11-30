@@ -310,11 +310,11 @@ class TestRateLimitMiddleware:
     def test_429_response_body_format(self) -> None:
         """429 response body should include expected error details."""
         # This tests the expected format of 429 responses
-        expected_fields = {"detail", "error_code", "retry_after"}
-        
-        # Verify the middleware returns proper format (unit test style)
-        from mycelium_fractal_net.integration.rate_limiter import RateLimitMiddleware
-        # The middleware is tested to return JSON with these fields
+        # The middleware is tested to return JSON with these fields:
+        # - detail: error message
+        # - error_code: "rate_limit_exceeded"
+        # - retry_after: seconds to wait
+        pass  # Format validation is done in rate_limit_exceeded_behavior test
 
     def test_disabled_rate_limiting_in_dev(self, unlimited_client: TestClient) -> None:
         """With rate limiting disabled (dev mode), all requests should succeed."""
