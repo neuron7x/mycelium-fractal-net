@@ -13,7 +13,8 @@ Reference:
 from __future__ import annotations
 
 # Re-export FeatureVector from root analytics module (single source of truth)
-# This is the canonical dataclass with individual feature fields
+# Note: 'analytics' is a root-level package configured in pyproject.toml
+# This is the canonical dataclass with individual feature fields (D_box, V_mean, etc.)
 from analytics.fractal_features import (
     FEATURE_COUNT,
     FeatureVector,
