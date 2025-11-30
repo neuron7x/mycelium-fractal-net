@@ -3,6 +3,10 @@ numpy>=1.24
 sympy>=1.12
 torch>=2.0.0
 
+# Data processing
+pandas>=1.5.3,<3.0.0
+pyarrow>=10.0.0
+
 # API
 fastapi>=0.109.0
 uvicorn>=0.27.0

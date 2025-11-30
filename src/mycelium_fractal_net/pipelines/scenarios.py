@@ -27,6 +27,15 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+# Guard: ensure pandas is available with clear error message
+try:
+    import pandas as pd
+except ModuleNotFoundError:
+    raise RuntimeError(
+        "pandas is required for dataset generation. "
+        "Install with: pip install -r requirements.txt"
+    )
+
 from mycelium_fractal_net.core import ReactionDiffusionConfig, ReactionDiffusionEngine
 
 logger = logging.getLogger(__name__)
@@ -475,17 +484,8 @@ def run_scenario(
             f"({n_failed}/{n_configs} failed)"
         )
 
-    try:
-        import pandas as pd
-
-        df = pd.DataFrame(all_rows)
-        _atomic_write(df, output_path, config.output_format)
-
-    except ImportError:
-        raise RuntimeError(
-            "pandas is required for dataset generation. "
-            "Install with: pip install pandas"
-        )
+    df = pd.DataFrame(all_rows)
+    _atomic_write(df, output_path, config.output_format)
 
     # Get feature names
     feature_names = FeatureVector.feature_names()
