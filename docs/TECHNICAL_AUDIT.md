@@ -134,7 +134,7 @@
 
 ```bash
 pytest -q
-# Результат: 305 tests passed (5 skipped)
+# Результат: 807 tests passed (1 skipped)
 # 100% pass rate
 ```
 
@@ -145,6 +145,7 @@ pytest -q
 - `tests/smoke/` — smoke tests
 - `tests/validation/` — model falsification tests
 - `tests/test_*.py` — unit tests
+- `tests/data/` — test fixtures and edge case data
 
 ### 4.2 Лінтери
 
@@ -172,9 +173,9 @@ python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
 ```bash
 python benchmarks/benchmark_core.py
 # Результат: 8/8 passed
-# Forward pass: 0.29 ms (target: <10 ms)
-# Field simulation (64x64, 100 steps): 19.56 ms (target: <100 ms)
-# Inference throughput: 198,402 samples/sec
+# Forward pass: 0.22 ms (target: <10 ms)
+# Field simulation (64x64, 100 steps): 19.08 ms (target: <100 ms)
+# Inference throughput: 264,031 samples/sec
 ```
 
 ### 4.5 Scientific Validation
@@ -186,6 +187,21 @@ python validation/scientific_validation.py
 # Fractal dimension: 1.762±0.008 (expected: 1.585, tolerance: 0.5)
 # Membrane potential range: [-95.0, 40.0] mV
 ```
+
+### 4.6 Coverage (2025-11-30)
+
+```bash
+pytest --cov=mycelium_fractal_net --cov-report=term-missing
+# Результат: 84% overall coverage
+```
+
+| Module | Coverage | Notes |
+|--------|----------|-------|
+| core/stability.py | 40% → improved | Added comprehensive tests |
+| core/stdp.py | 37% → improved | Added edge case tests |
+| config.py | 62% | Environment-specific paths |
+| model.py | 91% | Core neural network |
+| integration/*.py | 71-100% | API infrastructure |
 
 ---
 
@@ -221,14 +237,15 @@ python validation/scientific_validation.py
 |--------|-------|--------|
 | Python files | 58+ | — |
 | Lines of code (core) | ~5000+ | — |
-| Test files | 40 | — |
-| Tests count | 305+ | ✓ |
+| Test files | 45+ | — |
+| Tests count | 807+ | ✓ |
 | Test pass rate | 100% | ✓ |
+| Test coverage | 84% | ✓ |
 | Linting (ruff) | passed | ✓ |
 | Type checking (mypy) | passed | ✓ |
 | Scientific validation | 11/11 | ✓ |
 | Benchmark targets | 8/8 | ✓ |
-| Documentation files | 11 | ✓ |
+| Documentation files | 12+ | ✓ |
 | API endpoints | 5 | ✓ |
 | Docker support | yes | ✓ |
 | K8s support | basic | ⚠ |
@@ -262,3 +279,18 @@ Legend: ✓ = complete, ◐ = partial, ○ = not achieved
 ---
 
 *Аудит виконано на основі повного read-only доступу до репозиторію з запуском тестів, лінтерів, валідації та бенчмарків.*
+
+---
+
+## 8. TEST HEALTH REPORTS
+
+Daily test health reports are generated and stored in `docs/reports/`:
+
+- [MFN_TEST_HEALTH_2025-11-30.md](reports/MFN_TEST_HEALTH_2025-11-30.md) — Latest test health analysis
+
+These reports include:
+- CI run summaries with job-level details
+- Failing and flaky test tracking
+- Coverage analysis with gap identification
+- Benchmark results and trends
+- Scientific validation status

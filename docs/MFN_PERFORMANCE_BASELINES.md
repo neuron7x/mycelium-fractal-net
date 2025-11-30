@@ -212,6 +212,50 @@ print(f'Time: {time.perf_counter() - start:.4f}s')
 
 ---
 
-*Document Version: 1.1*
+## 8. Today's Baseline (2025-11-30)
+
+Benchmark results from CI run 19803646754 on GitHub Actions runner:
+
+### Core Benchmarks
+
+| Benchmark | Value | Target | Margin |
+|-----------|-------|--------|--------|
+| Forward pass latency | 0.22 ms | <10 ms | 45x |
+| Forward pass (batch=128) | 0.29 ms | <50 ms | 172x |
+| Field simulation (64x64, 100 steps) | 19.08 ms | <100 ms | 5x |
+| Fractal dimension estimation | 0.22 ms | <50 ms | 227x |
+| Training step | 1.68 ms | <20 ms | 12x |
+| Peak memory usage | 0.24 MB | <500 MB | 2083x |
+| Inference throughput | 264,031 samples/sec | >1,000 | 264x |
+| Model initialization | 0.50 ms | <100 ms | 200x |
+
+**Result:** 8/8 passed with significant performance headroom.
+
+### Scientific Validation
+
+| Validation | Expected | Computed | Error |
+|------------|----------|----------|-------|
+| K+ Nernst (mammalian) | -89.0 mV | -89.0 mV | 0.0 mV |
+| Na+ Nernst (mammalian) | 66.0 mV | 66.6 mV | 0.6 mV |
+| Cl- Nernst (mammalian) | -89.0 mV | -90.9 mV | 1.9 mV |
+| Ca2+ Nernst (mammalian) | 102.0 mV | 101.5 mV | 0.5 mV |
+| RT/F constant | 26.730 mV | 26.712 mV | 0.018 mV |
+| Fractal dimension | 1.585 | 1.762 | 0.177 |
+
+**Result:** 11/11 scientific validations passed.
+
+### Test Metrics
+
+| Metric | Value |
+|--------|-------|
+| Total tests | 807 |
+| Passed | 806 |
+| Skipped | 1 |
+| Coverage | 84% |
+| Warnings | 1585 (mostly from dependencies) |
+
+---
+
+*Document Version: 1.2*
 *Last Updated: 2025-11-30*
 *Applies to: MyceliumFractalNet v4.1.0*
