@@ -183,7 +183,35 @@ $$
 - growth_events
 - nernst_symbolic_mV, nernst_numeric_mV
 
-## 9. API Endpoints
+## 9. Integration Layer
+
+The integration layer (`src/mycelium_fractal_net/integration/`) provides unified schemas,
+service context, and adapters for consistent operation across CLI, HTTP API, and experiments.
+
+```
+src/mycelium_fractal_net/integration/
+├── __init__.py          # Package exports
+├── schemas.py           # Pydantic request/response models
+├── service_context.py   # Unified context with config, RNG, engine handles
+└── adapters.py          # Thin bridge between integration layer and core
+```
+
+**Key Components:**
+
+- **schemas.py**: Pydantic models (`ValidateRequest`, `SimulateResponse`, etc.) ensuring
+  consistent validation across all entry points.
+- **service_context.py**: `ServiceContext` class encapsulating configuration, RNG state,
+  and execution mode (CLI/API/experiment). Enables reproducibility and clean dependency injection.
+- **adapters.py**: Thin adapter functions that bridge schemas to core functions without
+  containing business logic. Keeps the core independent of FastAPI/CLI.
+
+**Benefits:**
+- Single source of truth for request/response schemas
+- Consistent validation between CLI and API
+- Clear boundary for adding auth/rate-limiting/observability
+- Core numerical engines remain independent of integration concerns
+
+## 10. API Endpoints
 
 FastAPI server (`api.py`):
 
@@ -195,7 +223,7 @@ FastAPI server (`api.py`):
 | /nernst | POST | Compute Nernst potential |
 | /federated/aggregate | POST | Krum aggregation |
 
-## 10. Configuration
+## 11. Configuration
 
 Three configuration levels (`configs/`):
 

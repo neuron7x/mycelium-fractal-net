@@ -188,7 +188,8 @@ mycelium-fractal-net/
 ├── src/mycelium_fractal_net/
 │   ├── __init__.py          # Public API
 │   ├── model.py             # Core implementation
-│   └── core/                # Numerical engines
+│   ├── core/                # Numerical engines
+│   └── integration/         # Integration layer (schemas, adapters)
 ├── analytics/               # Feature extraction module
 │   ├── __init__.py
 │   └── fractal_features.py  # 18 fractal features
