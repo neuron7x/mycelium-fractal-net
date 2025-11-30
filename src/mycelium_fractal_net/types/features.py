@@ -12,10 +12,10 @@ Reference:
 
 from __future__ import annotations
 
-# Re-export FeatureVector from analytics module (single source of truth)
+# Re-export FeatureVector from root analytics module (single source of truth)
+# This is the canonical dataclass with individual feature fields
 from analytics.fractal_features import (
     FEATURE_COUNT,
-    FeatureConfig,
     FeatureVector,
     compute_features,
     validate_feature_ranges,
@@ -51,7 +51,6 @@ assert len(FEATURE_NAMES) == FEATURE_COUNT, (
 
 __all__ = [
     "FeatureVector",
-    "FeatureConfig",
     "FEATURE_NAMES",
     "FEATURE_COUNT",
     "compute_features",
