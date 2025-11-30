@@ -22,11 +22,10 @@ Features demonstrated:
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 
 from mycelium_fractal_net import (
+    FeatureVector,
     compute_fractal_features,
     compute_nernst_potential,
     make_feature_config_demo,
@@ -34,11 +33,8 @@ from mycelium_fractal_net import (
     run_mycelium_simulation_with_history,
 )
 
-if TYPE_CHECKING:
-    from mycelium_fractal_net.analytics import FeatureVector
 
-
-def run_demo(*, verbose: bool = True, return_features: bool = False) -> "FeatureVector | None":
+def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureVector | None:
     """
     Run the MFN simple simulation demo.
 

@@ -5,25 +5,37 @@ Verifies the canonical E2E pipeline: Config → Simulation → Features → Vali
 """
 from __future__ import annotations
 
+import importlib.util
 import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-# Add examples directory to path
-examples_dir = Path(__file__).parent.parent.parent / "examples"
-sys.path.insert(0, str(examples_dir))
+
+def load_example_module(name: str):
+    """Load an example module by name from the examples directory."""
+    examples_dir = Path(__file__).parent.parent.parent / "examples"
+    spec = importlib.util.spec_from_file_location(name, examples_dir / f"{name}.py")
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load {name} from {examples_dir}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 class TestSimpleSimulationExample:
     """Tests for the simple simulation example."""
 
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Load the simple_simulation module."""
+        self.module = load_example_module("simple_simulation")
+
     def test_run_demo_returns_features(self) -> None:
         """Test that run_demo returns valid FeatureVector when requested."""
-        from simple_simulation import run_demo
-
-        features = run_demo(verbose=False, return_features=True)
+        features = self.module.run_demo(verbose=False, return_features=True)
 
         assert features is not None, "run_demo should return features"
         assert hasattr(features, "values"), "FeatureVector should have values attribute"
@@ -31,16 +43,12 @@ class TestSimpleSimulationExample:
 
     def test_run_demo_no_exceptions(self) -> None:
         """Test that run_demo completes without exceptions."""
-        from simple_simulation import run_demo
-
         # Should not raise any exceptions
-        run_demo(verbose=False, return_features=False)
+        self.module.run_demo(verbose=False, return_features=False)
 
     def test_feature_ranges_valid(self) -> None:
         """Test that all features are within expected ranges per MFN_FEATURE_SCHEMA.md."""
-        from simple_simulation import run_demo
-
-        features = run_demo(verbose=False, return_features=True)
+        features = self.module.run_demo(verbose=False, return_features=True)
         assert features is not None
 
         # No NaN or Inf values
@@ -70,9 +78,7 @@ class TestSimpleSimulationExample:
 
     def test_feature_array_length(self) -> None:
         """Test that feature array has exactly 18 elements."""
-        from simple_simulation import run_demo
-
-        features = run_demo(verbose=False, return_features=True)
+        features = self.module.run_demo(verbose=False, return_features=True)
         assert features is not None
 
         arr = features.to_array()
@@ -80,10 +86,8 @@ class TestSimpleSimulationExample:
 
     def test_main_function_exists(self) -> None:
         """Test that main() function exists and is callable."""
-        from simple_simulation import main
-
         # main should be callable
-        assert callable(main)
+        assert callable(self.module.main)
 
 
 class TestSimpleSimulationIntegration:

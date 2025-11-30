@@ -5,25 +5,37 @@ Verifies the RL use case: GridWorld + MFN-guided exploration → coverage analys
 """
 from __future__ import annotations
 
+import importlib.util
 import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-# Add examples directory to path
-examples_dir = Path(__file__).parent.parent.parent / "examples"
-sys.path.insert(0, str(examples_dir))
+
+def load_example_module(name: str):
+    """Load an example module by name from the examples directory."""
+    examples_dir = Path(__file__).parent.parent.parent / "examples"
+    spec = importlib.util.spec_from_file_location(name, examples_dir / f"{name}.py")
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load {name} from {examples_dir}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 class TestRLExplorationExample:
     """Tests for the RL exploration example."""
 
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Load the rl_exploration module."""
+        self.module = load_example_module("rl_exploration")
+
     def test_run_rl_demo_returns_stats(self) -> None:
         """Test that run_rl_demo returns valid ExplorationStats when requested."""
-        from rl_exploration import run_rl_demo
-
-        stats = run_rl_demo(
+        stats = self.module.run_rl_demo(
             verbose=False,
             num_episodes=10,  # Shorter for faster tests
             max_steps=50,
@@ -38,10 +50,8 @@ class TestRLExplorationExample:
 
     def test_run_rl_demo_no_exceptions(self) -> None:
         """Test that run_rl_demo completes without exceptions."""
-        from rl_exploration import run_rl_demo
-
         # Should not raise any exceptions with small number of episodes
-        run_rl_demo(
+        self.module.run_rl_demo(
             verbose=False,
             num_episodes=5,
             max_steps=30,
@@ -51,9 +61,7 @@ class TestRLExplorationExample:
 
     def test_exploration_stats_valid_ranges(self) -> None:
         """Test that exploration stats are in valid ranges."""
-        from rl_exploration import run_rl_demo
-
-        stats = run_rl_demo(
+        stats = self.module.run_rl_demo(
             verbose=False,
             num_episodes=10,
             max_steps=50,
@@ -85,9 +93,15 @@ class TestRLExplorationExample:
 class TestGridWorldEnvironment:
     """Tests for the GridWorld environment."""
 
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Load the rl_exploration module."""
+        self.module = load_example_module("rl_exploration")
+
     def test_gridworld_initialization(self) -> None:
         """Test GridWorld initialization."""
-        from rl_exploration import GridWorld, GridWorldConfig
+        GridWorld = self.module.GridWorld
+        GridWorldConfig = self.module.GridWorldConfig
 
         config = GridWorldConfig(size=8, seed=42)
         env = GridWorld(config=config)
@@ -98,7 +112,8 @@ class TestGridWorldEnvironment:
 
     def test_gridworld_reset(self) -> None:
         """Test GridWorld reset."""
-        from rl_exploration import GridWorld, GridWorldConfig
+        GridWorld = self.module.GridWorld
+        GridWorldConfig = self.module.GridWorldConfig
 
         config = GridWorldConfig(size=8, seed=42)
         env = GridWorld(config=config)
@@ -116,7 +131,8 @@ class TestGridWorldEnvironment:
 
     def test_gridworld_step_boundaries(self) -> None:
         """Test that GridWorld respects boundaries."""
-        from rl_exploration import GridWorld, GridWorldConfig
+        GridWorld = self.module.GridWorld
+        GridWorldConfig = self.module.GridWorldConfig
 
         config = GridWorldConfig(size=5, start=(0, 0), seed=42)
         env = GridWorld(config=config)
@@ -131,19 +147,15 @@ class TestGridWorldEnvironment:
 
     def test_gridworld_goal_reward(self) -> None:
         """Test that reaching goal gives positive reward."""
-        from rl_exploration import GridWorld, GridWorldConfig
+        GridWorldConfig = self.module.GridWorldConfig
 
         config = GridWorldConfig(size=3, start=(0, 0), goal=(1, 0), seed=42)
-        env = GridWorld(config=config)
-
-        # Move right to goal (if no obstacle)
-        # Note: with random obstacles, this might not always work
-        # so we just verify the goal mechanics
         assert config.goal != config.start
 
     def test_gridworld_coverage(self) -> None:
         """Test coverage calculation."""
-        from rl_exploration import GridWorld, GridWorldConfig
+        GridWorld = self.module.GridWorld
+        GridWorldConfig = self.module.GridWorldConfig
 
         config = GridWorldConfig(size=4, obstacle_probability=0.0, seed=42)
         env = GridWorld(config=config)
@@ -162,9 +174,14 @@ class TestGridWorldEnvironment:
 class TestMFNExplorer:
     """Tests for the MFN Explorer module."""
 
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Load the rl_exploration module."""
+        self.module = load_example_module("rl_exploration")
+
     def test_explorer_initialization(self) -> None:
         """Test MFNExplorer initialization."""
-        from rl_exploration import MFNExplorer
+        MFNExplorer = self.module.MFNExplorer
 
         explorer = MFNExplorer(grid_size=8, seed=42)
 
@@ -174,7 +191,7 @@ class TestMFNExplorer:
 
     def test_exploration_bonus_decreases(self) -> None:
         """Test that exploration bonus decreases with visits."""
-        from rl_exploration import MFNExplorer
+        MFNExplorer = self.module.MFNExplorer
 
         explorer = MFNExplorer(grid_size=8, seed=42)
 
@@ -187,7 +204,7 @@ class TestMFNExplorer:
 
     def test_coverage_fractal_dim_computation(self) -> None:
         """Test fractal dimension computation for coverage."""
-        from rl_exploration import MFNExplorer
+        MFNExplorer = self.module.MFNExplorer
 
         explorer = MFNExplorer(grid_size=8, seed=42)
 
@@ -202,7 +219,7 @@ class TestMFNExplorer:
 
     def test_epsilon_modulation(self) -> None:
         """Test epsilon modulation over episodes."""
-        from rl_exploration import MFNExplorer
+        MFNExplorer = self.module.MFNExplorer
 
         explorer = MFNExplorer(grid_size=8, seed=42)
 
@@ -216,7 +233,7 @@ class TestMFNExplorer:
 
     def test_stdp_reward_modulation(self) -> None:
         """Test STDP-inspired reward modulation."""
-        from rl_exploration import MFNExplorer
+        MFNExplorer = self.module.MFNExplorer
 
         explorer = MFNExplorer(grid_size=8, seed=42)
 
@@ -233,6 +250,4 @@ class TestMFNExplorer:
 
     def test_main_function_exists(self) -> None:
         """Test that main() function exists and is callable."""
-        from rl_exploration import main
-
-        assert callable(main)
+        assert callable(self.module.main)
