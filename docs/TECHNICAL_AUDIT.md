@@ -102,8 +102,9 @@
 - **[docs] Usage guides** — базові інструкції в README; бракує детальних туторіалів, troubleshooting guide  
   *Файли:* `README.md`
 
-- **[infra] Benchmarks** — базовий benchmark_core.py; бракує CI integration для regression testing, historical comparison  
-  *Файли:* `benchmarks/benchmark_core.py`
+- ~~**[infra] Benchmarks** — базовий benchmark_core.py; бракує CI integration для regression testing, historical comparison~~
+  ✅ **READY**: benchmark_core.py integrated in CI workflow (benchmark job), performance tests with documented thresholds
+  *Файли:* `benchmarks/benchmark_core.py`, `.github/workflows/ci.yml`, `tests/perf/test_mfn_performance.py`, `docs/MFN_PERFORMANCE_BASELINES.md`
 
 ### 3.3 MISSING
 
@@ -121,7 +122,9 @@
   ✅ **READY**: Configurable rate limiting middleware  
   *Файли:* `integration/rate_limiter.py`
 
-- **[tests] Load/Performance tests** — відсутні тести під навантаженням для API
+- ~~**[tests] Load/Performance tests** — відсутні тести під навантаженням для API~~
+  ✅ **READY**: Locust load tests for all API endpoints, performance tests in tests/performance/
+  *Файли:* `load_tests/locustfile.py`, `tests/performance/test_api_performance_small.py`
 
 - ~~**[tests] Coverage reporting** — відсутній pytest-cov у CI з coverage badge~~  
   ✅ **READY**: pytest-cov у CI, coverage upload to Codecov
