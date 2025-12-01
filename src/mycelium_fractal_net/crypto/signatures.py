@@ -194,20 +194,23 @@ def _point_double(P: ExtPoint) -> ExtPoint:
 
 def _scalar_mult(k: int, P: ExtPoint) -> ExtPoint:
     """
-    Scalar multiplication using double-and-add.
+    Scalar multiplication using constant-time double-and-add.
 
     Computes k * P where k is a scalar and P is a point.
+
+    This implementation processes all 256 bits regardless of k's actual
+    bit length to provide protection against timing side-channels.
     """
     # Identity point in extended coordinates
     result = (0, 1, 1, 0)
 
-    # Double-and-add (not constant-time for simplicity)
+    # Constant-time double-and-add: always process 256 bits
     temp = P
-    while k > 0:
-        if k & 1:
+    for i in range(256):
+        bit = (k >> i) & 1
+        if bit:
             result = _point_add(result, temp)
         temp = _point_double(temp)
-        k >>= 1
 
     return result
 
@@ -242,7 +245,7 @@ def _point_to_bytes(P: ExtPoint) -> bytes:
     # Encode y with sign of x in high bit
     y_bytes = y.to_bytes(32, "little")
     if x & 1:
-        y_bytes = bytes([y_bytes[i] if i < 31 else y_bytes[i] | 0x80 for i in range(32)])
+        y_bytes = y_bytes[:31] + bytes([y_bytes[31] | 0x80])
 
     return y_bytes
 

@@ -189,6 +189,11 @@ def _x25519(k: bytes, u: bytes) -> bytes:
     k_scalar = _clamp_scalar(k)
     u_int = int.from_bytes(u, "little") % _CURVE25519_PRIME
 
+    # Validate input point is in valid range (RFC 7748 Section 5)
+    # The high bit of byte 31 is ignored per RFC 7748
+    if u_int == 0:
+        raise KeyExchangeError("Invalid public key: zero coordinate")
+
     result = _x25519_ladder(k_scalar, u_int)
 
     result_bytes = result.to_bytes(32, "little")
