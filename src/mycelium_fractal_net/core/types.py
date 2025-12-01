@@ -39,6 +39,10 @@ class SimulationConfig:
         Variance of quantum jitter. Default 0.0005.
     seed : int | None
         Random seed for reproducibility. None for random seed.
+
+    Reference:
+        docs/MFN_DATA_MODEL.md — Canonical data model
+        docs/MFN_MATH_MODEL.md — Parameter bounds and physical constraints
     """
 
     grid_size: int = 64
@@ -66,6 +70,49 @@ class SimulationConfig:
         if self.jitter_var < 0.0:
             raise ValueError("jitter_var must be non-negative")
 
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Serialize configuration to a dictionary.
+
+        Returns:
+            Dictionary representation of the configuration.
+        """
+        return {
+            "grid_size": self.grid_size,
+            "steps": self.steps,
+            "alpha": self.alpha,
+            "spike_probability": self.spike_probability,
+            "turing_enabled": self.turing_enabled,
+            "turing_threshold": self.turing_threshold,
+            "quantum_jitter": self.quantum_jitter,
+            "jitter_var": self.jitter_var,
+            "seed": self.seed,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SimulationConfig":
+        """
+        Create configuration from a dictionary.
+
+        Args:
+            data: Dictionary with configuration values.
+
+        Returns:
+            New SimulationConfig instance.
+        """
+        seed_value = data.get("seed")
+        return cls(
+            grid_size=int(data.get("grid_size", 64)),
+            steps=int(data.get("steps", 64)),
+            alpha=float(data.get("alpha", 0.18)),
+            spike_probability=float(data.get("spike_probability", 0.25)),
+            turing_enabled=bool(data.get("turing_enabled", True)),
+            turing_threshold=float(data.get("turing_threshold", 0.75)),
+            quantum_jitter=bool(data.get("quantum_jitter", False)),
+            jitter_var=float(data.get("jitter_var", 0.0005)),
+            seed=int(seed_value) if seed_value is not None else None,
+        )
+
 
 @dataclass
 class SimulationResult:
@@ -80,13 +127,23 @@ class SimulationResult:
         Time series of field snapshots. Shape (T, N, N). None if not stored.
     growth_events : int
         Total number of growth events during simulation.
+    turing_activations : int
+        Number of Turing pattern activation events during simulation.
+    clamping_events : int
+        Number of field clamping events during simulation.
     metadata : dict[str, Any]
         Additional simulation metadata (timing, parameters, etc.).
+
+    Reference:
+        docs/MFN_DATA_MODEL.md — Canonical data model
+        docs/MFN_DATA_PIPELINES.md — Dataset schema
     """
 
     field: NDArray[np.float64]
     history: NDArray[np.float64] | None = None
     growth_events: int = 0
+    turing_activations: int = 0
+    clamping_events: int = 0
     metadata: dict[str, Any] = dataclass_field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -100,6 +157,8 @@ class SimulationResult:
                 raise ValueError("history must be 3D array (T, N, N)")
             if self.history.shape[1:] != self.field.shape:
                 raise ValueError("history spatial dimensions must match field")
+        if not np.isfinite(self.field).all():
+            raise ValueError("field contains NaN or Inf values")
 
     @property
     def grid_size(self) -> int:
@@ -110,3 +169,73 @@ class SimulationResult:
     def has_history(self) -> bool:
         """Check if time history is available."""
         return self.history is not None
+
+    @property
+    def num_steps(self) -> int:
+        """Return number of time steps in history, or 1 if no history."""
+        if self.history is not None:
+            return int(self.history.shape[0])
+        return 1
+
+    def to_dict(self, include_arrays: bool = False) -> dict[str, Any]:
+        """
+        Serialize result to a dictionary.
+
+        Args:
+            include_arrays: If True, include field and history arrays as lists.
+                           If False, only include metadata and statistics.
+
+        Returns:
+            Dictionary representation of the result.
+        """
+        result: dict[str, Any] = {
+            "grid_size": self.grid_size,
+            "num_steps": self.num_steps,
+            "has_history": self.has_history,
+            "growth_events": self.growth_events,
+            "turing_activations": self.turing_activations,
+            "clamping_events": self.clamping_events,
+            "metadata": self.metadata.copy(),
+            # Field statistics
+            "field_min_mV": float(np.min(self.field)) * 1000.0,
+            "field_max_mV": float(np.max(self.field)) * 1000.0,
+            "field_mean_mV": float(np.mean(self.field)) * 1000.0,
+            "field_std_mV": float(np.std(self.field)) * 1000.0,
+        }
+        if include_arrays:
+            result["field"] = self.field.tolist()
+            if self.history is not None:
+                result["history"] = self.history.tolist()
+        return result
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SimulationResult":
+        """
+        Create SimulationResult from a dictionary.
+
+        Args:
+            data: Dictionary with result data including 'field' array.
+
+        Returns:
+            New SimulationResult instance.
+
+        Raises:
+            KeyError: If 'field' key is missing.
+            ValueError: If field data is invalid.
+        """
+        if "field" not in data:
+            raise KeyError("'field' key is required in data dictionary")
+
+        field = np.array(data["field"], dtype=np.float64)
+        history = None
+        if "history" in data and data["history"] is not None:
+            history = np.array(data["history"], dtype=np.float64)
+
+        return cls(
+            field=field,
+            history=history,
+            growth_events=int(data.get("growth_events", 0)),
+            turing_activations=int(data.get("turing_activations", 0)),
+            clamping_events=int(data.get("clamping_events", 0)),
+            metadata=dict(data.get("metadata", {})),
+        )

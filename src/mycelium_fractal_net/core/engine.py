@@ -130,6 +130,8 @@ def run_mycelium_simulation(config: SimulationConfig) -> SimulationResult:
         field=final_field,
         history=None,
         growth_events=metrics.growth_events,
+        turing_activations=metrics.turing_activations,
+        clamping_events=metrics.clamping_events,
         metadata=metadata,
     )
 
@@ -235,5 +237,7 @@ def run_mycelium_simulation_with_history(
         field=final_field,
         history=history,
         growth_events=metrics.growth_events,
+        turing_activations=metrics.turing_activations,
+        clamping_events=metrics.clamping_events,
         metadata=metadata,
     )

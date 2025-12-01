@@ -1,9 +1,9 @@
 # MFN Data Model — Canonical Data Structures
 
-**Document Version**: 1.0  
+**Document Version**: 1.1  
 **Target Version**: MyceliumFractalNet v4.1.0  
 **Status**: Final  
-**Last Updated**: 2025-11-30
+**Last Updated**: 2025-12-01
 
 ---
 
@@ -25,7 +25,7 @@ the single source of truth for data flowing through the system.
 ```
 src/mycelium_fractal_net/types/
 ├── __init__.py      # Package exports
-├── config.py        # Configuration types (SimulationConfig, FeatureConfig, DatasetConfig)
+├── config.py        # Configuration types (SimulationConfig, SimulationResult, FeatureConfig, DatasetConfig)
 ├── field.py         # Field types (FieldState, FieldHistory, GridShape, BoundaryCondition)
 ├── features.py      # Feature types (FeatureVector, FEATURE_NAMES, FEATURE_COUNT)
 ├── scenario.py      # Scenario types (ScenarioConfig, ScenarioType)
@@ -41,6 +41,7 @@ src/mycelium_fractal_net/types/
 | Entity | Python Type | Location | Purpose |
 |--------|-------------|----------|---------|
 | SimulationConfig | dataclass | `types/config.py` | Simulation parameters |
+| SimulationResult | dataclass | `types/config.py` | Simulation output data |
 | FeatureConfig | dataclass | `types/config.py` | Feature extraction settings |
 | DatasetConfig | dataclass | `types/config.py` | Dataset generation settings |
 | FieldState | dataclass | `types/field.py` | Single field snapshot |
@@ -85,9 +86,61 @@ config = SimulationConfig(
 - `spike_probability` ∈ [0, 1]
 - `turing_threshold` ∈ [0, 1]
 
+**Serialization:**
+```python
+# Convert to dictionary
+config_dict = config.to_dict()
+
+# Create from dictionary
+config = SimulationConfig.from_dict(config_dict)
+```
+
 **Reference:** [MFN_MATH_MODEL.md](MFN_MATH_MODEL.md) Section 2
 
-### 3.2 FeatureConfig
+### 3.2 SimulationResult
+
+Container for simulation output data.
+
+```python
+from mycelium_fractal_net.types import SimulationResult
+import numpy as np
+
+# Create result from simulation output
+result = SimulationResult(
+    field=np.zeros((64, 64)) - 0.070,  # Final field in Volts
+    history=np.zeros((100, 64, 64)),    # Optional: time series
+    growth_events=25,                    # Growth events count
+    turing_activations=150,              # Turing activation events
+    clamping_events=10,                  # Field clamping events
+    metadata={"seed": 42, "elapsed_s": 1.5},
+)
+
+# Access properties
+print(f"Grid size: {result.grid_size}")
+print(f"Has history: {result.has_history}")
+print(f"Time steps: {result.num_steps}")
+```
+
+**Invariants:**
+- `field` must be 2D square array (N × N)
+- `history` if present must be 3D array (T, N, N) with spatial dimensions matching field
+- No NaN or Inf values in field
+
+**Serialization:**
+```python
+# Convert to dictionary (without arrays for metadata only)
+meta_dict = result.to_dict(include_arrays=False)
+
+# Convert to dictionary (with arrays for full serialization)
+full_dict = result.to_dict(include_arrays=True)
+
+# Create from dictionary
+result = SimulationResult.from_dict(full_dict)
+```
+
+**Reference:** [MFN_DATA_PIPELINES.md](MFN_DATA_PIPELINES.md) Section 5.3
+
+### 3.3 FeatureConfig
 
 Configuration for feature extraction.
 
@@ -114,7 +167,7 @@ config = FeatureConfig(
 
 **Reference:** [MFN_FEATURE_SCHEMA.md](MFN_FEATURE_SCHEMA.md) Section 5
 
-### 3.3 DatasetConfig
+### 3.4 DatasetConfig
 
 Configuration for dataset generation.
 

@@ -235,14 +235,24 @@ class TestSimulationResultEdgeCases:
         result = SimulationResult(field=field, history=history)
         assert result.has_history is True
 
-    def test_field_with_nan_allowed(self) -> None:
-        """Test that NaN values in field are currently allowed.
+    def test_field_with_nan_rejected(self) -> None:
+        """Test that NaN values in field are rejected.
         
-        Note: SimulationResult does not validate field values (NaN/Inf).
-        This is by design - validation is done at higher levels.
+        Per MFN_DATA_MODEL.md, field data must not contain NaN or Inf values.
+        SimulationResult validates this on construction.
         """
         field = np.random.randn(32, 32)
         field[0, 0] = np.nan
-        # Should not raise - SimulationResult doesn't validate values
-        result = SimulationResult(field=field)
-        assert result.grid_size == 32
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            SimulationResult(field=field)
+
+    def test_field_with_inf_rejected(self) -> None:
+        """Test that Inf values in field are rejected.
+        
+        Per MFN_DATA_MODEL.md, field data must not contain NaN or Inf values.
+        SimulationResult validates this on construction.
+        """
+        field = np.random.randn(32, 32)
+        field[0, 0] = np.inf
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            SimulationResult(field=field)

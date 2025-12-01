@@ -16,11 +16,12 @@ from __future__ import annotations
 from mycelium_fractal_net.config import DatasetConfig, FeatureConfig
 
 # Re-export existing canonical types to maintain single source of truth
-# SimulationConfig is the canonical simulation configuration from core
-from mycelium_fractal_net.core.types import SimulationConfig
+# SimulationConfig and SimulationResult are the canonical types from core
+from mycelium_fractal_net.core.types import SimulationConfig, SimulationResult
 
 __all__ = [
     "SimulationConfig",
+    "SimulationResult",
     "FeatureConfig",
     "DatasetConfig",
 ]
