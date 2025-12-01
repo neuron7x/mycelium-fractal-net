@@ -27,6 +27,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+import torch
 
 from mycelium_fractal_net import (
     SimulationConfig,
@@ -391,8 +392,6 @@ class TestFederatedScalability:
 
     def test_krum_many_clients(self) -> None:
         """Krum aggregation should handle many clients efficiently."""
-        import torch
-
         num_clients = 100
         gradient_dim = 1000
         gradients = [torch.randn(gradient_dim) for _ in range(num_clients)]
@@ -413,8 +412,6 @@ class TestFederatedScalability:
 
     def test_krum_large_gradients(self) -> None:
         """Krum should handle large gradient vectors efficiently."""
-        import torch
-
         num_clients = 20
         gradient_dim = 100000  # Large model
         gradients = [torch.randn(gradient_dim) for _ in range(num_clients)]
