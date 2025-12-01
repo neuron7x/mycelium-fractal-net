@@ -9,7 +9,7 @@
     "/health": {
       "get": {
         "summary": "Health Check",
-        "description": "Health check endpoint.",
+        "description": "Health check endpoint (public, no auth required).",
         "operationId": "health_check_health_get",
         "responses": {
           "200": {
@@ -18,6 +18,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Get Metrics",
+        "description": "Prometheus metrics endpoint (public, no auth required).\n\nReturns metrics in Prometheus text format including:\n- mfn_http_requests_total: Total HTTP requests\n- mfn_http_request_duration_seconds: Request latency histogram\n- mfn_http_requests_in_progress: Currently processing requests",
+        "operationId": "get_metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Prometheus metrics in text format",
+            "content": {
+              "text/plain; version=0.0.4; charset=utf-8": {
+                "schema": {
+                  "type": "string",
+                  "example": "# HELP mfn_http_requests_total Total HTTP requests\n# TYPE mfn_http_requests_total counter\nmfn_http_requests_total{endpoint=\"/health\",method=\"GET\",status=\"200\"} 1"
                 }
               }
             }
