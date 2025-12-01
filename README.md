@@ -257,6 +257,72 @@ pip-audit --strict
 
 ---
 
+## Cryptography Module
+
+MyceliumFractalNet provides a production-quality cryptography module with formal security guarantees.
+
+### Cryptographic Primitives
+
+| Primitive | Algorithm | Security Level |
+|-----------|-----------|----------------|
+| **Asymmetric Encryption** | RSA-4096 with OAEP | IND-CCA2 |
+| **Digital Signatures** | ECDSA P-384 | EUF-CMA |
+| **Key Derivation** | HKDF-SHA256 | PRF Security |
+| **Key Exchange** | X25519 | CDH Security |
+
+### Quick Start
+
+```python
+from mycelium_fractal_net.crypto import (
+    # RSA Encryption
+    generate_rsa_keypair,
+    rsa_encrypt,
+    rsa_decrypt,
+    # Digital Signatures
+    generate_ecdsa_keypair,
+    sign_message,
+    verify_signature,
+    # Key Exchange
+    generate_key_exchange_keypair,
+    perform_key_exchange,
+    # Key Derivation
+    derive_key,
+    generate_salt,
+)
+
+# RSA Encryption Example
+keypair = generate_rsa_keypair()
+ciphertext = rsa_encrypt(b"secret data", keypair.public_key)
+plaintext = rsa_decrypt(ciphertext, keypair.private_key)
+
+# Digital Signature Example
+sign_keypair = generate_ecdsa_keypair()
+signature = sign_message(b"message", sign_keypair.private_key)
+is_valid = verify_signature(b"message", signature, sign_keypair.public_key)
+
+# Key Exchange Example
+alice = generate_key_exchange_keypair()
+bob = generate_key_exchange_keypair()
+shared_secret = perform_key_exchange(alice.private_key, bob.public_key)
+
+# Key Derivation
+salt = generate_salt()
+derived_key = derive_key(shared_secret, salt, info=b"encryption-key")
+```
+
+### Configuration
+
+Configure cryptography settings via `configs/crypto.yaml` or environment variables:
+
+```bash
+export MFN_CRYPTO_RSA_KEY_SIZE=4096
+export MFN_CRYPTO_ECDSA_CURVE=P-384
+```
+
+📋 [Full Crypto Security Documentation](docs/crypto_security.md)
+
+---
+
 ## Docker
 
 ```bash
@@ -408,7 +474,9 @@ print(f"Active fraction: {features['f_active']:.3f}")
 | [MFN_FEATURE_SCHEMA.md](docs/MFN_FEATURE_SCHEMA.md) | Схема фрактальних ознак |
 | [MFN_DATA_PIPELINES.md](docs/MFN_DATA_PIPELINES.md) | Data pipelines та сценарії |
 | [MFN_USE_CASES.md](docs/MFN_USE_CASES.md) | Use cases та демо-приклади |
-| [ROADMAP.md](docs/ROADMAP.md) | План розвитку | |
+| [MFN_SECURITY.md](docs/MFN_SECURITY.md) | Безпека API та аутентифікація |
+| [crypto_security.md](docs/crypto_security.md) | Криптографічний модуль та формальна безпека |
+| [ROADMAP.md](docs/ROADMAP.md) | План розвитку |
 
 ---
 

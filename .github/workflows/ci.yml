@@ -71,6 +71,8 @@ jobs:
         continue-on-error: true
       - name: Run security tests
         run: pytest tests/security/ -v --tb=short
+      - name: Run crypto module tests
+        run: pytest tests/crypto/ -v --tb=short
 
   test:
     runs-on: ubuntu-latest

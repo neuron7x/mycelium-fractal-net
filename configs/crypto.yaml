@@ -1,0 +1,106 @@
+# Cryptography Configuration for MyceliumFractalNet
+# Reference: docs/crypto_security.md
+
+# =============================================================================
+# RSA Asymmetric Encryption Settings
+# =============================================================================
+rsa:
+  # Key size in bits (minimum: 2048, recommended: 4096)
+  key_size: 4096
+  
+  # Public exponent (65537 is standard and secure)
+  public_exponent: 65537
+  
+  # Padding scheme (OAEP is required for security)
+  padding: OAEP
+  
+  # Hash algorithm for OAEP padding
+  hash_algorithm: SHA256
+  
+  # MGF (Mask Generation Function) hash algorithm
+  mgf_hash_algorithm: SHA256
+
+# =============================================================================
+# ECDSA Digital Signature Settings
+# =============================================================================
+ecdsa:
+  # Elliptic curve (P-384 provides ~192-bit security)
+  # Options: P-256, P-384, P-521
+  curve: P-384
+  
+  # Hash algorithm for signatures
+  hash_algorithm: SHA384
+
+# =============================================================================
+# Key Derivation Function Settings
+# =============================================================================
+kdf:
+  # Algorithm (HKDF is the standard)
+  algorithm: HKDF
+  
+  # Hash algorithm for HKDF
+  hash_algorithm: SHA256
+  
+  # Default salt length in bytes (minimum: 16)
+  salt_length: 16
+  
+  # Default derived key length in bytes
+  default_key_length: 32
+  
+  # PBKDF2 iterations (if using PBKDF2 instead of HKDF)
+  pbkdf2_iterations: 100000
+
+# =============================================================================
+# Key Exchange Settings
+# =============================================================================
+key_exchange:
+  # Algorithm (X25519 is fast and secure)
+  algorithm: X25519
+  
+  # Shared secret length (fixed for X25519)
+  shared_secret_length: 32
+
+# =============================================================================
+# Key Management Settings
+# =============================================================================
+key_management:
+  # Enable key rotation reminders
+  rotation_enabled: true
+  
+  # Key rotation period in days
+  rotation_period_days: 365
+  
+  # Minimum RSA key size allowed
+  min_rsa_key_size: 2048
+  
+  # Allow insecure key storage (false for production)
+  allow_insecure_storage: false
+
+# =============================================================================
+# Logging and Audit Settings
+# =============================================================================
+audit:
+  # Log cryptographic operations
+  log_operations: true
+  
+  # Events to log
+  log_events:
+    - key_generation
+    - encryption
+    - decryption
+    - signing
+    - verification
+    - key_exchange
+  
+  # Redact sensitive data in logs
+  redact_sensitive: true
+
+# =============================================================================
+# Environment-Specific Overrides
+# =============================================================================
+# These can be overridden via environment variables:
+#   - MFN_CRYPTO_RSA_KEY_SIZE
+#   - MFN_CRYPTO_ECDSA_CURVE
+#   - MFN_CRYPTO_KDF_SALT_LENGTH
+#   - MFN_CRYPTO_AUDIT_LOG_OPERATIONS
+# =============================================================================
