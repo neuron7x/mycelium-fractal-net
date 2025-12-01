@@ -32,10 +32,13 @@
         "operationId": "get_metrics_metrics_get",
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Prometheus metrics in text format",
             "content": {
-              "application/json": {
-                "schema": {}
+              "text/plain; version=0.0.4; charset=utf-8": {
+                "schema": {
+                  "type": "string",
+                  "example": "# HELP mfn_http_requests_total Total HTTP requests\n# TYPE mfn_http_requests_total counter\nmfn_http_requests_total{endpoint=\"/health\",method=\"GET\",status=\"200\"} 1"
+                }
               }
             }
           }
