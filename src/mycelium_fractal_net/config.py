@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 # Re-export SimulationConfig from core.types (single source of truth)
 from .core.types import SimulationConfig
@@ -109,6 +110,49 @@ class FeatureConfig:
         """Validate all parameters on construction."""
         validate_feature_config(self)
 
+    def to_dict(self) -> dict[str, object]:
+        """
+        Serialize configuration to a dictionary.
+
+        Returns:
+            Dictionary representation of the configuration.
+        """
+        return {
+            "min_box_size": self.min_box_size,
+            "max_box_size": self.max_box_size,
+            "num_scales": self.num_scales,
+            "threshold_low_mv": self.threshold_low_mv,
+            "threshold_med_mv": self.threshold_med_mv,
+            "threshold_high_mv": self.threshold_high_mv,
+            "stability_threshold_mv": self.stability_threshold_mv,
+            "stability_window": self.stability_window,
+            "connectivity": self.connectivity,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "FeatureConfig":
+        """
+        Create configuration from a dictionary.
+
+        Args:
+            data: Dictionary with configuration values.
+
+        Returns:
+            New FeatureConfig instance.
+        """
+        max_box_value = data.get("max_box_size")
+        return cls(
+            min_box_size=int(data.get("min_box_size") or 2),
+            max_box_size=int(max_box_value) if max_box_value else None,
+            num_scales=int(data.get("num_scales") or 5),
+            threshold_low_mv=float(data.get("threshold_low_mv") or -60.0),
+            threshold_med_mv=float(data.get("threshold_med_mv") or -50.0),
+            threshold_high_mv=float(data.get("threshold_high_mv") or -40.0),
+            stability_threshold_mv=float(data.get("stability_threshold_mv") or 0.001),
+            stability_window=int(data.get("stability_window") or 10),
+            connectivity=int(data.get("connectivity") or 4),
+        )
+
 
 @dataclass
 class DatasetConfig:
@@ -143,6 +187,68 @@ class DatasetConfig:
     def __post_init__(self) -> None:
         """Validate all parameters on construction."""
         validate_dataset_config(self)
+
+    def to_dict(self) -> dict[str, object]:
+        """
+        Serialize configuration to a dictionary.
+
+        Returns:
+            Dictionary representation of the configuration.
+        """
+        return {
+            "num_samples": self.num_samples,
+            "grid_sizes": self.grid_sizes,
+            "steps_range": list(self.steps_range),
+            "alpha_range": list(self.alpha_range),
+            "turing_values": self.turing_values,
+            "spike_prob_range": list(self.spike_prob_range),
+            "turing_threshold_range": list(self.turing_threshold_range),
+            "base_seed": self.base_seed,
+            "output_path": str(self.output_path),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DatasetConfig":
+        """
+        Create configuration from a dictionary.
+
+        Args:
+            data: Dictionary with configuration values.
+
+        Returns:
+            New DatasetConfig instance.
+        """
+        steps_range_raw = data.get("steps_range") or (50, 200)
+        alpha_range_raw = data.get("alpha_range") or (0.10, 0.20)
+        spike_prob_range_raw = data.get("spike_prob_range") or (0.15, 0.35)
+        turing_threshold_range_raw = data.get("turing_threshold_range") or (0.65, 0.85)
+
+        # Convert to list for safe indexing
+        steps_range_list = list(steps_range_raw)
+        alpha_range_list = list(alpha_range_raw)
+        spike_prob_range_list = list(spike_prob_range_raw)
+        turing_threshold_range_list = list(turing_threshold_range_raw)
+
+        grid_sizes_raw = data.get("grid_sizes") or [32, 64]
+        turing_values_raw = data.get("turing_values") or [True, False]
+
+        return cls(
+            num_samples=int(data.get("num_samples") or 200),
+            grid_sizes=list(grid_sizes_raw),
+            steps_range=(int(steps_range_list[0]), int(steps_range_list[1])),
+            alpha_range=(float(alpha_range_list[0]), float(alpha_range_list[1])),
+            turing_values=list(turing_values_raw),
+            spike_prob_range=(
+                float(spike_prob_range_list[0]),
+                float(spike_prob_range_list[1]),
+            ),
+            turing_threshold_range=(
+                float(turing_threshold_range_list[0]),
+                float(turing_threshold_range_list[1]),
+            ),
+            base_seed=int(data.get("base_seed") or 42),
+            output_path=Path(str(data.get("output_path") or "data/mfn_dataset.parquet")),
+        )
 
 
 # ============================================================================
