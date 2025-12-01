@@ -93,7 +93,7 @@ class ECDSAKeyPair:
 
     private_key: EllipticCurvePrivateKey
     public_key: EllipticCurvePublicKey
-    curve_name: str = "P-384"
+    curve_name: str = "secp384r1"
 
 
 def generate_ecdsa_keypair(
@@ -117,7 +117,7 @@ def generate_ecdsa_keypair(
     Example:
         >>> keypair = generate_ecdsa_keypair()
         >>> keypair.curve_name
-        'P-384'
+        'secp384r1'
     """
     if curve is None:
         curve = DEFAULT_CURVE
