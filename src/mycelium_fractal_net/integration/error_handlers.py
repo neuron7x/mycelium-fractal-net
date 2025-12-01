@@ -14,7 +14,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-005
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -59,9 +59,10 @@ def _extract_request_id(request: Request) -> Optional[str]:
     """Extract request ID from request state or headers."""
     # Try request state first (set by RequestIDMiddleware)
     if hasattr(request.state, "request_id"):
-        return request.state.request_id
+        return cast(str, request.state.request_id)
     # Fall back to header
-    return request.headers.get("X-Request-ID")
+    header_value = request.headers.get("X-Request-ID")
+    return str(header_value) if header_value is not None else None
 
 
 async def validation_exception_handler(
@@ -222,11 +223,13 @@ def register_error_handlers(app: FastAPI) -> None:
         app: FastAPI application instance.
     """
     # Validation errors
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)
-    app.add_exception_handler(ValidationError, pydantic_validation_exception_handler)
+    # Note: add_exception_handler expects generic Exception handler signature,
+    # but correctly routes specific exception types to their handlers at runtime
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(ValidationError, pydantic_validation_exception_handler)  # type: ignore[arg-type]
 
     # Value errors (invalid business logic)
-    app.add_exception_handler(ValueError, value_error_handler)
+    app.add_exception_handler(ValueError, value_error_handler)  # type: ignore[arg-type]
 
     # Generic exception handler (must be last)
     app.add_exception_handler(Exception, internal_error_handler)
