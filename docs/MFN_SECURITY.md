@@ -150,7 +150,7 @@ validate_numeric_range(grid_size, min_value=8, max_value=512)
 
 ### At-Rest Encryption
 
-Sensitive data can be encrypted using AES-128-CBC with HMAC-SHA256:
+Sensitive data can be encrypted using the built-in encryption utilities:
 
 ```python
 from mycelium_fractal_net.security import encrypt_data, decrypt_data, generate_key
@@ -171,6 +171,22 @@ plaintext = decrypt_data(ciphertext, key)
 - **Random IV**: Each encryption uses a unique 16-byte IV
 - **Authentication**: HMAC-SHA256 prevents tampering
 - **URL-safe encoding**: Base64 output for easy storage
+
+### Production Encryption
+
+For high-security production use cases requiring regulatory compliance
+(PCI-DSS, HIPAA), consider using the `cryptography` library with
+Fernet or AES-GCM encryption:
+
+```python
+from cryptography.fernet import Fernet
+
+# Generate key and encrypt
+key = Fernet.generate_key()
+f = Fernet(key)
+ciphertext = f.encrypt(b"sensitive data")
+plaintext = f.decrypt(ciphertext)
+```
 
 ### Key Management
 

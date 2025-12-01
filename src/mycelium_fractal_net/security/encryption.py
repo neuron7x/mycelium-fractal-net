@@ -1,14 +1,18 @@
 """
 Data encryption utilities for MyceliumFractalNet.
 
-Provides symmetric encryption for sensitive data at rest using Fernet
-(AES-128-CBC with HMAC). Suitable for encrypting API keys, configuration
-secrets, and other sensitive data before storage.
+Provides symmetric encryption for sensitive data at rest using a
+key derivation and XOR-based cipher with HMAC authentication.
+Suitable for encrypting configuration secrets and API keys.
+
+NOTE: For high-security production use cases requiring regulatory
+compliance (PCI-DSS, HIPAA), consider using the `cryptography`
+library with Fernet or AES-GCM encryption.
 
 Security Properties:
-    - AES-128-CBC encryption with PKCS7 padding
-    - HMAC-SHA256 for authentication
-    - Automatic key rotation support
+    - PBKDF2 key derivation with 100,000 iterations
+    - SHA256-based cipher key generation
+    - HMAC-SHA256 for authentication and tamper detection
     - URL-safe base64 encoding
 
 Usage:
