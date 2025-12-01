@@ -198,9 +198,9 @@ All benchmarks **significantly exceed targets** (performance headroom: 10-100x).
 - [x] Add tests for `core/stability.py` (`compute_stability_metrics`) — see `tests/core/test_stability.py`
 - [x] Add tests for `core/stdp.py` edge cases — see `tests/core/test_stdp_edge_cases.py`
 - [x] Create minimal test data fixtures in `tests/data/` — see `edge_cases.json`, `sample_features.json`
-- [ ] Add benchmark assertions with documented thresholds
+- [x] Add benchmark assertions with documented thresholds — see `tests/perf/test_mfn_performance.py` (baselines from MFN_PERFORMANCE_BASELINES.md, +20% tolerance)
 - [x] Update `TECHNICAL_AUDIT.md` with today's findings
-- [ ] Update `MFN_PERFORMANCE_BASELINES.md` with today's metrics
+- [x] Update `MFN_PERFORMANCE_BASELINES.md` with today's metrics — see Section 8
 
 ---
 
