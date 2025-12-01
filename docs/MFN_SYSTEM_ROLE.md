@@ -59,13 +59,11 @@ MFN explicitly does **not** handle and should **not** be extended to include:
 
 6. **Data Persistence / Storage** — MFN does not manage databases, time-series stores, or historical data archives. Parquet export for datasets is the only persistence mechanism.
 
-7. **Authentication / Authorization** — MFN API does not implement authentication, authorization, or access control (see [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), `code_integration: PARTIAL`).
+7. **Orchestration / Workflow Management** — MFN does not coordinate multi-step workflows, job scheduling, or pipeline orchestration.
 
-8. **Orchestration / Workflow Management** — MFN does not coordinate multi-step workflows, job scheduling, or pipeline orchestration.
+8. **External Service Integration** — MFN does not integrate with message queues (Kafka, RabbitMQ), cloud services (AWS, GCP), or third-party APIs.
 
-9. **Monitoring / Alerting** — MFN does not provide Prometheus metrics, structured logging, or alerting infrastructure (see [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), `infra: PARTIAL`).
-
-10. **External Service Integration** — MFN does not integrate with message queues (Kafka, RabbitMQ), cloud services (AWS, GCP), or third-party APIs.
+> **Note (v4.1 Update)**: Basic production infrastructure is now available including API key authentication, rate limiting, and Prometheus metrics. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) and README.md for details.
 
 ---
 
@@ -150,20 +148,22 @@ Per [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md):
 | Sparse attention | ✅ READY | `src/mycelium_fractal_net/model.py:578-694` |
 | Hierarchical Krum | ✅ READY | `src/mycelium_fractal_net/model.py:697-904` |
 | 18-feature extraction | ✅ READY | `analytics/fractal_features.py` |
-| REST API | ⚠️ PARTIAL | `api.py` (missing auth, rate limiting) |
+| REST API | ✅ READY | `api.py` (with auth, rate limiting, metrics) |
+| API Authentication | ✅ READY | `integration/auth.py` (X-API-Key middleware) |
+| Rate Limiting | ✅ READY | `integration/rate_limiter.py` |
+| Prometheus Metrics | ✅ READY | `integration/metrics.py` (/metrics endpoint) |
+| Structured Logging | ✅ READY | `integration/logging_config.py` (JSON format, request IDs) |
 | External system integration | 🔴 PLANNED | Not yet implemented |
 | Upstream data connectors | 🔴 PLANNED | Not yet implemented |
 | Downstream event publishing | 🔴 PLANNED | Not yet implemented |
-| Monitoring & observability | 🔴 MISSING | No Prometheus/structured logging |
 
 ### 5.3 Gap Summary
 
-The core computational capabilities (fractal field generation, feature extraction, federated aggregation) are production-ready. The gaps exist primarily in:
+The core computational capabilities (fractal field generation, feature extraction, federated aggregation) are production-ready. Basic production infrastructure (authentication, rate limiting, metrics, logging) is implemented. The remaining gaps exist primarily in:
 
 1. **Integration layer** — No formal contracts with upstream/downstream systems
-2. **Observability** — No metrics, tracing, or structured logging
-3. **Security** — API lacks authentication/authorization
-4. **External I/O** — No streaming, message queue, or gRPC interfaces
+2. **External I/O** — No streaming, message queue, or gRPC interfaces
+3. **Secrets Management** — No integration with secrets vault (HashiCorp Vault, AWS Secrets Manager)
 
 ---
 

@@ -116,6 +116,13 @@ from .model import (
     run_validation_cli,
 )
 
+# === Pipelines Module (Data Generation Scenarios) ===
+from .pipelines import (
+    get_preset_config,
+    list_presets,
+    run_scenario,
+)
+
 # === Types Module (Canonical Data Structures) ===
 from .types import (
     BoundaryCondition,
@@ -218,6 +225,10 @@ __all__ = [
     # Scenario types
     "ScenarioConfig",
     "ScenarioType",
+    # === PIPELINES MODULE (Data Generation) ===
+    "run_scenario",
+    "get_preset_config",
+    "list_presets",
 ]
 
 __version__ = "4.1.0"

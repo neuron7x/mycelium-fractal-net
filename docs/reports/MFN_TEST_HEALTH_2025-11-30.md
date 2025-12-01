@@ -176,9 +176,9 @@ All benchmarks **significantly exceed targets** (performance headroom: 10-100x).
 ## 9. Recommendations
 
 ### 9.1 High Priority
-1. **Add tests for `core/stability.py`** — 40% coverage (missing `compute_stability_metrics`)
-2. **Add tests for `core/stdp.py`** — 37% coverage (missing `compute_weight_update` edge cases)
-3. **Create test data fixtures** — No synthetic data files exist in `tests/data/`
+1. ~~**Add tests for `core/stability.py`** — 40% coverage (missing `compute_stability_metrics`)~~ ✅ DONE: Tests added in `tests/core/test_stability.py`
+2. ~~**Add tests for `core/stdp.py`** — 37% coverage (missing `compute_weight_update` edge cases)~~ ✅ DONE: Tests added in `tests/core/test_stdp_edge_cases.py`
+3. ~~**Create test data fixtures** — No synthetic data files exist in `tests/data/`~~ ✅ DONE: `tests/data/edge_cases.json`, `tests/data/sample_features.json`
 
 ### 9.2 Medium Priority
 1. **Improve `config.py` coverage** — Many environment-specific code paths untested
@@ -195,11 +195,11 @@ All benchmarks **significantly exceed targets** (performance headroom: 10-100x).
 ## 10. Action Items for This PR
 
 - [x] Generate this test health report
-- [ ] Add tests for `core/stability.py` (`compute_stability_metrics`)
-- [ ] Add tests for `core/stdp.py` edge cases
-- [ ] Create minimal test data fixtures in `tests/data/`
+- [x] Add tests for `core/stability.py` (`compute_stability_metrics`) — see `tests/core/test_stability.py`
+- [x] Add tests for `core/stdp.py` edge cases — see `tests/core/test_stdp_edge_cases.py`
+- [x] Create minimal test data fixtures in `tests/data/` — see `edge_cases.json`, `sample_features.json`
 - [ ] Add benchmark assertions with documented thresholds
-- [ ] Update `TECHNICAL_AUDIT.md` with today's findings
+- [x] Update `TECHNICAL_AUDIT.md` with today's findings
 - [ ] Update `MFN_PERFORMANCE_BASELINES.md` with today's metrics
 
 ---
