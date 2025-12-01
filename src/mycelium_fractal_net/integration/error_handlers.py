@@ -21,7 +21,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from .logging_config import get_logger
+from .logging_config import get_logger, get_request_id
 from .schemas import ErrorCode, ErrorDetail, ErrorResponse
 
 logger = get_logger("error_handlers")
@@ -56,14 +56,15 @@ def create_error_response(
 
 
 def _extract_request_id(request: Request) -> Optional[str]:
-    """Extract request ID from request state or headers."""
-    # Try request state first (set by RequestIDMiddleware)
-    if hasattr(request.state, "request_id"):
-        request_id = request.state.request_id
-        # Explicitly check type to satisfy mypy's no-any-return rule
-        if isinstance(request_id, str):
-            return request_id
-        return None
+    """Extract request ID from context or headers.
+
+    Uses the context variable set by RequestIDMiddleware first,
+    falls back to X-Request-ID header if not available.
+    """
+    # Try context first (set by RequestIDMiddleware)
+    request_id = get_request_id()
+    if request_id is not None:
+        return request_id
     # Fall back to header
     return request.headers.get("X-Request-ID")
 
