@@ -13,6 +13,7 @@ Components:
     - rate_limiter: Rate limiting middleware
     - metrics: Prometheus metrics collection
     - logging_config: Structured JSON logging
+    - error_handlers: Standardized error response handling
     - data_integrations: 77 data integrations for iteration optimization
 
 Usage:
@@ -71,6 +72,14 @@ from .data_integrations import (
     list_all_integrations,
     reset_data_integration_config,
 )
+from .error_handlers import (
+    create_error_response,
+    internal_error_handler,
+    pydantic_validation_exception_handler,
+    register_error_handlers,
+    validation_exception_handler,
+    value_error_handler,
+)
 from .logging_config import (
     REQUEST_ID_HEADER,
     RequestIDMiddleware,
@@ -81,15 +90,23 @@ from .logging_config import (
     setup_logging,
 )
 from .metrics import (
+    FRACTAL_DIMENSION,
+    GROWTH_EVENTS,
+    LYAPUNOV_EXPONENT,
+    SIMULATION_DURATION,
+    TURING_ACTIVATIONS,
     MetricsMiddleware,
     is_prometheus_available,
     metrics_endpoint,
+    record_simulation_metrics,
 )
 from .rate_limiter import (
     RateLimiter,
     RateLimitMiddleware,
 )
 from .schemas import (
+    ErrorCode,
+    ErrorDetail,
     ErrorResponse,
     FederatedAggregateRequest,
     FederatedAggregateResponse,
@@ -144,10 +161,17 @@ __all__ = [
     # Rate Limiting
     "RateLimiter",
     "RateLimitMiddleware",
-    # Metrics
+    # Metrics (MFN-OBS-001)
     "MetricsMiddleware",
     "metrics_endpoint",
     "is_prometheus_available",
+    # Simulation Metrics (MFN-OBS-002)
+    "record_simulation_metrics",
+    "FRACTAL_DIMENSION",
+    "GROWTH_EVENTS",
+    "SIMULATION_DURATION",
+    "LYAPUNOV_EXPONENT",
+    "TURING_ACTIVATIONS",
     # Logging
     "REQUEST_ID_HEADER",
     "RequestIDMiddleware",
@@ -174,4 +198,13 @@ __all__ = [
     "get_integration",
     "list_all_integrations",
     "get_integration_categories",
+    # Error Handlers (MFN-API-005)
+    "ErrorCode",
+    "ErrorDetail",
+    "create_error_response",
+    "validation_exception_handler",
+    "pydantic_validation_exception_handler",
+    "value_error_handler",
+    "internal_error_handler",
+    "register_error_handlers",
 ]

@@ -8,12 +8,14 @@ These adapters do NOT contain business logic - they only:
 1. Convert between schema types and core types
 2. Delegate to core functions
 3. Convert results back to schema types
+4. Record metrics for observability (MFN-OBS-002)
 
 Reference: docs/ARCHITECTURE.md, docs/MFN_SYSTEM_ROLE.md
 """
 
 from __future__ import annotations
 
+import time
 from typing import Any, Dict
 
 import numpy as np
@@ -28,6 +30,7 @@ from mycelium_fractal_net import (
 )
 from mycelium_fractal_net.model import HierarchicalKrumAggregator
 
+from .metrics import record_simulation_metrics
 from .schemas import (
     FederatedAggregateRequest,
     FederatedAggregateResponse,
@@ -74,7 +77,20 @@ def run_validation_adapter(
     )
 
     # Run validation using core function
+    start_time = time.perf_counter()
     metrics: Dict[str, Any] = run_validation(cfg)
+    duration = time.perf_counter() - start_time
+
+    # Record simulation metrics (MFN-OBS-002)
+    record_simulation_metrics(
+        grid_size=request.grid_size,
+        steps=request.steps,
+        fractal_dim=metrics["example_fractal_dim"],
+        growth_events=int(metrics["growth_events"]),
+        duration_seconds=duration,
+        lyapunov_exp=metrics["lyapunov_exponent"],
+        turing_activations=1 if request.turing_enabled else 0,
+    )
 
     # Convert to response
     return ValidateResponse(
@@ -116,6 +132,7 @@ def run_simulation_adapter(
     rng = np.random.default_rng(request.seed)
 
     # Run simulation using core function
+    start_time = time.perf_counter()
     field, growth_events = simulate_mycelium_field(
         rng=rng,
         grid_size=request.grid_size,
@@ -124,10 +141,21 @@ def run_simulation_adapter(
         spike_probability=request.spike_probability,
         turing_enabled=request.turing_enabled,
     )
+    duration = time.perf_counter() - start_time
 
     # Compute fractal dimension
     binary = field > -0.060  # threshold -60 mV
     fractal_dim = estimate_fractal_dimension(binary)
+
+    # Record simulation metrics (MFN-OBS-002)
+    record_simulation_metrics(
+        grid_size=request.grid_size,
+        steps=request.steps,
+        fractal_dim=fractal_dim,
+        growth_events=growth_events,
+        duration_seconds=duration,
+        turing_activations=1 if request.turing_enabled else 0,
+    )
 
     # Convert to response (field is in Volts, convert to mV)
     return SimulateResponse(

@@ -208,21 +208,96 @@ class FederatedAggregateResponse(BaseModel):
 
 
 # =============================================================================
-# Error Response
+# Error Response (MFN-API-005)
 # =============================================================================
+
+
+class ErrorDetail(BaseModel):
+    """
+    Detailed error information for debugging.
+
+    Attributes:
+        field: Field name that caused the error (for validation errors).
+        message: Detailed error message.
+        value: The invalid value (if applicable and safe to log).
+    """
+
+    field: Optional[str] = None
+    message: str
+    value: Optional[str] = None
 
 
 class ErrorResponse(BaseModel):
     """
     Standard error response.
 
+    Provides consistent error format across all API endpoints including:
+    - Machine-readable error code
+    - Human-readable message
+    - Optional detailed error information
+    - Request ID for correlation
+
+    Reference: docs/MFN_BACKLOG.md#MFN-API-005
+
     Attributes:
-        detail: Error message describing what went wrong.
-        error_code: Optional machine-readable error code.
+        error_code: Machine-readable error code (e.g., "VALIDATION_ERROR", "RATE_LIMIT_EXCEEDED").
+        message: Human-readable error message.
+        detail: Detailed error message (deprecated, use 'message' instead).
+        details: List of detailed error information (for validation errors).
+        request_id: Request correlation ID for debugging.
+        timestamp: ISO 8601 timestamp when error occurred.
     """
 
-    detail: str
-    error_code: Optional[str] = None
+    error_code: str = Field(
+        description="Machine-readable error code",
+        examples=["VALIDATION_ERROR", "AUTHENTICATION_REQUIRED", "RATE_LIMIT_EXCEEDED"],
+    )
+    message: str = Field(description="Human-readable error message")
+    detail: Optional[str] = Field(
+        default=None,
+        description="Detailed error message (deprecated, for backward compatibility)",
+    )
+    details: Optional[List[ErrorDetail]] = Field(
+        default=None, description="List of detailed errors (for validation errors)"
+    )
+    request_id: Optional[str] = Field(
+        default=None, description="Request correlation ID"
+    )
+    timestamp: Optional[str] = Field(default=None, description="ISO 8601 timestamp")
+
+
+# =============================================================================
+# Error Codes
+# =============================================================================
+
+
+class ErrorCode:
+    """Standard error codes for the MFN API."""
+
+    # Authentication errors (401)
+    AUTHENTICATION_REQUIRED = "AUTHENTICATION_REQUIRED"
+    INVALID_API_KEY = "INVALID_API_KEY"
+
+    # Authorization errors (403)
+    FORBIDDEN = "FORBIDDEN"
+
+    # Rate limiting errors (429)
+    RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
+
+    # Validation errors (400)
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+    INVALID_REQUEST = "INVALID_REQUEST"
+
+    # Not found errors (404)
+    NOT_FOUND = "NOT_FOUND"
+
+    # Internal errors (500)
+    INTERNAL_ERROR = "INTERNAL_ERROR"
+    COMPUTATION_FAILED = "COMPUTATION_FAILED"
+    NUMERICAL_INSTABILITY = "NUMERICAL_INSTABILITY"
+
+    # Service errors (503)
+    SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
 
 
 # =============================================================================
@@ -246,4 +321,6 @@ __all__ = [
     "FederatedAggregateResponse",
     # Error
     "ErrorResponse",
+    "ErrorDetail",
+    "ErrorCode",
 ]

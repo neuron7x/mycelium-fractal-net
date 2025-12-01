@@ -9,6 +9,7 @@ Production Features:
     - Rate limiting (configurable per endpoint)
     - Prometheus metrics endpoint (/metrics)
     - Structured JSON logging with request IDs
+    - Standardized error responses (MFN-API-005)
 
 Usage:
     uvicorn api:app --host 0.0.0.0 --port 8000
@@ -33,7 +34,7 @@ Environment Variables:
     MFN_LOG_FORMAT       - Log format: json or text (default: text in dev)
     MFN_METRICS_ENABLED  - Enable Prometheus metrics (default: true)
 
-Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-OBS-001, MFN-LOG-001
+Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-OBS-001, MFN-LOG-001, MFN-API-005
 """
 
 from __future__ import annotations
@@ -41,7 +42,7 @@ from __future__ import annotations
 import os
 from typing import List
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import schemas and adapters from integration layer
@@ -69,6 +70,7 @@ from mycelium_fractal_net.integration import (
     get_api_config,
     get_logger,
     metrics_endpoint,
+    register_error_handlers,
     run_simulation_adapter,
     run_validation_adapter,
     setup_logging,
@@ -114,6 +116,9 @@ app = FastAPI(
 
 # Get API configuration
 api_config = get_api_config()
+
+# Register standardized error handlers (MFN-API-005)
+register_error_handlers(app)
 
 # Configure CORS middleware
 # Reference: docs/MFN_BACKLOG.md#MFN-API-003
@@ -178,34 +183,22 @@ async def get_metrics(request: Request) -> Response:
 @app.post("/validate", response_model=ValidateResponse)
 async def validate(request: ValidateRequest) -> ValidateResponse:
     """Run validation cycle and return metrics."""
-    try:
-        ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
-        return run_validation_adapter(request, ctx)
-    except Exception as e:
-        logger.error(f"Validation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+    ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
+    return run_validation_adapter(request, ctx)
 
 
 @app.post("/simulate", response_model=SimulateResponse)
 async def simulate(request: SimulateRequest) -> SimulateResponse:
     """Simulate mycelium field."""
-    try:
-        ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
-        return run_simulation_adapter(request, ctx)
-    except Exception as e:
-        logger.error(f"Simulation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+    ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
+    return run_simulation_adapter(request, ctx)
 
 
 @app.post("/nernst", response_model=NernstResponse)
 async def nernst(request: NernstRequest) -> NernstResponse:
     """Compute Nernst potential."""
-    try:
-        ctx = ServiceContext(mode=ExecutionMode.API)
-        return compute_nernst_adapter(request, ctx)
-    except Exception as e:
-        logger.error(f"Nernst computation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+    ctx = ServiceContext(mode=ExecutionMode.API)
+    return compute_nernst_adapter(request, ctx)
 
 
 @app.post("/federated/aggregate", response_model=FederatedAggregateResponse)
@@ -213,14 +206,8 @@ async def aggregate_gradients(
     request: FederatedAggregateRequest,
 ) -> FederatedAggregateResponse:
     """Aggregate gradients using hierarchical Krum."""
-    try:
-        ctx = ServiceContext(mode=ExecutionMode.API)
-        return aggregate_gradients_adapter(request, ctx)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Federated aggregation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+    ctx = ServiceContext(mode=ExecutionMode.API)
+    return aggregate_gradients_adapter(request, ctx)
 
 
 if __name__ == "__main__":

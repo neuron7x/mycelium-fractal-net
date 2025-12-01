@@ -29,11 +29,11 @@ MFN operates as a **fractal morphogenetic feature engine** — a computational m
 | mfn-api-rest | external_api | inbound/outbound | PARTIAL | code, docs | FastAPI with 6 endpoints; CORS configured |
 | mfn-auth | external_api | inbound | **READY** | code | API key authentication middleware |
 | mfn-rate-limiting | external_api | inbound | **READY** | code | Token bucket rate limiting |
-| mfn-monitoring | monitoring_metrics | outbound | **READY** | code | Prometheus metrics at /metrics |
+| mfn-monitoring | monitoring_metrics | outbound | **READY** | code | Prometheus metrics at /metrics + simulation metrics |
 | mfn-logging | logging_tracing | outbound | **READY** | code | JSON structured logging with request ID |
 | mfn-cli | cli_interface | inbound | READY | code, docs | `mycelium_fractal_net_v4_1.py` — validate/simulate modes |
 | mfn-docker | deployment_layer | infrastructure | READY | code, docs | Multi-stage build with healthcheck |
-| mfn-k8s | deployment_layer | infrastructure | PARTIAL | code, docs | Deployment, Service, HPA, ConfigMap; lacks secrets, ingress, network policies |
+| mfn-k8s | deployment_layer | infrastructure | **READY** | code, docs | Secrets, Ingress, NetworkPolicy, PDB added |
 | mfn-ci-cd | deployment_layer | infrastructure | READY | code | GitHub Actions: lint, test, validate, benchmark, scientific-validation |
 | mfn-config-json | config_management | inbound | PARTIAL | code, docs | JSON configs (small/medium/large); lacks secrets |
 | mfn-feature-extraction | batch_pipeline_adapter | outbound | READY | code, docs | `analytics/fractal_features.py` — 18 features → FeatureVector |
