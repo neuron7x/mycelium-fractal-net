@@ -1,11 +1,11 @@
-# MFN Test Health Report — 2025-11-30
+# MFN Test Health Report — 2025-11-30 (Updated 2025-12-01)
 
 ## Executive Summary
 
-**Date:** 2025-11-30  
+**Date:** 2025-12-01 (Updated)  
 **CI Status:** ✅ All Passing  
-**Tests:** 807 passed, 1 skipped  
-**Coverage:** 84% overall
+**Tests:** 891 passed, 1 skipped  
+**Coverage:** 87% overall (+3% from previous)
 
 This report documents the test health analysis for MyceliumFractalNet v4.1 based on today's CI runs.
 
@@ -67,16 +67,12 @@ No actionable warnings related to MFN code.
 
 ## 4. Coverage & Gaps
 
-### 4.1 Overall Coverage: 84%
+### 4.1 Overall Coverage: 87% (+3% from 2025-11-30)
 
 ### 4.2 Low-Coverage Modules (<70%)
 | Module | Coverage | Missing Lines | Priority |
 |--------|----------|---------------|----------|
-| `core/stability.py` | 40% | 74, 108-122 | HIGH |
-| `core/stdp.py` | 37% | 106-117, 121-133, 161-180, 184 | HIGH |
-| `config.py` | 62% | Various (config loading, env-specific) | MEDIUM |
 | `experiments/generate_dataset.py` | 62% | CLI/main, exception handlers | MEDIUM |
-| `numerics/grid_ops.py` | 74% | Advanced grid operations | LOW |
 
 ### 4.3 Well-Covered Modules (>90%)
 | Module | Coverage |
@@ -88,6 +84,10 @@ No actionable warnings related to MFN code.
 | `core/nernst.py` | 100% |
 | `core/turing.py` | 100% |
 | `core/fractal.py` | 100% |
+| `core/types.py` | 100% |
+| `core/stability.py` | 100% |
+| `core/stdp.py` | 100% |
+| `config.py` | 77% (edge cases tested) |
 | `types/*.py` | 95-100% |
 | `model.py` | 91% |
 | `integration/schemas.py` | 100% |
