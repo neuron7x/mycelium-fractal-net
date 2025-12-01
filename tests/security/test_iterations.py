@@ -141,13 +141,16 @@ class TestSecurityIterationConfig:
         assert ADAPTIVE_MIN_ITERATIONS <= adaptive <= ADAPTIVE_MAX_ITERATIONS
 
     def test_custom_config(self) -> None:
-        """Should accept custom iteration values."""
+        """Should accept custom iteration values with valid constraints.
+
+        Note: adaptive_min must be >= base per SecurityIterationConfig validation.
+        """
         config = SecurityIterationConfig(
             base=120_000,
             enhanced=180_000,
             high=240_000,
             maximum=300_000,
-            adaptive_min=120_000,  # Must be >= base
+            adaptive_min=120_000,
             adaptive_max=400_000,
             quantum_resistant=400_000,
         )

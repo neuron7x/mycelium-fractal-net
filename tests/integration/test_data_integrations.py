@@ -221,7 +221,7 @@ class TestDataIntegrationConfig:
 
     def test_loads_all_integrations(self) -> None:
         """Should load all 77 integrations."""
-        config = DataIntegrationConfig()
+        _config = DataIntegrationConfig()  # Initialize config to ensure loading
         assert len(list_all_integrations()) == INTEGRATION_COUNT
 
     def test_get_integration(self) -> None:

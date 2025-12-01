@@ -84,10 +84,12 @@ ENCRYPTION_OPTIMIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
     21: {"name": "enc_block_size", "value": 16, "description": "Encryption block size"},
     22: {"name": "enc_iv_length", "value": 16, "description": "IV length in bytes"},
     23: {"name": "enc_tag_length", "value": 16, "description": "Authentication tag length"},
+    # Security note: Key rotation of 86400s (24h) follows NIST SP 800-57 recommendations.
+    # Shorter intervals (e.g., 3600s) may be used for higher security requirements.
     24: {
         "name": "enc_key_rotation",
         "value": 86400,
-        "description": "Key rotation interval (seconds)",
+        "description": "Key rotation interval (seconds). Security-critical: 24h default.",
     },
     25: {"name": "enc_compression", "value": False, "description": "Enable compression"},
     26: {"name": "enc_padding", "value": "pkcs7", "description": "Padding scheme"},
