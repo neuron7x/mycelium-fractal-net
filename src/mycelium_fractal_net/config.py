@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 # Re-export SimulationConfig from core.types (single source of truth)
 from .core.types import SimulationConfig
@@ -109,7 +110,7 @@ class FeatureConfig:
         """Validate all parameters on construction."""
         validate_feature_config(self)
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize configuration to a dictionary.
 
@@ -129,7 +130,7 @@ class FeatureConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, object]) -> "FeatureConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "FeatureConfig":
         """
         Create configuration from a dictionary.
 
@@ -187,7 +188,7 @@ class DatasetConfig:
         """Validate all parameters on construction."""
         validate_dataset_config(self)
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize configuration to a dictionary.
 
@@ -207,7 +208,7 @@ class DatasetConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, object]) -> "DatasetConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "DatasetConfig":
         """
         Create configuration from a dictionary.
 
@@ -222,21 +223,21 @@ class DatasetConfig:
         spike_prob_range_raw = data.get("spike_prob_range") or (0.15, 0.35)
         turing_threshold_range_raw = data.get("turing_threshold_range") or (0.65, 0.85)
 
-        # Cast to list/tuple for safe indexing
-        steps_range_list = list(steps_range_raw)  # type: ignore[arg-type]
-        alpha_range_list = list(alpha_range_raw)  # type: ignore[arg-type]
-        spike_prob_range_list = list(spike_prob_range_raw)  # type: ignore[arg-type]
-        turing_threshold_range_list = list(turing_threshold_range_raw)  # type: ignore[arg-type]
+        # Cast to list for safe indexing
+        steps_range_list = list(steps_range_raw)
+        alpha_range_list = list(alpha_range_raw)
+        spike_prob_range_list = list(spike_prob_range_raw)
+        turing_threshold_range_list = list(turing_threshold_range_raw)
 
         grid_sizes_raw = data.get("grid_sizes") or [32, 64]
         turing_values_raw = data.get("turing_values") or [True, False]
 
         return cls(
             num_samples=int(data.get("num_samples") or 200),
-            grid_sizes=list(grid_sizes_raw),  # type: ignore[arg-type]
+            grid_sizes=list(grid_sizes_raw),
             steps_range=(int(steps_range_list[0]), int(steps_range_list[1])),
             alpha_range=(float(alpha_range_list[0]), float(alpha_range_list[1])),
-            turing_values=list(turing_values_raw),  # type: ignore[arg-type]
+            turing_values=list(turing_values_raw),
             spike_prob_range=(float(spike_prob_range_list[0]), float(spike_prob_range_list[1])),
             turing_threshold_range=(
                 float(turing_threshold_range_list[0]),
