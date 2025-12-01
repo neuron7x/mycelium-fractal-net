@@ -7,6 +7,7 @@ its mathematical/physical meaning and references to the relevant documentation.
 
 Type Categories:
     - **Configuration Types**: SimulationConfig, FeatureConfig, DatasetConfig
+    - **Result Types**: SimulationResult
     - **Field Types**: FieldState, FieldHistory, GridShape
     - **Feature Types**: FeatureVector, FeatureSchema
     - **Scenario Types**: ScenarioConfig, ScenarioType, DatasetRow, DatasetMeta
@@ -30,6 +31,7 @@ from .config import (
     DatasetConfig,
     FeatureConfig,
     SimulationConfig,
+    SimulationResult,
 )
 from .dataset import (
     DatasetMeta,
@@ -55,6 +57,7 @@ from .scenario import (
 __all__ = [
     # Configuration
     "SimulationConfig",
+    "SimulationResult",
     "FeatureConfig",
     "DatasetConfig",
     # Field
