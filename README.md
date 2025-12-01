@@ -213,6 +213,50 @@ curl -H "X-API-Key: your-secret-key" http://localhost:8000/validate
 
 ---
 
+## Security
+
+MyceliumFractalNet implements comprehensive security measures for production deployments:
+
+### Key Security Features
+
+| Feature | Description |
+|---------|-------------|
+| **API Key Authentication** | Protected endpoints require `X-API-Key` header |
+| **Rate Limiting** | Token bucket algorithm prevents API abuse |
+| **Input Validation** | SQL injection and XSS protection |
+| **Data Encryption** | AES-128-CBC with HMAC-SHA256 for sensitive data |
+| **Audit Logging** | GDPR/SOC 2 compliant structured logging |
+| **Request Tracing** | X-Request-ID for correlation |
+
+### Quick Start (Production)
+
+```bash
+# Set production environment variables
+export MFN_ENV=prod
+export MFN_API_KEY_REQUIRED=true
+export MFN_API_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+export MFN_RATE_LIMIT_ENABLED=true
+
+# Start API server
+uvicorn api:app --host 0.0.0.0 --port 8000
+```
+
+### Security Testing
+
+```bash
+# Run security tests
+pytest tests/security/ -v
+
+# Run static security analysis
+pip install bandit pip-audit
+bandit -r src/ -ll
+pip-audit --strict
+```
+
+📋 [Full Security Documentation](docs/MFN_SECURITY.md)
+
+---
+
 ## Docker
 
 ```bash
@@ -235,7 +279,8 @@ mycelium-fractal-net/
 │   ├── __init__.py          # Public API
 │   ├── model.py             # Core implementation
 │   ├── core/                # Numerical engines
-│   └── integration/         # Integration layer (schemas, adapters)
+│   ├── integration/         # Integration layer (schemas, adapters)
+│   └── security/            # Security module (encryption, validation, audit)
 ├── analytics/               # Feature extraction module
 │   ├── __init__.py
 │   └── fractal_features.py  # 18 fractal features
@@ -246,10 +291,13 @@ mycelium-fractal-net/
 ├── api.py                   # FastAPI server
 ├── mycelium_fractal_net_v4_1.py  # CLI
 ├── tests/                   # pytest suite
+│   ├── security/            # Security tests
+│   └── ...                  # Other test modules
 ├── configs/                 # small | medium | large
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── MFN_MATH_MODEL.md
+│   ├── MFN_SECURITY.md      # Security documentation
 │   ├── NUMERICAL_CORE.md
 │   ├── FEATURE_SCHEMA.md
 │   └── ROADMAP.md
