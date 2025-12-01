@@ -271,3 +271,148 @@ class MFNHeavyUser(HttpUser):
             headers=self._get_headers(),
             name="/validate (heavy)",
         )
+
+
+class MFNStressUser(HttpUser):
+    """
+    Stress test user with large payloads and high-frequency requests.
+
+    Designed to test system limits and identify breaking points.
+    Use sparingly - high resource consumption.
+    """
+
+    wait_time = between(0.5, 2)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.api_key = os.getenv("MFN_LOADTEST_API_KEY", "")
+
+    def _get_headers(self) -> dict:
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+        return headers
+
+    @task(2)
+    def simulate_large_grid(self) -> None:
+        """Run large grid simulation (128x128)."""
+        payload = {
+            "seed": random.randint(0, 10000),
+            "grid_size": 128,
+            "steps": 100,
+            "alpha": 0.18,
+            "spike_probability": 0.25,
+            "turing_enabled": True,
+        }
+
+        self.client.post(
+            "/simulate",
+            json=payload,
+            headers=self._get_headers(),
+            name="/simulate (128x128 stress)",
+        )
+
+    @task(1)
+    def federated_large(self) -> None:
+        """Run large federated aggregation."""
+        num_clients = 50
+        gradient_dim = 100
+
+        gradients = [
+            [random.gauss(0, 1) for _ in range(gradient_dim)]
+            for _ in range(num_clients)
+        ]
+
+        payload = {
+            "gradients": gradients,
+            "num_clusters": 10,
+            "byzantine_fraction": 0.2,
+        }
+
+        self.client.post(
+            "/federated/aggregate",
+            json=payload,
+            headers=self._get_headers(),
+            name="/federated/aggregate (stress)",
+        )
+
+    @task(3)
+    def nernst_burst(self) -> None:
+        """Burst of Nernst calculations."""
+        ions = [
+            {"z": 1, "out": 5e-3, "in": 140e-3},
+            {"z": 1, "out": 145e-3, "in": 12e-3},
+            {"z": 2, "out": 2e-3, "in": 0.1e-6},
+            {"z": -1, "out": 120e-3, "in": 4e-3},
+        ]
+
+        for ion in ions:
+            payload = {
+                "z_valence": ion["z"],
+                "concentration_out_molar": ion["out"],
+                "concentration_in_molar": ion["in"],
+                "temperature_k": random.uniform(300, 315),
+            }
+            self.client.post(
+                "/nernst",
+                json=payload,
+                headers=self._get_headers(),
+                name="/nernst (burst)",
+            )
+
+
+class MFNScalabilityUser(HttpUser):
+    """
+    Scalability test user with increasing load patterns.
+
+    Tests system behavior as load increases.
+    """
+
+    wait_time = between(1, 3)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.api_key = os.getenv("MFN_LOADTEST_API_KEY", "")
+        self._request_count = 0
+
+    def _get_headers(self) -> dict:
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+        return headers
+
+    @task(5)
+    def simulate_varying_load(self) -> None:
+        """Simulate with varying grid sizes based on request count."""
+        self._request_count += 1
+
+        # Cycle through grid sizes: 32 -> 64 -> 128 -> 32 ...
+        grid_sizes = [32, 48, 64, 96]
+        grid_size = grid_sizes[self._request_count % len(grid_sizes)]
+
+        payload = {
+            "seed": random.randint(0, 10000),
+            "grid_size": grid_size,
+            "steps": 50,
+            "alpha": 0.18,
+            "spike_probability": 0.25,
+            "turing_enabled": True,
+        }
+
+        self.client.post(
+            "/simulate",
+            json=payload,
+            headers=self._get_headers(),
+            name=f"/simulate ({grid_size}x{grid_size} scale)",
+        )
+
+    @task(3)
+    def health_check_rapid(self) -> None:
+        """Rapid health checks for availability monitoring."""
+        for _ in range(5):
+            self.client.get("/health", name="/health (rapid)")
+
+    @task(2)
+    def metrics_monitoring(self) -> None:
+        """Metrics fetch for monitoring scalability."""
+        self.client.get("/metrics", name="/metrics (scale)")

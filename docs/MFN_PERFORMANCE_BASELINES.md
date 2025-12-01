@@ -256,6 +256,74 @@ Benchmark results from CI run 19803646754 on GitHub Actions runner:
 
 ---
 
-*Document Version: 1.2*
-*Last Updated: 2025-11-30*
+## 9. Stress Testing & Scalability
+
+### 9.1 Scalability Benchmarks
+
+Run scalability benchmarks with:
+
+```bash
+python benchmarks/benchmark_scalability.py
+```
+
+| Benchmark | Target | Description |
+|-----------|--------|-------------|
+| Large grid (128x128) | <15s | 200 steps simulation |
+| Large grid (256x256) | <60s | 100 steps simulation |
+| Long simulation | <30s | 64x64, 1000 steps |
+| Concurrent throughput | >3 sim/s | 4 workers, 16 tasks |
+| Memory efficiency | <100MB | 20 repeated runs |
+| Fractal dimension (256x256) | <0.5s | Large field analysis |
+| Lyapunov (500x64x64) | <2s | Large history analysis |
+
+### 9.2 Stress Tests
+
+Run stress tests with:
+
+```bash
+pytest tests/perf/test_stress_scalability.py -v
+```
+
+Tests cover:
+- **Large Grid Simulations**: 128x128 and 256x256 grids
+- **Long Simulations**: 1000+ steps
+- **Memory Stress**: Repeated runs without memory leaks
+- **Concurrent Processing**: Thread-safe multi-worker execution
+- **Large Data Processing**: Fractal dimension, Lyapunov analysis
+- **Federated Scalability**: Many clients, large gradients
+- **Numerical Stability**: Edge parameters, extreme conditions
+
+### 9.3 Memory Limits
+
+| Configuration | Max Memory (MB) | Description |
+|---------------|-----------------|-------------|
+| Small (32x32) | 100 | Quick tests, CI |
+| Medium (64x64) | 200 | Development |
+| Large (128x128) | 500 | Production simulations |
+| XLarge (256x256) | 1500 | High-resolution analysis |
+
+### 9.4 Locust Load Testing
+
+For API load testing, use:
+
+```bash
+# Start the API server
+uvicorn api:app --host 0.0.0.0 --port 8000
+
+# Run stress tests (in another terminal)
+locust -f load_tests/locustfile.py --host http://localhost:8000 \
+    --headless -u 20 -r 5 -t 2m
+```
+
+Available user classes:
+- `MFNAPIUser`: Standard mixed load
+- `MFNReadOnlyUser`: Read-only operations
+- `MFNHeavyUser`: Computation-heavy operations
+- `MFNStressUser`: Large payloads, high-frequency
+- `MFNScalabilityUser`: Varying load patterns
+
+---
+
+*Document Version: 1.3*
+*Last Updated: 2025-12-01*
 *Applies to: MyceliumFractalNet v4.1.0*
