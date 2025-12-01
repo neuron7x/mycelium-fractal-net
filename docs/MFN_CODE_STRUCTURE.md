@@ -40,9 +40,14 @@ MyceliumFractalNet follows a three-layer architecture:
 | **Neural Network** | MFN with fractal dynamics | model | `model.py` | `MyceliumFractalNet`, `SparseAttention` |
 | **Validation** | Validation pipeline | model | `model.py` | `run_validation()`, `ValidationConfig` |
 | **Feature Extraction** | 18 fractal features | analytics | `analytics/` | `compute_fractal_features()`, `FeatureVector` |
+| **Data Pipelines** | Scenario-based data generation | pipelines | `pipelines/` | `run_scenario()`, `get_preset_config()`, `list_presets()` |
 | **Request/Response Schemas** | API contracts | integration | `integration/schemas.py` | `ValidateRequest`, `SimulateResponse`, etc. |
 | **Service Context** | Execution context | integration | `integration/service_context.py` | `ServiceContext`, `ExecutionMode` |
 | **Adapters** | Core ↔ Integration bridge | integration | `integration/adapters.py` | `run_validation_adapter()`, etc. |
+| **Authentication** | API key middleware | integration | `integration/auth.py` | `APIKeyMiddleware`, `require_api_key()` |
+| **Rate Limiting** | Request rate control | integration | `integration/rate_limiter.py` | `RateLimitMiddleware`, `RateLimiter` |
+| **Metrics** | Prometheus metrics | integration | `integration/metrics.py` | `MetricsMiddleware`, `metrics_endpoint()` |
+| **Logging** | Structured JSON logging | integration | `integration/logging_config.py` | `setup_logging()`, `RequestLoggingMiddleware` |
 
 ---
 
@@ -74,7 +79,12 @@ src/mycelium_fractal_net/
 │   ├── __init__.py          # Integration API exports
 │   ├── schemas.py           # Pydantic request/response models
 │   ├── service_context.py   # Service context and execution modes
-│   └── adapters.py          # Core ↔ Integration adapters
+│   ├── adapters.py          # Core ↔ Integration adapters
+│   ├── api_config.py        # API configuration management
+│   ├── auth.py              # API key authentication middleware
+│   ├── rate_limiter.py      # Rate limiting middleware
+│   ├── metrics.py           # Prometheus metrics collection
+│   └── logging_config.py    # Structured JSON logging
 │
 ├── analytics/               # Feature extraction
 │   ├── __init__.py
@@ -118,6 +128,11 @@ from mycelium_fractal_net import (
     # Analytics
     FeatureVector,
     compute_fractal_features,
+    
+    # Pipelines (data generation)
+    run_scenario,
+    get_preset_config,
+    list_presets,
     
     # Core engines (advanced use)
     MembraneEngine,

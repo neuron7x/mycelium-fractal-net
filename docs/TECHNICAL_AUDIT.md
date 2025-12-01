@@ -22,12 +22,12 @@
 
 | Dimension | Status | Evidence |
 |-----------|--------|----------|
-| **overall_type** | `partial_implementation` | Стабільне ядро з тестами, але неповна інтеграційна інфраструктура для production |
+| **overall_type** | `partial_implementation` | Стабільне ядро з тестами та базовою production інфраструктурою, але бракує деяких enterprise features |
 | **code_core** | READY | `src/mycelium_fractal_net/model.py` (1207 рядків), `src/mycelium_fractal_net/core/` (8 модулів), повна реалізація Nernst, Turing, STDP, Krum |
-| **code_integration** | PARTIAL | `api.py` (225 рядків) — FastAPI з 5 endpoints; відсутні rate limiting, auth, production middleware |
-| **docs** | READY | README.md, 11 документів в `docs/` (ARCHITECTURE.md, MFN_MATH_MODEL.md, ROADMAP.md тощо), детальна математична формалізація |
-| **tests** | READY | 305+ тестів у 40 файлах, pytest, hypothesis, unit/integration/e2e/smoke/validation покриття, 100% pass rate |
-| **infra** | PARTIAL | Dockerfile, k8s.yaml, GitHub Actions CI; відсутні secrets management, monitoring, logging infrastructure |
+| **code_integration** | READY | `api.py` + `integration/` — FastAPI з 5 endpoints, auth, rate limiting, metrics, structured logging |
+| **docs** | READY | README.md, 15+ документів в `docs/` (ARCHITECTURE.md, MFN_MATH_MODEL.md, ROADMAP.md тощо), детальна математична формалізація |
+| **tests** | READY | 807+ тестів у 45+ файлах, pytest, hypothesis, unit/integration/e2e/smoke/validation покриття, 100% pass rate, 84% coverage |
+| **infra** | PARTIAL | Dockerfile, k8s.yaml, GitHub Actions CI, Prometheus metrics; бракує secrets management, distributed tracing |
 | **examples/demo** | PARTIAL | 3 приклади в `examples/` (simple_simulation.py, finance_regime_detection.py, rl_exploration.py); відсутні Jupyter notebooks, візуалізації |
 
 ---
@@ -86,8 +86,9 @@
 
 ### 3.2 PARTIAL
 
-- **[code_integration] REST API** — 5 endpoints реалізовано; ✅ CORS configuration додано; бракує authentication, rate limiting, request validation logging  
-  *Файли:* `api.py`
+- ~~**[code_integration] REST API** — 5 endpoints реалізовано; ✅ CORS configuration додано; бракує authentication, rate limiting, request validation logging~~  
+  ✅ **READY**: 5 endpoints, authentication (X-API-Key), rate limiting, request ID tracking, structured logging  
+  *Файли:* `api.py`, `integration/auth.py`, `integration/rate_limiter.py`, `integration/logging_config.py`
 
 - **[infra] Kubernetes** — базовий deployment, service, HPA, ConfigMap; бракує secrets, ingress, network policies, PodDisruptionBudget  
   *Файли:* `k8s.yaml`
@@ -106,17 +107,24 @@
 
 ### 3.3 MISSING
 
-- **[infra] Monitoring & observability** — відсутні Prometheus metrics, structured logging, distributed tracing
+- ~~**[infra] Monitoring & observability** — відсутні Prometheus metrics, structured logging, distributed tracing~~  
+  ✅ **READY**: Prometheus metrics (/metrics endpoint), structured JSON logging, request ID tracking  
+  *Файли:* `integration/metrics.py`, `integration/logging_config.py`
 
 - **[infra] Secrets management** — відсутня інтеграція з secrets vault (HashiCorp Vault, AWS Secrets Manager)
 
-- **[code_integration] Authentication/Authorization** — API не має auth middleware
+- ~~**[code_integration] Authentication/Authorization** — API не має auth middleware~~  
+  ✅ **READY**: X-API-Key authentication middleware  
+  *Файли:* `integration/auth.py`
 
-- **[code_integration] Rate limiting** — відсутній rate limiter для API endpoints
+- ~~**[code_integration] Rate limiting** — відсутній rate limiter для API endpoints~~  
+  ✅ **READY**: Configurable rate limiting middleware  
+  *Файли:* `integration/rate_limiter.py`
 
 - **[tests] Load/Performance tests** — відсутні тести під навантаженням для API
 
-- **[tests] Coverage reporting** — відсутній pytest-cov у CI з coverage badge
+- ~~**[tests] Coverage reporting** — відсутній pytest-cov у CI з coverage badge~~  
+  ✅ **READY**: pytest-cov у CI, coverage upload to Codecov
 
 - **[examples/demo] Jupyter notebooks** — заявлені в ROADMAP як "research features", але відсутні
 
