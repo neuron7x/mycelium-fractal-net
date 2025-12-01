@@ -13,6 +13,7 @@ Components:
     - rate_limiter: Rate limiting middleware
     - metrics: Prometheus metrics collection
     - logging_config: Structured JSON logging
+    - data_integrations: 77 data integrations for iteration optimization
 
 Usage:
     >>> from mycelium_fractal_net.integration import (
@@ -20,6 +21,8 @@ Usage:
     ...     ValidateResponse,
     ...     ServiceContext,
     ...     run_validation_adapter,
+    ...     get_integration,
+    ...     INTEGRATION_COUNT,
     ... )
     >>> ctx = ServiceContext(seed=42)
     >>> request = ValidateRequest(seed=42, epochs=1)
@@ -48,6 +51,25 @@ from .auth import (
     API_KEY_HEADER,
     APIKeyMiddleware,
     require_api_key,
+)
+from .data_integrations import (
+    CORE_ITERATION_INTEGRATIONS,
+    ENCRYPTION_OPTIMIZATION_INTEGRATIONS,
+    HASH_FUNCTION_INTEGRATIONS,
+    INTEGRATION_COUNT,
+    KEY_DERIVATION_INTEGRATIONS,
+    MEMORY_OPTIMIZATION_INTEGRATIONS,
+    PARALLELIZATION_INTEGRATIONS,
+    SALT_GENERATION_INTEGRATIONS,
+    VALIDATION_AUDIT_INTEGRATIONS,
+    DataIntegration,
+    DataIntegrationConfig,
+    IntegrationCategory,
+    get_data_integration_config,
+    get_integration,
+    get_integration_categories,
+    list_all_integrations,
+    reset_data_integration_config,
 )
 from .logging_config import (
     REQUEST_ID_HEADER,
@@ -134,4 +156,22 @@ __all__ = [
     "get_logger",
     "get_request_id",
     "set_request_id",
+    # Data Integrations (77 integrations for iteration optimization)
+    "INTEGRATION_COUNT",
+    "IntegrationCategory",
+    "DataIntegration",
+    "DataIntegrationConfig",
+    "CORE_ITERATION_INTEGRATIONS",
+    "KEY_DERIVATION_INTEGRATIONS",
+    "ENCRYPTION_OPTIMIZATION_INTEGRATIONS",
+    "HASH_FUNCTION_INTEGRATIONS",
+    "SALT_GENERATION_INTEGRATIONS",
+    "MEMORY_OPTIMIZATION_INTEGRATIONS",
+    "PARALLELIZATION_INTEGRATIONS",
+    "VALIDATION_AUDIT_INTEGRATIONS",
+    "get_data_integration_config",
+    "reset_data_integration_config",
+    "get_integration",
+    "list_all_integrations",
+    "get_integration_categories",
 ]

@@ -6,6 +6,7 @@ Provides security utilities including:
     - Input validation and sanitization
     - Audit logging for security-relevant operations
     - Secrets management utilities
+    - Security iteration configuration (6 levels)
 
 Security Standards:
     - Follows OWASP security best practices
@@ -18,6 +19,8 @@ Usage:
     ...     decrypt_data,
     ...     validate_input,
     ...     audit_log,
+    ...     SecurityLevel,
+    ...     get_iteration_count,
     ... )
 
 Reference: docs/MFN_SECURITY.md
@@ -43,6 +46,21 @@ from .input_validation import (
     validate_api_key_format,
     validate_numeric_range,
 )
+from .iterations import (
+    ADAPTIVE_MAX_ITERATIONS,
+    ADAPTIVE_MIN_ITERATIONS,
+    BASE_ITERATIONS,
+    ENHANCED_ITERATIONS,
+    HIGH_SECURITY_ITERATIONS,
+    MAXIMUM_ITERATIONS,
+    QUANTUM_RESISTANT_ITERATIONS,
+    SecurityIterationConfig,
+    SecurityLevel,
+    get_iteration_count,
+    get_security_iteration_config,
+    reset_security_iteration_config,
+    validate_iteration_count,
+)
 
 __all__ = [
     # Encryption
@@ -62,4 +80,18 @@ __all__ = [
     "AuditSeverity",
     "audit_log",
     "get_audit_logger",
+    # Security Iterations (6 levels)
+    "SecurityLevel",
+    "SecurityIterationConfig",
+    "BASE_ITERATIONS",
+    "ENHANCED_ITERATIONS",
+    "HIGH_SECURITY_ITERATIONS",
+    "MAXIMUM_ITERATIONS",
+    "ADAPTIVE_MIN_ITERATIONS",
+    "ADAPTIVE_MAX_ITERATIONS",
+    "QUANTUM_RESISTANT_ITERATIONS",
+    "get_iteration_count",
+    "get_security_iteration_config",
+    "reset_security_iteration_config",
+    "validate_iteration_count",
 ]
