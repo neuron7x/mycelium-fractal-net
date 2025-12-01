@@ -157,6 +157,8 @@ class SimulationResult:
                 raise ValueError("history must be 3D array (T, N, N)")
             if self.history.shape[1:] != self.field.shape:
                 raise ValueError("history spatial dimensions must match field")
+            if not np.isfinite(self.history).all():
+                raise ValueError("history contains NaN or Inf values")
         if not np.isfinite(self.field).all():
             raise ValueError("field contains NaN or Inf values")
 

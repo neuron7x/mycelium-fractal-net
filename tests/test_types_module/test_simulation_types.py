@@ -300,6 +300,22 @@ class TestSimulationResult:
         with pytest.raises(ValueError, match="NaN or Inf"):
             SimulationResult(field=field)
 
+    def test_validation_history_no_nan(self) -> None:
+        """Test that history cannot contain NaN."""
+        field = np.zeros((10, 10))
+        history = np.zeros((5, 10, 10))
+        history[2, 3, 4] = np.nan
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            SimulationResult(field=field, history=history)
+
+    def test_validation_history_no_inf(self) -> None:
+        """Test that history cannot contain Inf."""
+        field = np.zeros((10, 10))
+        history = np.zeros((5, 10, 10))
+        history[2, 3, 4] = np.inf
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            SimulationResult(field=field, history=history)
+
 
 class TestSimulationTypesIntegration:
     """Integration tests for simulation types."""
