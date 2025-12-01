@@ -257,6 +257,51 @@ pip-audit --strict
 
 ---
 
+## Cryptography
+
+MyceliumFractalNet includes a formal cryptography module with mathematical proofs of security:
+
+### Key Exchange (ECDH/X25519)
+
+```python
+from mycelium_fractal_net.crypto import ECDHKeyExchange
+
+# Establish shared secret between two parties
+alice = ECDHKeyExchange()
+bob = ECDHKeyExchange()
+
+# Derive identical encryption keys
+key_alice = alice.derive_key(bob.public_key, context=b"encryption")
+key_bob = bob.derive_key(alice.public_key, context=b"encryption")
+# key_alice == key_bob  ✓
+```
+
+### Digital Signatures (Ed25519)
+
+```python
+from mycelium_fractal_net.crypto import generate_signature_keypair, sign_message, verify_signature
+
+# Generate signing keypair
+keypair = generate_signature_keypair()
+
+# Sign and verify messages
+signature = sign_message(b"Transaction data", keypair.private_key)
+is_valid = verify_signature(b"Transaction data", signature, keypair.public_key)
+# is_valid == True  ✓
+```
+
+### Security Properties
+
+| Algorithm | Security Level | Standard |
+|-----------|---------------|----------|
+| X25519 | 128-bit | RFC 7748 |
+| Ed25519 | 128-bit | RFC 8032 |
+| HKDF | 256-bit | RFC 5869 |
+
+📋 [Cryptography Documentation](docs/MFN_CRYPTOGRAPHY.md) (includes mathematical security proofs)
+
+---
+
 ## Docker
 
 ```bash

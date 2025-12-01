@@ -95,6 +95,19 @@ from .core import (
     simulate_mycelium_field,
 )
 
+# === Crypto Module (Cryptographic Primitives) ===
+from .crypto import (
+    ECDHKeyExchange,
+    ECDHKeyPair,
+    EdDSASignature,
+    SignatureKeyPair,
+    derive_symmetric_key,
+    generate_ecdh_keypair,
+    generate_signature_keypair,
+    sign_message,
+    verify_signature,
+)
+
 # === Model Layer (Neural Network, Validation) ===
 from .model import (
     BODY_TEMPERATURE_K,
@@ -229,6 +242,16 @@ __all__ = [
     "run_scenario",
     "get_preset_config",
     "list_presets",
+    # === CRYPTO MODULE (Cryptographic Primitives) ===
+    "ECDHKeyExchange",
+    "ECDHKeyPair",
+    "EdDSASignature",
+    "SignatureKeyPair",
+    "derive_symmetric_key",
+    "generate_ecdh_keypair",
+    "generate_signature_keypair",
+    "sign_message",
+    "verify_signature",
 ]
 
 __version__ = "4.1.0"
