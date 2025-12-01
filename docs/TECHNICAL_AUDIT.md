@@ -112,7 +112,9 @@
   ✅ **READY**: Prometheus metrics (/metrics endpoint), structured JSON logging, request ID tracking  
   *Файли:* `integration/metrics.py`, `integration/logging_config.py`
 
-- **[infra] Secrets management** — відсутня інтеграція з secrets vault (HashiCorp Vault, AWS Secrets Manager)
+- ~~**[infra] Secrets management** — відсутня інтеграція з secrets vault (HashiCorp Vault, AWS Secrets Manager)~~  
+  ⚠️ **PARTIAL**: Data encryption module added; production deployments should use external secrets manager  
+  *Файли:* `security/encryption.py`, `docs/MFN_SECURITY.md`
 
 - ~~**[code_integration] Authentication/Authorization** — API не має auth middleware~~  
   ✅ **READY**: X-API-Key authentication middleware  
@@ -122,6 +124,14 @@
   ✅ **READY**: Configurable rate limiting middleware  
   *Файли:* `integration/rate_limiter.py`
 
+- ~~**[security] Input validation** — відсутня перевірка вхідних даних на SQL injection, XSS~~  
+  ✅ **READY**: Comprehensive input validation with SQL injection, XSS detection  
+  *Файли:* `security/input_validation.py`, `tests/security/test_input_validation.py`
+
+- ~~**[security] Audit logging** — відсутнє логування для compliance (GDPR, SOC 2)~~  
+  ✅ **READY**: Structured audit logging with data redaction for compliance  
+  *Файли:* `security/audit.py`, `tests/security/test_audit.py`
+
 - ~~**[tests] Load/Performance tests** — відсутні тести під навантаженням для API~~
   ✅ **READY**: Locust load tests for all API endpoints, performance tests in tests/performance/
   *Файли:* `load_tests/locustfile.py`, `tests/performance/test_api_performance_small.py`
@@ -129,11 +139,19 @@
 - ~~**[tests] Coverage reporting** — відсутній pytest-cov у CI з coverage badge~~  
   ✅ **READY**: pytest-cov у CI, coverage upload to Codecov
 
+- ~~**[tests] Security tests** — відсутні тести безпеки~~  
+  ✅ **READY**: Security test suite with encryption, input validation, audit, authorization tests  
+  *Файли:* `tests/security/`
+
 - **[examples/demo] Jupyter notebooks** — заявлені в ROADMAP як "research features", але відсутні
 
 - **[examples/demo] Interactive visualizations** — відсутні візуалізації для fractal patterns, field evolution
 
 - ~~**[docs] API documentation** — відсутній OpenAPI spec export, Swagger UI в production~~ ✅ **READY**: `docs/openapi.json` експортовано, Swagger UI доступний на `/docs`
+
+- ~~**[docs] Security documentation** — відсутня документація безпеки~~  
+  ✅ **READY**: Comprehensive security documentation  
+  *Файли:* `docs/MFN_SECURITY.md`
 
 - **[infra] Database/State persistence** — відсутнє збереження результатів симуляцій (крім parquet export)
 
