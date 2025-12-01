@@ -11,6 +11,10 @@ import pytest
 
 from mycelium_fractal_net.core.types import SimulationConfig, SimulationResult
 
+# Test constants for field generation
+FIELD_VARIANCE = 0.01  # Small variance for field values
+FIELD_BASELINE_V = -0.070  # Resting potential baseline in Volts (-70 mV)
+
 
 class TestSimulationConfigCoreValidation:
     """Core tests for SimulationConfig dataclass."""
@@ -133,7 +137,7 @@ class TestSimulationResultValidation:
 
     def test_valid_result_minimal(self) -> None:
         """Test minimal valid result."""
-        field = np.random.randn(32, 32) * 0.01 - 0.070
+        field = np.random.randn(32, 32) * FIELD_VARIANCE + FIELD_BASELINE_V
         result = SimulationResult(field=field)
         assert result.grid_size == 32
         assert result.has_history is False
@@ -142,15 +146,15 @@ class TestSimulationResultValidation:
 
     def test_valid_result_with_history(self) -> None:
         """Test result with history."""
-        field = np.random.randn(32, 32) * 0.01 - 0.070
-        history = np.random.randn(10, 32, 32) * 0.01 - 0.070
+        field = np.random.randn(32, 32) * FIELD_VARIANCE + FIELD_BASELINE_V
+        history = np.random.randn(10, 32, 32) * FIELD_VARIANCE + FIELD_BASELINE_V
         result = SimulationResult(field=field, history=history)
         assert result.grid_size == 32
         assert result.has_history is True
 
     def test_valid_result_with_metadata(self) -> None:
         """Test result with metadata."""
-        field = np.random.randn(32, 32) * 0.01 - 0.070
+        field = np.random.randn(32, 32) * FIELD_VARIANCE + FIELD_BASELINE_V
         result = SimulationResult(
             field=field,
             growth_events=15,
@@ -194,7 +198,7 @@ class TestSimulationResultValidation:
 
     def test_grid_size_property(self) -> None:
         """Test grid_size property returns correct value."""
-        field = np.random.randn(64, 64) * 0.01
+        field = np.random.randn(64, 64) * FIELD_VARIANCE
         result = SimulationResult(field=field)
         assert result.grid_size == 64
 

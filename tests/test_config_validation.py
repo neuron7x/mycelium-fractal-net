@@ -57,9 +57,14 @@ class TestSimulationConfigValidation:
         validate_simulation_config(config)
 
     def test_grid_size_below_minimum(self) -> None:
-        """Test that grid_size below minimum raises error."""
+        """Test that grid_size below minimum raises error.
+        
+        Note: GRID_SIZE_MIN is 4 from config module, but SimulationConfig allows grid_size=2.
+        The validate_simulation_config function applies stricter validation.
+        """
+        # SimulationConfig accepts grid_size=3, but validate_simulation_config rejects it
+        config = SimulationConfig(grid_size=3, steps=32, alpha=0.18)
         with pytest.raises(ValueError, match="grid_size"):
-            config = SimulationConfig(grid_size=GRID_SIZE_MIN - 1, steps=32, alpha=0.18)
             validate_simulation_config(config)
 
     def test_grid_size_above_maximum(self) -> None:
@@ -282,11 +287,14 @@ class TestDatasetConfigValidation:
             DatasetConfig(grid_sizes=[])
 
     def test_grid_sizes_out_of_range(self) -> None:
-        """Test grid_sizes out of range raises error."""
+        """Test grid_sizes out of range raises error.
+        
+        Note: DatasetConfig uses GRID_SIZE_MIN=4 (stricter than SimulationConfig min=2).
+        """
         with pytest.raises(ValueError, match="grid_sizes"):
-            DatasetConfig(grid_sizes=[2])  # Too small
+            DatasetConfig(grid_sizes=[3])  # Below GRID_SIZE_MIN=4
         with pytest.raises(ValueError, match="grid_sizes"):
-            DatasetConfig(grid_sizes=[1024])  # Too large
+            DatasetConfig(grid_sizes=[1024])  # Above GRID_SIZE_MAX=512
 
     def test_steps_range_invalid_order(self) -> None:
         """Test steps_range min > max raises error."""
