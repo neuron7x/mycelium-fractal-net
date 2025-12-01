@@ -129,6 +129,17 @@ from .types import (
     ScenarioType,
 )
 
+# === Infrastructure (Reproducibility) ===
+from .infra import (
+    RNGContext,
+    RunHandle,
+    RunRegistry,
+    RunStatus,
+    create_rng,
+    get_global_rng,
+    set_global_seed,
+)
+
 __all__ = [
     # === PUBLIC API (as shown in README) ===
     # Nernst-Planck (membrane potentials)
@@ -218,6 +229,14 @@ __all__ = [
     # Scenario types
     "ScenarioConfig",
     "ScenarioType",
+    # === INFRASTRUCTURE (Reproducibility) ===
+    "RNGContext",
+    "RunRegistry",
+    "RunHandle",
+    "RunStatus",
+    "create_rng",
+    "set_global_seed",
+    "get_global_rng",
 ]
 
 __version__ = "4.1.0"

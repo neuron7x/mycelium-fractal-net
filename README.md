@@ -259,6 +259,61 @@ mycelium-fractal-net/
 
 ---
 
+## Reproducibility
+
+MFN ensures deterministic, reproducible simulations through:
+
+- **RNG Control Layer** — Unified random number generator management
+- **Seed Parameters** — All configs have explicit seed fields
+- **Run Registry** — File-based experiment tracking
+
+### Quick Start
+
+```python
+from mycelium_fractal_net import (
+    SimulationConfig,
+    run_mycelium_simulation,
+    set_global_seed,
+    create_rng,
+)
+
+# Option 1: Set seed in config
+config = SimulationConfig(grid_size=64, steps=100, seed=42)
+result1 = run_mycelium_simulation(config)
+result2 = run_mycelium_simulation(config)
+# result1.field == result2.field  # True
+
+# Option 2: Use RNG context
+rng_ctx = create_rng(seed=42)
+# ... use rng_ctx.numpy_rng for operations
+
+# Option 3: Set global seed
+set_global_seed(42)
+```
+
+### Run Registry
+
+Track experiments with metadata:
+
+```python
+from mycelium_fractal_net import RunRegistry
+
+registry = RunRegistry()
+run = registry.start_run(config, run_type="validation", seed=42)
+# ... run experiment ...
+registry.log_metrics(run, {"loss": 0.5, "accuracy": 0.95})
+registry.end_run(run, status="success")
+```
+
+Run data is stored in `runs/YYYYMMDD_HHMMSS_<id>/` with:
+- `config.json` — Full configuration
+- `meta.json` — Run metadata (seed, git commit, status)
+- `metrics.json` — Key metrics
+
+📖 [Full Reproducibility Guide](docs/MFN_REPRODUCIBILITY.md)
+
+---
+
 ## Тести
 
 ```bash
@@ -360,6 +415,7 @@ print(f"Active fraction: {features['f_active']:.3f}")
 | [MFN_FEATURE_SCHEMA.md](docs/MFN_FEATURE_SCHEMA.md) | Схема фрактальних ознак |
 | [MFN_DATA_PIPELINES.md](docs/MFN_DATA_PIPELINES.md) | Data pipelines та сценарії |
 | [MFN_USE_CASES.md](docs/MFN_USE_CASES.md) | Use cases та демо-приклади |
+| [MFN_REPRODUCIBILITY.md](docs/MFN_REPRODUCIBILITY.md) | Відтворюваність та run registry |
 | [ROADMAP.md](docs/ROADMAP.md) | План розвитку | |
 
 ---
