@@ -61,7 +61,7 @@ class RNGContext:
     """
 
     seed: int | None = None
-    _numpy_rng: np.random.Generator = field(default=None, repr=False)  # type: ignore
+    _numpy_rng: np.random.Generator | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         """Initialize RNG state from seed."""
@@ -71,6 +71,8 @@ class RNGContext:
     @property
     def numpy_rng(self) -> np.random.Generator:
         """Get NumPy random generator."""
+        if self._numpy_rng is None:
+            self._numpy_rng = np.random.default_rng(self.seed)
         return self._numpy_rng
 
     def fork(self, child_seed: int | None = None) -> "RNGContext":
@@ -89,7 +91,8 @@ class RNGContext:
         """
         if child_seed is None:
             # Derive child seed from current RNG state
-            child_seed = int(self._numpy_rng.integers(0, 2**31))
+            rng = self.numpy_rng
+            child_seed = int(rng.integers(0, 2**31))
         return RNGContext(seed=child_seed)
 
     def reset(self) -> None:
@@ -107,9 +110,10 @@ class RNGContext:
         Returns:
             Dictionary with seed and RNG bit generator state.
         """
+        rng = self.numpy_rng
         return {
             "seed": self.seed,
-            "bit_generator_state": self._numpy_rng.bit_generator.state,
+            "bit_generator_state": rng.bit_generator.state,
         }
 
     @classmethod
@@ -125,7 +129,8 @@ class RNGContext:
         """
         ctx = cls(seed=state.get("seed"))
         if "bit_generator_state" in state:
-            ctx._numpy_rng.bit_generator.state = state["bit_generator_state"]
+            rng = ctx.numpy_rng
+            rng.bit_generator.state = state["bit_generator_state"]
         return ctx
 
 

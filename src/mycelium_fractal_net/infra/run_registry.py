@@ -136,11 +136,11 @@ class RunRegistry:
         return "unknown"
 
     def _generate_run_id(self) -> str:
-        """Generate unique run ID with timestamp and short random suffix."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        import random
-
-        suffix = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))
+        """Generate unique run ID with timestamp and microseconds for uniqueness."""
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        # Use microseconds for uniqueness instead of random
+        suffix = f"{now.microsecond:06d}"
         return f"{timestamp}_{suffix}"
 
     def start_run(
@@ -178,9 +178,12 @@ class RunRegistry:
         run_id = self._generate_run_id()
         start_time = datetime.now().isoformat()
 
-        # Extract seed from config if not provided
+        # Extract seed from config if not provided (explicit None check to allow seed=0)
         if seed is None:
-            seed = config_dict.get("seed") or config_dict.get("base_seed")
+            if "seed" in config_dict and config_dict["seed"] is not None:
+                seed = config_dict["seed"]
+            elif "base_seed" in config_dict and config_dict["base_seed"] is not None:
+                seed = config_dict["base_seed"]
 
         handle = RunHandle(
             run_id=run_id,

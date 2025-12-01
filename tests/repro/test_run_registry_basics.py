@@ -255,3 +255,14 @@ class TestRunRegistry:
             run = registry.start_run(config, run_type="test")
 
             assert run.seed == 123
+
+    def test_config_seed_zero_extraction(self) -> None:
+        """Registry correctly extracts seed=0 from config."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            registry = RunRegistry(runs_dir=tmpdir, enabled=True)
+
+            config = {"grid_size": 64, "seed": 0}
+            run = registry.start_run(config, run_type="test")
+
+            # seed=0 should be extracted correctly, not fallback to None
+            assert run.seed == 0
