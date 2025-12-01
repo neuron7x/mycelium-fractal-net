@@ -9,6 +9,7 @@ Provides feature extraction utilities for fractal analysis:
 """
 
 from .fractal_features import (
+    FEATURE_COUNT,
     FeatureConfig,
     FeatureVector,
     compute_basic_stats,
@@ -19,6 +20,7 @@ from .fractal_features import (
 )
 
 __all__ = [
+    "FEATURE_COUNT",
     "FeatureConfig",
     "FeatureVector",
     "compute_features",
