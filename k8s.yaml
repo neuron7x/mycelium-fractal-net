@@ -28,6 +28,11 @@ metadata:
 #     --from-literal=api-key=$(python -c 'import secrets; print(secrets.token_urlsafe(32))') \
 #     --namespace=mycelium-fractal-net
 #
+# NOTE: This Secret resource is a TEMPLATE. Do NOT apply directly with placeholder values.
+# Either:
+# 1. Create secrets manually using the kubectl command above, OR
+# 2. Use external secrets management (Vault, AWS Secrets Manager, sealed-secrets)
+#
 apiVersion: v1
 kind: Secret
 metadata:
@@ -35,28 +40,48 @@ metadata:
   namespace: mycelium-fractal-net
   labels:
     app: mycelium-fractal-net
+  annotations:
+    # Indicates this is a template that must be configured before use
+    mfn.io/template: "true"
+    mfn.io/required-action: "Replace placeholder values before deployment"
 type: Opaque
 stringData:
   # Primary API key for authentication (MFN_API_KEY)
-  # REPLACE with secure value in production!
-  api-key: "REPLACE_WITH_SECURE_API_KEY"
+  # WARNING: This is a placeholder that MUST be replaced!
+  # Use: kubectl create secret generic mfn-secrets --from-literal=api-key=<your-key>
+  api-key: "PLACEHOLDER_DO_NOT_USE_IN_PRODUCTION"
   # Additional API keys (comma-separated, for MFN_API_KEYS)
   api-keys: ""
 ---
-# TLS Secret for Ingress (placeholder - use cert-manager in production)
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mfn-tls-secret
-  namespace: mycelium-fractal-net
-  labels:
-    app: mycelium-fractal-net
-type: kubernetes.io/tls
-data:
-  # Placeholder base64-encoded self-signed certificate
-  # In production, use cert-manager with Let's Encrypt or your CA
-  tls.crt: ""
-  tls.key: ""
+# TLS Secret for Ingress
+#
+# NOTE: For production deployments, use cert-manager to automatically provision
+# and renew TLS certificates from Let's Encrypt or your CA.
+#
+# With cert-manager:
+#   1. Install cert-manager: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+#   2. Create a ClusterIssuer for Let's Encrypt
+#   3. Add annotation to Ingress: cert-manager.io/cluster-issuer: "letsencrypt-prod"
+#   4. Remove or comment out this Secret resource
+#
+# Without cert-manager, create manually:
+#   kubectl create secret tls mfn-tls-secret \
+#     --cert=path/to/tls.crt \
+#     --key=path/to/tls.key \
+#     --namespace=mycelium-fractal-net
+#
+# This template resource is included for documentation but should be removed
+# when using cert-manager or created manually.
+#
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: mfn-tls-secret
+#   namespace: mycelium-fractal-net
+# type: kubernetes.io/tls
+# data:
+#   tls.crt: <base64-encoded-certificate>
+#   tls.key: <base64-encoded-key>
 ---
 apiVersion: apps/v1
 kind: Deployment
