@@ -18,6 +18,7 @@ from mycelium_fractal_net.crypto import (
     EdDSASignature,
     KeyExchangeError,
     SignatureError,
+    SignatureKeyPair,
     SymmetricEncryptionError,
     generate_aes_key,
     generate_ecdh_keypair,
@@ -280,10 +281,10 @@ def sign_message_adapter(request: SignRequest) -> SignResponse:
 
         # Get or create signing key
         if key_id and key_id in key_store.signature_keys:
-            private_key, _ = key_store.signature_keys[key_id]
+            private_key, public_key = key_store.signature_keys[key_id]
         elif key_store.default_signature_key_id:
             key_id = key_store.default_signature_key_id
-            private_key, _ = key_store.signature_keys[key_id]
+            private_key, public_key = key_store.signature_keys[key_id]
         else:
             # Create a new default signing key
             key_id = _generate_key_id()
@@ -291,10 +292,11 @@ def sign_message_adapter(request: SignRequest) -> SignResponse:
             key_store.signature_keys[key_id] = (keypair.private_key, keypair.public_key)
             key_store.set_default_signature_key(key_id)
             private_key = keypair.private_key
+            public_key = keypair.public_key
 
-        # Sign
-        signer = EdDSASignature()
-        signer._keypair.private_key = private_key  # Use existing key
+        # Sign using proper keypair initialization
+        keypair = SignatureKeyPair(private_key=private_key, public_key=public_key)
+        signer = EdDSASignature(keypair=keypair)
         signature = signer.sign(message)
 
         # Encode result

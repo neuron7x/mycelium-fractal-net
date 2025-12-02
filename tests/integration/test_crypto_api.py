@@ -476,18 +476,25 @@ class TestCryptoToggle:
 
     def test_all_endpoints_disabled(self, crypto_disabled_client: TestClient) -> None:
         """All crypto endpoints should return 503 when disabled."""
-        plaintext_b64 = base64.b64encode(b"test").decode("ascii")
+        # Use properly sized mock values for validation
+        plaintext_b64 = base64.b64encode(b"test data for encryption").decode("ascii")
+        # Mock ciphertext (needs to be at least nonce + tag = 28 bytes)
+        mock_ciphertext = base64.b64encode(b"x" * 30).decode("ascii")
+        # Mock signature (Ed25519 signature is 64 bytes)
+        mock_signature = base64.b64encode(b"s" * 64).decode("ascii")
+        # Mock public key (Ed25519 public key is 32 bytes)
+        mock_pubkey = base64.b64encode(b"p" * 32).decode("ascii")
 
         endpoints = [
             ("/api/encrypt", {"plaintext": plaintext_b64}),
-            ("/api/decrypt", {"ciphertext": plaintext_b64}),
+            ("/api/decrypt", {"ciphertext": mock_ciphertext}),
             ("/api/sign", {"message": plaintext_b64}),
             (
                 "/api/verify",
                 {
                     "message": plaintext_b64,
-                    "signature": plaintext_b64,
-                    "public_key": plaintext_b64,
+                    "signature": mock_signature,
+                    "public_key": mock_pubkey,
                 },
             ),
             ("/api/keypair", {"algorithm": "Ed25519"}),
