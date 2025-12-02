@@ -60,8 +60,15 @@ def get_audit_logger() -> logging.Logger:
     return logging.getLogger("mfn.crypto.audit")
 
 
-# In-memory key storage (in production, use proper KMS)
-# Keys are stored with their key_id as the key
+# In-memory key storage for development and testing.
+# WARNING: This implementation is NOT suitable for production use:
+# - Keys are not persistent across restarts
+# - Keys are vulnerable to memory inspection
+# - No proper key rotation or revocation
+# In production, use a proper Key Management System (KMS) such as:
+# - AWS KMS, GCP Cloud KMS, Azure Key Vault
+# - HashiCorp Vault
+# - Hardware Security Modules (HSMs)
 _encryption_keys: Dict[str, bytes] = {}
 _signature_keypairs: Dict[str, EdDSASignature] = {}
 _ecdh_keypairs: Dict[str, ECDHKeyExchange] = {}

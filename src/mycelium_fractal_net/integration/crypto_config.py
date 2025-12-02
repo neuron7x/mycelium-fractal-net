@@ -270,12 +270,26 @@ class CryptoConfig:
         Returns:
             CryptoConfig: Configured settings.
         """
+        import logging
+
+        logger = logging.getLogger("mfn.crypto.config")
+
         # Try to load from YAML first
-        yaml_path = Path(__file__).parent.parent.parent.parent.parent / "configs" / "crypto.yaml"
+        # Support configurable path via environment variable
+        yaml_path_str = os.getenv("MFN_CRYPTO_CONFIG_PATH")
+        if yaml_path_str:
+            yaml_path = Path(yaml_path_str)
+        else:
+            # Default: look in configs/ relative to project root
+            # Use package location to find project root
+            yaml_path = Path(__file__).parent.parent.parent.parent.parent / "configs" / "crypto.yaml"
+
         if yaml_path.exists():
             try:
                 config = cls.from_yaml(yaml_path)
-            except Exception:
+                logger.debug(f"Loaded crypto config from {yaml_path}")
+            except (FileNotFoundError, yaml.YAMLError, PermissionError) as e:
+                logger.warning(f"Failed to load crypto config from {yaml_path}: {e}")
                 config = cls()
         else:
             config = cls()
