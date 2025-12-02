@@ -14,6 +14,9 @@ Components:
     - metrics: Prometheus metrics collection
     - logging_config: Structured JSON logging
     - data_integrations: 77 data integrations for iteration optimization
+    - crypto_config: Cryptographic configuration management
+    - crypto_schemas: Pydantic models for crypto API endpoints
+    - crypto_api: Cryptographic API router with endpoints
 
 Usage:
     >>> from mycelium_fractal_net.integration import (
@@ -23,6 +26,8 @@ Usage:
     ...     run_validation_adapter,
     ...     get_integration,
     ...     INTEGRATION_COUNT,
+    ...     get_crypto_config,
+    ...     is_crypto_enabled,
     ... )
     >>> ctx = ServiceContext(seed=42)
     >>> request = ValidateRequest(seed=42, epochs=1)
@@ -51,6 +56,43 @@ from .auth import (
     API_KEY_HEADER,
     APIKeyMiddleware,
     require_api_key,
+)
+from .crypto_api import (
+    reset_crypto_keys,
+)
+from .crypto_api import (
+    router as crypto_router,
+)
+from .crypto_config import (
+    AuditConfig,
+    CipherSuite,
+    CryptoAPIConfig,
+    CryptoConfig,
+    EncryptionConfig,
+    KDFAlgorithm,
+    KDFConfig,
+    KeyExchangeAlgorithm,
+    KeyExchangeConfig,
+    SignatureAlgorithm,
+    SignatureConfig,
+    TLSConfig,
+    generate_key_id,
+    get_crypto_config,
+    is_crypto_enabled,
+    reset_crypto_config,
+)
+from .crypto_schemas import (
+    DecryptRequest,
+    DecryptResponse,
+    EncryptRequest,
+    EncryptResponse,
+    KeyPairRequest,
+    KeyPairResponse,
+    KeyPairType,
+    SignRequest,
+    SignResponse,
+    VerifyRequest,
+    VerifyResponse,
 )
 from .data_integrations import (
     CORE_ITERATION_INTEGRATIONS,
@@ -174,4 +216,36 @@ __all__ = [
     "get_integration",
     "list_all_integrations",
     "get_integration_categories",
+    # Crypto Configuration
+    "CipherSuite",
+    "KeyExchangeAlgorithm",
+    "SignatureAlgorithm",
+    "KDFAlgorithm",
+    "EncryptionConfig",
+    "KeyExchangeConfig",
+    "SignatureConfig",
+    "KDFConfig",
+    "CryptoAPIConfig",
+    "AuditConfig",
+    "TLSConfig",
+    "CryptoConfig",
+    "get_crypto_config",
+    "reset_crypto_config",
+    "is_crypto_enabled",
+    "generate_key_id",
+    # Crypto Schemas
+    "KeyPairType",
+    "EncryptRequest",
+    "EncryptResponse",
+    "DecryptRequest",
+    "DecryptResponse",
+    "SignRequest",
+    "SignResponse",
+    "VerifyRequest",
+    "VerifyResponse",
+    "KeyPairRequest",
+    "KeyPairResponse",
+    # Crypto API
+    "crypto_router",
+    "reset_crypto_keys",
 ]

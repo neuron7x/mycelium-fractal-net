@@ -140,6 +140,12 @@ class RateLimitConfig:
             "/simulate": 50,  # Simulation is expensive
             "/nernst": 200,  # Nernst is lightweight
             "/federated/aggregate": 50,  # Federated is expensive
+            # Crypto endpoints - moderate limits for security
+            "/api/encrypt": 100,  # Encryption operations
+            "/api/decrypt": 100,  # Decryption operations
+            "/api/sign": 100,  # Signature operations
+            "/api/verify": 200,  # Verification (lighter weight)
+            "/api/keypair": 20,  # Key generation (expensive, should be rare)
         }
 
         return cls(

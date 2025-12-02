@@ -9,6 +9,7 @@ Production Features:
     - Rate limiting (configurable per endpoint)
     - Prometheus metrics endpoint (/metrics)
     - Structured JSON logging with request IDs
+    - Cryptographic API endpoints (/api/encrypt, /api/decrypt, /api/sign, /api/verify, /api/keypair)
 
 Usage:
     uvicorn api:app --host 0.0.0.0 --port 8000
@@ -20,6 +21,11 @@ Endpoints:
     POST /simulate        - Simulate mycelium field
     POST /nernst          - Compute Nernst potential
     POST /federated/aggregate - Aggregate gradients (Krum)
+    POST /api/encrypt     - Encrypt data (AES-256-GCM)
+    POST /api/decrypt     - Decrypt data (AES-256-GCM)
+    POST /api/sign        - Sign message (Ed25519)
+    POST /api/verify      - Verify signature (Ed25519)
+    POST /api/keypair     - Generate key pair (ECDH or Ed25519)
 
 Environment Variables:
     MFN_ENV              - Environment name: dev, staging, prod (default: dev)
@@ -32,6 +38,7 @@ Environment Variables:
     MFN_LOG_LEVEL        - Log level: DEBUG, INFO, WARNING, ERROR (default: INFO)
     MFN_LOG_FORMAT       - Log format: json or text (default: text in dev)
     MFN_METRICS_ENABLED  - Enable Prometheus metrics (default: true)
+    MFN_CRYPTO_ENABLED   - Enable crypto endpoints (default: true)
 
 Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-OBS-001, MFN-LOG-001
 """
@@ -66,8 +73,10 @@ from mycelium_fractal_net.integration import (
     ValidateResponse,
     aggregate_gradients_adapter,
     compute_nernst_adapter,
+    crypto_router,
     get_api_config,
     get_logger,
+    is_crypto_enabled,
     metrics_endpoint,
     run_simulation_adapter,
     run_validation_adapter,
@@ -144,6 +153,13 @@ app.add_middleware(RateLimitMiddleware)
 
 # 5. Authentication (innermost - first check)
 app.add_middleware(APIKeyMiddleware)
+
+# Include crypto router if enabled
+if is_crypto_enabled():
+    app.include_router(crypto_router)
+    logger.info("Crypto API endpoints enabled")
+else:
+    logger.info("Crypto API endpoints disabled (MFN_CRYPTO_ENABLED=false)")
 
 
 # Backward compatibility aliases for external consumers

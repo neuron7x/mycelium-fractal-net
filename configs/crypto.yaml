@@ -1,0 +1,83 @@
+# Cryptographic Configuration for MyceliumFractalNet
+# Reference: docs/MFN_CRYPTOGRAPHY.md
+#
+# This file configures the cryptographic layer for the MFN system.
+# Settings can be overridden by environment variables with MFN_CRYPTO_ prefix.
+
+# Enable/disable the crypto layer globally
+# Environment: MFN_CRYPTO_ENABLED
+enabled: true
+
+# Encryption settings
+encryption:
+  # Cipher suite for symmetric encryption
+  # Options: AES-256-GCM, ChaCha20-Poly1305
+  # Environment: MFN_CRYPTO_CIPHER_SUITE
+  cipher_suite: "AES-256-GCM"
+  
+  # Key length in bits for AES
+  # Options: 128, 192, 256
+  # Environment: MFN_CRYPTO_KEY_BITS
+  key_bits: 256
+
+# Key exchange settings
+key_exchange:
+  # Algorithm for key exchange
+  # Options: X25519 (ECDH on Curve25519)
+  # Environment: MFN_CRYPTO_KEY_EXCHANGE_ALGORITHM
+  algorithm: "X25519"
+
+# Digital signature settings
+signatures:
+  # Algorithm for digital signatures
+  # Options: Ed25519
+  # Environment: MFN_CRYPTO_SIGNATURE_ALGORITHM
+  algorithm: "Ed25519"
+
+# Key derivation settings
+key_derivation:
+  # Algorithm for password-based key derivation
+  # Options: PBKDF2-SHA256, scrypt
+  # Environment: MFN_CRYPTO_KDF_ALGORITHM
+  algorithm: "scrypt"
+  
+  # PBKDF2 iterations (if using PBKDF2)
+  pbkdf2_iterations: 100000
+  
+  # scrypt parameters (if using scrypt)
+  scrypt_n: 16384  # CPU/memory cost (2^14)
+  scrypt_r: 8      # Block size
+  scrypt_p: 1      # Parallelization
+
+# API rate limiting for crypto endpoints
+api:
+  # Maximum requests per minute for crypto endpoints
+  # Environment: MFN_CRYPTO_RATE_LIMIT
+  rate_limit: 100
+  
+  # Maximum payload size in bytes (default: 1 MB)
+  # Environment: MFN_CRYPTO_MAX_PAYLOAD_SIZE
+  max_payload_size: 1048576
+
+# Audit logging
+audit:
+  # Enable audit logging for crypto operations
+  # Environment: MFN_CRYPTO_AUDIT_ENABLED
+  enabled: true
+  
+  # Log level for crypto audit logs (INFO, DEBUG, WARNING)
+  # Environment: MFN_CRYPTO_AUDIT_LEVEL
+  level: "INFO"
+  
+  # Include key identifiers in logs (never log actual keys)
+  include_key_id: true
+
+# TLS settings (for secure communication)
+tls:
+  # Enforce TLS for API endpoints
+  # Environment: MFN_CRYPTO_TLS_REQUIRED
+  required: true
+  
+  # Minimum TLS version
+  # Options: TLS1.2, TLS1.3
+  min_version: "TLS1.2"
