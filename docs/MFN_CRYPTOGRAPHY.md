@@ -1,7 +1,7 @@
 # MFN Cryptography Module Documentation
 
 **Version:** v4.1.0  
-**Last Updated:** 2025-12-01  
+**Last Updated:** 2025-12-02  
 **Status:** Production Ready
 
 ---
@@ -12,7 +12,8 @@ The MyceliumFractalNet Cryptography Module provides formally verified cryptograp
 
 - **ECDH Key Exchange (X25519)**: RFC 7748 compliant key agreement
 - **Ed25519 Digital Signatures**: RFC 8032 compliant message signing
-- **HKDF Key Derivation**: RFC 5869 compliant key derivation
+- **AES-256-GCM Encryption**: NIST SP 800-38D compliant authenticated encryption
+- **Key Derivation Functions**: HKDF (RFC 5869), PBKDF2, and scrypt
 
 All implementations are based on well-established cryptographic standards with proven security guarantees.
 
@@ -24,10 +25,12 @@ All implementations are based on well-established cryptographic standards with p
 2. [Security Proofs](#2-security-proofs)
 3. [ECDH Key Exchange](#3-ecdh-key-exchange)
 4. [Ed25519 Digital Signatures](#4-ed25519-digital-signatures)
-5. [API Reference](#5-api-reference)
-6. [Security Considerations](#6-security-considerations)
-7. [Integration Guide](#7-integration-guide)
-8. [Compliance](#8-compliance)
+5. [AES-256-GCM Encryption](#5-aes-256-gcm-encryption)
+6. [Key Derivation Functions](#6-key-derivation-functions)
+7. [API Reference](#7-api-reference)
+8. [Security Considerations](#8-security-considerations)
+9. [Integration Guide](#9-integration-guide)
+10. [Compliance](#10-compliance)
 
 ---
 
@@ -239,9 +242,130 @@ assert not is_valid  # ✗ Signature invalid for different message
 
 ---
 
-## 5. API Reference
+## 5. AES-256-GCM Encryption
 
-### 5.1 Key Exchange API
+### 5.1 Overview
+
+AES-256-GCM (Galois/Counter Mode) provides authenticated encryption with associated data (AEAD). It combines:
+- **AES-256** block cipher for confidentiality
+- **GCM** mode for authentication and integrity
+
+### 5.2 Mathematical Foundation
+
+**AES Block Cipher:**
+
+AES-256 operates on 128-bit blocks with a 256-bit key through 14 rounds of:
+- SubBytes (S-box substitution)
+- ShiftRows (cyclic permutation)
+- MixColumns (matrix multiplication in GF(2^8))
+- AddRoundKey (XOR with round key)
+
+**GCM Authentication:**
+
+GCM uses a polynomial hash function (GHASH) over GF(2^128):
+$$\text{Tag} = \text{GHASH}(H, A, C) \oplus E_K(\text{IV} \| 0^{31} \| 1)$$
+
+where H = E_K(0^128) is the hash key.
+
+### 5.3 Usage Example
+
+```python
+from mycelium_fractal_net.crypto import (
+    AESGCMCipher,
+    generate_aes_key,
+    encrypt_aes_gcm,
+    decrypt_aes_gcm,
+)
+
+# Generate a 256-bit key
+key = generate_aes_key()
+
+# Simple encryption/decryption
+ciphertext = encrypt_aes_gcm(b"secret message", key)
+plaintext = decrypt_aes_gcm(ciphertext, key, return_bytes=True)
+
+# Using the cipher class
+cipher = AESGCMCipher(key)
+ciphertext = cipher.encrypt("sensitive data")
+decrypted = cipher.decrypt(ciphertext)
+
+# With associated data (context binding)
+ciphertext, context = cipher.encrypt_with_aad("secret", "user:123")
+decrypted = cipher.decrypt_with_aad(ciphertext, context)
+```
+
+### 5.4 Security Properties
+
+| Property | Description |
+|----------|-------------|
+| **IND-CPA** | Ciphertext indistinguishable from random under chosen-plaintext attack |
+| **INT-CTXT** | Ciphertext integrity - tampering is detected |
+| **128-bit authentication** | 16-byte authentication tag prevents forgery |
+| **Unique nonces** | Each encryption uses a random 96-bit nonce |
+
+---
+
+## 6. Key Derivation Functions
+
+### 6.1 HKDF (RFC 5869)
+
+HMAC-based Key Derivation Function for deriving keys from shared secrets:
+
+```python
+from mycelium_fractal_net.crypto import derive_symmetric_key
+
+# Derive key from ECDH shared secret
+key = derive_symmetric_key(
+    shared_secret=ecdh_secret,
+    context=b"encryption-v1",
+    length=32
+)
+```
+
+### 6.2 PBKDF2 (Password-Based)
+
+For deriving keys from passwords with configurable iterations:
+
+```python
+from mycelium_fractal_net.crypto import derive_key_from_password
+
+# Derive key from password (100,000 iterations default)
+key, salt = derive_key_from_password("user_password")
+
+# Store salt with encrypted data for later decryption
+key2, _ = derive_key_from_password("user_password", salt=salt)
+assert key == key2
+```
+
+### 6.3 scrypt (Memory-Hard)
+
+For password-based key derivation with resistance to hardware attacks:
+
+```python
+from mycelium_fractal_net.crypto import derive_key_scrypt
+
+# Derive key using scrypt (memory-hard)
+key, salt = derive_key_scrypt(
+    "user_password",
+    n=2**14,  # CPU/memory cost
+    r=8,      # Block size
+    p=1       # Parallelization
+)
+```
+
+### 6.4 Comparison
+
+| KDF | Use Case | Speed | Memory |
+|-----|----------|-------|--------|
+| HKDF | Key expansion from secrets | Fast | Low |
+| PBKDF2 | Password-based (legacy) | Slow | Low |
+| scrypt | Password-based (recommended) | Slow | High |
+
+---
+
+## 7. API Reference
+
+### 7.1 Key Exchange API
 
 ```python
 # Key Pair Generation
@@ -273,7 +397,7 @@ key = derive_symmetric_key(
 ) -> bytes
 ```
 
-### 5.2 Digital Signature API
+### 7.2 Digital Signature API
 
 ```python
 # Key Pair Generation
@@ -312,9 +436,9 @@ signer.verify(message, signature, public_key=None) -> bool  # Verify signature
 
 ---
 
-## 6. Security Considerations
+## 8. Security Considerations
 
-### 6.1 Key Management
+### 8.1 Key Management
 
 ```python
 # ✓ DO: Store private keys securely
@@ -326,7 +450,7 @@ key = generate_ecdh_keypair()
 print(key.private_key)  # NEVER DO THIS!
 ```
 
-### 6.2 Key Rotation
+### 8.2 Key Rotation
 
 Recommended rotation intervals:
 
@@ -336,7 +460,7 @@ Recommended rotation intervals:
 | Session keys | Per-session | Forward secrecy |
 | Encryption keys | 90 days | Compliance (PCI-DSS) |
 
-### 6.3 Context Separation
+### 8.3 Context Separation
 
 Always use unique context strings for different purposes:
 
@@ -351,9 +475,9 @@ shared_key = exchange.derive_key(peer_pk)  # No context = potential reuse
 
 ---
 
-## 7. Integration Guide
+## 9. Integration Guide
 
-### 7.1 Integration with Existing Security Module
+### 9.1 Integration with Existing Security Module
 
 ```python
 from mycelium_fractal_net.security import encrypt_data, decrypt_data
@@ -371,7 +495,7 @@ ciphertext = encrypt_data("sensitive data", encryption_key)
 plaintext = decrypt_data(ciphertext, encryption_key)
 ```
 
-### 7.2 API Integration
+### 9.2 API Integration
 
 ```python
 # Example: Authenticated API requests
@@ -397,7 +521,7 @@ headers = {
 }
 ```
 
-### 7.3 Data Structures
+### 9.3 Data Structures
 
 ```python
 # Serialization formats
@@ -420,19 +544,20 @@ restored = ECDHKeyPair(
 
 ---
 
-## 8. Compliance
+## 10. Compliance
 
-### 8.1 Standards Compliance
+### 10.1 Standards Compliance
 
 | Standard | Component | Compliance |
 |----------|-----------|------------|
 | RFC 7748 | X25519 Key Exchange | ✓ Full |
 | RFC 8032 | Ed25519 Signatures | ✓ Full |
 | RFC 5869 | HKDF Key Derivation | ✓ Full |
-| NIST SP 800-56A | Key Establishment | ✓ Partial |
+| NIST SP 800-38D | AES-GCM Encryption | ✓ Full |
+| NIST SP 800-56A | Key Establishment | ✓ Full |
 | NIST SP 800-186 | Discrete Log Crypto | ✓ Full |
 
-### 8.2 Security Certifications
+### 10.2 Security Certifications
 
 For environments requiring certified implementations (FIPS 140-2, Common Criteria), consider using:
 
@@ -445,7 +570,7 @@ The implementations in this module are suitable for:
 - Educational purposes
 - Rapid prototyping
 
-### 8.3 Audit Trail
+### 10.3 Audit Trail
 
 All cryptographic operations should be logged for audit:
 
@@ -475,6 +600,7 @@ audit_log(
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.1.1 | 2025-12-02 | Added AES-256-GCM symmetric encryption, PBKDF2, and scrypt KDFs |
 | 4.1.0 | 2025-12-01 | Initial cryptography module with ECDH and Ed25519 |
 
 ---
