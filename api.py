@@ -49,10 +49,17 @@ from mycelium_fractal_net.integration import (
     API_KEY_HEADER,
     REQUEST_ID_HEADER,
     APIKeyMiddleware,
+    CryptoAPIError,
+    DecryptRequest,
+    DecryptResponse,
+    EncryptRequest,
+    EncryptResponse,
     ExecutionMode,
     FederatedAggregateRequest,
     FederatedAggregateResponse,
     HealthResponse,
+    KeypairRequest,
+    KeypairResponse,
     MetricsMiddleware,
     NernstRequest,
     NernstResponse,
@@ -60,18 +67,28 @@ from mycelium_fractal_net.integration import (
     RequestIDMiddleware,
     RequestLoggingMiddleware,
     ServiceContext,
+    SignRequest,
+    SignResponse,
     SimulateRequest,
     SimulateResponse,
     ValidateRequest,
     ValidateResponse,
+    VerifyRequest,
+    VerifyResponse,
     aggregate_gradients_adapter,
     compute_nernst_adapter,
+    decrypt_data_adapter,
+    encrypt_data_adapter,
+    generate_keypair_adapter,
     get_api_config,
+    get_crypto_config,
     get_logger,
     metrics_endpoint,
     run_simulation_adapter,
     run_validation_adapter,
     setup_logging,
+    sign_message_adapter,
+    verify_signature_adapter,
 )
 
 # Initialize logging
@@ -221,6 +238,137 @@ async def aggregate_gradients(
     except Exception as e:
         logger.error(f"Federated aggregation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# Cryptographic API Endpoints (Step 4: API Integration)
+# Reference: docs/MFN_CRYPTOGRAPHY.md
+# =============================================================================
+
+
+@app.post("/api/encrypt", response_model=EncryptResponse)
+async def encrypt(request: EncryptRequest) -> EncryptResponse:
+    """
+    Encrypt data using AES-256-GCM.
+
+    Accepts base64-encoded plaintext and returns encrypted ciphertext.
+    Uses server-managed keys or a specified key_id.
+    """
+    crypto_config = get_crypto_config()
+    if not crypto_config.enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="Cryptographic operations are disabled",
+        )
+
+    try:
+        return encrypt_data_adapter(request)
+    except CryptoAPIError as e:
+        logger.warning(f"Encryption failed: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Encryption failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Encryption failed")
+
+
+@app.post("/api/decrypt", response_model=DecryptResponse)
+async def decrypt(request: DecryptRequest) -> DecryptResponse:
+    """
+    Decrypt AES-256-GCM encrypted data.
+
+    Accepts base64-encoded ciphertext and returns decrypted plaintext.
+    Requires the same key_id that was used for encryption.
+    """
+    crypto_config = get_crypto_config()
+    if not crypto_config.enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="Cryptographic operations are disabled",
+        )
+
+    try:
+        return decrypt_data_adapter(request)
+    except CryptoAPIError as e:
+        logger.warning(f"Decryption failed: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Decryption failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Decryption failed")
+
+
+@app.post("/api/sign", response_model=SignResponse)
+async def sign(request: SignRequest) -> SignResponse:
+    """
+    Sign a message using Ed25519.
+
+    Accepts base64-encoded message and returns digital signature.
+    Uses server-managed signing keys.
+    """
+    crypto_config = get_crypto_config()
+    if not crypto_config.enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="Cryptographic operations are disabled",
+        )
+
+    try:
+        return sign_message_adapter(request)
+    except CryptoAPIError as e:
+        logger.warning(f"Signing failed: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Signing failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Signing failed")
+
+
+@app.post("/api/verify", response_model=VerifyResponse)
+async def verify(request: VerifyRequest) -> VerifyResponse:
+    """
+    Verify a digital signature.
+
+    Accepts base64-encoded message, signature, and optionally a public key.
+    Returns whether the signature is valid.
+    """
+    crypto_config = get_crypto_config()
+    if not crypto_config.enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="Cryptographic operations are disabled",
+        )
+
+    try:
+        return verify_signature_adapter(request)
+    except CryptoAPIError as e:
+        logger.warning(f"Verification failed: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Verification failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Verification failed")
+
+
+@app.post("/api/keypair", response_model=KeypairResponse)
+async def keypair(request: KeypairRequest) -> KeypairResponse:
+    """
+    Generate a new key pair.
+
+    Creates either an Ed25519 signature key pair or an ECDH (X25519) key pair.
+    Returns the public key and key ID. Private key is stored securely on server.
+    """
+    crypto_config = get_crypto_config()
+    if not crypto_config.enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="Cryptographic operations are disabled",
+        )
+
+    try:
+        return generate_keypair_adapter(request)
+    except CryptoAPIError as e:
+        logger.warning(f"Key generation failed: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Key generation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Key generation failed")
 
 
 if __name__ == "__main__":

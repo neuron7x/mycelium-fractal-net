@@ -9,6 +9,8 @@ Components:
     - service_context: Unified context with config, RNG, and engine handles
     - adapters: Thin bridge between integration layer and numerical core
     - api_config: Configuration management for API features
+    - crypto_config: Configuration management for cryptographic features
+    - crypto_adapters: Adapters for cryptographic API endpoints
     - auth: API key authentication middleware
     - rate_limiter: Rate limiting middleware
     - metrics: Prometheus metrics collection
@@ -52,6 +54,22 @@ from .auth import (
     APIKeyMiddleware,
     require_api_key,
 )
+from .crypto_adapters import (
+    CryptoAPIError,
+    decrypt_data_adapter,
+    encrypt_data_adapter,
+    generate_keypair_adapter,
+    sign_message_adapter,
+    verify_signature_adapter,
+)
+from .crypto_config import (
+    CryptoConfig,
+    KeyStore,
+    get_crypto_config,
+    get_key_store,
+    reset_crypto_config,
+    reset_key_store,
+)
 from .data_integrations import (
     CORE_ITERATION_INTEGRATIONS,
     ENCRYPTION_OPTIMIZATION_INTEGRATIONS,
@@ -90,16 +108,26 @@ from .rate_limiter import (
     RateLimitMiddleware,
 )
 from .schemas import (
+    DecryptRequest,
+    DecryptResponse,
+    EncryptRequest,
+    EncryptResponse,
     ErrorResponse,
     FederatedAggregateRequest,
     FederatedAggregateResponse,
     HealthResponse,
+    KeypairRequest,
+    KeypairResponse,
     NernstRequest,
     NernstResponse,
+    SignRequest,
+    SignResponse,
     SimulateRequest,
     SimulateResponse,
     ValidateRequest,
     ValidateResponse,
+    VerifyRequest,
+    VerifyResponse,
 )
 from .service_context import (
     ExecutionMode,
@@ -119,6 +147,17 @@ __all__ = [
     "FederatedAggregateRequest",
     "FederatedAggregateResponse",
     "ErrorResponse",
+    # Crypto Schemas
+    "EncryptRequest",
+    "EncryptResponse",
+    "DecryptRequest",
+    "DecryptResponse",
+    "SignRequest",
+    "SignResponse",
+    "VerifyRequest",
+    "VerifyResponse",
+    "KeypairRequest",
+    "KeypairResponse",
     # Service Context
     "ExecutionMode",
     "ServiceContext",
@@ -128,6 +167,13 @@ __all__ = [
     "run_simulation_adapter",
     "compute_nernst_adapter",
     "aggregate_gradients_adapter",
+    # Crypto Adapters
+    "CryptoAPIError",
+    "encrypt_data_adapter",
+    "decrypt_data_adapter",
+    "sign_message_adapter",
+    "verify_signature_adapter",
+    "generate_keypair_adapter",
     # API Configuration
     "Environment",
     "AuthConfig",
@@ -137,6 +183,13 @@ __all__ = [
     "APIConfig",
     "get_api_config",
     "reset_config",
+    # Crypto Configuration
+    "CryptoConfig",
+    "KeyStore",
+    "get_crypto_config",
+    "get_key_store",
+    "reset_crypto_config",
+    "reset_key_store",
     # Authentication
     "API_KEY_HEADER",
     "APIKeyMiddleware",
