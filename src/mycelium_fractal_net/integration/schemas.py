@@ -299,6 +299,223 @@ class ErrorCode:
     # Service errors (503)
     SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
 
+    # Cryptography errors
+    CRYPTO_ERROR = "CRYPTO_ERROR"
+    ENCRYPTION_FAILED = "ENCRYPTION_FAILED"
+    DECRYPTION_FAILED = "DECRYPTION_FAILED"
+    SIGNATURE_FAILED = "SIGNATURE_FAILED"
+    VERIFICATION_FAILED = "VERIFICATION_FAILED"
+    KEY_GENERATION_FAILED = "KEY_GENERATION_FAILED"
+
+
+# =============================================================================
+# Cryptography API Schemas (Step 4: API Integration)
+# =============================================================================
+
+
+class EncryptRequest(BaseModel):
+    """
+    Request for encrypting data using AES-256-GCM.
+
+    Attributes:
+        plaintext: Base64-encoded data to encrypt.
+        key_id: Optional key identifier. If not provided, server-managed key is used.
+        associated_data: Optional base64-encoded associated data for authenticated encryption.
+    """
+
+    plaintext: str = Field(
+        description="Base64-encoded plaintext data to encrypt",
+        min_length=1,
+        max_length=1048576,  # 1 MB limit
+    )
+    key_id: Optional[str] = Field(
+        default=None,
+        description="Key identifier for encryption. If not provided, server-managed key is used.",
+        max_length=64,
+    )
+    associated_data: Optional[str] = Field(
+        default=None,
+        description="Base64-encoded additional authenticated data (AAD)",
+        max_length=4096,
+    )
+
+
+class EncryptResponse(BaseModel):
+    """
+    Response from encryption operation.
+
+    Attributes:
+        ciphertext: Base64-encoded encrypted data (includes nonce and auth tag).
+        key_id: Identifier of the key used for encryption.
+        algorithm: Encryption algorithm used.
+    """
+
+    ciphertext: str = Field(description="Base64-encoded ciphertext")
+    key_id: str = Field(description="Key identifier used for encryption")
+    algorithm: str = Field(default="AES-256-GCM", description="Encryption algorithm")
+
+
+class DecryptRequest(BaseModel):
+    """
+    Request for decrypting AES-256-GCM encrypted data.
+
+    Attributes:
+        ciphertext: Base64-encoded ciphertext to decrypt.
+        key_id: Optional key identifier. If not provided, server-managed key is used.
+        associated_data: Optional base64-encoded associated data used during encryption.
+    """
+
+    ciphertext: str = Field(
+        description="Base64-encoded ciphertext to decrypt",
+        min_length=1,
+        max_length=1048576,  # 1 MB limit
+    )
+    key_id: Optional[str] = Field(
+        default=None,
+        description="Key identifier for decryption",
+        max_length=64,
+    )
+    associated_data: Optional[str] = Field(
+        default=None,
+        description="Base64-encoded AAD used during encryption",
+        max_length=4096,
+    )
+
+
+class DecryptResponse(BaseModel):
+    """
+    Response from decryption operation.
+
+    Attributes:
+        plaintext: Base64-encoded decrypted data.
+        key_id: Identifier of the key used for decryption.
+    """
+
+    plaintext: str = Field(description="Base64-encoded plaintext")
+    key_id: str = Field(description="Key identifier used for decryption")
+
+
+class SignRequest(BaseModel):
+    """
+    Request for signing a message using Ed25519.
+
+    Attributes:
+        message: Base64-encoded message or hash to sign.
+        key_id: Optional key identifier. If not provided, server-managed key is used.
+    """
+
+    message: str = Field(
+        description="Base64-encoded message to sign",
+        min_length=1,
+        max_length=1048576,  # 1 MB limit
+    )
+    key_id: Optional[str] = Field(
+        default=None,
+        description="Key identifier for signing",
+        max_length=64,
+    )
+
+
+class SignResponse(BaseModel):
+    """
+    Response from signing operation.
+
+    Attributes:
+        signature: Base64-encoded digital signature.
+        key_id: Identifier of the key used for signing.
+        algorithm: Signature algorithm used.
+    """
+
+    signature: str = Field(description="Base64-encoded Ed25519 signature")
+    key_id: str = Field(description="Key identifier used for signing")
+    algorithm: str = Field(default="Ed25519", description="Signature algorithm")
+
+
+class VerifyRequest(BaseModel):
+    """
+    Request for verifying a digital signature.
+
+    Attributes:
+        message: Base64-encoded original message.
+        signature: Base64-encoded signature to verify.
+        public_key: Optional base64-encoded public key. If not provided, key_id must be set.
+        key_id: Optional key identifier for looking up the public key.
+    """
+
+    message: str = Field(
+        description="Base64-encoded original message",
+        min_length=1,
+        max_length=1048576,
+    )
+    signature: str = Field(
+        description="Base64-encoded signature to verify",
+        min_length=1,
+        max_length=256,
+    )
+    public_key: Optional[str] = Field(
+        default=None,
+        description="Base64-encoded public key for verification",
+        max_length=256,
+    )
+    key_id: Optional[str] = Field(
+        default=None,
+        description="Key identifier to look up public key",
+        max_length=64,
+    )
+
+
+class VerifyResponse(BaseModel):
+    """
+    Response from signature verification.
+
+    Attributes:
+        valid: True if signature is valid, False otherwise.
+        key_id: Identifier of the key used for verification (if applicable).
+        algorithm: Signature algorithm used for verification.
+    """
+
+    valid: bool = Field(description="True if signature is valid")
+    key_id: Optional[str] = Field(
+        default=None, description="Key identifier used for verification"
+    )
+    algorithm: str = Field(default="Ed25519", description="Signature algorithm")
+
+
+class KeypairRequest(BaseModel):
+    """
+    Request for generating a new key pair.
+
+    Attributes:
+        algorithm: Key type to generate. Either 'ECDH' (X25519) or 'Ed25519'.
+        key_id: Optional custom key identifier. Auto-generated if not provided.
+    """
+
+    algorithm: str = Field(
+        default="Ed25519",
+        description="Key algorithm: 'ECDH' for X25519 key exchange, 'Ed25519' for signatures",
+        pattern="^(ECDH|Ed25519)$",
+    )
+    key_id: Optional[str] = Field(
+        default=None,
+        description="Custom key identifier. Auto-generated if not provided.",
+        max_length=64,
+    )
+
+
+class KeypairResponse(BaseModel):
+    """
+    Response from key pair generation.
+
+    Attributes:
+        key_id: Unique identifier for the generated key pair.
+        public_key: Base64-encoded public key.
+        algorithm: Algorithm of the generated key pair.
+    """
+
+    key_id: str = Field(description="Unique key identifier")
+    public_key: str = Field(description="Base64-encoded public key")
+    algorithm: str = Field(description="Key algorithm (ECDH or Ed25519)")
+
 
 # =============================================================================
 # Exports
@@ -323,4 +540,15 @@ __all__ = [
     "ErrorResponse",
     "ErrorDetail",
     "ErrorCode",
+    # Cryptography
+    "EncryptRequest",
+    "EncryptResponse",
+    "DecryptRequest",
+    "DecryptResponse",
+    "SignRequest",
+    "SignResponse",
+    "VerifyRequest",
+    "VerifyResponse",
+    "KeypairRequest",
+    "KeypairResponse",
 ]
