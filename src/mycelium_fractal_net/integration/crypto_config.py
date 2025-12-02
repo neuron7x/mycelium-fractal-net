@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from .api_config import Environment
 
@@ -109,8 +109,8 @@ class KeyStore:
     """
 
     encryption_keys: Dict[str, bytes] = field(default_factory=dict)
-    signature_keys: Dict[str, tuple] = field(default_factory=dict)
-    ecdh_keys: Dict[str, tuple] = field(default_factory=dict)
+    signature_keys: Dict[str, Tuple[bytes, bytes]] = field(default_factory=dict)
+    ecdh_keys: Dict[str, Tuple[bytes, bytes]] = field(default_factory=dict)
     _default_encryption_key_id: Optional[str] = None
     _default_signature_key_id: Optional[str] = None
 

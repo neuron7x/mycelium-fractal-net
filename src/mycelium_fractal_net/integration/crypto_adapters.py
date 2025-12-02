@@ -220,10 +220,12 @@ def decrypt_data_adapter(request: DecryptRequest) -> DecryptResponse:
 
         # Decrypt
         cipher = AESGCMCipher(key=key)
-        plaintext = cipher.decrypt(ciphertext, associated_data=aad, return_bytes=True)
+        plaintext_bytes = cipher.decrypt(ciphertext, associated_data=aad, return_bytes=True)
 
-        # Encode result
-        plaintext_b64 = base64.b64encode(plaintext).decode("ascii")
+        # Encode result - ensure we have bytes for b64encode
+        if isinstance(plaintext_bytes, str):
+            plaintext_bytes = plaintext_bytes.encode("utf-8")
+        plaintext_b64 = base64.b64encode(plaintext_bytes).decode("ascii")
 
         _log_crypto_operation("decrypt", key_id, config.cipher_suite, True)
 
@@ -426,12 +428,16 @@ def generate_keypair_adapter(request: KeypairRequest) -> KeypairResponse:
 
     try:
         algorithm = request.algorithm
+        public_key_b64: str = ""
 
         if algorithm == "Ed25519":
             # Generate Ed25519 signature key pair
-            keypair = generate_signature_keypair()
-            key_store.signature_keys[key_id] = (keypair.private_key, keypair.public_key)
-            public_key_b64 = base64.b64encode(keypair.public_key).decode("ascii")
+            sig_keypair = generate_signature_keypair()
+            key_store.signature_keys[key_id] = (
+                sig_keypair.private_key,
+                sig_keypair.public_key,
+            )
+            public_key_b64 = base64.b64encode(sig_keypair.public_key).decode("ascii")
 
             # Set as default if no default exists
             if not key_store.default_signature_key_id:
@@ -439,9 +445,12 @@ def generate_keypair_adapter(request: KeypairRequest) -> KeypairResponse:
 
         elif algorithm == "ECDH":
             # Generate X25519 key exchange key pair
-            keypair = generate_ecdh_keypair()
-            key_store.ecdh_keys[key_id] = (keypair.private_key, keypair.public_key)
-            public_key_b64 = base64.b64encode(keypair.public_key).decode("ascii")
+            ecdh_keypair = generate_ecdh_keypair()
+            key_store.ecdh_keys[key_id] = (
+                ecdh_keypair.private_key,
+                ecdh_keypair.public_key,
+            )
+            public_key_b64 = base64.b64encode(ecdh_keypair.public_key).decode("ascii")
 
         else:
             raise CryptoAPIError(f"Unsupported algorithm: {algorithm}")
