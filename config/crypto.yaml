@@ -1,0 +1,77 @@
+# MyceliumFractalNet Cryptographic Configuration
+#
+# This file configures the cryptographic module's behavior.
+# All settings can be overridden via environment variables prefixed with MFN_CRYPTO_
+#
+# Reference: docs/MFN_CRYPTOGRAPHY.md
+
+# Master switch for enabling/disabling cryptographic operations
+# When disabled, crypto API endpoints return 503 Service Unavailable
+# Environment variable: MFN_CRYPTO_ENABLED
+enabled: true
+
+# Cryptographic algorithms and key settings
+algorithms:
+  # Symmetric encryption algorithm (AES-GCM is the default)
+  # Supported: aes-256-gcm
+  symmetric: aes-256-gcm
+  
+  # Key length for symmetric encryption (in bits)
+  # Supported: 128, 192, 256
+  symmetric_key_bits: 256
+  
+  # Key exchange algorithm
+  # Supported: x25519
+  key_exchange: x25519
+  
+  # Digital signature algorithm
+  # Supported: ed25519
+  signature: ed25519
+
+# Key management settings
+key_management:
+  # Maximum number of keys stored in memory per type (ecdh, signing)
+  max_stored_keys: 100
+  
+  # Key expiration time in seconds (0 = never expires)
+  key_expiration_seconds: 86400  # 24 hours
+  
+  # Enable automatic key rotation
+  auto_rotate: false
+  
+  # Key rotation interval in seconds (only if auto_rotate is true)
+  rotation_interval_seconds: 604800  # 7 days
+
+# API-specific settings
+api:
+  # Maximum payload size for encryption/decryption in bytes
+  max_payload_bytes: 10485760  # 10 MB
+  
+  # Require input data to be base64 encoded
+  require_base64_input: true
+  
+  # Return output as base64 encoded (always true for binary data)
+  base64_output: true
+  
+  # Rate limit for crypto endpoints (requests per minute)
+  # Set to 0 to use global rate limit
+  rate_limit_per_minute: 100
+
+# Audit logging settings
+audit:
+  # Enable audit logging for cryptographic operations
+  enabled: true
+  
+  # Log level for crypto operations (DEBUG, INFO, WARN, ERROR)
+  log_level: INFO
+  
+  # Fields to include in audit logs (never includes private keys or plaintext)
+  # Available: operation, key_id, algorithm, timestamp, request_id, success, error_code
+  include_fields:
+    - operation
+    - key_id
+    - algorithm
+    - timestamp
+    - request_id
+    - success
+    - error_code
