@@ -18,6 +18,7 @@ dependencies = [
   "pandas>=1.5.3,<3.0.0",
   "pyarrow>=10.0.0",
   "prometheus_client>=0.17.0",
+  "cryptography>=44.0.0",
 ]
 
 [project.optional-dependencies]

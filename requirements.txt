@@ -7,6 +7,14 @@ torch>=2.0.0
 pandas>=1.5.3,<3.0.0
 pyarrow>=10.0.0
 
+# Cryptography
+# Provides production-grade cryptographic operations:
+# - AES-256-GCM encryption for sensitive data
+# - RSA/ECDSA for digital signatures (alternative to Ed25519)
+# - X.509 certificate handling
+# - FIPS-compliant implementations via OpenSSL backend
+cryptography>=44.0.0
+
 # API
 fastapi>=0.109.0
 uvicorn>=0.27.0
