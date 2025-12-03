@@ -44,6 +44,25 @@ spec:
               value: "1"
             - name: MFN_SEED
               value: "42"
+            - name: MFN_ENV
+              value: "prod"
+            - name: MFN_API_KEY_REQUIRED
+              value: "true"
+            - name: MFN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mfn-secrets
+                  key: api-key
+            - name: MFN_RATE_LIMIT_ENABLED
+              value: "true"
+            - name: MFN_RATE_LIMIT_REQUESTS
+              value: "100"
+            - name: MFN_LOG_FORMAT
+              value: "json"
+            - name: MFN_LOG_LEVEL
+              value: "INFO"
+            - name: MFN_METRICS_ENABLED
+              value: "true"
           livenessProbe:
             httpGet:
               path: /health
@@ -115,3 +134,129 @@ data:
       "use_sparse_attention": true,
       "use_stdp": true
     }
+---
+# Secret for API keys and sensitive configuration
+# Note: Values are base64 encoded. Create with:
+#   kubectl create secret generic mfn-secrets \
+#     --from-literal=api-key=$(openssl rand -base64 32) \
+#     -n mycelium-fractal-net
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mfn-secrets
+  namespace: mycelium-fractal-net
+type: Opaque
+data:
+  # Example: base64 encoded placeholder (replace with actual secret)
+  # echo -n "your-secret-key" | base64
+  api-key: cGxhY2Vob2xkZXItYXBpLWtleQ==
+---
+# Ingress for external HTTP(S) access
+# Note: Requires an ingress controller (nginx, traefik, etc.)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mycelium-ingress
+  namespace: mycelium-fractal-net
+  annotations:
+    # Nginx ingress annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    # CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    # Cert-manager for automatic TLS
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - mfn.example.com
+      secretName: mfn-tls-secret
+  rules:
+    - host: mfn.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mycelium-fractal-net
+                port:
+                  number: 80
+---
+# NetworkPolicy to restrict pod-to-pod communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mfn-network-policy
+  namespace: mycelium-fractal-net
+spec:
+  podSelector:
+    matchLabels:
+      app: mycelium-fractal-net
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+    # Allow traffic from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow external HTTPS (for API calls if needed)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+---
+# PodDisruptionBudget to ensure availability during disruptions
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mfn-pdb
+  namespace: mycelium-fractal-net
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: mycelium-fractal-net
+---
+# ServiceMonitor for Prometheus metrics scraping
+# Note: Requires prometheus-operator
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mfn-metrics
+  namespace: mycelium-fractal-net
+  labels:
+    app: mycelium-fractal-net
+spec:
+  selector:
+    matchLabels:
+      app: mycelium-fractal-net
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
