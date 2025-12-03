@@ -132,7 +132,7 @@ class WebSocketClient:
             )
             self.message_count += 1
             return data
-        except Exception as e:
+        except (OSError, json.JSONDecodeError) as e:
             latency = (time.time() - start_time) * 1000
             events.request.fire(
                 request_type="WSR",
@@ -150,7 +150,8 @@ class WebSocketClient:
         if self.ws:
             try:
                 self.ws.close()
-            except:
+            except (OSError, Exception):
+                # Ignore errors on close
                 pass
 
     def get_avg_latency(self) -> float:
@@ -274,8 +275,8 @@ class WebSocketStreamUser(User):
                             },
                             name="/ws/stream_features [pong]",
                         )
-                except Exception:
-                    # Timeout or error, continue
+                except (OSError, TimeoutError, Exception):
+                    # Timeout or connection error, continue
                     pass
 
             # Calculate metrics
@@ -422,8 +423,8 @@ class WebSocketSimulationUser(User):
                             name="/ws/simulation_live [pong]",
                         )
 
-                except Exception:
-                    # Timeout or error
+                except (OSError, TimeoutError, Exception):
+                    # Timeout or connection error
                     break
 
             # Log metrics
@@ -514,12 +515,12 @@ class WebSocketMixedUser(User):
                     ws_client.receive_json(
                         "/ws/stream_features [quick update]", timeout=1.0
                     )
-                except:
+                except (OSError, TimeoutError):
                     pass
 
             ws_client.close()
 
-        except Exception:
+        except (OSError, Exception):
             ws_client.close()
 
     @task(1)
@@ -575,10 +576,10 @@ class WebSocketMixedUser(User):
                     )
                     if response.get("type") == "simulation_complete":
                         break
-                except:
+                except (OSError, TimeoutError):
                     break
 
             ws_client.close()
 
-        except Exception:
+        except (OSError, Exception):
             ws_client.close()

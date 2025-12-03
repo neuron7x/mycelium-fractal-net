@@ -135,9 +135,10 @@ class TestWebSocketStreamFeatures:
             assert response["type"] == WSMessageType.SUBSCRIBE_SUCCESS.value
             assert response["stream_id"] == stream_id
 
-            # Step 4: Receive a couple of feature updates then unsubscribe
+            # Step 4: Receive feature updates then unsubscribe
+            # Try to receive at least one update by checking up to 5 messages
             feature_updates_received = 0
-            for _ in range(5):  # Try to receive up to 5 messages
+            for _ in range(5):
                 response = websocket.receive_json()
                 if response["type"] == WSMessageType.FEATURE_UPDATE.value:
                     feature_updates_received += 1
@@ -150,9 +151,8 @@ class TestWebSocketStreamFeatures:
                     assert "pot_mean_mV" in features
                     assert "fractal_dimension" in features
                     
-                    # Received at least one update, unsubscribe now
-                    if feature_updates_received >= 1:
-                        break
+                    # Received one update, that's enough - unsubscribe now
+                    break
 
             assert feature_updates_received > 0, "Should receive at least one feature update"
 

@@ -20,6 +20,7 @@ import json
 import time
 import uuid
 from collections import deque
+from enum import Enum
 from typing import Any, Dict, Optional, Set
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -42,7 +43,7 @@ from .ws_schemas import (
 logger = get_logger("ws_manager")
 
 
-class BackpressureStrategy:
+class BackpressureStrategy(str, Enum):
     """Backpressure handling strategies."""
 
     DROP_OLDEST = "drop_oldest"
