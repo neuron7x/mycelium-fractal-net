@@ -22,7 +22,7 @@ from mycelium_fractal_net import (
     run_validation,
     simulate_mycelium_field,
 )
-from mycelium_fractal_net.config import ValidationConfig
+from mycelium_fractal_net.model import ValidationConfig
 from mycelium_fractal_net.integration import ServiceContext, get_logger
 
 from . import mfn_pb2, mfn_pb2_grpc
