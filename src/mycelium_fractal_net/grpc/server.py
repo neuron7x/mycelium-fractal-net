@@ -131,9 +131,9 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
                     seed=request.seed,
                     grid_size=request.grid_size,
                     steps=min(step + request.stream_interval, request.steps),
-                    alpha=0.18,
-                    spike_probability=0.25,
-                    turing_enabled=True,
+                    alpha=request.alpha if request.alpha > 0 else 0.18,
+                    spike_probability=request.spike_probability if request.spike_probability > 0 else 0.25,
+                    turing_enabled=request.turing_enabled,
                 )
                 
                 simulation_result = run_mycelium_simulation(config)
@@ -249,9 +249,9 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
                     seed=request.seed,
                     grid_size=request.grid_size,
                     steps=min(step + request.stream_interval, request.steps),
-                    alpha=0.18,
-                    spike_probability=0.25,
-                    turing_enabled=True,
+                    alpha=request.alpha if request.alpha > 0 else 0.18,
+                    spike_probability=request.spike_probability if request.spike_probability > 0 else 0.25,
+                    turing_enabled=request.turing_enabled,
                 )
                 
                 simulation_result = run_mycelium_simulation(config)

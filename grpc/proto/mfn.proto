@@ -54,6 +54,9 @@ message FeatureStreamRequest {
   int32 grid_size = 3;
   int32 steps = 4;
   int32 stream_interval = 5;  // frames between updates
+  double alpha = 6;
+  double spike_probability = 7;
+  bool turing_enabled = 8;
 }
 
 message FeatureFrame {
@@ -104,6 +107,9 @@ message SimulationStreamRequest {
   int32 grid_size = 3;
   int32 steps = 4;
   int32 stream_interval = 5;  // frames between updates
+  double alpha = 6;
+  double spike_probability = 7;
+  bool turing_enabled = 8;
 }
 
 message SimulationFrame {

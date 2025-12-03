@@ -265,6 +265,9 @@ class MFNClient:
         grid_size: int = 64,
         steps: int = 64,
         stream_interval: int = 10,
+        alpha: float = 0.18,
+        spike_probability: float = 0.25,
+        turing_enabled: bool = True,
         request_id: Optional[str] = None,
     ) -> AsyncIterator[mfn_pb2.FeatureFrame]:
         """
@@ -275,6 +278,9 @@ class MFNClient:
             grid_size: Grid size
             steps: Total simulation steps
             stream_interval: Frames between updates
+            alpha: Diffusion coefficient
+            spike_probability: Growth probability
+            turing_enabled: Enable Turing patterns
             request_id: Custom request ID (auto-generated if None)
             
         Yields:
@@ -292,6 +298,9 @@ class MFNClient:
             grid_size=grid_size,
             steps=steps,
             stream_interval=stream_interval,
+            alpha=alpha,
+            spike_probability=spike_probability,
+            turing_enabled=turing_enabled,
         )
         
         metadata = self._create_metadata("/mfn.MFNFeaturesService/StreamFeatures")
@@ -361,6 +370,9 @@ class MFNClient:
         grid_size: int = 64,
         steps: int = 64,
         stream_interval: int = 10,
+        alpha: float = 0.18,
+        spike_probability: float = 0.25,
+        turing_enabled: bool = True,
         request_id: Optional[str] = None,
     ) -> AsyncIterator[mfn_pb2.SimulationFrame]:
         """
@@ -371,6 +383,9 @@ class MFNClient:
             grid_size: Grid size
             steps: Total simulation steps
             stream_interval: Frames between updates
+            alpha: Diffusion coefficient
+            spike_probability: Growth probability
+            turing_enabled: Enable Turing patterns
             request_id: Custom request ID (auto-generated if None)
             
         Yields:
@@ -388,6 +403,9 @@ class MFNClient:
             grid_size=grid_size,
             steps=steps,
             stream_interval=stream_interval,
+            alpha=alpha,
+            spike_probability=spike_probability,
+            turing_enabled=turing_enabled,
         )
         
         metadata = self._create_metadata("/mfn.MFNSimulationService/StreamSimulation")
