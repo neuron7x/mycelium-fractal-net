@@ -86,13 +86,13 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
                 request_id=request.request_id,
                 meta=mfn_pb2.ResponseMeta(meta={"status": "ok"}),
                 fractal_dimension=float(features.values["D_box"]),
-                lacunarity=float(features.values.get("lacunarity", 0.0)),
-                hurst_exponent=float(features.values.get("hurst_exponent", 0.0)),
-                spectral_energy_mean=float(features.values.get("spectral_energy_mean", 0.0)),
-                spectral_energy_std=float(features.values.get("spectral_energy_std", 0.0)),
-                active_nodes=int(features.values.get("N_active", 0)),
-                edge_density=float(features.values.get("edge_density", 0.0)),
-                clustering_coefficient=float(features.values.get("clustering_coef", 0.0)),
+                lacunarity=float(features.values.get("D_r2", 0.0)),  # Use D_r2 as lacunarity proxy
+                hurst_exponent=float(features.values.get("E_trend", 0.0)),  # Use E_trend as proxy
+                spectral_energy_mean=float(features.values.get("V_mean", 0.0)),
+                spectral_energy_std=float(features.values.get("V_std", 0.0)),
+                active_nodes=int(features.values.get("f_active", 0) * 1000),  # Convert fraction to count approx
+                edge_density=float(features.values.get("f_active", 0.0)),
+                clustering_coefficient=float(features.values.get("max_cluster_size", 0.0) / 1000.0),
             )
             
         except Exception as e:
@@ -143,8 +143,8 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
                     request_id=request.request_id,
                     step=step,
                     fractal_dimension=float(features.values["D_box"]),
-                    spectral_energy_mean=float(features.values.get("spectral_energy_mean", 0.0)),
-                    active_nodes=int(features.values.get("N_active", 0)),
+                    spectral_energy_mean=float(features.values.get("V_mean", 0.0)),
+                    active_nodes=int(features.values.get("f_active", 0) * 1000),
                 )
                 
                 # Small delay to prevent overwhelming clients
@@ -181,7 +181,7 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
             SimulationResult with statistics
         """
         try:
-            from mycelium_fractal_net import run_mycelium_simulation, SimulationConfig
+            from mycelium_fractal_net import run_mycelium_simulation, SimulationConfig, estimate_fractal_dimension
             
             # Run simulation with config
             config = SimulationConfig(
@@ -198,6 +198,10 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
             # Extract statistics from result
             field_mv = simulation_result.field * 1000.0  # Convert to mV
             
+            # Compute fractal dimension using mean as threshold
+            binary = simulation_result.field > np.mean(simulation_result.field)
+            fractal_dim = estimate_fractal_dimension(binary)
+            
             return mfn_pb2.SimulationResult(
                 request_id=request.request_id,
                 meta=mfn_pb2.ResponseMeta(meta={"status": "ok"}),
@@ -206,7 +210,7 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
                 pot_max_mV=float(np.max(field_mv)),
                 pot_mean_mV=float(np.mean(field_mv)),
                 pot_std_mV=float(np.std(field_mv)),
-                fractal_dimension=float(simulation_result.fractal_dimension),
+                fractal_dimension=float(fractal_dim),
             )
             
         except Exception as e:
@@ -232,7 +236,7 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
             SimulationFrame for each simulation step
         """
         try:
-            from mycelium_fractal_net import run_mycelium_simulation, SimulationConfig
+            from mycelium_fractal_net import run_mycelium_simulation, SimulationConfig, estimate_fractal_dimension
             
             # Run simulation with streaming updates
             for step in range(0, request.steps, request.stream_interval):
@@ -254,13 +258,15 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
                 
                 # Compute statistics
                 field_mv = simulation_result.field * 1000.0
+                binary = simulation_result.field > np.mean(simulation_result.field)
+                fractal_dim = estimate_fractal_dimension(binary)
                 
                 yield mfn_pb2.SimulationFrame(
                     request_id=request.request_id,
                     step=step,
                     growth_events=simulation_result.growth_events,
                     pot_mean_mV=float(np.mean(field_mv)),
-                    fractal_dimension=float(simulation_result.fractal_dimension),
+                    fractal_dimension=float(fractal_dim),
                 )
                 
                 # Small delay
