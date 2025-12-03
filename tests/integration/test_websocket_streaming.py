@@ -14,7 +14,6 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-STREAMING
 
 from __future__ import annotations
 
-import asyncio
 import os
 import time
 from unittest import mock
@@ -459,7 +458,7 @@ class TestWebSocketConnectionManager:
 
     async def test_backpressure_strategies(self):
         """Test different backpressure strategies."""
-        from mycelium_fractal_net.integration import WSConnectionManager, BackpressureStrategy
+        from mycelium_fractal_net.integration import BackpressureStrategy, WSConnectionManager
 
         # Test drop_oldest
         manager_drop_oldest = WSConnectionManager(

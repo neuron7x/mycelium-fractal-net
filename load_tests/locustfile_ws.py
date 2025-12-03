@@ -313,7 +313,7 @@ class WebSocketStreamUser(User):
             )
             self.ws_client.close()
 
-        except Exception as e:
+        except Exception:
             # Log error and cleanup
             if self.ws_client:
                 self.ws_client.close()
@@ -448,7 +448,7 @@ class WebSocketSimulationUser(User):
             # Close
             self.ws_client.close()
 
-        except Exception as e:
+        except Exception:
             if self.ws_client:
                 self.ws_client.close()
             raise

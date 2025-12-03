@@ -14,9 +14,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-STREAMING
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import hmac
-import json
 import time
 import uuid
 from collections import deque
@@ -26,18 +24,10 @@ from typing import Any, Dict, Optional, Set
 from fastapi import WebSocket, WebSocketDisconnect
 
 from .api_config import get_api_config
-from .auth import API_KEY_HEADER
 from .logging_config import get_logger
 from .ws_schemas import (
-    WSAuthRequest,
-    WSErrorMessage,
-    WSHeartbeatRequest,
-    WSInitRequest,
-    WSMessage,
     WSMessageType,
     WSStreamType,
-    WSSubscribeRequest,
-    WSUnsubscribeRequest,
 )
 
 logger = get_logger("ws_manager")
@@ -227,7 +217,7 @@ class WSConnectionManager:
         time_diff = abs(current_time - timestamp)
         if time_diff > 5 * 60 * 1000:  # 5 minutes
             logger.warning(
-                f"Authentication failed: timestamp out of range",
+                "Authentication failed: timestamp out of range",
                 extra={
                     "connection_id": connection_id,
                     "time_diff_ms": time_diff,
@@ -239,7 +229,7 @@ class WSConnectionManager:
         api_config = get_api_config()
         if api_config.auth.api_key_required and not self._validate_api_key(api_key):
             logger.warning(
-                f"Authentication failed: invalid API key",
+                "Authentication failed: invalid API key",
                 extra={"connection_id": connection_id},
             )
             return False
@@ -298,7 +288,7 @@ class WSConnectionManager:
 
         if not connection.authenticated:
             logger.warning(
-                f"Subscription failed: not authenticated",
+                "Subscription failed: not authenticated",
                 extra={"connection_id": connection_id, "stream_id": stream_id},
             )
             return False
@@ -312,7 +302,7 @@ class WSConnectionManager:
         self.stream_subscriptions[stream_id].add(connection_id)
 
         logger.info(
-            f"Stream subscription created",
+            "Stream subscription created",
             extra={
                 "connection_id": connection_id,
                 "stream_id": stream_id,
@@ -407,10 +397,10 @@ class WSConnectionManager:
         """Handle backpressure when queue is full."""
         if self.backpressure_strategy == BackpressureStrategy.DROP_OLDEST:
             # Remove oldest message
-            dropped = connection.message_queue.popleft()
+            connection.message_queue.popleft()
             connection.message_queue.append(message)
             logger.debug(
-                f"Backpressure: dropped oldest message",
+                "Backpressure: dropped oldest message",
                 extra={
                     "connection_id": connection.connection_id,
                     "queue_size": len(connection.message_queue),
@@ -419,7 +409,7 @@ class WSConnectionManager:
         elif self.backpressure_strategy == BackpressureStrategy.DROP_NEWEST:
             # Don't add new message
             logger.debug(
-                f"Backpressure: dropped newest message",
+                "Backpressure: dropped newest message",
                 extra={
                     "connection_id": connection.connection_id,
                     "queue_size": len(connection.message_queue),
@@ -432,7 +422,7 @@ class WSConnectionManager:
             connection.message_queue.extend(compressed)
             connection.message_queue.append(message)
             logger.debug(
-                f"Backpressure: compressed queue",
+                "Backpressure: compressed queue",
                 extra={
                     "connection_id": connection.connection_id,
                     "queue_size": len(connection.message_queue),
@@ -560,7 +550,7 @@ class WSConnectionManager:
 
                     if not connection.is_alive(self.heartbeat_timeout):
                         logger.warning(
-                            f"Connection timeout, disconnecting",
+                            "Connection timeout, disconnecting",
                             extra={
                                 "connection_id": connection_id,
                                 "last_heartbeat": connection.last_heartbeat,
