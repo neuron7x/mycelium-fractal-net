@@ -97,6 +97,7 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
                 grpc.StatusCode.INTERNAL,
                 f"Feature extraction failed: {str(e)}",
             )
+            raise  # For mypy: abort() never returns
     
     async def StreamFeatures(
         self,
@@ -171,6 +172,7 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
                 grpc.StatusCode.INTERNAL,
                 f"Feature streaming failed: {str(e)}",
             )
+            raise  # For mypy: abort() never returns
 
 
 class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
@@ -238,6 +240,7 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
                 grpc.StatusCode.INTERNAL,
                 f"Simulation failed: {str(e)}",
             )
+            raise  # For mypy: abort() never returns
     
     async def StreamSimulation(
         self,
@@ -310,6 +313,7 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
                 grpc.StatusCode.INTERNAL,
                 f"Simulation streaming failed: {str(e)}",
             )
+            raise  # For mypy: abort() never returns
 
 
 class MFNValidationServiceServicer(mfn_pb2_grpc.MFNValidationServiceServicer):
@@ -376,6 +380,7 @@ class MFNValidationServiceServicer(mfn_pb2_grpc.MFNValidationServiceServicer):
                 grpc.StatusCode.INTERNAL,
                 f"Validation failed: {str(e)}",
             )
+            raise  # For mypy: abort() never returns
 
 
 async def serve(

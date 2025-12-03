@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy
+          pip install ruff mypy grpcio-stubs
           pip install -e ".[dev]"
       - name: Verify critical dependencies
         run: |
