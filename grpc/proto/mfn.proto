@@ -1,0 +1,171 @@
+syntax = "proto3";
+
+package mfn;
+
+// ============================================================================
+// Common Types
+// ============================================================================
+
+// Metadata for all responses
+message ResponseMeta {
+  map<string, string> meta = 1;
+}
+
+// ============================================================================
+// Features Service
+// ============================================================================
+
+// Request for extracting features from simulation data
+message FeatureRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 grid_size = 3;
+  int32 steps = 4;
+  double alpha = 5;
+  double spike_probability = 6;
+  bool turing_enabled = 7;
+}
+
+// Response containing extracted features
+message FeatureResponse {
+  string request_id = 1;
+  ResponseMeta meta = 2;
+  double fractal_dimension = 3;
+  double pot_min_mV = 4;
+  double pot_max_mV = 5;
+  double pot_mean_mV = 6;
+  double pot_std_mV = 7;
+  int32 growth_events = 8;
+}
+
+// Request for streaming features
+message FeatureStreamRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 grid_size = 3;
+  int32 total_steps = 4;
+  int32 steps_per_frame = 5;
+  double alpha = 6;
+  double spike_probability = 7;
+  bool turing_enabled = 8;
+}
+
+// Single frame of streaming features
+message FeatureFrame {
+  string request_id = 1;
+  int32 step = 2;
+  double fractal_dimension = 3;
+  double pot_min_mV = 4;
+  double pot_max_mV = 5;
+  double pot_mean_mV = 6;
+  double pot_std_mV = 7;
+  int32 growth_events = 8;
+  bool is_final = 9;
+}
+
+// Features service definition
+service MFNFeaturesService {
+  // Extract features from a single simulation
+  rpc ExtractFeatures(FeatureRequest) returns (FeatureResponse);
+  
+  // Stream features during simulation
+  rpc StreamFeatures(FeatureStreamRequest) returns (stream FeatureFrame);
+}
+
+// ============================================================================
+// Simulation Service
+// ============================================================================
+
+// Request for running simulation
+message SimulationRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 grid_size = 3;
+  int32 steps = 4;
+  double alpha = 5;
+  double spike_probability = 6;
+  bool turing_enabled = 7;
+}
+
+// Result of simulation
+message SimulationResult {
+  string request_id = 1;
+  ResponseMeta meta = 2;
+  int32 growth_events = 3;
+  double pot_min_mV = 4;
+  double pot_max_mV = 5;
+  double pot_mean_mV = 6;
+  double pot_std_mV = 7;
+  double fractal_dimension = 8;
+}
+
+// Request for streaming simulation
+message SimulationStreamRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 grid_size = 3;
+  int32 total_steps = 4;
+  int32 steps_per_frame = 5;
+  double alpha = 6;
+  double spike_probability = 7;
+  bool turing_enabled = 8;
+}
+
+// Single frame of simulation state
+message SimulationFrame {
+  string request_id = 1;
+  int32 step = 2;
+  int32 growth_events = 3;
+  double pot_min_mV = 4;
+  double pot_max_mV = 5;
+  double pot_mean_mV = 6;
+  double pot_std_mV = 7;
+  bool is_final = 8;
+}
+
+// Simulation service definition
+service MFNSimulationService {
+  // Run a complete simulation
+  rpc RunSimulation(SimulationRequest) returns (SimulationResult);
+  
+  // Stream simulation state updates
+  rpc StreamSimulation(SimulationStreamRequest) returns (stream SimulationFrame);
+}
+
+// ============================================================================
+// Validation Service
+// ============================================================================
+
+// Request for pattern validation
+message ValidationRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 epochs = 3;
+  int32 batch_size = 4;
+  int32 grid_size = 5;
+  int32 steps = 6;
+  bool turing_enabled = 7;
+  bool quantum_jitter = 8;
+}
+
+// Result of validation
+message ValidationResult {
+  string request_id = 1;
+  ResponseMeta meta = 2;
+  double loss_start = 3;
+  double loss_final = 4;
+  double loss_drop = 5;
+  double pot_min_mV = 6;
+  double pot_max_mV = 7;
+  double example_fractal_dim = 8;
+  double lyapunov_exponent = 9;
+  double growth_events = 10;
+  double nernst_symbolic_mV = 11;
+  double nernst_numeric_mV = 12;
+}
+
+// Validation service definition
+service MFNValidationService {
+  // Validate a pattern using training cycle
+  rpc ValidatePattern(ValidationRequest) returns (ValidationResult);
+}
