@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import grpc
 import pytest
 
+import grpc
 from mycelium_fractal_net.grpc import mfn_pb2
 from mycelium_fractal_net.grpc.client import MFNClient
 

@@ -13,17 +13,17 @@ import asyncio
 import signal
 from typing import AsyncIterator, Optional
 
-import grpc
 import numpy as np
-from grpc import aio
 
+import grpc
+from grpc import aio
 from mycelium_fractal_net import (
     estimate_fractal_dimension,
     run_validation,
     simulate_mycelium_field,
 )
+from mycelium_fractal_net.integration import get_logger
 from mycelium_fractal_net.model import ValidationConfig
-from mycelium_fractal_net.integration import ServiceContext, get_logger
 
 from . import mfn_pb2, mfn_pb2_grpc
 from .config import GRPCConfig, get_grpc_config

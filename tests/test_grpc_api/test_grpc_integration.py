@@ -7,8 +7,6 @@ Tests end-to-end functionality with real server and client.
 from __future__ import annotations
 
 import asyncio
-import os
-from unittest.mock import patch
 
 import pytest
 import pytest_asyncio

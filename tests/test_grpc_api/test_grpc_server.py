@@ -6,13 +6,11 @@ Tests individual gRPC service methods without full server setup.
 
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-import grpc
-import numpy as np
 import pytest
 
+import grpc
 from mycelium_fractal_net.grpc import mfn_pb2
 from mycelium_fractal_net.grpc.server import (
     MFNFeaturesServiceServicer,

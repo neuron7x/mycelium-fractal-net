@@ -14,11 +14,11 @@ import hashlib
 import hmac
 import time
 from collections import defaultdict
-from typing import Any, Awaitable, Callable, Dict, Optional
+from typing import Awaitable, Callable, Dict
 
-import grpc
 from grpc.aio import ServerInterceptor
 
+import grpc
 from mycelium_fractal_net.integration import get_api_config, get_logger
 
 logger = get_logger("grpc.interceptors")

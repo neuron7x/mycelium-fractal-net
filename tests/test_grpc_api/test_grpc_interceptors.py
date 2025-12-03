@@ -6,13 +6,12 @@ Tests authentication, audit, and rate limiting interceptors.
 
 from __future__ import annotations
 
-import asyncio
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import grpc
 import pytest
 
+import grpc
 from mycelium_fractal_net.grpc.interceptors import (
     AuditInterceptor,
     AuthInterceptor,
@@ -253,13 +252,13 @@ class TestRateLimitInterceptor:
         interceptor = RateLimitInterceptor(rps_limit=2, concurrent_limit=1)
         
         # First request should succeed
-        handler1 = await interceptor.intercept_service(
+        await interceptor.intercept_service(
             mock_continuation,
             mock_handler_call_details,
         )
         
         # Second request should succeed
-        handler2 = await interceptor.intercept_service(
+        await interceptor.intercept_service(
             mock_continuation,
             mock_handler_call_details,
         )
@@ -281,7 +280,9 @@ class TestRateLimitInterceptor:
         assert call_args[0][0] == grpc.StatusCode.RESOURCE_EXHAUSTED
     
     @pytest.mark.asyncio
-    async def test_rate_limit_concurrent_release(self, mock_handler_call_details, mock_continuation):
+    async def test_rate_limit_concurrent_release(
+        self, mock_handler_call_details, mock_continuation
+    ):
         """Test concurrent slot is released after request."""
         mock_handler_call_details.invocation_metadata = [
             ("x-api-key", "test-key"),
