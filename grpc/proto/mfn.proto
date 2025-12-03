@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+package mfn;
+
+// =============================================================================
+// Common Types
+// =============================================================================
+
+// Metadata for responses
+message ResponseMeta {
+  map<string, string> meta = 1;
+}
+
+// =============================================================================
+// Feature Extraction Service
+// =============================================================================
+
+service MFNFeaturesService {
+  // Extract features from a simulation
+  rpc ExtractFeatures(FeatureRequest) returns (FeatureResponse);
+  
+  // Stream features in real-time
+  rpc StreamFeatures(FeatureStreamRequest) returns (stream FeatureFrame);
+}
+
+message FeatureRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 grid_size = 3;
+  int32 steps = 4;
+  double alpha = 5;
+  double spike_probability = 6;
+  bool turing_enabled = 7;
+}
+
+message FeatureResponse {
+  string request_id = 1;
+  ResponseMeta meta = 2;
+  
+  // Feature vector
+  double fractal_dimension = 3;
+  double lacunarity = 4;
+  double hurst_exponent = 5;
+  double spectral_energy_mean = 6;
+  double spectral_energy_std = 7;
+  int32 active_nodes = 8;
+  double edge_density = 9;
+  double clustering_coefficient = 10;
+}
+
+message FeatureStreamRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 grid_size = 3;
+  int32 steps = 4;
+  int32 stream_interval = 5;  // frames between updates
+}
+
+message FeatureFrame {
+  string request_id = 1;
+  int32 step = 2;
+  double fractal_dimension = 3;
+  double spectral_energy_mean = 4;
+  int32 active_nodes = 5;
+}
+
+// =============================================================================
+// Simulation Service
+// =============================================================================
+
+service MFNSimulationService {
+  // Run a single simulation
+  rpc RunSimulation(SimulationRequest) returns (SimulationResult);
+  
+  // Stream simulation state in real-time
+  rpc StreamSimulation(SimulationStreamRequest) returns (stream SimulationFrame);
+}
+
+message SimulationRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 grid_size = 3;
+  int32 steps = 4;
+  double alpha = 5;
+  double spike_probability = 6;
+  bool turing_enabled = 7;
+}
+
+message SimulationResult {
+  string request_id = 1;
+  ResponseMeta meta = 2;
+  
+  int32 growth_events = 3;
+  double pot_min_mV = 4;
+  double pot_max_mV = 5;
+  double pot_mean_mV = 6;
+  double pot_std_mV = 7;
+  double fractal_dimension = 8;
+}
+
+message SimulationStreamRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 grid_size = 3;
+  int32 steps = 4;
+  int32 stream_interval = 5;  // frames between updates
+}
+
+message SimulationFrame {
+  string request_id = 1;
+  int32 step = 2;
+  int32 growth_events = 3;
+  double pot_mean_mV = 4;
+  double fractal_dimension = 5;
+}
+
+// =============================================================================
+// Validation Service
+// =============================================================================
+
+service MFNValidationService {
+  // Validate a pattern/configuration
+  rpc ValidatePattern(ValidationRequest) returns (ValidationResult);
+}
+
+message ValidationRequest {
+  string request_id = 1;
+  int32 seed = 2;
+  int32 epochs = 3;
+  int32 batch_size = 4;
+  int32 grid_size = 5;
+  int32 steps = 6;
+  bool turing_enabled = 7;
+  bool quantum_jitter = 8;
+}
+
+message ValidationResult {
+  string request_id = 1;
+  ResponseMeta meta = 2;
+  
+  double loss_start = 3;
+  double loss_final = 4;
+  double loss_drop = 5;
+  double pot_min_mV = 6;
+  double pot_max_mV = 7;
+  double example_fractal_dim = 8;
+  double lyapunov_exponent = 9;
+  double growth_events = 10;
+  double nernst_symbolic_mV = 11;
+  double nernst_numeric_mV = 12;
+}
