@@ -76,7 +76,8 @@ class ServiceContext:
         if self._rng is None and self.seed is not None:
             self._rng = np.random.default_rng(self.seed)
 
-    def get_rng(self) -> np.random.Generator:
+    @property
+    def rng(self) -> np.random.Generator:
         """
         Get the random number generator for this context.
 
@@ -90,6 +91,22 @@ class ServiceContext:
         if self._rng is None:
             return np.random.default_rng()
         return self._rng
+
+    def get_rng(self) -> np.random.Generator:
+        """
+        Get the random number generator for this context.
+
+        Returns:
+            np.random.Generator: Seeded or unseeded RNG.
+
+        Note:
+            If seed is None, returns a new unseeded generator each time.
+            If seed is set, returns the same generator instance for reproducibility.
+            
+        Deprecated:
+            Use the `rng` property instead.
+        """
+        return self.rng
 
     def reset_rng(self) -> None:
         """

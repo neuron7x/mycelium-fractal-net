@@ -9,6 +9,7 @@ Production Features:
     - Rate limiting (configurable per endpoint)
     - Prometheus metrics endpoint (/metrics)
     - Structured JSON logging with request IDs
+    - WebSocket streaming for real-time simulation data
 
 Usage:
     uvicorn api:app --host 0.0.0.0 --port 8000
@@ -20,6 +21,8 @@ Endpoints:
     POST /simulate        - Simulate mycelium field
     POST /nernst          - Compute Nernst potential
     POST /federated/aggregate - Aggregate gradients (Krum)
+    WS   /ws/stream_features - Real-time fractal features streaming
+    WS   /ws/simulation_live - Live simulation state updates
 
 Environment Variables:
     MFN_ENV              - Environment name: dev, staging, prod (default: dev)
@@ -33,15 +36,17 @@ Environment Variables:
     MFN_LOG_FORMAT       - Log format: json or text (default: text in dev)
     MFN_METRICS_ENABLED  - Enable Prometheus metrics (default: true)
 
-Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-OBS-001, MFN-LOG-001
+Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-OBS-001, MFN-LOG-001, MFN-API-STREAMING
 """
 
 from __future__ import annotations
 
+import asyncio
 import os
+import time
 from typing import List
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import schemas and adapters from integration layer
@@ -49,6 +54,7 @@ from mycelium_fractal_net.integration import (
     API_KEY_HEADER,
     REQUEST_ID_HEADER,
     APIKeyMiddleware,
+    BackpressureStrategy,
     CryptoAPIError,
     DecryptRequest,
     DecryptResponse,
@@ -71,10 +77,18 @@ from mycelium_fractal_net.integration import (
     SignResponse,
     SimulateRequest,
     SimulateResponse,
+    SimulationLiveParams,
+    StreamFeaturesParams,
     ValidateRequest,
     ValidateResponse,
     VerifyRequest,
     VerifyResponse,
+    WSAuthRequest,
+    WSConnectionManager,
+    WSInitRequest,
+    WSMessageType,
+    WSSubscribeRequest,
+    WSUnsubscribeRequest,
     aggregate_gradients_adapter,
     compute_nernst_adapter,
     decrypt_data_adapter,
@@ -88,6 +102,8 @@ from mycelium_fractal_net.integration import (
     run_validation_adapter,
     setup_logging,
     sign_message_adapter,
+    stream_features_adapter,
+    stream_simulation_live_adapter,
     verify_signature_adapter,
 )
 
@@ -161,6 +177,28 @@ app.add_middleware(RateLimitMiddleware)
 
 # 5. Authentication (innermost - first check)
 app.add_middleware(APIKeyMiddleware)
+
+# Initialize WebSocket connection manager
+ws_manager = WSConnectionManager(
+    backpressure_strategy=BackpressureStrategy.DROP_OLDEST,
+    max_queue_size=1000,
+    heartbeat_interval=30.0,
+    heartbeat_timeout=60.0,
+)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background tasks on application startup."""
+    await ws_manager.start_heartbeat_monitor()
+    logger.info("Application started, heartbeat monitor running")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up resources on application shutdown."""
+    await ws_manager.stop_heartbeat_monitor()
+    logger.info("Application shutdown, heartbeat monitor stopped")
 
 
 # Backward compatibility aliases for external consumers
@@ -369,6 +407,468 @@ async def keypair(request: KeypairRequest) -> KeypairResponse:
     except Exception as e:
         logger.error(f"Key generation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Key generation failed")
+
+
+# =============================================================================
+# WebSocket Streaming Endpoints (MFN-API-STREAMING)
+# Reference: docs/MFN_BACKLOG.md#MFN-API-STREAMING
+# =============================================================================
+
+
+@app.websocket("/ws/stream_features")
+async def stream_features(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time fractal features streaming.
+
+    Protocol:
+        1. Client sends: init message
+        2. Client sends: auth message (API key + timestamp)
+        3. Server sends: auth_success or auth_failed
+        4. Client sends: subscribe message with stream parameters
+        5. Server sends: subscribe_success or subscribe_failed
+        6. Server streams: feature_update messages
+        7. Server/Client exchanges: heartbeat/pong messages
+        8. Client sends: close message (optional)
+
+    Backpressure: drop_oldest strategy applied when queue is full.
+    """
+    connection_id = await ws_manager.connect(websocket)
+
+    try:
+        # Connection lifecycle
+        authenticated = False
+        stream_id = None
+        stream_task = None
+
+        while True:
+            # Receive message from client
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+
+            # Handle init
+            if msg_type == WSMessageType.INIT.value:
+                try:
+                    init_req = WSInitRequest(**data.get("payload", {}))
+                    ws_manager.connections[connection_id].client_info = init_req.client_info
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.INIT.value,
+                            "timestamp": time.time() * 1000,
+                            "payload": {"protocol_version": "1.0"},
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Init failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.ERROR.value,
+                            "payload": {
+                                "error_code": "INIT_FAILED",
+                                "message": str(e),
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+
+            # Handle authentication
+            elif msg_type == WSMessageType.AUTH.value:
+                try:
+                    auth_req = WSAuthRequest(**data.get("payload", {}))
+                    authenticated = ws_manager.authenticate(
+                        connection_id, auth_req.api_key, auth_req.timestamp
+                    )
+                    if authenticated:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.AUTH_SUCCESS.value,
+                                "timestamp": time.time() * 1000,
+                            }
+                        )
+                    else:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.AUTH_FAILED.value,
+                                "timestamp": time.time() * 1000,
+                                "payload": {
+                                    "error_code": "AUTH_FAILED",
+                                    "message": "Invalid API key or timestamp",
+                                },
+                            }
+                        )
+                except Exception as e:
+                    logger.error(f"Auth failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.AUTH_FAILED.value,
+                            "payload": {
+                                "error_code": "AUTH_ERROR",
+                                "message": str(e),
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+
+            # Handle subscription
+            elif msg_type == WSMessageType.SUBSCRIBE.value:
+                if not authenticated:
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.SUBSCRIBE_FAILED.value,
+                            "payload": {
+                                "error_code": "NOT_AUTHENTICATED",
+                                "message": "Must authenticate before subscribing",
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+                    continue
+
+                try:
+                    sub_req = WSSubscribeRequest(**data.get("payload", {}))
+                    stream_id = sub_req.stream_id
+                    params = StreamFeaturesParams(**(sub_req.params or {}))
+
+                    # Subscribe
+                    success = await ws_manager.subscribe(
+                        connection_id, stream_id, sub_req.stream_type, sub_req.params
+                    )
+
+                    if success:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.SUBSCRIBE_SUCCESS.value,
+                                "stream_id": stream_id,
+                                "timestamp": time.time() * 1000,
+                            }
+                        )
+
+                        # Start streaming task
+                        ctx = ServiceContext(mode=ExecutionMode.API)
+                        stream_task = asyncio.create_task(
+                            _stream_features_task(
+                                connection_id, stream_id, params, ctx, ws_manager
+                            )
+                        )
+                    else:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.SUBSCRIBE_FAILED.value,
+                                "payload": {
+                                    "error_code": "SUBSCRIBE_FAILED",
+                                    "message": "Failed to subscribe",
+                                    "timestamp": time.time() * 1000,
+                                },
+                            }
+                        )
+
+                except Exception as e:
+                    logger.error(f"Subscribe failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.SUBSCRIBE_FAILED.value,
+                            "payload": {
+                                "error_code": "SUBSCRIBE_ERROR",
+                                "message": str(e),
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+
+            # Handle unsubscribe
+            elif msg_type == WSMessageType.UNSUBSCRIBE.value:
+                try:
+                    unsub_req = WSUnsubscribeRequest(**data.get("payload", {}))
+                    await ws_manager.unsubscribe(connection_id, unsub_req.stream_id)
+                    if stream_task:
+                        stream_task.cancel()
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.UNSUBSCRIBE.value,
+                            "stream_id": unsub_req.stream_id,
+                            "timestamp": time.time() * 1000,
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Unsubscribe failed: {e}", exc_info=True)
+
+            # Handle pong (heartbeat response)
+            elif msg_type == WSMessageType.PONG.value:
+                await ws_manager.handle_pong(connection_id)
+
+            # Handle close
+            elif msg_type == WSMessageType.CLOSE.value:
+                break
+
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected: {connection_id}")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}", exc_info=True)
+    finally:
+        if stream_task:
+            stream_task.cancel()
+        await ws_manager.disconnect(connection_id)
+
+
+@app.websocket("/ws/simulation_live")
+async def simulation_live(websocket: WebSocket):
+    """
+    WebSocket endpoint for live simulation state updates.
+
+    Protocol:
+        1. Client sends: init message
+        2. Client sends: auth message (API key + timestamp)
+        3. Server sends: auth_success or auth_failed
+        4. Client sends: subscribe message with simulation parameters
+        5. Server sends: subscribe_success or subscribe_failed
+        6. Server streams: simulation_state messages
+        7. Server sends: simulation_complete message
+        8. Server/Client exchanges: heartbeat/pong messages
+
+    Backpressure: drop_oldest strategy applied when queue is full.
+    """
+    connection_id = await ws_manager.connect(websocket)
+
+    try:
+        authenticated = False
+        stream_id = None
+        stream_task = None
+
+        while True:
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+
+            # Handle init
+            if msg_type == WSMessageType.INIT.value:
+                try:
+                    init_req = WSInitRequest(**data.get("payload", {}))
+                    ws_manager.connections[connection_id].client_info = init_req.client_info
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.INIT.value,
+                            "timestamp": time.time() * 1000,
+                            "payload": {"protocol_version": "1.0"},
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Init failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.ERROR.value,
+                            "payload": {
+                                "error_code": "INIT_FAILED",
+                                "message": str(e),
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+
+            # Handle authentication
+            elif msg_type == WSMessageType.AUTH.value:
+                try:
+                    auth_req = WSAuthRequest(**data.get("payload", {}))
+                    authenticated = ws_manager.authenticate(
+                        connection_id, auth_req.api_key, auth_req.timestamp
+                    )
+                    if authenticated:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.AUTH_SUCCESS.value,
+                                "timestamp": time.time() * 1000,
+                            }
+                        )
+                    else:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.AUTH_FAILED.value,
+                                "timestamp": time.time() * 1000,
+                                "payload": {
+                                    "error_code": "AUTH_FAILED",
+                                    "message": "Invalid API key or timestamp",
+                                },
+                            }
+                        )
+                except Exception as e:
+                    logger.error(f"Auth failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.AUTH_FAILED.value,
+                            "payload": {
+                                "error_code": "AUTH_ERROR",
+                                "message": str(e),
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+
+            # Handle subscription
+            elif msg_type == WSMessageType.SUBSCRIBE.value:
+                if not authenticated:
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.SUBSCRIBE_FAILED.value,
+                            "payload": {
+                                "error_code": "NOT_AUTHENTICATED",
+                                "message": "Must authenticate before subscribing",
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+                    continue
+
+                try:
+                    sub_req = WSSubscribeRequest(**data.get("payload", {}))
+                    stream_id = sub_req.stream_id
+                    params = SimulationLiveParams(**(sub_req.params or {}))
+
+                    # Subscribe
+                    success = await ws_manager.subscribe(
+                        connection_id, stream_id, sub_req.stream_type, sub_req.params
+                    )
+
+                    if success:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.SUBSCRIBE_SUCCESS.value,
+                                "stream_id": stream_id,
+                                "timestamp": time.time() * 1000,
+                            }
+                        )
+
+                        # Start streaming task
+                        ctx = ServiceContext(seed=params.seed, mode=ExecutionMode.API)
+                        stream_task = asyncio.create_task(
+                            _stream_simulation_task(
+                                connection_id, stream_id, params, ctx, ws_manager
+                            )
+                        )
+                    else:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.SUBSCRIBE_FAILED.value,
+                                "payload": {
+                                    "error_code": "SUBSCRIBE_FAILED",
+                                    "message": "Failed to subscribe",
+                                    "timestamp": time.time() * 1000,
+                                },
+                            }
+                        )
+
+                except Exception as e:
+                    logger.error(f"Subscribe failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.SUBSCRIBE_FAILED.value,
+                            "payload": {
+                                "error_code": "SUBSCRIBE_ERROR",
+                                "message": str(e),
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+
+            # Handle unsubscribe
+            elif msg_type == WSMessageType.UNSUBSCRIBE.value:
+                try:
+                    unsub_req = WSUnsubscribeRequest(**data.get("payload", {}))
+                    await ws_manager.unsubscribe(connection_id, unsub_req.stream_id)
+                    if stream_task:
+                        stream_task.cancel()
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.UNSUBSCRIBE.value,
+                            "stream_id": unsub_req.stream_id,
+                            "timestamp": time.time() * 1000,
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Unsubscribe failed: {e}", exc_info=True)
+
+            # Handle pong
+            elif msg_type == WSMessageType.PONG.value:
+                await ws_manager.handle_pong(connection_id)
+
+            # Handle close
+            elif msg_type == WSMessageType.CLOSE.value:
+                break
+
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected: {connection_id}")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}", exc_info=True)
+    finally:
+        if stream_task:
+            stream_task.cancel()
+        await ws_manager.disconnect(connection_id)
+
+
+async def _stream_features_task(
+    connection_id: str,
+    stream_id: str,
+    params: StreamFeaturesParams,
+    ctx: ServiceContext,
+    manager: WSConnectionManager,
+):
+    """Background task for streaming features."""
+    try:
+        async for update in stream_features_adapter(stream_id, params, ctx):
+            message = {
+                "type": WSMessageType.FEATURE_UPDATE.value,
+                "payload": update.model_dump(),
+            }
+            await manager.send_message(connection_id, message)
+    except asyncio.CancelledError:
+        logger.info(f"Feature stream task cancelled: {stream_id}")
+    except Exception as e:
+        logger.error(f"Feature stream error: {e}", exc_info=True)
+        error_msg = {
+            "type": WSMessageType.ERROR.value,
+            "payload": {
+                "error_code": "STREAM_ERROR",
+                "message": str(e),
+                "stream_id": stream_id,
+                "timestamp": time.time() * 1000,
+            },
+        }
+        await manager.send_message(connection_id, error_msg)
+
+
+async def _stream_simulation_task(
+    connection_id: str,
+    stream_id: str,
+    params: SimulationLiveParams,
+    ctx: ServiceContext,
+    manager: WSConnectionManager,
+):
+    """Background task for streaming simulation."""
+    try:
+        async for update in stream_simulation_live_adapter(stream_id, params, ctx):
+            if hasattr(update, "step"):
+                # Simulation state update
+                message = {
+                    "type": WSMessageType.SIMULATION_STATE.value,
+                    "payload": update.model_dump(),
+                }
+            else:
+                # Simulation complete
+                message = {
+                    "type": WSMessageType.SIMULATION_COMPLETE.value,
+                    "payload": update.model_dump(),
+                }
+            await manager.send_message(connection_id, message)
+    except asyncio.CancelledError:
+        logger.info(f"Simulation stream task cancelled: {stream_id}")
+    except Exception as e:
+        logger.error(f"Simulation stream error: {e}", exc_info=True)
+        error_msg = {
+            "type": WSMessageType.ERROR.value,
+            "payload": {
+                "error_code": "STREAM_ERROR",
+                "message": str(e),
+                "stream_id": stream_id,
+                "timestamp": time.time() * 1000,
+            },
+        }
+        await manager.send_message(connection_id, error_msg)
 
 
 if __name__ == "__main__":
