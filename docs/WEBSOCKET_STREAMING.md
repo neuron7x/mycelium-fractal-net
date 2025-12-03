@@ -26,6 +26,28 @@ Streams real-time fractal features computed from an active simulation.
 - `features`: Optional list of specific features to stream
 - `compression`: Enable compression for large feature sets (default: false)
 
+### `/ws/heartbeat`
+
+Streams live simulation state updates as the simulation progresses.
+
+**Purpose**: Dedicated endpoint for lightweight connection health monitoring and keepalive.
+
+**Use Case**: Infrastructure monitoring, connection health checks, automatic reconnection detection.
+
+**Features**:
+- Minimal overhead (no data streaming)
+- Server-initiated heartbeat every 30 seconds
+- Client responds with pong
+- Automatic timeout detection (60 seconds)
+
+**Protocol**:
+1. Client connects
+2. Client sends init message
+3. Client sends auth message (API key + timestamp + optional signature)
+4. Server sends heartbeat every 30s
+5. Client responds with pong
+6. Connection maintained until client closes or timeout
+
 ### `/ws/simulation_live`
 
 Streams live simulation state updates as the simulation progresses.
@@ -82,9 +104,57 @@ Server responds:
   "type": "auth",
   "payload": {
     "api_key": "your-api-key",
-    "timestamp": 1701600000000
+    "timestamp": 1701600000000,
+    "signature": "a1b2c3d4e5f6..." 
   }
 }
+```
+
+**Note**: The `signature` field is optional but recommended for enhanced security.
+
+#### Generating HMAC Signature (Python)
+
+```python
+import hmac
+import hashlib
+import time
+
+api_key = "your-secret-key"
+timestamp = int(time.time() * 1000)
+timestamp_str = str(timestamp)
+
+signature = hmac.new(
+    api_key.encode('utf-8'),
+    timestamp_str.encode('utf-8'),
+    hashlib.sha256
+).hexdigest()
+
+auth_payload = {
+    "api_key": api_key,
+    "timestamp": timestamp,
+    "signature": signature
+}
+```
+
+#### Generating HMAC Signature (JavaScript)
+
+```javascript
+const crypto = require('crypto');
+
+const apiKey = 'your-secret-key';
+const timestamp = Date.now();
+const timestampStr = timestamp.toString();
+
+const signature = crypto
+  .createHmac('sha256', apiKey)
+  .update(timestampStr)
+  .digest('hex');
+
+const authPayload = {
+  api_key: apiKey,
+  timestamp: timestamp,
+  signature: signature
+};
 ```
 
 Server responds:
