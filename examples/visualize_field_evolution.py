@@ -80,8 +80,11 @@ def create_evolution_animation(result, output_path=None, fps=10):
         
         return [im, title, stats_text]
     
-    # Create animation (sample every 2nd frame for speed)
-    frames = range(0, len(result.field_history), max(1, len(result.field_history) // 100))
+    # Create animation
+    # Sample frames to target ~100 frames max for reasonable file size
+    # For 200 steps: every 2nd frame. For 50 steps: every frame
+    max_frames = 100
+    frames = range(0, len(result.field_history), max(1, len(result.field_history) // max_frames))
     anim = FuncAnimation(
         fig, 
         update, 

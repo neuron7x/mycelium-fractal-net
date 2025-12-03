@@ -147,8 +147,10 @@ metadata:
   namespace: mycelium-fractal-net
 type: Opaque
 data:
-  # Example: base64 encoded placeholder (replace with actual secret)
-  # echo -n "your-secret-key" | base64
+  # WARNING: This is a placeholder value! MUST be replaced before production deployment!
+  # Generate a secure key with: openssl rand -base64 32 | base64
+  # Or create secret with kubectl command above (recommended)
+  # Placeholder decodes to: "placeholder-api-key" (DO NOT USE IN PRODUCTION!)
   api-key: cGxhY2Vob2xkZXItYXBpLWtleQ==
 ---
 # Ingress for external HTTP(S) access
