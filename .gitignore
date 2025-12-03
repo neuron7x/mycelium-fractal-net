@@ -106,3 +106,12 @@ data/*.parquet
 data/*.npz
 data/*.csv
 data/scenarios/
+
+# Visualization outputs
+*.gif
+*.mp4
+*.avi
+examples/*.png
+examples/*.gif
+notebooks/*.png
+notebooks/*.gif
