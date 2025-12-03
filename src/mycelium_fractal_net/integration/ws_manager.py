@@ -14,6 +14,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-STREAMING
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import hmac
 import time
 import uuid
@@ -223,7 +224,7 @@ class WSConnectionManager:
                 "drop_rate_percent": round(
                     100.0 * connection.dropped_frames / max(1, connection.packets_sent),
                     2
-                ) if connection.packets_sent > 0 else 0,
+                ),
             },
         )
 
@@ -323,8 +324,6 @@ class WSConnectionManager:
         Returns:
             bool: True if signature is valid.
         """
-        import hashlib
-        
         # Create expected signature: HMAC-SHA256(api_key, timestamp)
         timestamp_bytes = str(int(timestamp)).encode('utf-8')
         expected_signature = hmac.new(

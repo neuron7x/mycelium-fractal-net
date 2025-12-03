@@ -335,7 +335,10 @@ class TestWSConnectionManager:
     async def test_backpressure_drop_oldest(self, ws_manager, mock_websocket):
         """Test backpressure with drop_oldest strategy."""
         # Make send_json slow to prevent immediate flush
-        mock_websocket.send_json.side_effect = lambda x: asyncio.sleep(0.01)
+        async def slow_send(x):
+            await asyncio.sleep(0.01)
+        
+        mock_websocket.send_json.side_effect = slow_send
         
         connection_id = await ws_manager.connect(mock_websocket)
         connection = ws_manager.connections[connection_id]
