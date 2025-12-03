@@ -17,11 +17,13 @@ import hashlib
 import hmac
 import time
 import uuid
-from typing import AsyncIterator, Optional
+from typing import Any, AsyncIterator, Awaitable, Callable, List, Optional, Tuple, TypeVar
 
 import grpc
 
 from . import mfn_pb2, mfn_pb2_grpc
+
+T = TypeVar("T")
 
 
 class MFNClient:
@@ -69,7 +71,12 @@ class MFNClient:
         await self.connect()
         return self
     
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[Any],
+    ) -> None:
         """Exit async context manager."""
         await self.close()
     
@@ -114,7 +121,7 @@ class MFNClient:
             hashlib.sha256,
         ).hexdigest()
     
-    def _build_metadata(self, request_id: str) -> list:
+    def _build_metadata(self, request_id: str) -> List[Tuple[str, str]]:
         """
         Build gRPC metadata with authentication.
         
@@ -134,7 +141,9 @@ class MFNClient:
             ("x-signature", signature),
         ]
     
-    async def _retry_call(self, call_func, *args, **kwargs):
+    async def _retry_call(
+        self, call_func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any
+    ) -> T:
         """
         Execute gRPC call with retry logic.
         
@@ -210,6 +219,7 @@ class MFNClient:
         
         metadata = self._build_metadata(request_id)
         
+        assert self._features_stub is not None, "Client not connected"
         return await self._retry_call(
             self._features_stub.ExtractFeatures,
             request,
@@ -258,6 +268,7 @@ class MFNClient:
         
         metadata = self._build_metadata(request_id)
         
+        assert self._features_stub is not None, "Client not connected"
         stream = self._features_stub.StreamFeatures(request, metadata=metadata)
         
         async for frame in stream:
@@ -302,6 +313,7 @@ class MFNClient:
         
         metadata = self._build_metadata(request_id)
         
+        assert self._simulation_stub is not None, "Client not connected"
         return await self._retry_call(
             self._simulation_stub.RunSimulation,
             request,
@@ -350,6 +362,7 @@ class MFNClient:
         
         metadata = self._build_metadata(request_id)
         
+        assert self._simulation_stub is not None, "Client not connected"
         stream = self._simulation_stub.StreamSimulation(request, metadata=metadata)
         
         async for frame in stream:
@@ -397,6 +410,7 @@ class MFNClient:
         
         metadata = self._build_metadata(request_id)
         
+        assert self._validation_stub is not None, "Client not connected"
         return await self._retry_call(
             self._validation_stub.ValidatePattern,
             request,

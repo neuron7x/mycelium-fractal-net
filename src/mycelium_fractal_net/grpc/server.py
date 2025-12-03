@@ -465,7 +465,7 @@ async def serve_forever(config: Optional[GRPCConfig] = None) -> None:
     server = await serve(config)
     
     # Setup signal handlers for graceful shutdown
-    async def shutdown():
+    async def shutdown() -> None:
         logger.info("Shutting down gRPC server...")
         await server.stop(grace=5.0)
         logger.info("Server stopped")
