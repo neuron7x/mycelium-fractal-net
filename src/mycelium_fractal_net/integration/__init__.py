@@ -16,6 +16,9 @@ Components:
     - metrics: Prometheus metrics collection
     - logging_config: Structured JSON logging
     - data_integrations: 77 data integrations for iteration optimization
+    - ws_schemas: WebSocket message schemas for streaming
+    - ws_manager: WebSocket connection manager
+    - ws_adapters: Adapters for streaming simulation data
 
 Usage:
     >>> from mycelium_fractal_net.integration import (
@@ -134,6 +137,31 @@ from .service_context import (
     ServiceContext,
     create_context_from_request,
 )
+from .ws_adapters import (
+    stream_features_adapter,
+    stream_simulation_live_adapter,
+)
+from .ws_manager import (
+    BackpressureStrategy,
+    WSConnectionManager,
+    WSConnectionState,
+)
+from .ws_schemas import (
+    SimulationLiveParams,
+    StreamFeaturesParams,
+    WSAuthRequest,
+    WSErrorMessage,
+    WSFeatureUpdate,
+    WSHeartbeatRequest,
+    WSInitRequest,
+    WSMessage,
+    WSMessageType,
+    WSSimulationComplete,
+    WSSimulationState,
+    WSStreamType,
+    WSSubscribeRequest,
+    WSUnsubscribeRequest,
+)
 
 __all__ = [
     # Schemas
@@ -227,4 +255,24 @@ __all__ = [
     "get_integration",
     "list_all_integrations",
     "get_integration_categories",
+    # WebSocket Components
+    "WSMessageType",
+    "WSStreamType",
+    "WSMessage",
+    "WSInitRequest",
+    "WSAuthRequest",
+    "WSSubscribeRequest",
+    "WSUnsubscribeRequest",
+    "WSHeartbeatRequest",
+    "WSFeatureUpdate",
+    "WSSimulationState",
+    "WSSimulationComplete",
+    "WSErrorMessage",
+    "StreamFeaturesParams",
+    "SimulationLiveParams",
+    "WSConnectionManager",
+    "WSConnectionState",
+    "BackpressureStrategy",
+    "stream_features_adapter",
+    "stream_simulation_live_adapter",
 ]
