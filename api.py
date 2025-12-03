@@ -23,6 +23,7 @@ Endpoints:
     POST /federated/aggregate - Aggregate gradients (Krum)
     WS   /ws/stream_features - Real-time fractal features streaming
     WS   /ws/simulation_live - Live simulation state updates
+    WS   /ws/heartbeat     - Dedicated heartbeat/keepalive connection
 
 Environment Variables:
     MFN_ENV              - Environment name: dev, staging, prod (default: dev)
@@ -475,7 +476,7 @@ async def stream_features(websocket: WebSocket):
                 try:
                     auth_req = WSAuthRequest(**data.get("payload", {}))
                     authenticated = ws_manager.authenticate(
-                        connection_id, auth_req.api_key, auth_req.timestamp
+                        connection_id, auth_req.api_key, auth_req.timestamp, auth_req.signature
                     )
                     if authenticated:
                         await websocket.send_json(
@@ -667,7 +668,7 @@ async def simulation_live(websocket: WebSocket):
                 try:
                     auth_req = WSAuthRequest(**data.get("payload", {}))
                     authenticated = ws_manager.authenticate(
-                        connection_id, auth_req.api_key, auth_req.timestamp
+                        connection_id, auth_req.api_key, auth_req.timestamp, auth_req.signature
                     )
                     if authenticated:
                         await websocket.send_json(
@@ -798,6 +799,111 @@ async def simulation_live(websocket: WebSocket):
     finally:
         if stream_task:
             stream_task.cancel()
+        await ws_manager.disconnect(connection_id)
+
+
+@app.websocket("/ws/heartbeat")
+async def heartbeat_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint for dedicated heartbeat/keepalive connection.
+    
+    This is a lightweight endpoint that only handles heartbeat protocol
+    without any data streaming. Useful for monitoring connection health.
+    
+    Protocol:
+        1. Client sends: init message
+        2. Client sends: auth message (API key + timestamp + optional signature)
+        3. Server sends: auth_success or auth_failed
+        4. Server/Client exchange: heartbeat/pong messages every 30s
+        5. Client sends: close message (optional)
+    """
+    connection_id = await ws_manager.connect(websocket)
+    
+    try:
+        authenticated = False
+        
+        while True:
+            # Receive message from client
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+            
+            # Handle init
+            if msg_type == WSMessageType.INIT.value:
+                try:
+                    init_req = WSInitRequest(**data.get("payload", {}))
+                    ws_manager.connections[connection_id].client_info = init_req.client_info
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.INIT.value,
+                            "timestamp": time.time() * 1000,
+                            "payload": {"protocol_version": "1.0"},
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Init failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.ERROR.value,
+                            "payload": {
+                                "error_code": "INIT_FAILED",
+                                "message": str(e),
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+            
+            # Handle authentication
+            elif msg_type == WSMessageType.AUTH.value:
+                try:
+                    auth_req = WSAuthRequest(**data.get("payload", {}))
+                    authenticated = ws_manager.authenticate(
+                        connection_id, auth_req.api_key, auth_req.timestamp, auth_req.signature
+                    )
+                    if authenticated:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.AUTH_SUCCESS.value,
+                                "timestamp": time.time() * 1000,
+                            }
+                        )
+                    else:
+                        await websocket.send_json(
+                            {
+                                "type": WSMessageType.AUTH_FAILED.value,
+                                "timestamp": time.time() * 1000,
+                                "payload": {
+                                    "error_code": "AUTH_FAILED",
+                                    "message": "Invalid API key, timestamp, or signature",
+                                },
+                            }
+                        )
+                except Exception as e:
+                    logger.error(f"Auth failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {
+                            "type": WSMessageType.AUTH_FAILED.value,
+                            "payload": {
+                                "error_code": "AUTH_ERROR",
+                                "message": str(e),
+                                "timestamp": time.time() * 1000,
+                            },
+                        }
+                    )
+            
+            # Handle pong
+            elif msg_type == WSMessageType.PONG.value:
+                await ws_manager.handle_pong(connection_id)
+                ws_manager.connections[connection_id].packets_received += 1
+            
+            # Handle close
+            elif msg_type == WSMessageType.CLOSE.value:
+                break
+    
+    except WebSocketDisconnect:
+        logger.info(f"Heartbeat WebSocket disconnected: {connection_id}")
+    except Exception as e:
+        logger.error(f"Heartbeat WebSocket error: {e}", exc_info=True)
+    finally:
         await ws_manager.disconnect(connection_id)
 
 

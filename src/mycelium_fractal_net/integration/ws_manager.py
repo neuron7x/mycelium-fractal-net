@@ -73,6 +73,11 @@ class WSConnectionState:
         self.message_queue: Deque[Dict[str, Any]] = deque(maxlen=max_queue_size)
         self.client_info: Optional[str] = None
         self.api_key_used: Optional[str] = None
+        # Audit metrics
+        self.packets_sent: int = 0
+        self.packets_received: int = 0
+        self.dropped_frames: int = 0
+        self.stream_start_time: Dict[str, float] = {}  # stream_id -> start_time
 
     def is_alive(self, timeout: float = 60.0) -> bool:
         """Check if connection is alive based on heartbeat timeout."""
@@ -85,6 +90,7 @@ class WSConnectionState:
     def add_subscription(self, stream_id: str) -> None:
         """Add a stream subscription."""
         self.subscriptions.add(stream_id)
+        self.stream_start_time[stream_id] = time.time()
         logger.info(
             f"Connection {self.connection_id} subscribed to {stream_id}",
             extra={
@@ -97,14 +103,30 @@ class WSConnectionState:
     def remove_subscription(self, stream_id: str) -> None:
         """Remove a stream subscription."""
         self.subscriptions.discard(stream_id)
-        logger.info(
-            f"Connection {self.connection_id} unsubscribed from {stream_id}",
-            extra={
-                "connection_id": self.connection_id,
-                "stream_id": stream_id,
-                "total_subscriptions": len(self.subscriptions),
-            },
-        )
+        # Log audit metrics for this stream
+        if stream_id in self.stream_start_time:
+            duration = time.time() - self.stream_start_time[stream_id]
+            logger.info(
+                f"Connection {self.connection_id} unsubscribed from {stream_id}",
+                extra={
+                    "connection_id": self.connection_id,
+                    "stream_id": stream_id,
+                    "total_subscriptions": len(self.subscriptions),
+                    "stream_duration_seconds": round(duration, 2),
+                    "packets_sent": self.packets_sent,
+                    "dropped_frames": self.dropped_frames,
+                },
+            )
+            del self.stream_start_time[stream_id]
+        else:
+            logger.info(
+                f"Connection {self.connection_id} unsubscribed from {stream_id}",
+                extra={
+                    "connection_id": self.connection_id,
+                    "stream_id": stream_id,
+                    "total_subscriptions": len(self.subscriptions),
+                },
+            )
 
 
 class WSConnectionManager:
@@ -183,6 +205,9 @@ class WSConnectionManager:
         for stream_id in list(connection.subscriptions):
             await self._remove_from_stream(connection_id, stream_id)
 
+        # Calculate final audit metrics
+        duration = time.time() - connection.created_at
+
         # Remove connection
         del self.connections[connection_id]
 
@@ -191,11 +216,24 @@ class WSConnectionManager:
             extra={
                 "connection_id": connection_id,
                 "total_connections": len(self.connections),
-                "duration_seconds": time.time() - connection.created_at,
+                "duration_seconds": round(duration, 2),
+                "packets_sent": connection.packets_sent,
+                "packets_received": connection.packets_received,
+                "dropped_frames": connection.dropped_frames,
+                "drop_rate_percent": round(
+                    100.0 * connection.dropped_frames / max(1, connection.packets_sent),
+                    2
+                ) if connection.packets_sent > 0 else 0,
             },
         )
 
-    def authenticate(self, connection_id: str, api_key: str, timestamp: float) -> bool:
+    def authenticate(
+        self, 
+        connection_id: str, 
+        api_key: str, 
+        timestamp: float,
+        signature: Optional[str] = None
+    ) -> bool:
         """
         Authenticate a WebSocket connection.
 
@@ -203,6 +241,7 @@ class WSConnectionManager:
             connection_id: Connection identifier.
             api_key: API key for authentication.
             timestamp: Request timestamp for replay attack prevention.
+            signature: Optional HMAC-SHA256 signature of timestamp for enhanced security.
 
         Returns:
             bool: True if authentication successful.
@@ -234,6 +273,15 @@ class WSConnectionManager:
             )
             return False
 
+        # Validate HMAC signature if provided
+        if signature is not None:
+            if not self._validate_signature(api_key, timestamp, signature):
+                logger.warning(
+                    "Authentication failed: invalid signature",
+                    extra={"connection_id": connection_id},
+                )
+                return False
+
         connection.authenticated = True
         connection.api_key_used = api_key[:8] + "..."  # Log partial key for audit
         connection.update_heartbeat()
@@ -243,6 +291,7 @@ class WSConnectionManager:
             extra={
                 "connection_id": connection_id,
                 "api_key_partial": connection.api_key_used,
+                "signature_validated": signature is not None,
             },
         )
 
@@ -261,6 +310,31 @@ class WSConnectionManager:
                 valid = True
                 break
         return valid
+
+    def _validate_signature(self, api_key: str, timestamp: float, signature: str) -> bool:
+        """
+        Validate HMAC-SHA256 signature of timestamp.
+        
+        Args:
+            api_key: API key used as HMAC secret.
+            timestamp: Timestamp that was signed.
+            signature: Client-provided signature (hex-encoded).
+            
+        Returns:
+            bool: True if signature is valid.
+        """
+        import hashlib
+        
+        # Create expected signature: HMAC-SHA256(api_key, timestamp)
+        timestamp_bytes = str(int(timestamp)).encode('utf-8')
+        expected_signature = hmac.new(
+            api_key.encode('utf-8'),
+            timestamp_bytes,
+            hashlib.sha256
+        ).hexdigest()
+        
+        # Constant-time comparison
+        return hmac.compare_digest(signature.lower(), expected_signature.lower())
 
     async def subscribe(
         self,
@@ -399,25 +473,31 @@ class WSConnectionManager:
             # Remove oldest message
             connection.message_queue.popleft()
             connection.message_queue.append(message)
+            connection.dropped_frames += 1
             logger.debug(
                 "Backpressure: dropped oldest message",
                 extra={
                     "connection_id": connection.connection_id,
                     "queue_size": len(connection.message_queue),
+                    "total_dropped": connection.dropped_frames,
                 },
             )
         elif self.backpressure_strategy == BackpressureStrategy.DROP_NEWEST:
             # Don't add new message
+            connection.dropped_frames += 1
             logger.debug(
                 "Backpressure: dropped newest message",
                 extra={
                     "connection_id": connection.connection_id,
                     "queue_size": len(connection.message_queue),
+                    "total_dropped": connection.dropped_frames,
                 },
             )
         elif self.backpressure_strategy == BackpressureStrategy.COMPRESS:
             # Compress by sampling (keep every Nth message)
             compressed = list(connection.message_queue)[::2]  # Keep every 2nd
+            dropped_count = len(connection.message_queue) - len(compressed)
+            connection.dropped_frames += dropped_count
             connection.message_queue.clear()
             connection.message_queue.extend(compressed)
             connection.message_queue.append(message)
@@ -426,6 +506,8 @@ class WSConnectionManager:
                 extra={
                     "connection_id": connection.connection_id,
                     "queue_size": len(connection.message_queue),
+                    "dropped_in_compression": dropped_count,
+                    "total_dropped": connection.dropped_frames,
                 },
             )
 
@@ -435,6 +517,7 @@ class WSConnectionManager:
             message = connection.message_queue.popleft()
             try:
                 await connection.websocket.send_json(message)
+                connection.packets_sent += 1
             except WebSocketDisconnect:
                 await self.disconnect(connection.connection_id)
                 break
