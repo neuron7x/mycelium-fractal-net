@@ -33,12 +33,16 @@ from mycelium_fractal_net import (
     run_validation,
     ValidationConfig,
 )
-from mycelium_fractal_net.integration import ServiceContext
 
 from . import mfn_pb2, mfn_pb2_grpc
 from .interceptors import AuditInterceptor, AuthInterceptor, RateLimitInterceptor
 
 logger = logging.getLogger(__name__)
+
+# Default simulation parameters for streaming
+DEFAULT_ALPHA = 0.18
+DEFAULT_SPIKE_PROBABILITY = 0.25
+DEFAULT_TURING_ENABLED = True
 
 
 class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
@@ -82,15 +86,23 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
             features = compute_fractal_features(simulation_result)
             
             # Build response
+            # Note: MFN features use specific keys. We map them to proto fields:
+            # - D_box -> fractal_dimension
+            # - D_r2 -> lacunarity (regression fit dimension as proxy)
+            # - E_trend -> hurst_exponent (energy trend as proxy)
+            # - V_mean, V_std -> spectral energy (voltage statistics)
+            # - f_active -> active_nodes (fraction * 1000 for approximate count)
+            # - f_active -> edge_density (fraction directly)
+            # - max_cluster_size / 1000 -> clustering_coefficient (normalized)
             return mfn_pb2.FeatureResponse(
                 request_id=request.request_id,
                 meta=mfn_pb2.ResponseMeta(meta={"status": "ok"}),
                 fractal_dimension=float(features.values["D_box"]),
-                lacunarity=float(features.values.get("D_r2", 0.0)),  # Use D_r2 as lacunarity proxy
-                hurst_exponent=float(features.values.get("E_trend", 0.0)),  # Use E_trend as proxy
+                lacunarity=float(features.values.get("D_r2", 0.0)),
+                hurst_exponent=float(features.values.get("E_trend", 0.0)),
                 spectral_energy_mean=float(features.values.get("V_mean", 0.0)),
                 spectral_energy_std=float(features.values.get("V_std", 0.0)),
-                active_nodes=int(features.values.get("f_active", 0) * 1000),  # Convert fraction to count approx
+                active_nodes=int(features.values.get("f_active", 0) * 1000),
                 edge_density=float(features.values.get("f_active", 0.0)),
                 clustering_coefficient=float(features.values.get("max_cluster_size", 0.0) / 1000.0),
             )
@@ -131,9 +143,9 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
                     seed=request.seed,
                     grid_size=request.grid_size,
                     steps=min(step + request.stream_interval, request.steps),
-                    alpha=request.alpha if request.alpha > 0 else 0.18,
-                    spike_probability=request.spike_probability if request.spike_probability > 0 else 0.25,
-                    turing_enabled=request.turing_enabled,
+                    alpha=request.alpha if request.alpha > 0 else DEFAULT_ALPHA,
+                    spike_probability=request.spike_probability if request.spike_probability > 0 else DEFAULT_SPIKE_PROBABILITY,
+                    turing_enabled=request.turing_enabled if hasattr(request, 'turing_enabled') else DEFAULT_TURING_ENABLED,
                 )
                 
                 simulation_result = run_mycelium_simulation(config)
@@ -249,9 +261,9 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
                     seed=request.seed,
                     grid_size=request.grid_size,
                     steps=min(step + request.stream_interval, request.steps),
-                    alpha=request.alpha if request.alpha > 0 else 0.18,
-                    spike_probability=request.spike_probability if request.spike_probability > 0 else 0.25,
-                    turing_enabled=request.turing_enabled,
+                    alpha=request.alpha if request.alpha > 0 else DEFAULT_ALPHA,
+                    spike_probability=request.spike_probability if request.spike_probability > 0 else DEFAULT_SPIKE_PROBABILITY,
+                    turing_enabled=request.turing_enabled if hasattr(request, 'turing_enabled') else DEFAULT_TURING_ENABLED,
                 )
                 
                 simulation_result = run_mycelium_simulation(config)
