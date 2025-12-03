@@ -42,7 +42,6 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-OBS-001, MFN-LOG-00
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import time
 from typing import List
@@ -86,11 +85,8 @@ from mycelium_fractal_net.integration import (
     VerifyResponse,
     WSAuthRequest,
     WSConnectionManager,
-    WSErrorMessage,
-    WSHeartbeatRequest,
     WSInitRequest,
     WSMessageType,
-    WSStreamType,
     WSSubscribeRequest,
     WSUnsubscribeRequest,
     aggregate_gradients_adapter,
@@ -441,7 +437,6 @@ async def stream_features(websocket: WebSocket):
     try:
         # Connection lifecycle
         authenticated = False
-        subscribed = False
         stream_id = None
         stream_task = None
 
@@ -548,7 +543,6 @@ async def stream_features(websocket: WebSocket):
                         )
 
                         # Start streaming task
-                        subscribed = True
                         ctx = ServiceContext(mode=ExecutionMode.API)
                         stream_task = asyncio.create_task(
                             _stream_features_task(
@@ -587,7 +581,6 @@ async def stream_features(websocket: WebSocket):
                     await ws_manager.unsubscribe(connection_id, unsub_req.stream_id)
                     if stream_task:
                         stream_task.cancel()
-                    subscribed = False
                     await websocket.send_json(
                         {
                             "type": WSMessageType.UNSUBSCRIBE.value,
@@ -637,7 +630,6 @@ async def simulation_live(websocket: WebSocket):
 
     try:
         authenticated = False
-        subscribed = False
         stream_id = None
         stream_task = None
 
@@ -743,7 +735,6 @@ async def simulation_live(websocket: WebSocket):
                         )
 
                         # Start streaming task
-                        subscribed = True
                         ctx = ServiceContext(seed=params.seed, mode=ExecutionMode.API)
                         stream_task = asyncio.create_task(
                             _stream_simulation_task(
@@ -782,7 +773,6 @@ async def simulation_live(websocket: WebSocket):
                     await ws_manager.unsubscribe(connection_id, unsub_req.stream_id)
                     if stream_task:
                         stream_task.cancel()
-                    subscribed = False
                     await websocket.send_json(
                         {
                             "type": WSMessageType.UNSUBSCRIBE.value,

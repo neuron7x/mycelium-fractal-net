@@ -12,10 +12,9 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-STREAMING
 from __future__ import annotations
 
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
-
 
 # =============================================================================
 # WebSocket Message Types
@@ -73,7 +72,7 @@ class WSMessage(BaseModel):
     type: WSMessageType
     stream_id: Optional[str] = None
     timestamp: Optional[float] = None
-    payload: Optional[Dict] = None
+    payload: Optional[Dict[str, Any]] = None
 
 
 # =============================================================================
@@ -127,7 +126,7 @@ class WSSubscribeRequest(BaseModel):
 
     stream_type: WSStreamType
     stream_id: str
-    params: Optional[Dict] = None
+    params: Optional[Dict[str, Any]] = None
 
 
 class WSUnsubscribeRequest(BaseModel):

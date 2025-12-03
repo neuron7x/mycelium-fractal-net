@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import AsyncIterator, Dict, Optional
+from typing import AsyncIterator, Dict
 
 import numpy as np
 
@@ -50,9 +50,8 @@ async def stream_features_adapter(
     sequence = 0
     update_interval = params.update_interval_ms / 1000.0  # Convert to seconds
 
-    # Initialize engines
+    # Initialize engine
     membrane_engine = MembraneEngine(ctx.grid_size)
-    rd_engine = ReactionDiffusionEngine(ctx.grid_size)
 
     logger.info(
         f"Starting feature stream: {stream_id}",
