@@ -94,7 +94,9 @@ class TestWSConnectionState:
         state = WSConnectionState(connection_id, mock_websocket)
 
         old_time = state.last_heartbeat
-        time.sleep(0.01)
+        # Small delay to ensure time passes
+        import time
+        time.sleep(0.001)  # 1ms delay
         state.update_heartbeat()
 
         assert state.last_heartbeat > old_time
@@ -375,7 +377,8 @@ class TestWSConnectionManager:
         connection = ws_manager.connections[connection_id]
 
         old_heartbeat = connection.last_heartbeat
-        time.sleep(0.01)
+        # Small delay to ensure time passes
+        await asyncio.sleep(0.001)  # 1ms delay
 
         await ws_manager.handle_pong(connection_id)
 

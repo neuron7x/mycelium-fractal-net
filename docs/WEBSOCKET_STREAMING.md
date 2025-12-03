@@ -28,7 +28,7 @@ Streams real-time fractal features computed from an active simulation.
 
 ### `/ws/heartbeat`
 
-Streams live simulation state updates as the simulation progresses.
+Dedicated endpoint for lightweight connection health monitoring and keepalive.
 
 **Purpose**: Dedicated endpoint for lightweight connection health monitoring and keepalive.
 
