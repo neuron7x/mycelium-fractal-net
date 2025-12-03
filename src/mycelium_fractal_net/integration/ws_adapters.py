@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import AsyncIterator, Dict
+from typing import Any, AsyncIterator, Dict
 
 import numpy as np
+from numpy.typing import NDArray
 
-from ..core import MembraneEngine, ReactionDiffusionEngine
+from ..core import ReactionDiffusionConfig, ReactionDiffusionEngine
 from .logging_config import get_logger
 from .service_context import ServiceContext
 from .ws_schemas import (
@@ -50,8 +51,10 @@ async def stream_features_adapter(
     sequence = 0
     update_interval = params.update_interval_ms / 1000.0  # Convert to seconds
 
-    # Initialize engine
-    membrane_engine = MembraneEngine(ctx.grid_size)
+    # Initialize engine with proper config
+    config = ReactionDiffusionConfig(grid_size=ctx.grid_size, random_seed=ctx.seed)
+    rd_engine = ReactionDiffusionEngine(config)
+    rd_engine.initialize_field()
 
     logger.info(
         f"Starting feature stream: {stream_id}",
@@ -66,32 +69,29 @@ async def stream_features_adapter(
         while True:
             start_time = time.time()
 
-            # Simulate a step
-            membrane_engine.step_implicit(
-                dt=0.01,
-                rng=ctx.rng,
-                spike_probability=0.25,
-            )
+            # Run a simulation step
+            rd_engine.simulate(steps=1, turing_enabled=True)
 
-            # Compute features
-            field = membrane_engine.V.copy()
-            features = _compute_fractal_features(field)
+            # Get field state
+            field = rd_engine.field
+            if field is not None:
+                features = _compute_fractal_features(field)
 
-            # Filter features if specified
-            if params.features:
-                features = {
-                    k: v for k, v in features.items() if k in params.features
-                }
+                # Filter features if specified
+                if params.features:
+                    features = {
+                        k: v for k, v in features.items() if k in params.features
+                    }
 
-            # Create update message
-            update = WSFeatureUpdate(
-                stream_id=stream_id,
-                sequence=sequence,
-                features=features,
-                timestamp=time.time() * 1000,
-            )
+                # Create update message
+                update = WSFeatureUpdate(
+                    stream_id=stream_id,
+                    sequence=sequence,
+                    features=features,
+                    timestamp=time.time() * 1000,
+                )
 
-            yield update
+                yield update
 
             sequence += 1
 
@@ -130,9 +130,14 @@ async def stream_simulation_live_adapter(
     if params.seed != ctx.seed:
         ctx = ServiceContext(seed=params.seed, mode=ctx.mode)
 
-    # Initialize engines
-    membrane_engine = MembraneEngine(params.grid_size)
-    rd_engine = ReactionDiffusionEngine(params.grid_size)
+    # Initialize engine with proper config
+    config = ReactionDiffusionConfig(
+        grid_size=params.grid_size,
+        random_seed=params.seed,
+        alpha=params.alpha,
+    )
+    rd_engine = ReactionDiffusionEngine(config)
+    rd_engine.initialize_field()
 
     logger.info(
         f"Starting simulation stream: {stream_id}",
@@ -148,75 +153,69 @@ async def stream_simulation_live_adapter(
 
     try:
         for step in range(params.steps):
-            # Simulation step
-            if params.turing_enabled:
-                rd_engine.step(dt=0.01, alpha=params.alpha, rng=ctx.rng)
+            # Run simulation step
+            rd_engine.simulate(steps=1, turing_enabled=params.turing_enabled)
 
-            membrane_engine.step_implicit(
-                dt=0.01,
-                rng=ctx.rng,
-                spike_probability=params.spike_probability,
-            )
-
-            # Count growth events
+            # Count growth events (simplified - based on spike probability)
             if ctx.rng.random() < params.spike_probability:
                 growth_events += 1
 
             # Send update at specified interval
             if (step + 1) % params.update_interval_steps == 0 or step == params.steps - 1:
-                field = membrane_engine.V.copy()
+                field = rd_engine.field
+                if field is not None:
+                    # Compute state metrics
+                    state_data: Dict[str, Any] = {
+                        "pot_mean_mV": float(np.mean(field) * 1000),
+                        "pot_std_mV": float(np.std(field) * 1000),
+                        "pot_min_mV": float(np.min(field) * 1000),
+                        "pot_max_mV": float(np.max(field) * 1000),
+                        "active_nodes": int(np.sum(np.abs(field) > 0.01)),
+                    }
 
-                # Compute state metrics
-                state_data = {
-                    "pot_mean_mV": float(np.mean(field) * 1000),
-                    "pot_std_mV": float(np.std(field) * 1000),
-                    "pot_min_mV": float(np.min(field) * 1000),
-                    "pot_max_mV": float(np.max(field) * 1000),
-                    "active_nodes": int(np.sum(np.abs(field) > 0.01)),
-                }
+                    # Add full state if requested (can be large)
+                    if params.include_full_state:
+                        # Only include a compressed representation
+                        state_data["field_shape"] = list(field.shape)
+                        state_data["field_mean"] = float(np.mean(field))
 
-                # Add full state if requested (can be large)
-                if params.include_full_state:
-                    # Only include a compressed representation
-                    state_data["field_shape"] = list(field.shape)
-                    state_data["field_mean"] = float(np.mean(field))
+                    metrics_data: Dict[str, float] = {
+                        "growth_events": float(growth_events),
+                    }
 
-                metrics = {
-                    "growth_events": growth_events,
-                }
+                    update = WSSimulationState(
+                        stream_id=stream_id,
+                        step=step + 1,
+                        total_steps=params.steps,
+                        state=state_data,
+                        metrics=metrics_data,
+                        timestamp=time.time() * 1000,
+                    )
 
-                update = WSSimulationState(
-                    stream_id=stream_id,
-                    step=step + 1,
-                    total_steps=params.steps,
-                    state=state_data,
-                    metrics=metrics,
-                    timestamp=time.time() * 1000,
-                )
-
-                yield update
+                    yield update
 
                 # Allow other tasks to run
                 await asyncio.sleep(0)
 
         # Send completion message
-        final_field = membrane_engine.V.copy()
-        final_metrics = {
-            "growth_events": growth_events,
-            "pot_min_mV": float(np.min(final_field) * 1000),
-            "pot_max_mV": float(np.max(final_field) * 1000),
-            "pot_mean_mV": float(np.mean(final_field) * 1000),
-            "pot_std_mV": float(np.std(final_field) * 1000),
-            "fractal_dimension": _compute_fractal_dimension(final_field),
-        }
+        final_field = rd_engine.field
+        if final_field is not None:
+            final_metrics = {
+                "growth_events": float(growth_events),
+                "pot_min_mV": float(np.min(final_field) * 1000),
+                "pot_max_mV": float(np.max(final_field) * 1000),
+                "pot_mean_mV": float(np.mean(final_field) * 1000),
+                "pot_std_mV": float(np.std(final_field) * 1000),
+                "fractal_dimension": _compute_fractal_dimension(final_field),
+            }
 
-        completion = WSSimulationComplete(
-            stream_id=stream_id,
-            final_metrics=final_metrics,
-            timestamp=time.time() * 1000,
-        )
+            completion = WSSimulationComplete(
+                stream_id=stream_id,
+                final_metrics=final_metrics,
+                timestamp=time.time() * 1000,
+            )
 
-        yield completion
+            yield completion
 
         logger.info(
             f"Simulation stream completed: {stream_id}",
@@ -235,7 +234,7 @@ async def stream_simulation_live_adapter(
         raise
 
 
-def _compute_fractal_features(field: np.ndarray) -> Dict[str, float]:
+def _compute_fractal_features(field: NDArray[np.floating[Any]]) -> Dict[str, float]:
     """
     Compute fractal features from field.
 
@@ -245,7 +244,7 @@ def _compute_fractal_features(field: np.ndarray) -> Dict[str, float]:
     Returns:
         Dictionary of fractal features.
     """
-    features = {}
+    features: Dict[str, float] = {}
 
     # Basic statistics
     features["pot_mean_mV"] = float(np.mean(field) * 1000)
@@ -254,8 +253,9 @@ def _compute_fractal_features(field: np.ndarray) -> Dict[str, float]:
     features["pot_max_mV"] = float(np.max(field) * 1000)
 
     # Active nodes
-    features["active_nodes"] = int(np.sum(np.abs(field) > 0.01))
-    features["activity_ratio"] = float(np.sum(np.abs(field) > 0.01) / field.size)
+    active_count = int(np.sum(np.abs(field) > 0.01))
+    features["active_nodes"] = float(active_count)
+    features["activity_ratio"] = float(active_count / field.size)
 
     # Fractal dimension (simplified)
     features["fractal_dimension"] = _compute_fractal_dimension(field)
@@ -271,7 +271,7 @@ def _compute_fractal_features(field: np.ndarray) -> Dict[str, float]:
     return features
 
 
-def _compute_fractal_dimension(field: np.ndarray, threshold: float = 0.01) -> float:
+def _compute_fractal_dimension(field: NDArray[np.floating[Any]], threshold: float = 0.01) -> float:
     """
     Compute box-counting fractal dimension.
 

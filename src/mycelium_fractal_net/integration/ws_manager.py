@@ -19,7 +19,7 @@ import time
 import uuid
 from collections import deque
 from enum import Enum
-from typing import Any, Dict, Optional, Set
+from typing import Any, Deque, Dict, Optional, Set
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -70,7 +70,7 @@ class WSConnectionState:
         self.subscriptions: Set[str] = set()
         self.last_heartbeat = time.time()
         self.created_at = time.time()
-        self.message_queue: deque = deque(maxlen=max_queue_size)
+        self.message_queue: Deque[Dict[str, Any]] = deque(maxlen=max_queue_size)
         self.client_info: Optional[str] = None
         self.api_key_used: Optional[str] = None
 
@@ -136,7 +136,7 @@ class WSConnectionManager:
         self.max_queue_size = max_queue_size
         self.heartbeat_interval = heartbeat_interval
         self.heartbeat_timeout = heartbeat_timeout
-        self._heartbeat_task: Optional[asyncio.Task] = None
+        self._heartbeat_task: Optional[asyncio.Task[Any]] = None
 
     async def connect(self, websocket: WebSocket) -> str:
         """
@@ -267,7 +267,7 @@ class WSConnectionManager:
         connection_id: str,
         stream_id: str,
         stream_type: WSStreamType,
-        params: Optional[Dict] = None,
+        params: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Subscribe connection to a stream.

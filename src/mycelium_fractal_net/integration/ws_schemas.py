@@ -199,8 +199,8 @@ class WSSimulationState(BaseModel):
     stream_id: str
     step: int
     total_steps: int
-    state: Dict[str, float] = Field(
-        description="State data: pot_mean_mV, pot_std_mV, active_nodes, etc."
+    state: Dict[str, Any] = Field(
+        description="State data: pot_mean_mV, pot_std_mV, active_nodes, field_shape, etc."
     )
     metrics: Optional[Dict[str, float]] = None
     timestamp: float
