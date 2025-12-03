@@ -236,7 +236,7 @@ class WSConnectionManager:
 
         # Validate API key
         api_config = get_api_config()
-        if api_config.auth.required and not self._validate_api_key(api_key):
+        if api_config.auth.api_key_required and not self._validate_api_key(api_key):
             logger.warning(
                 f"Authentication failed: invalid API key",
                 extra={"connection_id": connection_id},
@@ -260,12 +260,12 @@ class WSConnectionManager:
     def _validate_api_key(self, api_key: str) -> bool:
         """Validate API key against configured keys."""
         api_config = get_api_config()
-        if not api_config.auth.required:
+        if not api_config.auth.api_key_required:
             return True
 
         # Use constant-time comparison
         valid = False
-        for valid_key in api_config.auth.valid_keys:
+        for valid_key in api_config.auth.api_keys:
             if hmac.compare_digest(api_key, valid_key):
                 valid = True
                 break
