@@ -6,7 +6,8 @@ This script demonstrates how to create animated visualizations of
 MyceliumFractalNet field evolution over time.
 
 Usage:
-    python examples/visualize_field_evolution.py [--grid-size 64] [--steps 100] [--output evolution.gif]
+    python examples/visualize_field_evolution.py [--grid-size 64] [--steps 100] \\
+        [--output evolution.gif]
 """
 
 import argparse
@@ -48,7 +49,7 @@ def create_evolution_animation(result, output_path=None, fps=10):
     )
     
     # Add colorbar
-    cbar = plt.colorbar(im, ax=ax, label='Membrane Potential (mV)')
+    plt.colorbar(im, ax=ax, label='Membrane Potential (mV)')
     
     # Setup labels
     ax.set_xlabel('X Position', fontsize=12)
@@ -99,7 +100,7 @@ def create_evolution_animation(result, output_path=None, fps=10):
         print(f"Saving animation to {output_path}...")
         writer = PillowWriter(fps=fps)
         anim.save(output_path, writer=writer)
-        print(f"✓ Animation saved")
+        print("✓ Animation saved")
     else:
         print("Displaying animation (close window to exit)...")
         plt.show()
@@ -176,7 +177,7 @@ def create_multi_view(result, output_path=None):
     ax7 = fig.add_subplot(gs[2, 0])
     binary = result.field_final > -60
     ax7.imshow(binary, cmap='binary', interpolation='nearest')
-    ax7.set_title(f'Binary Pattern (threshold: -60 mV)', fontsize=12)
+    ax7.set_title('Binary Pattern (threshold: -60 mV)', fontsize=12)
     ax7.set_xlabel('X')
     ax7.set_ylabel('Y')
     
@@ -218,7 +219,7 @@ def create_multi_view(result, output_path=None):
     if output_path:
         print(f"Saving figure to {output_path}...")
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        print(f"✓ Figure saved")
+        print("✓ Figure saved")
     else:
         print("Displaying figure (close window to exit)...")
         plt.show()
@@ -230,8 +231,12 @@ def main():
     parser.add_argument('--grid-size', type=int, default=64, help='Grid size (default: 64)')
     parser.add_argument('--steps', type=int, default=100, help='Simulation steps (default: 100)')
     parser.add_argument('--seed', type=int, default=42, help='Random seed (default: 42)')
-    parser.add_argument('--output', type=str, help='Output path for animation (.gif) or figure (.png)')
-    parser.add_argument('--fps', type=int, default=10, help='Frames per second for animation (default: 10)')
+    parser.add_argument(
+        '--output', type=str, help='Output path for animation (.gif) or figure (.png)'
+    )
+    parser.add_argument(
+        '--fps', type=int, default=10, help='Frames per second for animation (default: 10)'
+    )
     parser.add_argument('--mode', choices=['animation', 'multi'], default='multi',
                        help='Visualization mode (default: multi)')
     
@@ -240,7 +245,7 @@ def main():
     print("="*60)
     print("MyceliumFractalNet Field Visualization")
     print("="*60)
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Grid size: {args.grid_size}×{args.grid_size}")
     print(f"  Steps: {args.steps}")
     print(f"  Seed: {args.seed}")
@@ -256,7 +261,7 @@ def main():
     
     result = run_mycelium_simulation_with_history(config)
     
-    print(f"✓ Simulation complete")
+    print("✓ Simulation complete")
     print(f"  Growth events: {result.growth_events}")
     print(f"  Turing activations: {result.turing_activations}")
     print(f"  Potential range: [{result.field_final.min():.1f}, {result.field_final.max():.1f}] mV")
