@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import signal
-from typing import AsyncIterator, Optional
+from typing import Any, AsyncIterator, List, Optional
 
 import numpy as np
 
@@ -38,7 +38,7 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
     async def ExtractFeatures(
         self,
         request: mfn_pb2.FeatureRequest,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[Any, Any],
     ) -> mfn_pb2.FeatureResponse:
         """
         Extract features from simulation data.
@@ -102,7 +102,7 @@ class MFNFeaturesServiceServicer(mfn_pb2_grpc.MFNFeaturesServiceServicer):
     async def StreamFeatures(
         self,
         request: mfn_pb2.FeatureStreamRequest,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[Any, Any],
     ) -> AsyncIterator[mfn_pb2.FeatureFrame]:
         """
         Stream features during simulation.
@@ -181,7 +181,7 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
     async def RunSimulation(
         self,
         request: mfn_pb2.SimulationRequest,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[Any, Any],
     ) -> mfn_pb2.SimulationResult:
         """
         Run a complete simulation.
@@ -245,7 +245,7 @@ class MFNSimulationServiceServicer(mfn_pb2_grpc.MFNSimulationServiceServicer):
     async def StreamSimulation(
         self,
         request: mfn_pb2.SimulationStreamRequest,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[Any, Any],
     ) -> AsyncIterator[mfn_pb2.SimulationFrame]:
         """
         Stream simulation state updates.
@@ -322,7 +322,7 @@ class MFNValidationServiceServicer(mfn_pb2_grpc.MFNValidationServiceServicer):
     async def ValidatePattern(
         self,
         request: mfn_pb2.ValidationRequest,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[Any, Any],
     ) -> mfn_pb2.ValidationResult:
         """
         Validate a pattern using training cycle.
@@ -400,7 +400,7 @@ async def serve(
     cfg = config or get_grpc_config()
     
     # Build interceptors
-    interceptors = []
+    interceptors: List[Any] = []
     if interceptors_enabled and cfg.auth_enabled:
         interceptors.append(AuthInterceptor())
     interceptors.append(AuditInterceptor())
@@ -428,13 +428,13 @@ async def serve(
     )
     
     # Add servicers
-    mfn_pb2_grpc.add_MFNFeaturesServiceServicer_to_server(
+    mfn_pb2_grpc.add_MFNFeaturesServiceServicer_to_server(  # type: ignore[no-untyped-call]
         MFNFeaturesServiceServicer(), server
     )
-    mfn_pb2_grpc.add_MFNSimulationServiceServicer_to_server(
+    mfn_pb2_grpc.add_MFNSimulationServiceServicer_to_server(  # type: ignore[no-untyped-call]
         MFNSimulationServiceServicer(), server
     )
-    mfn_pb2_grpc.add_MFNValidationServiceServicer_to_server(
+    mfn_pb2_grpc.add_MFNValidationServiceServicer_to_server(  # type: ignore[no-untyped-call]
         MFNValidationServiceServicer(), server
     )
     

@@ -89,14 +89,14 @@ class MFNClient:
             self._channel = grpc.aio.insecure_channel(self.address)
         
         # Create stubs
-        self._features_stub = mfn_pb2_grpc.MFNFeaturesServiceStub(self._channel)
-        self._simulation_stub = mfn_pb2_grpc.MFNSimulationServiceStub(self._channel)
-        self._validation_stub = mfn_pb2_grpc.MFNValidationServiceStub(self._channel)
+        self._features_stub = mfn_pb2_grpc.MFNFeaturesServiceStub(self._channel)  # type: ignore[no-untyped-call]
+        self._simulation_stub = mfn_pb2_grpc.MFNSimulationServiceStub(self._channel)  # type: ignore[no-untyped-call]
+        self._validation_stub = mfn_pb2_grpc.MFNValidationServiceStub(self._channel)  # type: ignore[no-untyped-call]
     
     async def close(self) -> None:
         """Close connection to gRPC server."""
         if self._channel:
-            await self._channel.close()
+            await self._channel.close(grace=5.0)
             self._channel = None
     
     def _generate_request_id(self) -> str:

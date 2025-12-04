@@ -14,7 +14,7 @@ import hashlib
 import hmac
 import time
 from collections import defaultdict
-from typing import Awaitable, Callable, Dict
+from typing import Any, Awaitable, Callable, Dict, List
 
 from grpc.aio import ServerInterceptor
 
@@ -24,7 +24,7 @@ from mycelium_fractal_net.integration import get_api_config, get_logger
 logger = get_logger("grpc.interceptors")
 
 
-class AuthInterceptor(ServerInterceptor):
+class AuthInterceptor(ServerInterceptor[Any, Any]):
     """
     Authentication interceptor for gRPC.
     
@@ -87,9 +87,11 @@ class AuthInterceptor(ServerInterceptor):
     
     async def intercept_service(
         self,
-        continuation: Callable[[grpc.HandlerCallDetails], Awaitable[grpc.RpcMethodHandler]],
+        continuation: Callable[
+            [grpc.HandlerCallDetails], Awaitable[grpc.RpcMethodHandler[Any, Any]]
+        ],
         handler_call_details: grpc.HandlerCallDetails,
-    ) -> grpc.RpcMethodHandler:
+    ) -> grpc.RpcMethodHandler[Any, Any]:
         """
         Intercept RPC call for authentication.
         
@@ -103,10 +105,24 @@ class AuthInterceptor(ServerInterceptor):
         # Extract metadata
         metadata = dict(handler_call_details.invocation_metadata)
         
-        api_key = metadata.get("x-api-key")
-        signature = metadata.get("x-signature")
-        timestamp = metadata.get("x-timestamp")
-        request_id = metadata.get("x-request-id", "")
+        api_key_raw = metadata.get("x-api-key")
+        signature_raw = metadata.get("x-signature")
+        timestamp_raw = metadata.get("x-timestamp")
+        request_id_raw = metadata.get("x-request-id", "")
+        
+        # Normalize metadata to strings
+        api_key = (
+            api_key_raw.decode() if isinstance(api_key_raw, bytes) else api_key_raw
+        )
+        signature = (
+            signature_raw.decode() if isinstance(signature_raw, bytes) else signature_raw
+        )
+        timestamp = (
+            timestamp_raw.decode() if isinstance(timestamp_raw, bytes) else timestamp_raw
+        )
+        request_id = (
+            request_id_raw.decode() if isinstance(request_id_raw, bytes) else request_id_raw
+        )
         
         # Check if API key is valid
         if not api_key or api_key not in self.api_config.auth.api_keys:
@@ -135,9 +151,9 @@ class AuthInterceptor(ServerInterceptor):
         # Authentication successful
         return await continuation(handler_call_details)
     
-    def _abort_unauthenticated(self, details: str) -> grpc.RpcMethodHandler:
+    def _abort_unauthenticated(self, details: str) -> grpc.RpcMethodHandler[Any, Any]:
         """Create handler that aborts with UNAUTHENTICATED status."""
-        async def abort(request, context):
+        async def abort(request: Any, context: Any) -> Any:
             await context.abort(grpc.StatusCode.UNAUTHENTICATED, details)
         
         return grpc.unary_unary_rpc_method_handler(
@@ -147,7 +163,7 @@ class AuthInterceptor(ServerInterceptor):
         )
 
 
-class AuditInterceptor(ServerInterceptor):
+class AuditInterceptor(ServerInterceptor[Any, Any]):
     """
     Audit logging interceptor.
     
@@ -160,9 +176,11 @@ class AuditInterceptor(ServerInterceptor):
     
     async def intercept_service(
         self,
-        continuation: Callable[[grpc.HandlerCallDetails], Awaitable[grpc.RpcMethodHandler]],
+        continuation: Callable[
+            [grpc.HandlerCallDetails], Awaitable[grpc.RpcMethodHandler[Any, Any]]
+        ],
         handler_call_details: grpc.HandlerCallDetails,
-    ) -> grpc.RpcMethodHandler:
+    ) -> grpc.RpcMethodHandler[Any, Any]:
         """
         Intercept RPC call for audit logging.
         
@@ -174,7 +192,10 @@ class AuditInterceptor(ServerInterceptor):
             RPC method handler with logging
         """
         metadata = dict(handler_call_details.invocation_metadata)
-        request_id = metadata.get("x-request-id", "unknown")
+        request_id_raw = metadata.get("x-request-id", "unknown")
+        request_id = (
+            request_id_raw.decode() if isinstance(request_id_raw, bytes) else request_id_raw
+        )
         method = handler_call_details.method
         
         start_time = time.time()
@@ -191,7 +212,7 @@ class AuditInterceptor(ServerInterceptor):
         if handler and handler.unary_unary:
             original_handler = handler.unary_unary
             
-            async def wrapped_handler(request, context):
+            async def wrapped_handler(request: Any, context: Any) -> Any:
                 try:
                     response = await original_handler(request, context)
                     duration = time.time() - start_time
@@ -228,7 +249,7 @@ class AuditInterceptor(ServerInterceptor):
         return handler
 
 
-class RateLimitInterceptor(ServerInterceptor):
+class RateLimitInterceptor(ServerInterceptor[Any, Any]):
     """
     Rate limiting interceptor.
     
@@ -249,7 +270,7 @@ class RateLimitInterceptor(ServerInterceptor):
         self.concurrent_limit = concurrent_limit
         
         # Per-API-key state
-        self._request_counts: Dict[str, list] = defaultdict(list)
+        self._request_counts: Dict[str, List[float]] = defaultdict(list)
         self._concurrent_counts: Dict[str, int] = defaultdict(int)
         self._locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
     
@@ -295,9 +316,11 @@ class RateLimitInterceptor(ServerInterceptor):
     
     async def intercept_service(
         self,
-        continuation: Callable[[grpc.HandlerCallDetails], Awaitable[grpc.RpcMethodHandler]],
+        continuation: Callable[
+            [grpc.HandlerCallDetails], Awaitable[grpc.RpcMethodHandler[Any, Any]]
+        ],
         handler_call_details: grpc.HandlerCallDetails,
-    ) -> grpc.RpcMethodHandler:
+    ) -> grpc.RpcMethodHandler[Any, Any]:
         """
         Intercept RPC call for rate limiting.
         
@@ -309,8 +332,16 @@ class RateLimitInterceptor(ServerInterceptor):
             RPC method handler or aborts with RESOURCE_EXHAUSTED
         """
         metadata = dict(handler_call_details.invocation_metadata)
-        api_key = metadata.get("x-api-key", "default")
-        request_id = metadata.get("x-request-id", "")
+        api_key_raw = metadata.get("x-api-key", "default")
+        request_id_raw = metadata.get("x-request-id", "")
+        
+        # Normalize metadata to strings
+        api_key = (
+            api_key_raw.decode() if isinstance(api_key_raw, bytes) else str(api_key_raw)
+        )
+        request_id = (
+            request_id_raw.decode() if isinstance(request_id_raw, bytes) else str(request_id_raw)
+        )
         
         # Check rate limit
         if not await self._check_rate_limit(api_key):
@@ -327,7 +358,7 @@ class RateLimitInterceptor(ServerInterceptor):
         if handler and handler.unary_unary:
             original_handler = handler.unary_unary
             
-            async def wrapped_handler(request, context):
+            async def wrapped_handler(request: Any, context: Any) -> Any:
                 try:
                     return await original_handler(request, context)
                 finally:
@@ -341,9 +372,9 @@ class RateLimitInterceptor(ServerInterceptor):
         
         return handler
     
-    def _abort_resource_exhausted(self, details: str) -> grpc.RpcMethodHandler:
+    def _abort_resource_exhausted(self, details: str) -> grpc.RpcMethodHandler[Any, Any]:
         """Create handler that aborts with RESOURCE_EXHAUSTED status."""
-        async def abort(request, context):
+        async def abort(request: Any, context: Any) -> Any:
             await context.abort(grpc.StatusCode.RESOURCE_EXHAUSTED, details)
         
         return grpc.unary_unary_rpc_method_handler(
