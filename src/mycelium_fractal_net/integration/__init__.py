@@ -19,6 +19,8 @@ Components:
     - ws_schemas: WebSocket message schemas for streaming
     - ws_manager: WebSocket connection manager
     - ws_adapters: Adapters for streaming simulation data
+    - connectors: Upstream data connectors (REST, File, Kafka)
+    - publishers: Downstream event publishers (Webhook, Kafka, File)
 
 Usage:
     >>> from mycelium_fractal_net.integration import (
@@ -28,12 +30,14 @@ Usage:
     ...     run_validation_adapter,
     ...     get_integration,
     ...     INTEGRATION_COUNT,
+    ...     RESTConnector,
+    ...     WebhookPublisher,
     ... )
     >>> ctx = ServiceContext(seed=42)
     >>> request = ValidateRequest(seed=42, epochs=1)
     >>> response = run_validation_adapter(request, ctx)
 
-Reference: docs/ARCHITECTURE.md, docs/MFN_SYSTEM_ROLE.md
+Reference: docs/ARCHITECTURE.md, docs/MFN_SYSTEM_ROLE.md, docs/MFN_INTEGRATION_GAPS.md
 """
 
 from .adapters import (
@@ -56,6 +60,18 @@ from .auth import (
     API_KEY_HEADER,
     APIKeyMiddleware,
     require_api_key,
+)
+from .connectors import (
+    BaseConnector,
+    ConnectorConfig,
+    ConnectorMetrics,
+    ConnectorStatus,
+    FileConnector,
+    KafkaConnectorAdapter,
+    RESTConnector,
+)
+from .connectors import (
+    RetryStrategy as ConnectorRetryStrategy,
 )
 from .crypto_adapters import (
     CryptoAPIError,
@@ -105,6 +121,18 @@ from .metrics import (
     MetricsMiddleware,
     is_prometheus_available,
     metrics_endpoint,
+)
+from .publishers import (
+    BasePublisher,
+    FilePublisher,
+    KafkaPublisherAdapter,
+    PublisherConfig,
+    PublisherMetrics,
+    PublisherStatus,
+    WebhookPublisher,
+)
+from .publishers import (
+    RetryStrategy as PublisherRetryStrategy,
 )
 from .rate_limiter import (
     RateLimiter,
@@ -275,4 +303,22 @@ __all__ = [
     "BackpressureStrategy",
     "stream_features_adapter",
     "stream_simulation_live_adapter",
+    # Connectors (upstream data sources)
+    "BaseConnector",
+    "RESTConnector",
+    "FileConnector",
+    "KafkaConnectorAdapter",
+    "ConnectorConfig",
+    "ConnectorMetrics",
+    "ConnectorStatus",
+    "ConnectorRetryStrategy",
+    # Publishers (downstream event publishing)
+    "BasePublisher",
+    "WebhookPublisher",
+    "KafkaPublisherAdapter",
+    "FilePublisher",
+    "PublisherConfig",
+    "PublisherMetrics",
+    "PublisherStatus",
+    "PublisherRetryStrategy",
 ]
