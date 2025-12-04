@@ -21,13 +21,12 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 try:
     import aiohttp
@@ -187,7 +186,7 @@ class BasePublisher(ABC):
 
     async def _retry_operation(
         self,
-        operation: Any,
+        operation: Callable[[], Any],  # Async callable returning Any
         operation_name: str,
     ) -> Any:
         """
@@ -293,7 +292,9 @@ class WebhookPublisher(BasePublisher):
     async def connect(self) -> None:
         """Establish HTTP session."""
         if aiohttp is None:
-            raise ImportError("aiohttp is required for WebhookPublisher. Install with: pip install aiohttp")
+            raise ImportError(
+                "aiohttp is required for WebhookPublisher. Install with: pip install aiohttp"
+            )
 
         if self._session is None or self._session.closed:
             self.status = PublisherStatus.CONNECTING
@@ -462,8 +463,11 @@ class KafkaPublisherAdapter(BasePublisher):
 
             # Send message
             future = self._producer.send(self.topic, value=data)
-            # Wait for acknowledgment
-            record_metadata = future.get(timeout=self.config.timeout)
+            # Wait for acknowledgment in thread pool to avoid blocking event loop
+            loop = asyncio.get_event_loop()
+            record_metadata = await loop.run_in_executor(
+                None, future.get, self.config.timeout
+            )
 
             self.metrics.successful_publishes += 1
             self.metrics.total_bytes_published += payload_size

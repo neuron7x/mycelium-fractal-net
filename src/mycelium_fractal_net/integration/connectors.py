@@ -20,10 +20,9 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -186,7 +185,7 @@ class BaseConnector(ABC):
 
     async def _retry_operation(
         self,
-        operation: Callable[[], Any],
+        operation: Callable[[], Any],  # Async callable returning Any
         operation_name: str,
     ) -> Any:
         """
@@ -292,7 +291,9 @@ class RESTConnector(BaseConnector):
     async def connect(self) -> None:
         """Establish HTTP session."""
         if aiohttp is None:
-            raise ImportError("aiohttp is required for RESTConnector. Install with: pip install aiohttp")
+            raise ImportError(
+                "aiohttp is required for RESTConnector. Install with: pip install aiohttp"
+            )
 
         if self._session is None or self._session.closed:
             self.status = ConnectorStatus.CONNECTING
@@ -357,8 +358,10 @@ class RESTConnector(BaseConnector):
                 **kwargs,
             ) as response:
                 response.raise_for_status()
-                response_data = await response.json()
-                response_size = len(await response.read())
+                # Read response body once
+                response_body = await response.read()
+                response_size = len(response_body)
+                response_data = json.loads(response_body.decode("utf-8"))
 
                 self.metrics.successful_requests += 1
                 self.metrics.total_bytes_fetched += response_size
