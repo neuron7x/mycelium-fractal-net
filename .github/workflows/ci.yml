@@ -253,7 +253,10 @@ jobs:
           if [[ "${{ needs.lint.result }}" != "success" ]] || \
              [[ "${{ needs.security.result }}" != "success" ]] || \
              [[ "${{ needs.test.result }}" != "success" ]] || \
-             [[ "${{ needs.validate.result }}" != "success" ]]; then
+             [[ "${{ needs.validate.result }}" != "success" ]] || \
+             [[ "${{ needs.benchmark.result }}" != "success" ]] || \
+             [[ "${{ needs.scientific-validation.result }}" != "success" ]] || \
+             [[ "${{ needs.scalability-test.result }}" != "success" ]]; then
             echo "❌ Some required checks failed!"
             exit 1
           fi
