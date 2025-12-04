@@ -38,13 +38,13 @@ import json
 import logging
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
-import aiohttp
-from pydantic import BaseModel, Field
+if TYPE_CHECKING:
+    pass
 
 
 logger = logging.getLogger(__name__)
@@ -309,10 +309,15 @@ class KafkaPublisher(BasePublisher):
         logger.info(f"Connecting to Kafka: {self.bootstrap_servers}, topic: {self.topic}")
 
         async def _connect():
+            acks_config = (
+                "all"
+                if self.config.delivery_guarantee == DeliveryGuarantee.AT_LEAST_ONCE
+                else 1
+            )
             self.producer = AIOKafkaProducer(
                 bootstrap_servers=self.bootstrap_servers,
                 value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-                acks="all" if self.config.delivery_guarantee == DeliveryGuarantee.AT_LEAST_ONCE else 1,
+                acks=acks_config,
             )
             await self.producer.start()
 
@@ -367,10 +372,18 @@ class WebhookPublisher(BasePublisher):
         self.url = url
         self.secret_key = secret_key
         self.headers = headers or {"Content-Type": "application/json"}
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: Optional[Any] = None
 
     async def connect(self) -> None:
         """Create HTTP session."""
+        try:
+            import aiohttp
+        except ImportError:
+            raise ImportError(
+                "aiohttp is required for Webhook publisher. "
+                "Install with: pip install aiohttp"
+            )
+        
         self.status = PublisherStatus.CONNECTING
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.config.timeout)

@@ -257,6 +257,77 @@ pip-audit --strict
 
 ---
 
+## Integration Connectors & Publishers
+
+MyceliumFractalNet provides production-ready connectors and publishers for external system integration:
+
+### Data Connectors (Upstream)
+
+```python
+from mycelium_fractal_net.integration import (
+    KafkaConnector,
+    FileFeedConnector,
+    RestApiConnector,
+)
+
+# Kafka consumer for real-time streaming
+connector = KafkaConnector(
+    bootstrap_servers="localhost:9092",
+    topic="simulation-params",
+    group_id="mfn-consumer"
+)
+
+async for message in connector.consume():
+    params = message.value
+    # Process simulation parameters
+```
+
+**Available Connectors:**
+- **KafkaConnector**: Real-time event streaming (requires `aiokafka`)
+- **FileFeedConnector**: Batch file ingestion with directory watching
+- **RestApiConnector**: Polling external REST APIs
+- **DatabaseConnector**: Base class for database polling
+
+### Event Publishers (Downstream)
+
+```python
+from mycelium_fractal_net.integration import (
+    KafkaPublisher,
+    WebhookPublisher,
+    RedisPublisher,
+)
+
+# Webhook publisher with HMAC signatures
+publisher = WebhookPublisher(
+    url="https://api.example.com/webhooks/mfn",
+    secret_key="your-secret-key"
+)
+
+await publisher.publish({
+    "D_box": 1.584,
+    "V_mean": -67.5,
+    "f_active": 0.42
+})
+```
+
+**Available Publishers:**
+- **KafkaPublisher**: Event-driven architecture (requires `aiokafka`)
+- **WebhookPublisher**: HTTP callbacks with HMAC signatures
+- **RedisPublisher**: Pub/sub messaging (requires `redis`)
+- **RabbitMQPublisher**: AMQP messaging (requires `aio-pika`)
+
+**Features:**
+- ✅ Retry logic with exponential backoff
+- ✅ Circuit breaker pattern for fault tolerance
+- ✅ Batch publishing with configurable timeout
+- ✅ Delivery guarantees (at-least-once)
+- ✅ Comprehensive metrics collection
+- ✅ Structured logging with correlation IDs
+
+📋 [Integration Documentation](docs/known_issues.md)
+
+---
+
 ## Cryptography
 
 MyceliumFractalNet includes a formal cryptography module with mathematical proofs of security:
@@ -324,7 +395,7 @@ mycelium-fractal-net/
 │   ├── __init__.py          # Public API
 │   ├── model.py             # Core implementation
 │   ├── core/                # Numerical engines
-│   ├── integration/         # Integration layer (schemas, adapters)
+│   ├── integration/         # Integration layer (schemas, adapters, connectors, publishers)
 │   └── security/            # Security module (encryption, validation, audit)
 ├── analytics/               # Feature extraction module
 │   ├── __init__.py

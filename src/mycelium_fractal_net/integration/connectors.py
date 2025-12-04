@@ -34,14 +34,14 @@ import json
 import logging
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Dict, List, Optional, Union
 
-import aiohttp
-from pydantic import BaseModel, Field
+if TYPE_CHECKING:
+    pass
 
 
 logger = logging.getLogger(__name__)
@@ -227,10 +227,10 @@ class BaseConnector(ABC):
                 self.config.max_retry_delay,
             )
         else:  # EXPONENTIAL_BACKOFF
-            return min(
-                self.config.initial_retry_delay * (self.config.backoff_multiplier ** (retry_count - 1)),
-                self.config.max_retry_delay,
+            delay = self.config.initial_retry_delay * (
+                self.config.backoff_multiplier ** (retry_count - 1)
             )
+            return min(delay, self.config.max_retry_delay)
 
 
 class KafkaConnector(BaseConnector):
@@ -425,10 +425,18 @@ class RestApiConnector(BaseConnector):
         self.endpoint = endpoint.lstrip("/")
         self.poll_interval = poll_interval
         self.headers = headers or {}
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: Optional[Any] = None
 
     async def connect(self) -> None:
         """Create HTTP session."""
+        try:
+            import aiohttp
+        except ImportError:
+            raise ImportError(
+                "aiohttp is required for REST API connector. "
+                "Install with: pip install aiohttp"
+            )
+        
         self.status = ConnectorStatus.CONNECTING
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.config.timeout)
