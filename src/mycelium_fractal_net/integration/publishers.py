@@ -34,7 +34,7 @@ except ImportError:
     aiohttp = None  # type: ignore
 
 try:
-    from kafka import KafkaProducer  # type: ignore
+    from kafka import KafkaProducer
 except ImportError:
     KafkaProducer = None  # type: ignore
 
@@ -179,10 +179,10 @@ class BasePublisher(ABC):
             return self.config.initial_retry_delay
         elif self.config.retry_strategy == RetryStrategy.LINEAR_BACKOFF:
             delay = self.config.initial_retry_delay * (attempt + 1)
-            return min(delay, self.config.max_retry_delay)
+            return float(min(delay, self.config.max_retry_delay))
         else:  # EXPONENTIAL_BACKOFF
             delay = self.config.initial_retry_delay * (2**attempt)
-            return min(delay, self.config.max_retry_delay)
+            return float(min(delay, self.config.max_retry_delay))
 
     async def _retry_operation(
         self,
@@ -287,7 +287,7 @@ class WebhookPublisher(BasePublisher):
         super().__init__(config)
         self.webhook_url = webhook_url
         self.headers = headers or {"Content-Type": "application/json"}
-        self._session: Optional[aiohttp.ClientSession] = None  # type: ignore
+        self._session: Optional[Any] = None
 
     async def connect(self) -> None:
         """Establish HTTP session."""
@@ -298,8 +298,8 @@ class WebhookPublisher(BasePublisher):
 
         if self._session is None or self._session.closed:
             self.status = PublisherStatus.CONNECTING
-            timeout = aiohttp.ClientTimeout(total=self.config.timeout)  # type: ignore
-            self._session = aiohttp.ClientSession(  # type: ignore
+            timeout = aiohttp.ClientTimeout(total=self.config.timeout)
+            self._session = aiohttp.ClientSession(
                 headers=self.headers,
                 timeout=timeout,
             )
@@ -462,6 +462,8 @@ class KafkaPublisherAdapter(BasePublisher):
             payload_size = len(json.dumps(data))
 
             # Send message
+            if self._producer is None:
+                raise RuntimeError("Producer not initialized")
             future = self._producer.send(self.topic, value=data)
             # Wait for acknowledgment in thread pool to avoid blocking event loop
             loop = asyncio.get_event_loop()
