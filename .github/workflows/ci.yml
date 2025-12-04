@@ -17,7 +17,6 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.10"
-  PIP_NO_CACHE_DIR: "1"
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
 jobs:
@@ -91,6 +90,7 @@ jobs:
           if-no-files-found: warn
       - name: Check dependencies for vulnerabilities
         run: |
+          set -o pipefail
           pip-audit --strict --desc on | tee pip-audit-report.txt
       - name: Upload pip-audit report
         if: always()
