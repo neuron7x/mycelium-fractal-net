@@ -535,11 +535,16 @@ class RabbitMQPublisher(BasePublisher):
         self.routing_key = routing_key
         self.connection: Optional[Any] = None
         self.channel: Optional[Any] = None
+        self._exchange: Optional[Any] = None
+        self._aio_pika: Optional[Any] = None
 
     async def connect(self) -> None:
         """Establish connection to RabbitMQ."""
         try:
             import aio_pika
+            
+            # Store for later use
+            self._aio_pika = aio_pika
         except ImportError:
             raise ImportError(
                 "aio-pika is required for RabbitMQ publisher. "
@@ -552,7 +557,8 @@ class RabbitMQPublisher(BasePublisher):
         async def _connect():
             self.connection = await aio_pika.connect_robust(self.amqp_url)
             self.channel = await self.connection.channel()
-            await self.channel.declare_exchange(
+            # Declare and store exchange for later use
+            self._exchange = await self.channel.declare_exchange(
                 self.exchange,
                 aio_pika.ExchangeType.TOPIC,
                 durable=True,
@@ -581,17 +587,13 @@ class RabbitMQPublisher(BasePublisher):
         if not self.channel:
             await self.connect()
 
-        try:
-            import aio_pika
-        except ImportError:
-            raise ImportError("aio-pika is required")
-
         async def _publish():
             payload = json.dumps(message).encode("utf-8")
-            await self.channel.default_exchange.publish(
-                aio_pika.Message(
+            # Use the declared exchange, not default exchange
+            await self._exchange.publish(
+                self._aio_pika.Message(
                     body=payload,
-                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                    delivery_mode=self._aio_pika.DeliveryMode.PERSISTENT,
                 ),
                 routing_key=self.routing_key,
             )

@@ -303,7 +303,13 @@ class KafkaConnector(BaseConnector):
         try:
             async for message in self.consumer:
                 self.metrics.messages_received += 1
-                self.metrics.bytes_received += len(message.value)
+                # Calculate bytes correctly for dict/JSON objects
+                message_bytes = (
+                    len(json.dumps(message.value).encode("utf-8"))
+                    if isinstance(message.value, dict)
+                    else len(str(message.value).encode("utf-8"))
+                )
+                self.metrics.bytes_received += message_bytes
                 self.metrics.last_success_time = datetime.now()
                 
                 logger.debug(
@@ -397,7 +403,7 @@ class FileFeedConnector(BaseConnector):
 
     async def _read_file(self, file_path: Path) -> Dict[str, Any]:
         """Read and parse file."""
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             if file_path.suffix == ".json":
                 return json.load(f)
             else:
