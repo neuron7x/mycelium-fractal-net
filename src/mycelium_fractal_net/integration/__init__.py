@@ -19,6 +19,8 @@ Components:
     - ws_schemas: WebSocket message schemas for streaming
     - ws_manager: WebSocket connection manager
     - ws_adapters: Adapters for streaming simulation data
+    - connectors: External data connectors (Kafka, REST, File, Database)
+    - publishers: Downstream event publishers (Kafka, Webhook, Redis, RabbitMQ)
 
 Usage:
     >>> from mycelium_fractal_net.integration import (
@@ -162,6 +164,28 @@ from .ws_schemas import (
     WSSubscribeRequest,
     WSUnsubscribeRequest,
 )
+from .connectors import (
+    BaseConnector,
+    ConnectorConfig,
+    ConnectorMetrics,
+    ConnectorStatus,
+    DatabaseConnector,
+    FileFeedConnector,
+    KafkaConnector,
+    RestApiConnector,
+    RetryStrategy,
+)
+from .publishers import (
+    BasePublisher,
+    DeliveryGuarantee,
+    KafkaPublisher,
+    PublisherConfig,
+    PublisherMetrics,
+    PublisherStatus,
+    RabbitMQPublisher,
+    RedisPublisher,
+    WebhookPublisher,
+)
 
 __all__ = [
     # Schemas
@@ -275,4 +299,24 @@ __all__ = [
     "BackpressureStrategy",
     "stream_features_adapter",
     "stream_simulation_live_adapter",
+    # Data Connectors
+    "BaseConnector",
+    "ConnectorConfig",
+    "ConnectorMetrics",
+    "ConnectorStatus",
+    "RetryStrategy",
+    "KafkaConnector",
+    "FileFeedConnector",
+    "RestApiConnector",
+    "DatabaseConnector",
+    # Event Publishers
+    "BasePublisher",
+    "PublisherConfig",
+    "PublisherMetrics",
+    "PublisherStatus",
+    "DeliveryGuarantee",
+    "KafkaPublisher",
+    "WebhookPublisher",
+    "RedisPublisher",
+    "RabbitMQPublisher",
 ]
