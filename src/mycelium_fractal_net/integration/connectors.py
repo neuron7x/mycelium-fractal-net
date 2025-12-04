@@ -30,12 +30,12 @@ from typing import Any, Callable, Dict, List, Optional, Union
 try:
     import aiohttp
 except ImportError:
-    aiohttp = None  # type: ignore
+    aiohttp = None
 
 try:
     from kafka import KafkaConsumer
 except ImportError:
-    KafkaConsumer = None  # type: ignore
+    KafkaConsumer = None
 
 from mycelium_fractal_net.integration.logging_config import get_logger
 
