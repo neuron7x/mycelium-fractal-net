@@ -5,7 +5,6 @@ Tests connectivity, retry logic, error handling, and metrics collection
 for REST, File, and Kafka connectors.
 """
 
-import asyncio
 import json
 import tempfile
 from pathlib import Path
@@ -14,7 +13,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from mycelium_fractal_net.integration.connectors import (
-    BaseConnector,
     ConnectorConfig,
     ConnectorStatus,
     FileConnector,

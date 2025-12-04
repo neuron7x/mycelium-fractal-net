@@ -15,7 +15,6 @@ import pytest
 from mycelium_fractal_net.integration.publishers import (
     FilePublisher,
     PublisherConfig,
-    PublisherStatus,
     RetryStrategy,
 )
 
