@@ -17,7 +17,6 @@ Reference: docs/MFN_INTEGRATION_GAPS.md#mfn-api-grpc
 """
 
 import argparse
-import asyncio
 import os
 import time
 from concurrent import futures
@@ -36,7 +35,7 @@ from mycelium_fractal_net import (
     run_mycelium_simulation_with_history,
     run_validation,
 )
-from mycelium_fractal_net.integration import ServiceContext, ExecutionMode, get_logger
+from mycelium_fractal_net.integration import ExecutionMode, ServiceContext, get_logger
 from mycelium_fractal_net.types import SimulationConfig
 
 logger = get_logger("grpc_server")
@@ -101,7 +100,6 @@ class MyceliumServicer(mycelium_pb2_grpc.MyceliumServiceServicer):
             logger.info(f"Validation request: seed={request.seed}, epochs={request.epochs}")
 
             # Run validation
-            ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
             result = run_validation(
                 seed=request.seed, epochs=request.epochs, grid_size=request.grid_size or 32
             )
