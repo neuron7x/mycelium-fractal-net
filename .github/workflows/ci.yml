@@ -12,8 +12,6 @@ concurrency:
 
 permissions:
   contents: read
-  actions: read
-  security-events: write
 
 env:
   PYTHON_VERSION: "3.10"
@@ -37,6 +35,7 @@ jobs:
             pyproject.toml
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install ruff mypy
           pip install -e ".[dev]"
@@ -56,7 +55,6 @@ jobs:
     permissions:
       contents: read
       security-events: write
-      actions: read
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -69,11 +67,13 @@ jobs:
             pyproject.toml
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install bandit safety pip-audit
           pip install -e ".[dev]"
       - name: Run Bandit security scan
         run: |
+          set -euo pipefail
           bandit -r src/ -ll -ii --exclude tests -f json -o bandit-report.json
           bandit -r src/ -ll -ii --exclude tests -f txt -o bandit-report.txt
       - name: Upload Bandit report
@@ -84,11 +84,11 @@ jobs:
           path: |
             bandit-report.json
             bandit-report.txt
-          retention-days: 30
+          retention-days: 14
           if-no-files-found: warn
       - name: Check dependencies for vulnerabilities
         run: |
-          set -o pipefail
+          set -euo pipefail
           pip-audit --strict --desc on | tee pip-audit-report.txt
       - name: Upload pip-audit report
         if: always()
@@ -96,7 +96,7 @@ jobs:
         with:
           name: pip-audit-report
           path: pip-audit-report.txt
-          retention-days: 30
+          retention-days: 14
           if-no-files-found: warn
       - name: Run security tests
         run: pytest tests/security/ -v --tb=short
@@ -123,6 +123,7 @@ jobs:
             pyproject.toml
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           pip install hypothesis scipy pytest-xdist
@@ -138,7 +139,7 @@ jobs:
         with:
           name: test-results-${{ matrix.python-version }}
           path: test-results.xml
-          retention-days: 30
+          retention-days: 14
           if-no-files-found: error
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -165,10 +166,13 @@ jobs:
             pyproject.toml
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install -e .
       - name: Run validation
-        run: python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
+        run: |
+          set -euo pipefail
+          python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
 
   benchmark:
     runs-on: ubuntu-latest
@@ -188,17 +192,20 @@ jobs:
             pyproject.toml
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install -e .
       - name: Run benchmarks
-        run: python benchmarks/benchmark_core.py | tee benchmark-results.txt
+        run: |
+          set -euo pipefail
+          python benchmarks/benchmark_core.py | tee benchmark-results.txt
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: benchmark-results.txt
-          retention-days: 30
+          retention-days: 14
           if-no-files-found: warn
 
   scientific-validation:
@@ -219,17 +226,20 @@ jobs:
             pyproject.toml
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install -e .
       - name: Run scientific validation
-        run: python validation/scientific_validation.py | tee scientific-validation-results.txt
+        run: |
+          set -euo pipefail
+          python validation/scientific_validation.py | tee scientific-validation-results.txt
       - name: Upload scientific validation results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: scientific-validation-results
           path: scientific-validation-results.txt
-          retention-days: 30
+          retention-days: 14
           if-no-files-found: warn
 
   scalability-test:
@@ -250,23 +260,27 @@ jobs:
             pyproject.toml
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
       - name: Run scalability benchmarks
         run: |
+          set -euo pipefail
           echo "=== Scalability Benchmarks ===" > scalability-results.txt
           python benchmarks/benchmark_scalability.py | tee -a scalability-results.txt
           echo "" >> scalability-results.txt
           echo "=== Stress Tests ===" >> scalability-results.txt
       - name: Run stress tests
-        run: pytest tests/perf/test_stress_scalability.py -v --tb=short | tee -a scalability-results.txt
+        run: |
+          set -euo pipefail
+          pytest tests/perf/test_stress_scalability.py -v --tb=short | tee -a scalability-results.txt
       - name: Upload scalability results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: scalability-results
           path: scalability-results.txt
-          retention-days: 30
+          retention-days: 14
           if-no-files-found: warn
 
   all-checks-passed:
