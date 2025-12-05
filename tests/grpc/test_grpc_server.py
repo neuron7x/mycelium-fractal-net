@@ -14,9 +14,9 @@ Reference: docs/MFN_GRPC_API.md
 import time
 from concurrent import futures
 
-import grpc
 import pytest
 
+import grpc
 from mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
 from mycelium_fractal_net.grpc.server import MyceliumServicer
 
