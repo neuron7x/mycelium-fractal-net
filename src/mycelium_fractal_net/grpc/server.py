@@ -26,6 +26,7 @@ import grpc
 import numpy as np
 
 from mycelium_fractal_net import (
+    ValidationConfig,
     compute_nernst_potential,
     estimate_fractal_dimension,
     run_mycelium_simulation_with_history,
@@ -96,10 +97,13 @@ class MyceliumServicer(mycelium_pb2_grpc.MyceliumServiceServicer):
         try:
             logger.info(f"Validation request: seed={request.seed}, epochs={request.epochs}")
 
-            # Run validation
-            result = run_validation(
-                seed=request.seed, epochs=request.epochs, grid_size=request.grid_size or 32
+            # Run validation with ValidationConfig
+            cfg = ValidationConfig(
+                seed=request.seed,
+                epochs=request.epochs,
+                grid_size=request.grid_size or 32,
             )
+            result = run_validation(cfg)
 
             response = mycelium_pb2.ValidateResponse(
                 loss_start=result.get("loss_start", 0.0),
