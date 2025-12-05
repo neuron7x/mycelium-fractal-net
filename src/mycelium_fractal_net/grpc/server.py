@@ -25,18 +25,15 @@ from typing import Iterator
 import grpc
 import numpy as np
 
-# Import generated protobuf code
-from src.mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
-
-# Import MFN core functionality
 from mycelium_fractal_net import (
     compute_nernst_potential,
     estimate_fractal_dimension,
     run_mycelium_simulation_with_history,
     run_validation,
 )
-from mycelium_fractal_net.integration import ExecutionMode, ServiceContext, get_logger
+from mycelium_fractal_net.integration import get_logger
 from mycelium_fractal_net.types import SimulationConfig
+from src.mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
 
 logger = get_logger("grpc_server")
 
@@ -132,7 +129,8 @@ class MyceliumServicer(mycelium_pb2_grpc.MyceliumServiceServicer):
 
         try:
             logger.info(
-                f"Simulation request: seed={request.seed}, grid={request.grid_size}, steps={request.steps}"
+                f"Simulation request: seed={request.seed}, "
+                f"grid={request.grid_size}, steps={request.steps}"
             )
 
             # Create simulation config
@@ -175,7 +173,8 @@ class MyceliumServicer(mycelium_pb2_grpc.MyceliumServiceServicer):
             )
 
             logger.info(
-                f"Simulation completed: growth_events={response.growth_events}, fractal_dim={fractal_dim:.3f}"
+                f"Simulation completed: growth_events={response.growth_events}, "
+                f"fractal_dim={fractal_dim:.3f}"
             )
             return response
 
@@ -194,7 +193,8 @@ class MyceliumServicer(mycelium_pb2_grpc.MyceliumServiceServicer):
 
         try:
             logger.info(
-                f"Streaming simulation request: seed={request.seed}, grid={request.grid_size}, steps={request.steps}"
+                f"Streaming simulation request: seed={request.seed}, "
+                f"grid={request.grid_size}, steps={request.steps}"
             )
 
             # Create simulation config
@@ -312,7 +312,10 @@ def serve(port: int = 50051, max_workers: int = 10, require_auth: bool = False, 
     server.add_insecure_port(f"[::]:{port}")
     server.start()
 
-    logger.info(f"gRPC server started on port {port} (max_workers={max_workers}, auth={require_auth})")
+    logger.info(
+        f"gRPC server started on port {port} "
+        f"(max_workers={max_workers}, auth={require_auth})"
+    )
     print(f"MyceliumFractalNet gRPC server listening on port {port}")
 
     try:

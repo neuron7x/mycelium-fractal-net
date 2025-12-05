@@ -11,16 +11,13 @@ Verifies gRPC service functionality including:
 Reference: docs/MFN_GRPC_API.md
 """
 
-import pytest
-import grpc
-from concurrent import futures
-import threading
 import time
+from concurrent import futures
 
-# Import generated protobuf code
+import grpc
+import pytest
+
 from src.mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
-
-# Import server implementation
 from src.mycelium_fractal_net.grpc.server import MyceliumServicer
 
 
@@ -257,7 +254,7 @@ class TestGRPCErrorHandling:
         )
         
         try:
-            response = grpc_stub.ComputeNernst(request, timeout=5.0)
+            grpc_stub.ComputeNernst(request, timeout=5.0)
             # Should either return error or handle gracefully
         except grpc.RpcError as e:
             # Expected error
