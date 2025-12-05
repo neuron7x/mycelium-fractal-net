@@ -31,13 +31,14 @@ def grpc_server():
     servicer = MyceliumServicer(require_auth=False, api_key="")
     mycelium_pb2_grpc.add_MyceliumServiceServicer_to_server(servicer, server)
     
-    port = server.add_insecure_port('[::]:50052')  # Use different port for tests
+    # Add port and get actual bound port
+    actual_port = server.add_insecure_port('[::]:50052')  # Use different port for tests
     server.start()
     
     # Wait for server to be ready
     time.sleep(0.5)
     
-    yield port
+    yield actual_port
     
     server.stop(grace=1)
 
@@ -45,6 +46,7 @@ def grpc_server():
 @pytest.fixture
 def grpc_stub(grpc_server):
     """Create gRPC stub for testing."""
+    # grpc_server is the actual bound port number
     channel = grpc.insecure_channel(f'localhost:{grpc_server}')
     stub = mycelium_pb2_grpc.MyceliumServiceStub(channel)
     yield stub
