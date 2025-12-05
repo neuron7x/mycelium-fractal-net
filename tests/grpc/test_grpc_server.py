@@ -21,9 +21,7 @@ import time
 from src.mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
 
 # Import server implementation
-import sys
-sys.path.insert(0, '/home/runner/work/mycelium-fractal-net/mycelium-fractal-net')
-from grpc_server import MyceliumServicer
+from src.mycelium_fractal_net.grpc.server import MyceliumServicer
 
 
 @pytest.fixture(scope="module")

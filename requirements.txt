@@ -36,9 +36,10 @@ isort>=5.12.0
 locust>=2.20.0
 
 # gRPC & Protobuf
-grpcio>=1.60.0
-grpcio-tools>=1.60.0
-protobuf>=4.25.0
+# Note: grpcio version aligned with generated protobuf code
+grpcio>=1.60.0,<1.70.0
+grpcio-tools>=1.60.0,<1.70.0
+protobuf>=4.25.0,<6.0.0
 
 # Kafka Integration
 kafka-python>=2.0.2
