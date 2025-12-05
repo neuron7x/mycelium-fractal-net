@@ -10,5 +10,5 @@ Usage:
 """
 
 if __name__ == "__main__":
-    from src.mycelium_fractal_net.grpc.server import main
+    from mycelium_fractal_net.grpc.server import main
     main()

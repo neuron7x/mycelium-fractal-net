@@ -17,8 +17,8 @@ from concurrent import futures
 import grpc
 import pytest
 
-from src.mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
-from src.mycelium_fractal_net.grpc.server import MyceliumServicer
+from mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
+from mycelium_fractal_net.grpc.server import MyceliumServicer
 
 
 @pytest.fixture(scope="module")

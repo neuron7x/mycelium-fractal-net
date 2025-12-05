@@ -31,9 +31,9 @@ from mycelium_fractal_net import (
     run_mycelium_simulation_with_history,
     run_validation,
 )
+from mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
 from mycelium_fractal_net.integration import get_logger
 from mycelium_fractal_net.types import SimulationConfig
-from src.mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
 
 logger = get_logger("grpc_server")
 
