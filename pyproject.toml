@@ -22,7 +22,7 @@ dependencies = [
   "websockets>=12.0",
   "grpcio>=1.60.0,<1.70.0",
   "grpcio-tools>=1.60.0,<1.70.0",
-  "protobuf>=4.25.0,<6.0.0",
+  "protobuf>=5.29.0,<6.0.0",
   "kafka-python>=2.0.2",
   "aiokafka>=0.10.0",
 ]
@@ -78,6 +78,10 @@ strict = true
 ignore_missing_imports = true
 namespace_packages = true
 pretty = true
+exclude = [
+    "src/mycelium_fractal_net/grpc/protos/.*_pb2\\.pyi?$",
+    "src/mycelium_fractal_net/grpc/protos/.*_pb2_grpc\\.pyi?$",
+]
 
 [tool.coverage.run]
 source = ["mycelium_fractal_net"]
