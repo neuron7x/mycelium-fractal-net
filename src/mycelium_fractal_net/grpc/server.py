@@ -26,6 +26,7 @@ import grpc
 import numpy as np
 
 from mycelium_fractal_net import (
+    SimulationConfig,
     ValidationConfig,
     compute_nernst_potential,
     estimate_fractal_dimension,
@@ -34,7 +35,6 @@ from mycelium_fractal_net import (
 )
 from mycelium_fractal_net.grpc.protos import mycelium_pb2, mycelium_pb2_grpc
 from mycelium_fractal_net.integration import get_logger
-from mycelium_fractal_net.types import SimulationConfig
 
 logger = get_logger("grpc_server")
 
@@ -137,19 +137,19 @@ class MyceliumServicer(mycelium_pb2_grpc.MyceliumServiceServicer):
                 f"grid={request.grid_size}, steps={request.steps}"
             )
 
-            # Create simulation config
+            # Create simulation config (no 'gamma' parameter exists in SimulationConfig)
             config = SimulationConfig(
                 seed=request.seed,
                 grid_size=request.grid_size or 64,
                 steps=request.steps or 100,
                 turing_enabled=request.turing_enabled,
-                alpha=request.alpha if request.alpha > 0 else 0.1,
-                gamma=request.gamma if request.gamma > 0 else 0.8,
+                alpha=request.alpha if request.alpha > 0 else 0.18,
             )
 
             # Run simulation
             result = run_mycelium_simulation_with_history(config)
-            field_history = result.field_history
+            # Use 'history' attribute, not 'field_history'
+            field_history = result.history if result.history is not None else [result.field]
 
             # Calculate statistics
             field_mean = [float(np.mean(field)) for field in field_history]
@@ -201,19 +201,19 @@ class MyceliumServicer(mycelium_pb2_grpc.MyceliumServiceServicer):
                 f"grid={request.grid_size}, steps={request.steps}"
             )
 
-            # Create simulation config
+            # Create simulation config (no 'gamma' parameter exists in SimulationConfig)
             config = SimulationConfig(
                 seed=request.seed,
                 grid_size=request.grid_size or 64,
                 steps=request.steps or 100,
                 turing_enabled=request.turing_enabled,
-                alpha=request.alpha if request.alpha > 0 else 0.1,
-                gamma=request.gamma if request.gamma > 0 else 0.8,
+                alpha=request.alpha if request.alpha > 0 else 0.18,
             )
 
             # Run simulation with history
             result = run_mycelium_simulation_with_history(config)
-            field_history = result.field_history
+            # Use 'history' attribute, not 'field_history'
+            field_history = result.history if result.history is not None else [result.field]
             total_steps = len(field_history)
 
             # Stream updates for each step
@@ -299,7 +299,9 @@ class MyceliumServicer(mycelium_pb2_grpc.MyceliumServiceServicer):
             return mycelium_pb2.FederatedAggregateResponse()
 
 
-def serve(port: int = 50051, max_workers: int = 10, require_auth: bool = False, api_key: str = ""):
+def serve(
+    port: int = 50051, max_workers: int = 10, require_auth: bool = False, api_key: str = ""
+) -> None:
     """
     Start the gRPC server.
 
@@ -329,7 +331,7 @@ def serve(port: int = 50051, max_workers: int = 10, require_auth: bool = False, 
         server.stop(grace=5)
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="MyceliumFractalNet gRPC Server")
     parser.add_argument("--port", type=int, default=50051, help="Port to listen on")
