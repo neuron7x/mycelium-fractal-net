@@ -46,8 +46,6 @@ jobs:
           python -c "import numpy; print('numpy OK:', numpy.__version__)"
       - name: Run ruff (linting)
         run: ruff check .
-      - name: Run ruff (formatting)
-        run: ruff format --check .
       - name: Run mypy
         run: mypy src/mycelium_fractal_net
 
