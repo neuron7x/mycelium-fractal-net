@@ -168,6 +168,8 @@ nernst_symbolic_mV      : -89.010669
 
 ## API
 
+### REST API (FastAPI)
+
 ```bash
 uvicorn api:app --host 0.0.0.0 --port 8000
 ```
@@ -180,6 +182,22 @@ uvicorn api:app --host 0.0.0.0 --port 8000
 | `/simulate` | POST | `{seed, grid_size, steps}` | `{field_stats, growth_events}` |
 | `/nernst` | POST | `{z_valence, concentration_out_molar, concentration_in_molar, temperature_k}` | `{potential_mV}` |
 | `/federated/aggregate` | POST | `{gradients[], num_clusters, byzantine_fraction}` | `{aggregated_gradient}` |
+
+### gRPC API (High Performance)
+
+```bash
+python grpc_server.py --port 50051
+```
+
+**Service Methods**:
+- `HealthCheck` — Server health and uptime
+- `Validate` — Run validation cycle
+- `Simulate` — Simulate mycelium field
+- `SimulateStream` — Real-time simulation updates (streaming)
+- `ComputeNernst` — Calculate Nernst potential
+- `AggregateFederated` — Federated gradient aggregation
+
+📋 [Full gRPC API Documentation](docs/MFN_GRPC_API.md)
 
 ### Production Features
 
@@ -254,6 +272,61 @@ pip-audit --strict
 ```
 
 📋 [Full Security Documentation](docs/MFN_SECURITY.md)
+
+---
+
+## Integration & Data Pipelines
+
+MyceliumFractalNet provides comprehensive connectors and publishers for integrating with external systems:
+
+### Upstream Connectors (Data Sources)
+
+```python
+from mycelium_fractal_net.integration.connectors import (
+    RESTConnector,     # Pull from HTTP APIs
+    KafkaConnector,    # Consume from Kafka topics
+    FileFeedConnector  # Watch file system
+)
+
+# REST API connector
+connector = RESTConnector(base_url="https://api.example.com")
+await connector.connect()
+data = await connector.fetch("/data/latest")
+
+# Kafka consumer
+connector = KafkaConnector(
+    bootstrap_servers=["localhost:9092"],
+    topic="mfn-input"
+)
+await connector.connect()
+async for message in connector.consume():
+    process_message(message)
+```
+
+### Downstream Publishers (Data Sinks)
+
+```python
+from mycelium_fractal_net.integration.publishers import (
+    WebhookPublisher,  # POST to HTTP endpoints
+    KafkaPublisher,    # Produce to Kafka topics
+    FilePublisher      # Write to files (JSON/Parquet)
+)
+
+# Webhook publisher
+publisher = WebhookPublisher(webhook_url="https://api.example.com/webhook")
+await publisher.connect()
+await publisher.publish({"event": "simulation_complete", "data": {...}})
+
+# Kafka producer
+publisher = KafkaPublisher(
+    bootstrap_servers=["localhost:9092"],
+    topic="mfn-results"
+)
+await publisher.connect()
+await publisher.publish({"result": {...}})
+```
+
+📋 [Full Connectors & Publishers Guide](docs/MFN_CONNECTORS_GUIDE_UPDATED.md)
 
 ---
 

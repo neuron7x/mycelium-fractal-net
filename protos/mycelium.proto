@@ -1,0 +1,123 @@
+syntax = "proto3";
+
+package mycelium;
+
+// MyceliumFractalNet gRPC Service
+// Provides high-performance RPC interface for fractal neural network operations
+service MyceliumService {
+  // Run validation cycle
+  rpc Validate(ValidateRequest) returns (ValidateResponse);
+  
+  // Simulate mycelium field
+  rpc Simulate(SimulateRequest) returns (SimulateResponse);
+  
+  // Stream simulation updates in real-time
+  rpc SimulateStream(SimulateRequest) returns (stream SimulationUpdate);
+  
+  // Compute Nernst potential
+  rpc ComputeNernst(NernstRequest) returns (NernstResponse);
+  
+  // Aggregate federated learning gradients
+  rpc AggregateFederated(FederatedAggregateRequest) returns (FederatedAggregateResponse);
+  
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Validation request
+message ValidateRequest {
+  int32 seed = 1;
+  int32 epochs = 2;
+  int32 grid_size = 3;
+}
+
+// Validation response
+message ValidateResponse {
+  double loss_start = 1;
+  double loss_final = 2;
+  double loss_drop = 3;
+  double pot_min_mV = 4;
+  double pot_max_mV = 5;
+  double lyapunov_exponent = 6;
+  double nernst_symbolic_mV = 7;
+}
+
+// Simulation request
+message SimulateRequest {
+  int32 seed = 1;
+  int32 grid_size = 2;
+  int32 steps = 3;
+  bool turing_enabled = 4;
+  double alpha = 5;
+  double gamma = 6;
+}
+
+// Simulation response
+message SimulateResponse {
+  repeated double field_mean = 1;
+  repeated double field_std = 2;
+  int32 growth_events = 3;
+  double fractal_dimension = 4;
+  FieldStats field_stats = 5;
+}
+
+// Simulation streaming update
+message SimulationUpdate {
+  int32 step = 1;
+  int32 total_steps = 2;
+  double pot_mean_mV = 3;
+  double pot_std_mV = 4;
+  int32 growth_events = 5;
+  bool completed = 6;
+}
+
+// Field statistics
+message FieldStats {
+  double mean = 1;
+  double std = 2;
+  double min = 3;
+  double max = 4;
+}
+
+// Nernst potential request
+message NernstRequest {
+  int32 z_valence = 1;
+  double concentration_out_molar = 2;
+  double concentration_in_molar = 3;
+  double temperature_k = 4;
+}
+
+// Nernst potential response
+message NernstResponse {
+  double potential_mV = 1;
+}
+
+// Federated learning aggregation request
+message FederatedAggregateRequest {
+  repeated Gradient gradients = 1;
+  int32 num_clusters = 2;
+  double byzantine_fraction = 3;
+}
+
+// Gradient data
+message Gradient {
+  repeated double values = 1;
+}
+
+// Federated aggregation response
+message FederatedAggregateResponse {
+  repeated double aggregated_gradient = 1;
+  int32 num_accepted = 2;
+  int32 num_rejected = 3;
+}
+
+// Health check request
+message HealthCheckRequest {
+}
+
+// Health check response
+message HealthCheckResponse {
+  string status = 1;
+  string version = 2;
+  int64 uptime_seconds = 3;
+}

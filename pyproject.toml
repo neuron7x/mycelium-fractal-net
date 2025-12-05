@@ -20,6 +20,11 @@ dependencies = [
   "prometheus_client>=0.17.0",
   "cryptography>=44.0.0",
   "websockets>=12.0",
+  "grpcio>=1.60.0",
+  "grpcio-tools>=1.60.0",
+  "protobuf>=4.25.0",
+  "kafka-python>=2.0.2",
+  "aiokafka>=0.10.0",
 ]
 
 [project.optional-dependencies]
