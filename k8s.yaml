@@ -136,22 +136,25 @@ data:
     }
 ---
 # Secret for API keys and sensitive configuration
-# Note: Values are base64 encoded. Create with:
+# IMPORTANT: Create this secret manually before deploying!
+#
+# Create secret with kubectl:
 #   kubectl create secret generic mfn-secrets \
 #     --from-literal=api-key=$(openssl rand -base64 32) \
 #     -n mycelium-fractal-net
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mfn-secrets
-  namespace: mycelium-fractal-net
-type: Opaque
-data:
-  # WARNING: This is a placeholder value! MUST be replaced before production deployment!
-  # Generate a secure key with: openssl rand -base64 32 | base64
-  # Or create secret with kubectl command above (recommended)
-  # Placeholder decodes to: "placeholder-api-key" (DO NOT USE IN PRODUCTION!)
-  api-key: cGxhY2Vob2xkZXItYXBpLWtleQ==
+#
+# Or create from a file:
+#   echo -n "your-secret-api-key" > api-key.txt
+#   kubectl create secret generic mfn-secrets \
+#     --from-file=api-key=api-key.txt \
+#     -n mycelium-fractal-net
+#   rm api-key.txt
+#
+# Verify secret was created:
+#   kubectl get secret mfn-secrets -n mycelium-fractal-net
+#
+# The Secret resource is intentionally NOT included in this file for security.
+# Never commit secrets to version control!
 ---
 # Ingress for external HTTP(S) access
 # Note: Requires an ingress controller (nginx, traefik, etc.)

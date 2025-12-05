@@ -1,0 +1,72 @@
+# Version Control
+.git
+.gitignore
+.github
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# Testing
+tests
+.pytest_cache
+.hypothesis
+.coverage
+coverage.xml
+htmlcov
+.tox
+
+# Type checking and linting
+.mypy_cache
+.ruff_cache
+.pylint.d
+
+# Development
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Documentation
+docs
+*.md
+!README.md
+notebooks
+
+# Data and outputs
+data
+*.parquet
+*.csv
+*.json
+!configs/*.json
+
+# Environment
+.env
+.env.local
+.venv
+venv
+ENV
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Planning and project management
+planning
+assets
+COMPLETION_REPORT.md
+
+# Validation and benchmarks (not needed in production image)
+validation
+benchmarks
+load_tests
+examples

@@ -43,12 +43,13 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["mycelium_fractal_net", "analytics", "experiments"]
+# Use automatic package discovery from src/ directory
+# This ensures only the canonical package structure is included
+packages = {find = {where = ["src"]}}
 
 [tool.setuptools.package-dir]
-mycelium_fractal_net = "src/mycelium_fractal_net"
-analytics = "analytics"
-experiments = "experiments"
+# All packages are under src/
+"" = "src"
 
 [tool.pytest.ini_options]
 addopts = "-q --disable-warnings"
