@@ -1,0 +1,22 @@
+# Kustomize configuration for MyceliumFractalNet base deployment
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - secrets.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - network-policy.yaml
+  - ingress.yaml
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: mycelium-fractal-net
+  app.kubernetes.io/version: "4.1"
+  app.kubernetes.io/managed-by: kustomize
+
+# Namespace for all resources
+namespace: mycelium-fractal-net

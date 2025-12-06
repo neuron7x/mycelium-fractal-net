@@ -1,0 +1,173 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mycelium-fractal-net-hpa
+  namespace: mycelium-fractal-net
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mycelium-fractal-net
+  minReplicas: 3
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+# ConfigMap for model configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mycelium-config
+  namespace: mycelium-fractal-net
+data:
+  config.json: |
+    {
+      "seed": 42,
+      "epochs": 1,
+      "batch_size": 4,
+      "grid_size": 64,
+      "steps": 64,
+      "turing_enabled": true,
+      "quantum_jitter": false,
+      "use_sparse_attention": true,
+      "use_stdp": true
+    }
+---
+# Secret for API keys and sensitive configuration
+# Note: Values are base64 encoded. Create with:
+#   kubectl create secret generic mfn-secrets \
+#     --from-literal=api-key=$(openssl rand -base64 32) \
+#     -n mycelium-fractal-net
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mfn-secrets
+  namespace: mycelium-fractal-net
+type: Opaque
+data:
+  # WARNING: This is a placeholder value! MUST be replaced before production deployment!
+  # Generate a secure key with: openssl rand -base64 32 | base64
+  # Or create secret with kubectl command above (recommended)
+  # Placeholder decodes to: "placeholder-api-key" (DO NOT USE IN PRODUCTION!)
+  api-key: cGxhY2Vob2xkZXItYXBpLWtleQ==
+---
+# Ingress for external HTTP(S) access
+# Note: Requires an ingress controller (nginx, traefik, etc.)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mycelium-ingress
+  namespace: mycelium-fractal-net
+  annotations:
+    # Nginx ingress annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    # CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    # Cert-manager for automatic TLS
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - mfn.example.com
+      secretName: mfn-tls-secret
+  rules:
+    - host: mfn.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mycelium-fractal-net
+                port:
+                  number: 80
+---
+# NetworkPolicy to restrict pod-to-pod communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mfn-network-policy
+  namespace: mycelium-fractal-net
+spec:
+  podSelector:
+    matchLabels:
+      app: mycelium-fractal-net
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+    # Allow traffic from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow external HTTPS (for API calls if needed)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+---
+# PodDisruptionBudget to ensure availability during disruptions
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mfn-pdb
+  namespace: mycelium-fractal-net
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: mycelium-fractal-net
+---
+# ServiceMonitor for Prometheus metrics scraping
+# Note: Requires prometheus-operator
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mfn-metrics
+  namespace: mycelium-fractal-net
+  labels:
+    app: mycelium-fractal-net
+spec:
+  selector:
+    matchLabels:
+      app: mycelium-fractal-net
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s

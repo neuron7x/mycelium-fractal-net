@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mycelium-fractal-net
+  namespace: mycelium-fractal-net
+spec:
+  selector:
+    app: mycelium-fractal-net
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
