@@ -275,9 +275,48 @@ def _box_counting_dimension(
     return fractal_dim, r_squared
 
 
+def compute_box_counting_dimension(
+    field: NDArray[np.floating],
+    threshold: float | None = None,
+    min_box_size: int = DEFAULT_MIN_BOX_SIZE,
+    num_scales: int = DEFAULT_NUM_SCALES,
+) -> Tuple[float, float]:
+    """
+    Compute box-counting fractal dimension (public API).
+
+    Parameters
+    ----------
+    field : NDArray
+        2D field in Volts.
+    threshold : float | None
+        Threshold for binarization. If None, uses median.
+    min_box_size : int
+        Minimum box size. Default 2.
+    num_scales : int
+        Number of scales. Default 5.
+
+    Returns
+    -------
+    tuple[float, float]
+        (D_box, D_r2) - dimension and regression quality.
+    """
+    if threshold is None:
+        threshold = float(np.median(field))
+    
+    binary_field = field > threshold
+    max_box_size = field.shape[0] // 2 if field.shape[0] >= 4 else field.shape[0]
+    
+    return _box_counting_dimension(
+        binary_field,
+        min_box_size=min_box_size,
+        max_box_size=max_box_size,
+        num_scales=num_scales,
+    )
+
+
 def compute_fractal_features(
     field: NDArray[np.floating],
-    config: FeatureConfig,
+    config: FeatureConfig | None = None,
 ) -> Tuple[float, float]:
     """
     Compute fractal features (D_box, D_r2).
@@ -294,6 +333,9 @@ def compute_fractal_features(
     tuple[float, float]
         (D_box, D_r2) - fractal dimension and R² quality.
     """
+    if config is None:
+        config = FeatureConfig()
+    
     # Convert to binary at -60mV threshold
     threshold_v = config.threshold_low_mv / 1000.0
     binary = field > threshold_v
@@ -308,7 +350,7 @@ def compute_fractal_features(
 
 def compute_basic_stats(
     field: NDArray[np.floating],
-) -> Tuple[float, float, float, float, float, float]:
+) -> dict[str, float]:
     """
     Compute basic field statistics.
 
@@ -319,8 +361,8 @@ def compute_basic_stats(
 
     Returns
     -------
-    tuple[float, ...]
-        (V_min, V_max, V_mean, V_std, V_skew, V_kurt) in mV.
+    dict[str, float]
+        Dictionary with keys: min, max, mean, std, skew, kurt (all in mV).
     """
     # Convert to mV
     field_mv = field * 1000.0
@@ -341,7 +383,14 @@ def compute_basic_stats(
         V_skew = 0.0
         V_kurt = 0.0
 
-    return V_min, V_max, V_mean, V_std, V_skew, V_kurt
+    return {
+        "min": V_min,
+        "max": V_max,
+        "mean": V_mean,
+        "std": V_std,
+        "skew": V_skew,
+        "kurt": V_kurt,
+    }
 
 
 def compute_temporal_features(
@@ -653,7 +702,13 @@ def compute_features(
 
     # Compute all feature groups
     D_box, D_r2 = compute_fractal_features(field, config)
-    V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(field)
+    basic_stats = compute_basic_stats(field)
+    V_min = basic_stats["min"]
+    V_max = basic_stats["max"]
+    V_mean = basic_stats["mean"]
+    V_std = basic_stats["std"]
+    V_skew = basic_stats["skew"]
+    V_kurt = basic_stats["kurt"]
     dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
     f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
         field, config

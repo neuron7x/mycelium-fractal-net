@@ -26,12 +26,13 @@ Reference: docs/MFN_DATA_PIPELINES.md
 from __future__ import annotations
 
 import argparse
+import datetime
 import logging
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Iterator
 
 import numpy as np
 
@@ -43,6 +44,7 @@ from mycelium_fractal_net.analytics import FeatureConfig, FeatureVector, compute
 from mycelium_fractal_net.core import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
+    ReactionDiffusionMetrics,
 )
 from mycelium_fractal_net.pipelines import (
     get_preset_config,
@@ -86,6 +88,160 @@ class SweepConfig:
             self.alpha_values = [0.10, 0.15, 0.20]
         if self.turing_values is None:
             self.turing_values = [True, False]
+
+
+@dataclass
+class ConfigSampler:
+    """
+    Generates valid SimulationConfig instances within specified parameter ranges.
+
+    All parameters are constrained to valid ranges from MFN_MATH_MODEL.md:
+    - alpha (diffusion): Must be < 0.25 for CFL stability
+    - turing_threshold: Must be in [0, 1]
+    - grid_size: Minimum 4 for meaningful simulation
+
+    Attributes
+    ----------
+    grid_sizes : list[int]
+        Grid sizes to sample from. Default [32, 64].
+    steps_range : tuple[int, int]
+        (min, max) steps to sample. Default (50, 200).
+    alpha_range : tuple[float, float]
+        (min, max) diffusion coefficient. Default (0.10, 0.20).
+    turing_values : list[bool]
+        Turing enabled values to sample. Default [True, False].
+    spike_prob_range : tuple[float, float]
+        (min, max) spike probability. Default (0.15, 0.35).
+    turing_threshold_range : tuple[float, float]
+        (min, max) Turing threshold. Default (0.65, 0.85).
+    base_seed : int
+        Base seed for reproducibility. Default 42.
+    """
+
+    grid_sizes: list[int] = field(default_factory=lambda: [32, 64])
+    steps_range: tuple[int, int] = (50, 200)
+    alpha_range: tuple[float, float] = (0.10, 0.20)
+    turing_values: list[bool] = field(default_factory=lambda: [True, False])
+    spike_prob_range: tuple[float, float] = (0.15, 0.35)
+    turing_threshold_range: tuple[float, float] = (0.65, 0.85)
+    base_seed: int = 42
+
+    def __post_init__(self) -> None:
+        """Validate parameter ranges."""
+        if self.alpha_range[1] >= 0.25:
+            raise ValueError(
+                f"alpha_range max ({self.alpha_range[1]}) must be < 0.25 for CFL stability"
+            )
+        if any(g < 4 for g in self.grid_sizes):
+            raise ValueError("All grid_sizes must be >= 4")
+        if self.steps_range[0] < 1:
+            raise ValueError("steps_range min must be >= 1")
+
+    def sample(
+        self,
+        num_samples: int,
+        rng: np.random.Generator | None = None,
+    ) -> Iterator[Dict[str, Any]]:
+        """
+        Generate num_samples configuration dictionaries.
+
+        Parameters
+        ----------
+        num_samples : int
+            Number of configurations to generate.
+        rng : np.random.Generator | None
+            Random generator. If None, uses base_seed.
+
+        Yields
+        ------
+        dict
+            Configuration dictionary for each sample.
+        """
+        if rng is None:
+            rng = np.random.default_rng(self.base_seed)
+
+        for sim_id in range(num_samples):
+            # Sample parameters
+            grid_size = int(rng.choice(self.grid_sizes))
+            steps = int(rng.integers(self.steps_range[0], self.steps_range[1] + 1))
+            alpha = float(rng.uniform(self.alpha_range[0], self.alpha_range[1]))
+            turing_enabled = bool(rng.choice(self.turing_values))
+            spike_prob = float(
+                rng.uniform(self.spike_prob_range[0], self.spike_prob_range[1])
+            )
+            turing_threshold = float(
+                rng.uniform(self.turing_threshold_range[0], self.turing_threshold_range[1])
+            )
+
+            # Generate reproducible seed for this simulation
+            random_seed = self.base_seed + sim_id
+
+            yield {
+                "sim_id": sim_id,
+                "grid_size": grid_size,
+                "steps": steps,
+                "alpha": alpha,
+                "turing_enabled": turing_enabled,
+                "spike_probability": spike_prob,
+                "turing_threshold": turing_threshold,
+                "random_seed": random_seed,
+            }
+
+
+# Version constant
+MFN_VERSION = "4.1.0"
+
+
+def to_record(
+    config: Dict[str, Any],
+    features: FeatureVector,
+    *,
+    metrics: ReactionDiffusionMetrics,
+    timestamp: str | None = None,
+) -> Dict[str, Any]:
+    """
+    Convert simulation config and features to a flat dataset record.
+
+    Parameters
+    ----------
+    config : dict
+        Simulation configuration dictionary.
+    features : FeatureVector
+        Extracted features from simulation.
+    metrics : ReactionDiffusionMetrics
+        Simulation metrics.
+    timestamp : str | None
+        ISO timestamp. If None, uses current time.
+
+    Returns
+    -------
+    dict
+        Flat dictionary with all record fields.
+    """
+    if timestamp is None:
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+    record: Dict[str, Any] = {
+        # Configuration fields
+        "sim_id": config["sim_id"],
+        "random_seed": config["random_seed"],
+        "grid_size": config["grid_size"],
+        "steps": config["steps"],
+        "alpha": config["alpha"],
+        "turing_enabled": config["turing_enabled"],
+        "spike_probability": config.get("spike_probability", 0.25),
+        "turing_threshold": config.get("turing_threshold", 0.75),
+        # Feature fields (from FeatureVector)
+        **features.to_dict(),
+        # Metadata fields
+        "mfn_version": MFN_VERSION,
+        "timestamp": timestamp,
+        "growth_events": metrics.growth_events,
+        "turing_activations": metrics.turing_activations,
+        "clamping_events": metrics.clamping_events,
+    }
+
+    return record
 
 
 def _create_default_sweep() -> SweepConfig:
@@ -142,6 +298,12 @@ def generate_parameter_configs(
     """
     configs = []
     sim_id = 0
+
+    # Ensure all sweep parameters are initialized (should be guaranteed by __post_init__)
+    assert sweep.grid_sizes is not None
+    assert sweep.steps_list is not None
+    assert sweep.alpha_values is not None
+    assert sweep.turing_values is not None
 
     for grid_size in sweep.grid_sizes:
         for steps in sweep.steps_list:

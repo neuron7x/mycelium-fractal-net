@@ -66,7 +66,10 @@ jobs:
       - name: Run Bandit security scan
         run: bandit -r src/ -ll -ii --exclude tests -c .bandit
       - name: Check dependencies for vulnerabilities
-        run: pip-audit --strict --desc on
+        run: |
+          # bcc is a system package not on PyPI, skip it
+          pip list --format=freeze | grep -v "^bcc==" > /tmp/requirements-audit.txt
+          pip-audit --strict --desc on -r /tmp/requirements-audit.txt
       - name: Run security tests
         run: pytest tests/security/ -v --tb=short
 

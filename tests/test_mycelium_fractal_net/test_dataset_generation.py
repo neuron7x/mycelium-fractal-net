@@ -372,7 +372,6 @@ class TestToRecord:
     def test_creates_flat_record(self) -> None:
         """to_record should create a flat dictionary with all fields."""
         from mycelium_fractal_net.analytics import FeatureVector
-
         from mycelium_fractal_net.core import ReactionDiffusionMetrics
 
         config = {
