@@ -328,7 +328,7 @@ def generate_parameter_configs(
 
 def run_simulation(
     params: dict[str, Any],
-) -> tuple[np.ndarray, dict[str, Any]] | None:
+) -> tuple[np.ndarray, ReactionDiffusionMetrics] | None:
     """
     Run a single simulation with given parameters.
 
@@ -357,67 +357,110 @@ def run_simulation(
             return_history=True,
         )
 
-        metadata = {
-            "growth_events": metrics.growth_events,
-            "turing_activations": metrics.turing_activations,
-            "clamping_events": metrics.clamping_events,
-        }
-
-        return history, metadata
+        return history, metrics
 
     except Exception as e:
         logger.warning(f"Simulation failed for params {params}: {e}")
         return None
 
 
+# Add these functions before main()
+
+def _save_dataset(rows: list[dict[str, Any]], output_path: Path) -> str:
+    """
+    Save dataset to file in Parquet format.
+    
+    Parameters
+    ----------
+    rows : list[dict]
+        List of record dictionaries.
+    output_path : Path
+        Output file path.
+    
+    Returns
+    -------
+    str
+        Actual path where dataset was saved.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        import pandas as pd
+        df = pd.DataFrame(rows)
+        df.to_parquet(output_path, index=False)
+        logger.info(f"Dataset saved to {output_path}")
+        return str(output_path)
+    except ImportError:
+        logger.warning("pandas not installed, saving as npz instead")
+        npz_path = output_path.with_suffix(".npz")
+        np.savez(
+            npz_path,
+            data=np.array([list(r.values()) for r in rows], dtype=object),
+            columns=np.array(list(rows[0].keys())),
+        )
+        logger.info(f"Dataset saved to {npz_path}")
+        return str(npz_path)
+
+
 def generate_dataset(
-    sweep: SweepConfig,
-    output_path: Path | None = None,
+    *,
+    num_samples: int,
+    config_sampler: ConfigSampler | None = None,
+    output_path: str | Path | None = None,
     feature_config: FeatureConfig | None = None,
 ) -> dict[str, Any]:
     """
-    Generate complete dataset with parameter sweep.
-
+    Generate dataset with num_samples simulations (original API).
+    
+    For each configuration:
+    - Runs simulation via ConfigSampler
+    - Computes FeatureVector via compute_features
+    - Writes record to output dataset
+    
     Parameters
     ----------
-    sweep : SweepConfig
-        Sweep configuration.
-    output_path : Path | None
-        Output path for parquet file.
+    num_samples : int
+        Number of simulations to generate.
+    config_sampler : ConfigSampler | None
+        Configuration sampler. If None, uses default sampler.
+    output_path : str | Path | None
+        Output path for parquet file. If None, doesn't save to file.
     feature_config : FeatureConfig | None
         Feature extraction configuration.
-
+    
     Returns
     -------
     dict
-        Dataset statistics and metadata.
+        Dataset generation statistics.
     """
+    if config_sampler is None:
+        config_sampler = ConfigSampler()
+    
     if feature_config is None:
         feature_config = FeatureConfig()
-
-    configs = generate_parameter_configs(sweep)
-    n_configs = len(configs)
-
-    logger.info(f"Starting dataset generation with {n_configs} configurations")
-
-    # Storage for results
+    
+    # Generate all configurations
+    rng = np.random.default_rng(config_sampler.base_seed)
+    configs = list(config_sampler.sample(num_samples, rng))
+    
+    logger.info(f"Starting dataset generation with {num_samples} samples")
+    
     all_rows: list[dict[str, Any]] = []
     n_success = 0
     n_failed = 0
-
-    start_time = time.time()
-
+    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    
     for i, params in enumerate(configs):
-        if (i + 1) % 10 == 0 or i == 0:
-            logger.info(f"Processing {i + 1}/{n_configs}...")
-
+        if (i + 1) % max(1, num_samples // 10) == 0 or i == 0:
+            logger.info(f"Processing {i + 1}/{num_samples}...")
+        
         result = run_simulation(params)
         if result is None:
             n_failed += 1
             continue
-
+        
         history, sim_meta = result
-
+        
         # Extract features
         try:
             features = compute_features(history, feature_config)
@@ -425,51 +468,28 @@ def generate_dataset(
             logger.warning(f"Feature extraction failed for sim_id={params['sim_id']}: {e}")
             n_failed += 1
             continue
-
-        # Build row
-        row = {
-            **params,
-            **features.to_dict(),
-            **sim_meta,
-        }
-        all_rows.append(row)
+        
+        # Build record
+        record = to_record(params, features, metrics=sim_meta, timestamp=timestamp)
+        all_rows.append(record)
         n_success += 1
-
-    elapsed = time.time() - start_time
-
-    # Create dataset
-    if all_rows:
-        try:
-            import pandas as pd
-
-            df = pd.DataFrame(all_rows)
-
-            if output_path is not None:
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                df.to_parquet(output_path, index=False)
-                logger.info(f"Dataset saved to {output_path}")
-
-        except ImportError:
-            logger.warning("pandas not installed, saving as npz instead")
-            if output_path is not None and all_rows:
-                npz_path = output_path.with_suffix(".npz")
-                np.savez(
-                    npz_path,
-                    data=np.array([list(r.values()) for r in all_rows]),
-                    columns=list(all_rows[0].keys()),
-                )
-                logger.info(f"Dataset saved to {npz_path}")
-
+    
+    # Save dataset
+    saved_path: str | None = None
+    if all_rows and output_path is not None:
+        output_path = Path(output_path) if isinstance(output_path, str) else output_path
+        saved_path = _save_dataset(all_rows, output_path)
+    
     # Compute statistics
-    stats = {
-        "total_configs": n_configs,
+    stats: dict[str, Any] = {
+        "total_samples": num_samples,
         "successful": n_success,
         "failed": n_failed,
-        "success_rate": n_success / n_configs if n_configs > 0 else 0.0,
-        "elapsed_seconds": elapsed,
-        "configs_per_second": n_configs / elapsed if elapsed > 0 else 0.0,
+        "success_rate": n_success / num_samples if num_samples > 0 else 0.0,
+        "output_path": saved_path,
+        "rows": all_rows,
     }
-
+    
     # Feature statistics
     if all_rows:
         feature_names = FeatureVector.feature_names()
@@ -480,12 +500,88 @@ def generate_dataset(
                 stats[f"{fname}_min"] = float(np.min(values))
                 stats[f"{fname}_max"] = float(np.max(values))
                 stats[f"{fname}_mean"] = float(np.mean(values))
-
-    logger.info(f"Dataset generation complete: {n_success}/{n_configs} successful")
-    logger.info(f"Time elapsed: {elapsed:.1f}s ({stats['configs_per_second']:.2f} configs/s)")
-
+    
+    logger.info(f"Dataset generation complete: {n_success}/{num_samples} successful")
+    
     return stats
 
+
+def generate_dataset_sweep(
+    sweep: SweepConfig,
+    output_path: Path | None = None,
+    feature_config: FeatureConfig | None = None,
+) -> dict[str, Any]:
+    """
+    Generate complete dataset with parameter sweep (alternative API).
+    
+    Parameters
+    ----------
+    sweep : SweepConfig
+        Sweep configuration.
+    output_path : Path | None
+        Output path for parquet file.
+    feature_config : FeatureConfig | None
+        Feature extraction configuration.
+    
+    Returns
+    -------
+    dict
+        Dataset statistics and metadata.
+    """
+    if feature_config is None:
+        feature_config = FeatureConfig()
+    
+    configs = generate_parameter_configs(sweep)
+    n_configs = len(configs)
+    
+    logger.info(f"Starting dataset generation with {n_configs} configurations")
+    
+    # Storage for results
+    all_rows: list[dict[str, Any]] = []
+    n_success = 0
+    n_failed = 0
+    
+    start_time = time.time()
+    
+    for i, params in enumerate(configs):
+        if (i + 1) % 10 == 0 or i == 0:
+            logger.info(f"Processing {i + 1}/{n_configs}...")
+        
+        result = run_simulation(params)
+        if result is None:
+            n_failed += 1
+            continue
+        
+        history, sim_meta = result
+        
+        # Extract features
+        try:
+            features = compute_features(history, feature_config)
+        except Exception as e:
+            logger.warning(f"Feature extraction failed: {e}")
+            n_failed += 1
+            continue
+        
+        # TODO: Convert features to record format
+        all_rows.append({"features": features, "params": params, "metrics": sim_meta})
+        n_success += 1
+    
+    elapsed = time.time() - start_time
+    
+    # Save if path provided
+    if all_rows and output_path is not None:
+        _save_dataset(all_rows, output_path)
+    
+    stats: dict[str, Any] = {
+        "total_configs": n_configs,
+        "successful": n_success,
+        "failed": n_failed,
+        "success_rate": n_success / n_configs if n_configs > 0 else 0.0,
+        "elapsed_seconds": elapsed,
+        "configs_per_second": n_configs / elapsed if elapsed > 0 else 0.0,
+    }
+    
+    return stats
 
 def main() -> None:
     """Main entry point for dataset generation."""
@@ -591,7 +687,7 @@ Available presets: small, medium, large, benchmark
         sweep.base_seed = args.seed
 
         # Generate dataset
-        stats = generate_dataset(sweep, args.output)
+        stats = generate_dataset_sweep(sweep, args.output)
 
         # Print summary
         print("\n=== Dataset Generation Summary ===")
