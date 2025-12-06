@@ -178,7 +178,7 @@ This repository represents a **mature, well-engineered scientific computing plat
   - Health checks (liveness, readiness)
 
 #### 🟡 **MINOR:** Placeholder Secret in K8s
-- **Severity:** MEDIUM (P1)
+- **Severity:** HIGH (P1)
 - **Issue:** K8s Secret has placeholder API key
 - **Impact:** Security risk if deployed as-is
 - **Files:** `k8s.yaml:154`
