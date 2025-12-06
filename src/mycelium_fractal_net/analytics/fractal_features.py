@@ -318,17 +318,17 @@ def compute_box_counting_dimension(
     )
 
 
-def compute_fractal_features(
-    field: Union[NDArray[np.floating], "SimulationResult"],
+def _compute_fractal_dimension_pair(
+    field: NDArray[np.floating],
     config: FeatureConfig | None = None,
 ) -> Tuple[float, float]:
     """
-    Compute fractal features (D_box, D_r2).
+    Internal helper: Compute fractal dimension pair (D_box, D_r2).
 
     Parameters
     ----------
-    field : NDArray or SimulationResult
-        2D field in Volts or SimulationResult object.
+    field : NDArray
+        2D field in Volts.
     config : FeatureConfig
         Feature configuration.
 
@@ -337,12 +337,6 @@ def compute_fractal_features(
     tuple[float, float]
         (D_box, D_r2) - fractal dimension and R² quality.
     """
-    # Extract field from SimulationResult if passed
-    # Check for 'field' attribute to support SimulationResult without circular import
-    if hasattr(field, 'field') and hasattr(field, 'history'):
-        # Duck typing: has both 'field' and 'history' attributes like SimulationResult
-        field = field.field  # type: ignore[attr-defined]
-    
     if config is None:
         config = FeatureConfig()
     
@@ -704,7 +698,7 @@ def compute_features(
         raise ValueError(f"Field must be square, got shape {field.shape}")
 
     # Compute all feature groups
-    D_box, D_r2 = compute_fractal_features(field, config)
+    D_box, D_r2 = _compute_fractal_dimension_pair(field, config)
     V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(field)
     dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
     f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
@@ -731,6 +725,69 @@ def compute_features(
         max_cluster_size=max_cs,
         cluster_size_std=cs_std,
     )
+
+
+def compute_fractal_features(
+    result: Union["SimulationResult", NDArray[np.floating]],
+    config: FeatureConfig | None = None,
+) -> FeatureVector:
+    """
+    Compute complete feature vector from SimulationResult or field data.
+
+    This is the main public API for feature extraction. Extracts all 18 features
+    defined in MFN_FEATURE_SCHEMA.md from the simulation result or field array.
+
+    Parameters
+    ----------
+    result : SimulationResult or NDArray
+        SimulationResult containing field and optionally history, or a field array.
+        If SimulationResult with history, temporal features will be computed.
+        If SimulationResult without history or NDArray (2D), temporal features = 0.
+    config : FeatureConfig | None
+        Feature extraction configuration.
+
+    Returns
+    -------
+    FeatureVector
+        Complete feature vector with all 18 features.
+
+    Raises
+    ------
+    TypeError
+        If result is not a SimulationResult or NDArray.
+    ValueError
+        If field has invalid shape (must be 2D square).
+
+    Examples
+    --------
+    >>> from mycelium_fractal_net import run_mycelium_simulation, SimulationConfig
+    >>> from mycelium_fractal_net import compute_fractal_features
+    >>> result = run_mycelium_simulation(SimulationConfig(steps=50, seed=42))
+    >>> features = compute_fractal_features(result)
+    >>> print(f"D_box: {features.D_box:.3f}")
+    >>> print(f"V_mean: {features.V_mean:.1f}")
+
+    Notes
+    -----
+    - For temporal features, use run_mycelium_simulation_with_history()
+    - All voltage values are in the original Volts units in FeatureVector
+    - Does not modify the input result object
+    """
+    # Handle SimulationResult input
+    # Check for 'field' and 'history' attributes to support SimulationResult without circular import
+    if hasattr(result, 'field'):
+        # It's a SimulationResult-like object
+        if hasattr(result, 'history') and result.history is not None:  # type: ignore[attr-defined]
+            # Has history, use it for temporal features
+            field_snapshots = result.history  # type: ignore[attr-defined]
+        else:
+            # No history, use just the field
+            field_snapshots = result.field  # type: ignore[attr-defined]
+    else:
+        # It's a plain NDArray
+        field_snapshots = result  # type: ignore[assignment]
+    
+    return compute_features(field_snapshots, config)
 
 
 def validate_feature_ranges(
