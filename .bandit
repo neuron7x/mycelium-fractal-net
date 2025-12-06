@@ -1,0 +1,7 @@
+exclude_dirs:
+  - /tests/
+  - /.venv/
+
+# Add baseline exceptions after first scan if needed
+# skips:
+#   - B101  # Test for use of assert

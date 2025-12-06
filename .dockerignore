@@ -1,0 +1,54 @@
+# Version control
+.git/
+.github/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing and coverage
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+.hypothesis/
+
+# Type checking and linting
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+
+# Development documentation
+docs/*.md
+docs/reports/
+docs/adr/
+docs/tutorials/
+
+# Notebooks and examples
+notebooks/
+examples/
+
+# Markdown files (except README)
+*.md
+!README.md
+
+# Keep essential runtime docs if needed
+!docs/openapi.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.egg-info/

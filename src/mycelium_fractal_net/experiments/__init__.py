@@ -7,13 +7,13 @@ Reference: docs/MFN_DATASET_SPEC.md
 """
 
 from .generate_dataset import (
-    ConfigSampler,
+    SweepConfig,
     generate_dataset,
-    to_record,
+    generate_parameter_configs,
 )
 
 __all__ = [
-    "ConfigSampler",
+    "SweepConfig",
     "generate_dataset",
-    "to_record",
+    "generate_parameter_configs",
 ]
