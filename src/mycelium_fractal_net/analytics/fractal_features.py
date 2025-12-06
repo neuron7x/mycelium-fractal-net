@@ -20,10 +20,13 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple, Union
 
 import numpy as np
 from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.core.types import SimulationResult
 
 # === Constants ===
 FEATURE_COUNT: int = 18
@@ -122,6 +125,8 @@ class FeatureVector:
     N_clusters_high: int = 0
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
+
+
 
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary with float values."""
@@ -315,7 +320,7 @@ def compute_box_counting_dimension(
 
 
 def compute_fractal_features(
-    field: NDArray[np.floating],
+    field: Union[NDArray[np.floating], "SimulationResult"],
     config: FeatureConfig | None = None,
 ) -> Tuple[float, float]:
     """
@@ -323,8 +328,8 @@ def compute_fractal_features(
 
     Parameters
     ----------
-    field : NDArray
-        2D field in Volts.
+    field : NDArray or SimulationResult
+        2D field in Volts or SimulationResult object.
     config : FeatureConfig
         Feature configuration.
 
@@ -333,6 +338,10 @@ def compute_fractal_features(
     tuple[float, float]
         (D_box, D_r2) - fractal dimension and R² quality.
     """
+    # Handle SimulationResult input
+    if hasattr(field, 'field'):
+        field = field.field
+    
     if config is None:
         config = FeatureConfig()
     
@@ -350,7 +359,7 @@ def compute_fractal_features(
 
 def compute_basic_stats(
     field: NDArray[np.floating],
-) -> dict[str, float]:
+) -> Tuple[float, float, float, float, float, float]:
     """
     Compute basic field statistics.
 
@@ -361,8 +370,8 @@ def compute_basic_stats(
 
     Returns
     -------
-    dict[str, float]
-        Dictionary with keys: min, max, mean, std, skew, kurt (all in mV).
+    tuple[float, float, float, float, float, float]
+        (V_min, V_max, V_mean, V_std, V_skew, V_kurt) all in mV.
     """
     # Convert to mV
     field_mv = field * 1000.0
@@ -383,14 +392,7 @@ def compute_basic_stats(
         V_skew = 0.0
         V_kurt = 0.0
 
-    return {
-        "min": V_min,
-        "max": V_max,
-        "mean": V_mean,
-        "std": V_std,
-        "skew": V_skew,
-        "kurt": V_kurt,
-    }
+    return V_min, V_max, V_mean, V_std, V_skew, V_kurt
 
 
 def compute_temporal_features(
@@ -702,13 +704,7 @@ def compute_features(
 
     # Compute all feature groups
     D_box, D_r2 = compute_fractal_features(field, config)
-    basic_stats = compute_basic_stats(field)
-    V_min = basic_stats["min"]
-    V_max = basic_stats["max"]
-    V_mean = basic_stats["mean"]
-    V_std = basic_stats["std"]
-    V_skew = basic_stats["skew"]
-    V_kurt = basic_stats["kurt"]
+    V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(field)
     dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
     f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
         field, config

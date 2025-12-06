@@ -328,7 +328,7 @@ def generate_parameter_configs(
 
 def run_simulation(
     params: dict[str, Any],
-) -> tuple[np.ndarray, ReactionDiffusionMetrics] | None:
+) -> tuple[np.ndarray[Any, np.dtype[np.float64]], ReactionDiffusionMetrics] | None:
     """
     Run a single simulation with given parameters.
 
