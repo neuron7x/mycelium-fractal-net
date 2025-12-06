@@ -643,11 +643,15 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 tests/
-docs/
+docs/*.md
+docs/reports/
+docs/adr/
 notebooks/
 examples/
 *.md
 !README.md
+# Keep essential runtime docs if needed
+# !docs/openapi.json
 ```
 
 #### .bandit
@@ -978,6 +982,6 @@ MyceliumFractalNet v4.1 is a **well-architected system with critical structural 
 
 **Document Version**: 1.0  
 **Last Updated**: 2025-12-06  
-**Next Review**: After PR #3 completion
+**Next Review**: 2026-01-15 or after PR #3 completion, whichever comes first
 
 **Contact**: Open GitHub issue for questions or clarifications.

@@ -94,6 +94,8 @@ MyceliumFractalNet v4.1 is **production-ready core with critical organizational 
 
 ## Risk Assessment
 
+*Note: Likelihood percentages based on expert analysis of similar system deployments and historical issue patterns.*
+
 | Risk | Severity | Likelihood | Mitigation |
 |------|----------|------------|------------|
 | Security vulnerabilities in prod | 🔴 Critical | 60% | PR #1 |
