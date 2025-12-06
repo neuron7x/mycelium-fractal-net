@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator
 
 import numpy as np
+from numpy.typing import NDArray
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
@@ -328,7 +329,7 @@ def generate_parameter_configs(
 
 def run_simulation(
     params: dict[str, Any],
-) -> tuple[np.ndarray[Any, np.dtype[np.float64]], ReactionDiffusionMetrics] | None:
+) -> tuple[NDArray[np.floating[Any]], ReactionDiffusionMetrics] | None:
     """
     Run a single simulation with given parameters.
 
@@ -562,8 +563,9 @@ def generate_dataset_sweep(
             n_failed += 1
             continue
         
-        # TODO: Convert features to record format
-        all_rows.append({"features": features, "params": params, "metrics": sim_meta})
+        # Convert to record format
+        record = to_record(params, features, metrics=sim_meta)
+        all_rows.append(record)
         n_success += 1
     
     elapsed = time.time() - start_time

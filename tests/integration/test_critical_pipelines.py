@@ -155,7 +155,7 @@ class TestPipeline3DatasetGeneration:
 
     def test_complete_pipeline_flow(self) -> None:
         """Test complete dataset generation pipeline."""
-        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset_sweep
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_pipeline.parquet"
@@ -171,7 +171,7 @@ class TestPipeline3DatasetGeneration:
             )
 
             # Generate dataset
-            stats = generate_dataset(sweep, output_path)
+            stats = generate_dataset_sweep(sweep, output_path)
 
             # Verify statistics
             assert stats["successful"] > 0
@@ -183,7 +183,7 @@ class TestPipeline3DatasetGeneration:
         """Test generated dataset has correct schema per DATASET_SPEC.md."""
         import pandas as pd
 
-        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset_sweep
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_schema.parquet"
@@ -197,7 +197,7 @@ class TestPipeline3DatasetGeneration:
                 base_seed=42,
             )
 
-            generate_dataset(sweep, output_path)
+            generate_dataset_sweep(sweep, output_path)
 
             if output_path.exists():
                 df = pd.read_parquet(output_path)
@@ -222,7 +222,7 @@ class TestPipeline3DatasetGeneration:
 
     def test_dataset_reproducibility(self) -> None:
         """Test dataset generation is reproducible with fixed seed."""
-        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset_sweep
 
         sweep1 = SweepConfig(
             grid_sizes=[32],
@@ -241,8 +241,8 @@ class TestPipeline3DatasetGeneration:
             base_seed=42,
         )
 
-        stats1 = generate_dataset(sweep1, output_path=None)
-        stats2 = generate_dataset(sweep2, output_path=None)
+        stats1 = generate_dataset_sweep(sweep1, output_path=None)
+        stats2 = generate_dataset_sweep(sweep2, output_path=None)
 
         # Compare key statistics
         assert stats1["successful"] == stats2["successful"]

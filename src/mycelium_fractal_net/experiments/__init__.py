@@ -10,6 +10,7 @@ from .generate_dataset import (
     ConfigSampler,
     SweepConfig,
     generate_dataset,
+    generate_dataset_sweep,
     generate_parameter_configs,
     to_record,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "ConfigSampler",
     "SweepConfig",
     "generate_dataset",
+    "generate_dataset_sweep",
     "generate_parameter_configs",
     "to_record",
 ]

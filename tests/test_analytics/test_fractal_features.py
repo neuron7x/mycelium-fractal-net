@@ -420,14 +420,14 @@ class TestSensitivity:
         config_low = FeatureConfig(threshold_low_mv=-70.0)  # More active
         config_high = FeatureConfig(threshold_low_mv=-50.0)  # Less active
 
-        D_low, _ = compute_fractal_features(field, config_low)
-        D_high, _ = compute_fractal_features(field, config_high)
+        features_low = compute_fractal_features(field, config_low)
+        features_high = compute_fractal_features(field, config_high)
 
         # Lower threshold → more active cells → potentially different dimension
         # This is a sensitivity check, not exact value check
         # Just verify they're both valid
-        assert 0.0 <= D_low <= 2.5
-        assert 0.0 <= D_high <= 2.5
+        assert 0.0 <= features_low.D_box <= 2.5
+        assert 0.0 <= features_high.D_box <= 2.5
 
     def test_cluster_count_changes_with_threshold(self) -> None:
         """Cluster count should change with threshold."""

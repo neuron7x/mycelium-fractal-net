@@ -127,6 +127,18 @@ class FeatureVector:
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
 
+    @property
+    def values(self) -> dict[str, float]:
+        """
+        Get feature values as dict (backward compatibility).
+        
+        Returns
+        -------
+        dict[str, float]
+            Dictionary mapping feature names to values.
+        """
+        return self.to_dict()
+    
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary with float values."""
         return {name: float(getattr(self, name)) for name in self.feature_names()}
@@ -777,15 +789,15 @@ def compute_fractal_features(
     # Check for 'field' and 'history' attributes to support SimulationResult without circular import
     if hasattr(result, 'field'):
         # It's a SimulationResult-like object
-        if hasattr(result, 'history') and result.history is not None:  # type: ignore[attr-defined]
+        if hasattr(result, 'history') and result.history is not None:
             # Has history, use it for temporal features
-            field_snapshots = result.history  # type: ignore[attr-defined]
+            field_snapshots = result.history
         else:
             # No history, use just the field
-            field_snapshots = result.field  # type: ignore[attr-defined]
+            field_snapshots = result.field
     else:
         # It's a plain NDArray
-        field_snapshots = result  # type: ignore[assignment]
+        field_snapshots = result
     
     return compute_features(field_snapshots, config)
 
