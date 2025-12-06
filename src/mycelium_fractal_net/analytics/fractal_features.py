@@ -93,7 +93,6 @@ class FeatureConfig:
             raise ValueError("connectivity must be 4 or 8")
 
 
-@dataclass
 class FeatureVector:
     """
     Complete feature vector from a simulation.
@@ -101,31 +100,98 @@ class FeatureVector:
     All 18 features as defined in FEATURE_SCHEMA.md.
     """
 
-    # Fractal features
-    D_box: float = 0.0
-    D_r2: float = 0.0
-
-    # Basic statistics (in mV)
-    V_min: float = 0.0
-    V_max: float = 0.0
-    V_mean: float = 0.0
-    V_std: float = 0.0
-    V_skew: float = 0.0
-    V_kurt: float = 0.0
-
-    # Temporal features
-    dV_mean: float = 0.0
-    dV_max: float = 0.0
-    T_stable: int = 0
-    E_trend: float = 0.0
-
-    # Structural features
-    f_active: float = 0.0
-    N_clusters_low: int = 0
-    N_clusters_med: int = 0
-    N_clusters_high: int = 0
-    max_cluster_size: int = 0
-    cluster_size_std: float = 0.0
+    # Class attribute for backward compatibility
+    _FEATURE_NAMES: list[str] = None  # type: ignore[assignment]
+    
+    def __init__(
+        self,
+        D_box: float = 0.0,
+        D_r2: float = 0.0,
+        V_min: float = 0.0,
+        V_max: float = 0.0,
+        V_mean: float = 0.0,
+        V_std: float = 0.0,
+        V_skew: float = 0.0,
+        V_kurt: float = 0.0,
+        dV_mean: float = 0.0,
+        dV_max: float = 0.0,
+        T_stable: int = 0,
+        E_trend: float = 0.0,
+        f_active: float = 0.0,
+        N_clusters_low: int = 0,
+        N_clusters_med: int = 0,
+        N_clusters_high: int = 0,
+        max_cluster_size: int = 0,
+        cluster_size_std: float = 0.0,
+        values: dict[str, float] | None = None,
+    ) -> None:
+        """
+        Initialize FeatureVector.
+        
+        Parameters
+        ----------
+        D_box, D_r2, ... : float/int
+            Individual feature values.
+        values : dict[str, float] | None
+            Alternative: dictionary of feature values (backward compatibility).
+            If provided, individual parameters are ignored.
+        """
+        if values is not None:
+            # Backward compatibility: construct from values dict
+            for name in self.feature_names():
+                setattr(self, name, values.get(name, 0.0))
+        else:
+            # Fractal features
+            self.D_box = float(D_box)
+            self.D_r2 = float(D_r2)
+            
+            # Basic statistics (in mV)
+            self.V_min = float(V_min)
+            self.V_max = float(V_max)
+            self.V_mean = float(V_mean)
+            self.V_std = float(V_std)
+            self.V_skew = float(V_skew)
+            self.V_kurt = float(V_kurt)
+            
+            # Temporal features
+            self.dV_mean = float(dV_mean)
+            self.dV_max = float(dV_max)
+            self.T_stable = int(T_stable)
+            self.E_trend = float(E_trend)
+            
+            # Structural features
+            self.f_active = float(f_active)
+            self.N_clusters_low = int(N_clusters_low)
+            self.N_clusters_med = int(N_clusters_med)
+            self.N_clusters_high = int(N_clusters_high)
+            self.max_cluster_size = int(max_cluster_size)
+            self.cluster_size_std = float(cluster_size_std)
+        
+        # Initialize class attribute
+        if FeatureVector._FEATURE_NAMES is None:
+            FeatureVector._FEATURE_NAMES = self.feature_names()
+    
+    def __getitem__(self, key: str) -> float:
+        """
+        Support subscript access (backward compatibility).
+        
+        Parameters
+        ----------
+        key : str
+            Feature name (e.g., "D_box").
+        
+        Returns
+        -------
+        float
+            Feature value.
+        """
+        if key in self.feature_names():
+            return float(getattr(self, key))
+        raise KeyError(f"Unknown feature: {key}")
+    
+    def __contains__(self, key: str) -> bool:
+        """Check if feature name exists."""
+        return key in self.feature_names()
 
     @property
     def values(self) -> dict[str, float]:
@@ -296,7 +362,7 @@ def compute_box_counting_dimension(
     threshold: float | None = None,
     min_box_size: int = DEFAULT_MIN_BOX_SIZE,
     num_scales: int = DEFAULT_NUM_SCALES,
-) -> Tuple[float, float]:
+) -> float:
     """
     Compute box-counting fractal dimension (public API).
 
@@ -313,8 +379,8 @@ def compute_box_counting_dimension(
 
     Returns
     -------
-    tuple[float, float]
-        (D_box, D_r2) - dimension and regression quality.
+    float
+        D_box - box-counting dimension.
     """
     if threshold is None:
         threshold = float(np.median(field))
@@ -322,12 +388,13 @@ def compute_box_counting_dimension(
     binary_field = field > threshold
     max_box_size = field.shape[0] // 2 if field.shape[0] >= 4 else field.shape[0]
     
-    return _box_counting_dimension(
+    D_box, _ = _box_counting_dimension(
         binary_field,
         min_box_size=min_box_size,
         max_box_size=max_box_size,
         num_scales=num_scales,
     )
+    return D_box
 
 
 def _compute_fractal_dimension_pair(
@@ -366,7 +433,7 @@ def _compute_fractal_dimension_pair(
 
 def compute_basic_stats(
     field: NDArray[np.floating],
-) -> Tuple[float, float, float, float, float, float]:
+) -> dict[str, float]:
     """
     Compute basic field statistics.
 
@@ -377,8 +444,8 @@ def compute_basic_stats(
 
     Returns
     -------
-    tuple[float, float, float, float, float, float]
-        (V_min, V_max, V_mean, V_std, V_skew, V_kurt) all in mV.
+    dict[str, float]
+        Dictionary with keys: min, max, mean, std, skew, kurt (all in mV).
     """
     # Convert to mV
     field_mv = field * 1000.0
@@ -399,7 +466,14 @@ def compute_basic_stats(
         V_skew = 0.0
         V_kurt = 0.0
 
-    return V_min, V_max, V_mean, V_std, V_skew, V_kurt
+    return {
+        "min": V_min,
+        "max": V_max,
+        "mean": V_mean,
+        "std": V_std,
+        "skew": V_skew,
+        "kurt": V_kurt,
+    }
 
 
 def compute_temporal_features(
@@ -711,7 +785,13 @@ def compute_features(
 
     # Compute all feature groups
     D_box, D_r2 = _compute_fractal_dimension_pair(field, config)
-    V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(field)
+    stats = compute_basic_stats(field)
+    V_min = stats["min"]
+    V_max = stats["max"]
+    V_mean = stats["mean"]
+    V_std = stats["std"]
+    V_skew = stats["skew"]
+    V_kurt = stats["kurt"]
     dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
     f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
         field, config
