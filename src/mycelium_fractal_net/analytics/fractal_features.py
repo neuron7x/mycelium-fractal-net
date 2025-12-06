@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Tuple, Union
 import numpy as np
 from numpy.typing import NDArray
 
+# TYPE_CHECKING avoids circular import: analytics -> types -> (potentially) analytics
 if TYPE_CHECKING:
     from mycelium_fractal_net.core.types import SimulationResult
 
@@ -125,8 +126,6 @@ class FeatureVector:
     N_clusters_high: int = 0
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
-
-
 
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary with float values."""
@@ -338,9 +337,11 @@ def compute_fractal_features(
     tuple[float, float]
         (D_box, D_r2) - fractal dimension and R² quality.
     """
-    # Handle SimulationResult input
-    if hasattr(field, 'field'):
-        field = field.field
+    # Extract field from SimulationResult if passed
+    # Check for 'field' attribute to support SimulationResult without circular import
+    if hasattr(field, 'field') and hasattr(field, 'history'):
+        # Duck typing: has both 'field' and 'history' attributes like SimulationResult
+        field = field.field  # type: ignore[attr-defined]
     
     if config is None:
         config = FeatureConfig()
