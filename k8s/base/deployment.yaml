@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mycelium-fractal-net
+  namespace: mycelium-fractal-net
+  labels:
+    app: mycelium-fractal-net
+    version: v4.1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mycelium-fractal-net
+  template:
+    metadata:
+      labels:
+        app: mycelium-fractal-net
+        version: v4.1
+    spec:
+      containers:
+        - name: mycelium-fractal-net
+          image: mycelium-fractal-net:v4.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: MFN_SEED
+              value: "42"
+            - name: MFN_ENV
+              value: "prod"
+            - name: MFN_API_KEY_REQUIRED
+              value: "true"
+            - name: MFN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mfn-secrets
+                  key: api-key
+            - name: MFN_RATE_LIMIT_ENABLED
+              value: "true"
+            - name: MFN_RATE_LIMIT_REQUESTS
+              value: "100"
+            - name: MFN_LOG_FORMAT
+              value: "json"
+            - name: MFN_LOG_LEVEL
+              value: "INFO"
+            - name: MFN_METRICS_ENABLED
+              value: "true"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---

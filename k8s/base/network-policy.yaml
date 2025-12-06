@@ -1,0 +1,45 @@
+# NetworkPolicy restricts network access for security
+# Allows only necessary ingress and egress traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mycelium-fractal-net-netpol
+  namespace: mycelium-fractal-net
+spec:
+  podSelector:
+    matchLabels:
+      app: mycelium-fractal-net
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow ingress within namespace (pod-to-pod)
+    - from:
+        - podSelector: {}
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow HTTPS for external APIs (if needed)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow egress within namespace
+    - to:
+        - podSelector: {}

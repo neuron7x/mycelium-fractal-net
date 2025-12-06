@@ -1,0 +1,12 @@
+# PodDisruptionBudget ensures high availability during updates and node maintenance
+# Ensures at least 2 pods are always running
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mycelium-fractal-net-pdb
+  namespace: mycelium-fractal-net
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: mycelium-fractal-net

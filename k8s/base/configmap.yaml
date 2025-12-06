@@ -1,0 +1,19 @@
+# ConfigMap for model configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mycelium-config
+  namespace: mycelium-fractal-net
+data:
+  config.json: |
+    {
+      "seed": 42,
+      "epochs": 1,
+      "batch_size": 4,
+      "grid_size": 64,
+      "steps": 64,
+      "turing_enabled": true,
+      "quantum_jitter": false,
+      "use_sparse_attention": true,
+      "use_stdp": true
+    }

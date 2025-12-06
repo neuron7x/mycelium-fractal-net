@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mycelium-fractal-net
+  labels:
+    name: mycelium-fractal-net
+    app.kubernetes.io/name: mycelium-fractal-net
+    app.kubernetes.io/version: "4.1"

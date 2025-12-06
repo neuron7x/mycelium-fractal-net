@@ -1,3 +1,16 @@
+# DEPRECATED: This file is deprecated and will be removed in v4.2
+# Use k8s/base/ directory with Kustomize instead:
+#   kubectl apply -k k8s/base/
+#
+# See k8s/README.md for migration instructions
+#
+# For production deployments, use the modular k8s/base/ structure which includes:
+# - Proper secrets management
+# - NetworkPolicies for security
+# - PodDisruptionBudget for HA
+# - Ingress with TLS
+# - Kustomize support
+
 # MyceliumFractalNet v4.1 Kubernetes Deployment
 # Supports scaling to 1M clients via horizontal pod autoscaling
 
