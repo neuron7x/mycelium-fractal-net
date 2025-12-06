@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - secrets.yaml
+  - configmap.yaml
   - deployment.yaml
   - service.yaml
   - hpa.yaml
