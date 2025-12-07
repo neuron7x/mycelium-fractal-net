@@ -5,12 +5,12 @@ Generates experimental datasets by running simulations with parameter sweeps
 and extracting features as defined in FEATURE_SCHEMA.md.
 
 Usage (scenario-based - recommended):
-    python -m experiments.generate_dataset --preset small
-    python -m experiments.generate_dataset --preset medium
-    python -m experiments.generate_dataset --preset large
+    python -m mycelium_fractal_net.experiments.generate_dataset --preset small
+    python -m mycelium_fractal_net.experiments.generate_dataset --preset medium
+    python -m mycelium_fractal_net.experiments.generate_dataset --preset large
 
 Usage (legacy sweep mode):
-    python -m experiments.generate_dataset --output data/mycelium_dataset.parquet --sweep default
+    python -m mycelium_fractal_net.experiments.generate_dataset --output data/mycelium_dataset.parquet --sweep default
 
 Features:
 - Scenario-based data generation with small/medium/large presets
@@ -333,11 +333,11 @@ def main() -> None:
         epilog="""
 Examples:
   # Run with a preset (recommended)
-  python -m experiments.generate_dataset --preset small
-  python -m experiments.generate_dataset --preset medium
+  python -m mycelium_fractal_net.experiments.generate_dataset --preset small
+  python -m mycelium_fractal_net.experiments.generate_dataset --preset medium
 
   # Legacy sweep mode
-  python -m experiments.generate_dataset --sweep default --output data/my_dataset.parquet
+  python -m mycelium_fractal_net.experiments.generate_dataset --sweep default --output data/my_dataset.parquet
 
 Available presets: small, medium, large, benchmark
         """,

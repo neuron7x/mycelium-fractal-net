@@ -5,7 +5,7 @@ Loads a generated dataset and provides summary statistics, correlations,
 and basic visualizations.
 
 Usage:
-    python -m experiments.inspect_features --input data/mycelium_dataset.parquet
+    python -m mycelium_fractal_net.experiments.inspect_features --input data/mycelium_dataset.parquet
 
 Features:
 - Descriptive statistics for all features
@@ -213,7 +213,7 @@ def main() -> None:
 
     if not args.input.exists():
         print(f"Error: Dataset not found at {args.input}")
-        print("Run `python -m experiments.generate_dataset` first")
+        print("Run `python -m mycelium_fractal_net.experiments.generate_dataset` first")
         sys.exit(1)
 
     # Load dataset
