@@ -257,9 +257,13 @@ jobs:
           python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/security/__init__.py" || exit 1
           python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/types/__init__.py" || exit 1
           echo "✓ All expected subpackages found in wheel"
+      - name: Verify analytics package is included
+        run: |
+          python -m zipfile -l dist/*.whl | grep "analytics/__init__.py" || exit 1
+          echo "✓ Analytics package included in wheel"
       - name: Verify excluded packages are not in wheel
         run: |
-          if python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+[[:space:]]+.*[[:space:]]+(analytics|experiments|tests|docs)/__init__.py" | grep -v "mycelium_fractal_net"; then
+          if python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+[[:space:]]+.*[[:space:]]+(experiments|tests|docs)/__init__.py" | grep -v "mycelium_fractal_net"; then
             echo "✗ Found excluded runtime packages in wheel"
             exit 1
           fi
