@@ -45,6 +45,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 include-package-data = true
 
+# Automatic package discovery ensures ALL nested subpackages are included.
+# Using `packages.find` instead of manually listing packages to avoid
+# missing new subpackages when they are added.
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["mycelium_fractal_net*"]
