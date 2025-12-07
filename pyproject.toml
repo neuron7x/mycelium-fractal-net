@@ -43,12 +43,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["mycelium_fractal_net", "analytics", "experiments"]
+include-package-data = true
 
-[tool.setuptools.package-dir]
-mycelium_fractal_net = "src/mycelium_fractal_net"
-analytics = "analytics"
-experiments = "experiments"
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["mycelium_fractal_net*", "analytics"]
+exclude = ["tests*", "docs*", "examples*", "experiments*"]
 
 [tool.pytest.ini_options]
 addopts = "-q --disable-warnings"
