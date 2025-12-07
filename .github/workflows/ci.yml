@@ -206,3 +206,61 @@ jobs:
         run: python benchmarks/benchmark_scalability.py
       - name: Run stress tests
         run: pytest tests/perf/test_stress_scalability.py -v --tb=short
+
+  packaging:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-packaging-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-packaging-
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip build
+      - name: Build distributions
+        run: python -m build
+      - name: Install wheel in clean environment
+        run: |
+          python -m venv /tmp/test_venv
+          /tmp/test_venv/bin/pip install --quiet dist/*.whl
+      - name: Test recursive import of all subpackages
+        run: |
+          /tmp/test_venv/bin/python -c "
+          import mycelium_fractal_net, pkgutil
+          submodules = [m.name for m in pkgutil.walk_packages(
+              mycelium_fractal_net.__path__,
+              mycelium_fractal_net.__name__ + '.'
+          )]
+          print(f'✓ Discovered {len(submodules)} submodules')
+          for m in submodules:
+              __import__(m)
+          print('✓ All submodules imported successfully')
+          "
+      - name: Verify package structure
+        run: |
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/core/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/crypto/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/integration/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/numerics/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/pipelines/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/security/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/types/__init__.py" || exit 1
+          echo "✓ All expected subpackages found in wheel"
+      - name: Verify excluded packages are not in wheel
+        run: |
+          if python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+[[:space:]]+.*[[:space:]]+(analytics|experiments|tests|docs)/__init__.py" | grep -v "mycelium_fractal_net"; then
+            echo "✗ Found excluded runtime packages in wheel"
+            exit 1
+          fi
+          echo "✓ No excluded runtime packages in wheel"
