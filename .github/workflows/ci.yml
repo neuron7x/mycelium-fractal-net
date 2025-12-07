@@ -125,10 +125,14 @@ jobs:
           pip install build
       - name: Build sdist and wheel
         run: python -m build
-      - name: Verify wheel contents
+      - name: Verify wheel has multiple subpackages
         run: |
-          unzip -l dist/*.whl | grep -E "mycelium_fractal_net/(core|crypto|integration|numerics|pipelines|security|types)/" || (echo "ERROR: Missing subpackages in wheel!" && exit 1)
-          echo "✓ All expected subpackages found in wheel"
+          subpackage_count=$(unzip -l dist/*.whl | grep -c "mycelium_fractal_net/.*/.*\.py" || true)
+          if [ "$subpackage_count" -lt 30 ]; then
+            echo "ERROR: Expected at least 30 Python files in subpackages, found $subpackage_count"
+            exit 1
+          fi
+          echo "✓ Wheel contains $subpackage_count Python files in subpackages"
       - name: Install wheel in clean environment
         run: |
           python -m venv /tmp/test_env
