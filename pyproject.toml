@@ -50,9 +50,6 @@ where = ["src", "."]
 include = ["mycelium_fractal_net*", "analytics"]
 exclude = ["tests*", "docs*", "examples*", "experiments*"]
 
-[tool.setuptools.package-dir]
-mycelium_fractal_net = "src/mycelium_fractal_net"
-
 [tool.pytest.ini_options]
 addopts = "-q --disable-warnings"
 testpaths = ["tests"]
