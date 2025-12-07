@@ -1,19 +1,11 @@
-"""
-Experiments submodule for MyceliumFractalNet.
+"""Experiments module for MyceliumFractalNet."""
 
-Contains dataset generation and experimental utilities.
-
-Reference: docs/MFN_DATASET_SPEC.md
-"""
-
-from .generate_dataset import (
-    ConfigSampler,
-    generate_dataset,
-    to_record,
-)
+from .generate_dataset import SweepConfig, generate_dataset
+from .inspect_features import compute_descriptive_stats, load_dataset
 
 __all__ = [
-    "ConfigSampler",
     "generate_dataset",
-    "to_record",
+    "SweepConfig",
+    "load_dataset",
+    "compute_descriptive_stats",
 ]

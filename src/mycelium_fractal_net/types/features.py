@@ -12,10 +12,9 @@ Reference:
 
 from __future__ import annotations
 
-# Re-export FeatureVector from root analytics module (single source of truth)
-# Note: 'analytics' is a root-level package configured in pyproject.toml
+# Re-export FeatureVector from analytics module (single source of truth)
 # This is the canonical dataclass with individual feature fields (D_box, V_mean, etc.)
-from analytics.fractal_features import (
+from mycelium_fractal_net.analytics.fractal_features import (
     FEATURE_COUNT,
     FeatureVector,
     compute_features,

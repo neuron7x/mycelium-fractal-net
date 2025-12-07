@@ -2,56 +2,53 @@
 Dataset Generation Pipeline for MyceliumFractalNet.
 
 Generates experimental datasets by running simulations with parameter sweeps
-and extracting features as defined in MFN_FEATURE_SCHEMA.md.
+and extracting features as defined in FEATURE_SCHEMA.md.
 
-Usage:
-    python -m mycelium_fractal_net.experiments.generate_dataset \
-        --num-samples 200 --output data/mfn_dataset.parquet
+Usage (scenario-based - recommended):
+    python -m experiments.generate_dataset --preset small
+    python -m experiments.generate_dataset --preset medium
+    python -m experiments.generate_dataset --preset large
+
+Usage (legacy sweep mode):
+    python -m experiments.generate_dataset --output data/mycelium_dataset.parquet --sweep default
 
 Features:
-- ConfigSampler for generating valid simulation configurations
-- Reproducible via seed control
-- Error handling for StabilityError/ValueOutOfRangeError
-- Output in Parquet format (NPZ fallback)
+- Scenario-based data generation with small/medium/large presets
+- Parameter sweeps across stable ranges from MFN_MATH_MODEL.md
+- Reproducible via random_seed control
+- Atomic file writes for data integrity
+- Logging of metrics and failures
+- Output in Parquet format
 
-Reference: docs/MFN_DATASET_SPEC.md
+Reference: docs/MFN_DATA_PIPELINES.md
 """
 
 from __future__ import annotations
 
 import argparse
-import datetime
 import logging
-from dataclasses import dataclass, field
+import sys
+import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Tuple
+from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
 
-from analytics import FeatureConfig, FeatureVector, compute_features
+# Add project root to path for imports
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from mycelium_fractal_net.analytics import FeatureConfig, FeatureVector, compute_features
 from mycelium_fractal_net.core import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
-    ReactionDiffusionMetrics,
-    StabilityError,
-    ValueOutOfRangeError,
 )
-from mycelium_fractal_net.core.exceptions import NumericalInstabilityError
-
-
-def _get_mfn_version() -> str:
-    """Get MyceliumFractalNet version dynamically."""
-    try:
-        from importlib.metadata import version
-
-        return version("mycelium-fractal-net")
-    except Exception:
-        # Fallback if package metadata not available
-        return "4.1.0"
-
-
-MFN_VERSION = _get_mfn_version()
+from mycelium_fractal_net.pipelines import (
+    get_preset_config,
+    list_presets,
+    run_scenario,
+)
 
 # === Logging Setup ===
 logging.basicConfig(
@@ -62,277 +59,202 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# === Constants ===
-DEFAULT_OUTPUT_PATH = Path("data/mfn_dataset.parquet")
-DEFAULT_NUM_SAMPLES = 200
-MAX_RETRIES = 3
-
-
+# === Parameter Sweep Configuration ===
 @dataclass
-class ConfigSampler:
-    """
-    Generates valid SimulationConfig instances within specified parameter ranges.
+class SweepConfig:
+    """Configuration for parameter sweep."""
 
-    All parameters are constrained to valid ranges from MFN_MATH_MODEL.md:
-    - alpha (diffusion): Must be < 0.25 for CFL stability
-    - turing_threshold: Must be in [0, 1]
-    - grid_size: Minimum 4 for meaningful simulation
-
-    Attributes
-    ----------
-    grid_sizes : list[int]
-        Grid sizes to sample from. Default [32, 64].
-    steps_range : tuple[int, int]
-        (min, max) steps to sample. Default (50, 200).
-    alpha_range : tuple[float, float]
-        (min, max) diffusion coefficient. Default (0.10, 0.20).
-    turing_values : list[bool]
-        Turing enabled values to sample. Default [True, False].
-    spike_prob_range : tuple[float, float]
-        (min, max) spike probability. Default (0.15, 0.35).
-    turing_threshold_range : tuple[float, float]
-        (min, max) Turing threshold. Default (0.65, 0.85).
-    base_seed : int
-        Base seed for reproducibility. Default 42.
-    """
-
-    grid_sizes: list[int] = field(default_factory=lambda: [32, 64])
-    steps_range: tuple[int, int] = (50, 200)
-    alpha_range: tuple[float, float] = (0.10, 0.20)
-    turing_values: list[bool] = field(default_factory=lambda: [True, False])
-    spike_prob_range: tuple[float, float] = (0.15, 0.35)
-    turing_threshold_range: tuple[float, float] = (0.65, 0.85)
+    # Grid sizes to test
+    grid_sizes: list[int] | None = None
+    # Simulation steps
+    steps_list: list[int] | None = None
+    # Diffusion coefficients (must be < 0.25 for CFL stability)
+    alpha_values: list[float] | None = None
+    # Turing enabled/disabled
+    turing_values: list[bool] | None = None
+    # Number of random seeds per configuration
+    seeds_per_config: int = 3
+    # Base random seed for reproducibility
     base_seed: int = 42
 
     def __post_init__(self) -> None:
-        """Validate parameter ranges."""
-        if self.alpha_range[1] >= 0.25:
-            raise ValueError(
-                f"alpha_range max ({self.alpha_range[1]}) must be < 0.25 for CFL stability"
-            )
-        if any(g < 4 for g in self.grid_sizes):
-            raise ValueError("All grid_sizes must be >= 4")
-        if self.steps_range[0] < 1:
-            raise ValueError("steps_range min must be >= 1")
-
-    def sample(
-        self,
-        num_samples: int,
-        rng: np.random.Generator | None = None,
-    ) -> Iterator[Dict[str, Any]]:
-        """
-        Generate num_samples configuration dictionaries.
-
-        Parameters
-        ----------
-        num_samples : int
-            Number of configurations to generate.
-        rng : np.random.Generator | None
-            Random generator. If None, uses base_seed.
-
-        Yields
-        ------
-        dict
-            Configuration dictionary for each sample.
-        """
-        if rng is None:
-            rng = np.random.default_rng(self.base_seed)
-
-        for sim_id in range(num_samples):
-            # Sample parameters
-            grid_size = int(rng.choice(self.grid_sizes))
-            steps = int(rng.integers(self.steps_range[0], self.steps_range[1] + 1))
-            alpha = float(rng.uniform(self.alpha_range[0], self.alpha_range[1]))
-            turing_enabled = bool(rng.choice(self.turing_values))
-            spike_prob = float(
-                rng.uniform(self.spike_prob_range[0], self.spike_prob_range[1])
-            )
-            turing_threshold = float(
-                rng.uniform(self.turing_threshold_range[0], self.turing_threshold_range[1])
-            )
-
-            # Generate reproducible seed for this simulation
-            random_seed = self.base_seed + sim_id
-
-            yield {
-                "sim_id": sim_id,
-                "grid_size": grid_size,
-                "steps": steps,
-                "alpha": alpha,
-                "turing_enabled": turing_enabled,
-                "spike_probability": spike_prob,
-                "turing_threshold": turing_threshold,
-                "random_seed": random_seed,
-            }
+        if self.grid_sizes is None:
+            self.grid_sizes = [32, 64]
+        if self.steps_list is None:
+            self.steps_list = [50, 100]
+        if self.alpha_values is None:
+            self.alpha_values = [0.10, 0.15, 0.20]
+        if self.turing_values is None:
+            self.turing_values = [True, False]
 
 
-def to_record(
-    config: Dict[str, Any],
-    features: FeatureVector,
-    *,
-    metrics: ReactionDiffusionMetrics,
-    timestamp: str | None = None,
-) -> Dict[str, Any]:
+def _create_default_sweep() -> SweepConfig:
+    """Create default sweep configuration."""
+    return SweepConfig(
+        grid_sizes=[32, 64],
+        steps_list=[50, 100],
+        alpha_values=[0.10, 0.15, 0.20],
+        turing_values=[True, False],
+        seeds_per_config=3,
+        base_seed=42,
+    )
+
+
+def _create_minimal_sweep() -> SweepConfig:
+    """Create minimal sweep for quick testing."""
+    return SweepConfig(
+        grid_sizes=[32],
+        steps_list=[50],
+        alpha_values=[0.15],
+        turing_values=[True],
+        seeds_per_config=2,
+        base_seed=42,
+    )
+
+
+def _create_extended_sweep() -> SweepConfig:
+    """Create extended sweep for comprehensive dataset."""
+    return SweepConfig(
+        grid_sizes=[32, 64, 128],
+        steps_list=[50, 100, 200],
+        alpha_values=[0.08, 0.12, 0.16, 0.20],
+        turing_values=[True, False],
+        seeds_per_config=5,
+        base_seed=42,
+    )
+
+
+def generate_parameter_configs(
+    sweep: SweepConfig,
+) -> list[dict[str, Any]]:
     """
-    Convert simulation config and features to a flat dataset record.
+    Generate all parameter configurations for sweep.
 
     Parameters
     ----------
-    config : dict
-        Simulation configuration dictionary.
-    features : FeatureVector
-        Extracted features from simulation.
-    metrics : ReactionDiffusionMetrics
-        Simulation metrics.
-    timestamp : str | None
-        ISO timestamp. If None, uses current time.
+    sweep : SweepConfig
+        Sweep configuration.
 
     Returns
     -------
-    dict
-        Flat dictionary with all record fields.
+    list[dict]
+        List of parameter dictionaries.
     """
-    if timestamp is None:
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    configs = []
+    sim_id = 0
 
-    record: Dict[str, Any] = {
-        # Configuration fields
-        "sim_id": config["sim_id"],
-        "random_seed": config["random_seed"],
-        "grid_size": config["grid_size"],
-        "steps": config["steps"],
-        "alpha": config["alpha"],
-        "turing_enabled": config["turing_enabled"],
-        "spike_probability": config.get("spike_probability", 0.25),
-        "turing_threshold": config.get("turing_threshold", 0.75),
-        # Feature fields (from FeatureVector)
-        **features.to_dict(),
-        # Metadata fields
-        "mfn_version": MFN_VERSION,
-        "timestamp": timestamp,
-        "growth_events": metrics.growth_events,
-        "turing_activations": metrics.turing_activations,
-        "clamping_events": metrics.clamping_events,
-    }
+    for grid_size in sweep.grid_sizes:
+        for steps in sweep.steps_list:
+            for alpha in sweep.alpha_values:
+                for turing in sweep.turing_values:
+                    for seed_offset in range(sweep.seeds_per_config):
+                        seed = sweep.base_seed + sim_id
+                        configs.append(
+                            {
+                                "sim_id": sim_id,
+                                "grid_size": grid_size,
+                                "steps": steps,
+                                "alpha": alpha,
+                                "turing_enabled": turing,
+                                "random_seed": seed,
+                            }
+                        )
+                        sim_id += 1
 
-    return record
+    return configs
 
 
 def run_simulation(
-    params: Dict[str, Any],
-) -> Tuple[NDArray[np.floating[Any]], ReactionDiffusionMetrics] | None:
+    params: dict[str, Any],
+) -> tuple[np.ndarray, dict[str, Any]] | None:
     """
     Run a single simulation with given parameters.
-
-    Handles StabilityError and ValueOutOfRangeError gracefully.
 
     Parameters
     ----------
     params : dict
-        Simulation parameters from ConfigSampler.
+        Simulation parameters.
 
     Returns
     -------
     tuple | None
-        (field_history, metrics) or None if simulation failed.
+        (field_history, metadata) or None if failed.
     """
     try:
         config = ReactionDiffusionConfig(
             grid_size=params["grid_size"],
             alpha=params["alpha"],
-            spike_probability=params.get("spike_probability", 0.25),
-            turing_threshold=params.get("turing_threshold", 0.75),
             random_seed=params["random_seed"],
         )
         engine = ReactionDiffusionEngine(config)
 
-        # Run simulation with history for temporal features
+        # Run simulation with history
         history, metrics = engine.simulate(
             steps=params["steps"],
             turing_enabled=params["turing_enabled"],
             return_history=True,
         )
 
-        return history, metrics
+        metadata = {
+            "growth_events": metrics.growth_events,
+            "turing_activations": metrics.turing_activations,
+            "clamping_events": metrics.clamping_events,
+        }
 
-    except StabilityError as e:
-        logger.warning(f"StabilityError for sim_id={params['sim_id']}: {e}")
-        return None
-    except ValueOutOfRangeError as e:
-        logger.warning(f"ValueOutOfRangeError for sim_id={params['sim_id']}: {e}")
-        return None
-    except NumericalInstabilityError as e:
-        logger.warning(f"NumericalInstabilityError for sim_id={params['sim_id']}: {e}")
-        return None
+        return history, metadata
+
     except Exception as e:
-        logger.warning(f"Unexpected error for sim_id={params['sim_id']}: {e}")
+        logger.warning(f"Simulation failed for params {params}: {e}")
         return None
 
 
 def generate_dataset(
-    *,
-    num_samples: int,
-    config_sampler: ConfigSampler | None = None,
-    output_path: str | Path | None = None,
+    sweep: SweepConfig,
+    output_path: Path | None = None,
     feature_config: FeatureConfig | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
-    Generate dataset with num_samples simulations.
-
-    For each configuration:
-    - Runs run_mycelium_simulation(...)
-    - Computes FeatureVector via compute_features(...)
-    - Writes record to output dataset
+    Generate complete dataset with parameter sweep.
 
     Parameters
     ----------
-    num_samples : int
-        Number of simulations to generate.
-    config_sampler : ConfigSampler | None
-        Configuration sampler. If None, uses default sampler.
-    output_path : str | Path | None
-        Output path for parquet file. If None, doesn't save to file.
+    sweep : SweepConfig
+        Sweep configuration.
+    output_path : Path | None
+        Output path for parquet file.
     feature_config : FeatureConfig | None
         Feature extraction configuration.
 
     Returns
     -------
     dict
-        Dataset generation statistics including:
-        - total_samples: Requested number of samples
-        - successful: Number of successful simulations
-        - failed: Number of failed simulations
-        - success_rate: Ratio of successful to total
-        - output_path: Path where dataset was saved (if any)
-        - rows: List of all records (for testing)
+        Dataset statistics and metadata.
     """
-    if config_sampler is None:
-        config_sampler = ConfigSampler()
-
     if feature_config is None:
         feature_config = FeatureConfig()
 
-    # Generate all configurations
-    rng = np.random.default_rng(config_sampler.base_seed)
-    configs = list(config_sampler.sample(num_samples, rng))
+    configs = generate_parameter_configs(sweep)
+    n_configs = len(configs)
 
-    logger.info(f"Starting dataset generation with {num_samples} samples")
+    logger.info(f"Starting dataset generation with {n_configs} configurations")
 
-    all_rows: List[Dict[str, Any]] = []
+    # Storage for results
+    all_rows: list[dict[str, Any]] = []
     n_success = 0
     n_failed = 0
-    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+    start_time = time.time()
 
     for i, params in enumerate(configs):
-        if (i + 1) % max(1, num_samples // 10) == 0 or i == 0:
-            logger.info(f"Processing {i + 1}/{num_samples}...")
+        if (i + 1) % 10 == 0 or i == 0:
+            logger.info(f"Processing {i + 1}/{n_configs}...")
 
         result = run_simulation(params)
         if result is None:
             n_failed += 1
             continue
 
-        history, metrics = result
+        history, sim_meta = result
 
         # Extract features
         try:
@@ -342,25 +264,48 @@ def generate_dataset(
             n_failed += 1
             continue
 
-        # Build record
-        record = to_record(params, features, metrics=metrics, timestamp=timestamp)
-        all_rows.append(record)
+        # Build row
+        row = {
+            **params,
+            **features.to_dict(),
+            **sim_meta,
+        }
+        all_rows.append(row)
         n_success += 1
 
-    # Save dataset
-    saved_path: str | None = None
-    if all_rows and output_path is not None:
-        output_path = Path(output_path)
-        saved_path = _save_dataset(all_rows, output_path)
+    elapsed = time.time() - start_time
+
+    # Create dataset
+    if all_rows:
+        try:
+            import pandas as pd
+
+            df = pd.DataFrame(all_rows)
+
+            if output_path is not None:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                df.to_parquet(output_path, index=False)
+                logger.info(f"Dataset saved to {output_path}")
+
+        except ImportError:
+            logger.warning("pandas not installed, saving as npz instead")
+            if output_path is not None and all_rows:
+                npz_path = output_path.with_suffix(".npz")
+                np.savez(
+                    npz_path,
+                    data=np.array([list(r.values()) for r in all_rows]),
+                    columns=list(all_rows[0].keys()),
+                )
+                logger.info(f"Dataset saved to {npz_path}")
 
     # Compute statistics
-    stats: Dict[str, Any] = {
-        "total_samples": num_samples,
+    stats = {
+        "total_configs": n_configs,
         "successful": n_success,
         "failed": n_failed,
-        "success_rate": n_success / num_samples if num_samples > 0 else 0.0,
-        "output_path": saved_path,
-        "rows": all_rows,
+        "success_rate": n_success / n_configs if n_configs > 0 else 0.0,
+        "elapsed_seconds": elapsed,
+        "configs_per_second": n_configs / elapsed if elapsed > 0 else 0.0,
     }
 
     # Feature statistics
@@ -374,85 +319,58 @@ def generate_dataset(
                 stats[f"{fname}_max"] = float(np.max(values))
                 stats[f"{fname}_mean"] = float(np.mean(values))
 
-    logger.info(f"Dataset generation complete: {n_success}/{num_samples} successful")
+    logger.info(f"Dataset generation complete: {n_success}/{n_configs} successful")
+    logger.info(f"Time elapsed: {elapsed:.1f}s ({stats['configs_per_second']:.2f} configs/s)")
 
     return stats
 
 
-def _save_dataset(rows: List[Dict[str, Any]], output_path: Path) -> str:
-    """
-    Save dataset to file in Parquet format (with NPZ fallback).
-
-    Parameters
-    ----------
-    rows : list[dict]
-        List of record dictionaries.
-    output_path : Path
-        Output file path.
-
-    Returns
-    -------
-    str
-        Actual path where dataset was saved.
-    """
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    try:
-        import pandas as pd
-
-        df = pd.DataFrame(rows)
-        df.to_parquet(output_path, index=False)
-        logger.info(f"Dataset saved to {output_path}")
-        return str(output_path)
-
-    except ImportError:
-        logger.warning("pandas not installed, saving as npz instead")
-        npz_path = output_path.with_suffix(".npz")
-        np.savez(
-            npz_path,
-            data=np.array([list(r.values()) for r in rows], dtype=object),
-            columns=np.array(list(rows[0].keys())),
-        )
-        logger.info(f"Dataset saved to {npz_path}")
-        return str(npz_path)
-
-
 def main() -> None:
-    """
-    CLI entry point for dataset generation.
-
-    Parses command-line arguments and generates the dataset.
-    """
+    """Main entry point for dataset generation."""
     parser = argparse.ArgumentParser(
         description="Generate MyceliumFractalNet experimental dataset",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Run with a preset (recommended)
+  python -m experiments.generate_dataset --preset small
+  python -m experiments.generate_dataset --preset medium
+
+  # Legacy sweep mode
+  python -m experiments.generate_dataset --sweep default --output data/my_dataset.parquet
+
+Available presets: small, medium, large, benchmark
+        """,
     )
+
+    # Scenario-based arguments
     parser.add_argument(
-        "--num-samples",
-        "-n",
-        type=int,
-        default=DEFAULT_NUM_SAMPLES,
-        help="Number of simulations to generate",
+        "--preset",
+        "-p",
+        type=str,
+        choices=list_presets(),
+        help="Scenario preset: small (quick test), medium (standard), large (production)",
     )
+
+    # Legacy sweep arguments
     parser.add_argument(
         "--output",
         "-o",
         type=Path,
-        default=DEFAULT_OUTPUT_PATH,
-        help="Output path for dataset",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Base random seed for reproducibility",
+        default=Path("data/mycelium_dataset.parquet"),
+        help="Output path for dataset (legacy sweep mode)",
     )
     parser.add_argument(
         "--sweep",
         type=str,
         choices=["minimal", "default", "extended"],
-        default="default",
-        help="Sweep configuration preset",
+        help="Sweep configuration preset (legacy mode, use --preset instead)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Base random seed",
     )
     parser.add_argument(
         "--verbose",
@@ -460,62 +378,80 @@ def main() -> None:
         action="store_true",
         help="Verbose output",
     )
+    parser.add_argument(
+        "--list-presets",
+        action="store_true",
+        help="List available presets and exit",
+    )
 
     args = parser.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # Configure sampler based on preset
-    if args.sweep == "minimal":
-        sampler = ConfigSampler(
-            grid_sizes=[32],
-            steps_range=(50, 50),
-            alpha_range=(0.15, 0.15),
-            turing_values=[True],
-            base_seed=args.seed,
-        )
-    elif args.sweep == "extended":
-        sampler = ConfigSampler(
-            grid_sizes=[32, 64, 128],
-            steps_range=(50, 300),
-            alpha_range=(0.08, 0.22),
-            turing_values=[True, False],
-            base_seed=args.seed,
-        )
-    else:  # default
-        sampler = ConfigSampler(
-            grid_sizes=[32, 64],
-            steps_range=(50, 200),
-            alpha_range=(0.10, 0.20),
-            turing_values=[True, False],
-            base_seed=args.seed,
-        )
+    # Handle --list-presets
+    if args.list_presets:
+        print("Available presets:")
+        for preset_name in list_presets():
+            config = get_preset_config(preset_name)
+            print(f"  {preset_name}: {config.description}")
+        return
 
-    # Generate dataset
-    stats = generate_dataset(
-        num_samples=args.num_samples,
-        config_sampler=sampler,
-        output_path=args.output,
-    )
+    # Scenario-based mode (preferred)
+    if args.preset:
+        config = get_preset_config(args.preset)
+        config.base_seed = args.seed
 
-    # Print summary
-    print("\n=== Dataset Generation Summary ===")
-    print(f"Total samples requested: {stats['total_samples']}")
-    print(f"Successful: {stats['successful']}")
-    print(f"Failed: {stats['failed']}")
-    print(f"Success rate: {stats['success_rate']:.1%}")
-    if stats["output_path"]:
-        print(f"Output: {stats['output_path']}")
+        print(f"\n=== Running Scenario: {config.name} ===")
+        print(f"Description: {config.description}")
+        print(f"Grid: {config.grid_size}x{config.grid_size}, Steps: {config.steps}")
+        print(f"Samples: {config.num_samples}")
+        print()
 
-    if stats["successful"] > 0:
-        print("\n=== Feature Ranges ===")
-        for key in ["D_box", "V_mean", "f_active"]:
-            if f"{key}_mean" in stats:
-                print(
-                    f"{key}: [{stats[f'{key}_min']:.3f}, {stats[f'{key}_max']:.3f}] "
-                    f"(mean: {stats[f'{key}_mean']:.3f})"
-                )
+        meta = run_scenario(config, data_root=Path("data"))
+
+        print("\n=== Scenario Complete ===")
+        print(f"Output: {meta.output_path}")
+        print(f"Rows: {meta.num_rows}")
+        print(f"Columns: {meta.num_columns}")
+        print(f"Time: {meta.elapsed_seconds:.1f}s")
+        return
+
+    # Legacy sweep mode
+    if args.sweep:
+        if args.sweep == "minimal":
+            sweep = _create_minimal_sweep()
+        elif args.sweep == "extended":
+            sweep = _create_extended_sweep()
+        else:
+            sweep = _create_default_sweep()
+
+        sweep.base_seed = args.seed
+
+        # Generate dataset
+        stats = generate_dataset(sweep, args.output)
+
+        # Print summary
+        print("\n=== Dataset Generation Summary ===")
+        print(f"Total configurations: {stats['total_configs']}")
+        print(f"Successful: {stats['successful']}")
+        print(f"Failed: {stats['failed']}")
+        print(f"Success rate: {stats['success_rate']:.1%}")
+        print(f"Time: {stats['elapsed_seconds']:.1f}s")
+
+        if stats["successful"] > 0:
+            print("\n=== Feature Ranges ===")
+            for key in ["D_box", "V_mean", "f_active"]:
+                if f"{key}_mean" in stats:
+                    print(
+                        f"{key}: [{stats[f'{key}_min']:.3f}, {stats[f'{key}_max']:.3f}] "
+                        f"(mean: {stats[f'{key}_mean']:.3f})"
+                    )
+        return
+
+    # Default: show help
+    parser.print_help()
+    print("\nTip: Use --preset small for a quick test run.")
 
 
 if __name__ == "__main__":

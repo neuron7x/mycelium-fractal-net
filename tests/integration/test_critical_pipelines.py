@@ -93,7 +93,7 @@ class TestPipeline2ResultToFeatures:
 
     def test_complete_pipeline_flow(self) -> None:
         """Test feature extraction from simulation result."""
-        from analytics import FeatureVector, compute_features
+        from mycelium_fractal_net.analytics import FeatureVector, compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
 
         # Run simulation
@@ -113,7 +113,7 @@ class TestPipeline2ResultToFeatures:
 
     def test_feature_extraction_from_single_field(self) -> None:
         """Test feature extraction from single field (no history)."""
-        from analytics import FeatureVector, compute_features
+        from mycelium_fractal_net.analytics import FeatureVector, compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation
 
         config = SimulationConfig(grid_size=32, steps=20, seed=42)
@@ -127,7 +127,7 @@ class TestPipeline2ResultToFeatures:
 
     def test_feature_ranges_match_spec(self) -> None:
         """Test feature values are within expected ranges from FEATURE_SCHEMA.md."""
-        from analytics import compute_features
+        from mycelium_fractal_net.analytics import compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
 
         config = SimulationConfig(grid_size=64, steps=50, seed=42)
@@ -155,7 +155,7 @@ class TestPipeline3DatasetGeneration:
 
     def test_complete_pipeline_flow(self) -> None:
         """Test complete dataset generation pipeline."""
-        from experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_pipeline.parquet"
@@ -183,7 +183,7 @@ class TestPipeline3DatasetGeneration:
         """Test generated dataset has correct schema per DATASET_SPEC.md."""
         import pandas as pd
 
-        from experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_schema.parquet"
@@ -222,7 +222,7 @@ class TestPipeline3DatasetGeneration:
 
     def test_dataset_reproducibility(self) -> None:
         """Test dataset generation is reproducible with fixed seed."""
-        from experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments import SweepConfig, generate_dataset
 
         sweep1 = SweepConfig(
             grid_sizes=[32],
@@ -254,7 +254,7 @@ class TestEndToEndPipeline:
 
     def test_full_workflow(self) -> None:
         """Test complete workflow: config → simulation → features → dataset record."""
-        from analytics import compute_features
+        from mycelium_fractal_net.analytics import compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
 
         # Step 1: Configure simulation
@@ -300,7 +300,7 @@ class TestEndToEndPipeline:
 
     def test_workflow_with_multiple_configs(self) -> None:
         """Test workflow with parameter variations."""
-        from analytics import compute_features
+        from mycelium_fractal_net.analytics import compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
 
         configs = [

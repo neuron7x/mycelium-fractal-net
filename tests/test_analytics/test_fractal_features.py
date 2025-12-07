@@ -13,7 +13,7 @@ Reference: docs/FEATURE_SCHEMA.md
 import numpy as np
 import pytest
 
-from analytics import (
+from mycelium_fractal_net.analytics import (
     FeatureConfig,
     FeatureVector,
     compute_basic_stats,
@@ -22,7 +22,7 @@ from analytics import (
     compute_structural_features,
     compute_temporal_features,
 )
-from analytics.fractal_features import (
+from mycelium_fractal_net.analytics.fractal_features import (
     FEATURE_COUNT,
     _box_counting_dimension,
     _count_clusters_4conn,

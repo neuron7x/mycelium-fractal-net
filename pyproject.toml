@@ -46,9 +46,9 @@ build-backend = "setuptools.build_meta"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["src", "."]
-include = ["mycelium_fractal_net*", "analytics"]
-exclude = ["tests*", "docs*", "examples*", "experiments*"]
+where = ["src"]
+include = ["mycelium_fractal_net*"]
+exclude = ["tests*", "docs*", "examples*"]
 
 [tool.pytest.ini_options]
 addopts = "-q --disable-warnings"

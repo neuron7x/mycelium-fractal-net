@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from analytics import FeatureVector
+from mycelium_fractal_net.analytics import FeatureVector
 from mycelium_fractal_net.pipelines import (
     DatasetMeta,
     ScenarioConfig,
