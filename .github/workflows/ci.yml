@@ -109,6 +109,34 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: false
 
+  packaging:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+      - name: Build sdist and wheel
+        run: python -m build
+      - name: Verify wheel contents
+        run: |
+          unzip -l dist/*.whl | grep -E "mycelium_fractal_net/(core|crypto|integration|numerics|pipelines|security|types)/" || (echo "ERROR: Missing subpackages in wheel!" && exit 1)
+          echo "✓ All expected subpackages found in wheel"
+      - name: Install wheel in clean environment
+        run: |
+          python -m venv /tmp/test_env
+          /tmp/test_env/bin/pip install dist/*.whl
+      - name: Test recursive imports
+        run: |
+          /tmp/test_env/bin/python tests/test_package_completeness.py
+
   validate:
     runs-on: ubuntu-latest
     permissions:
