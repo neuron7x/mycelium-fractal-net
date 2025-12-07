@@ -12,7 +12,7 @@ Features extracted:
 Reference: docs/MFN_FEATURE_SCHEMA.md
 
 Usage:
-    >>> from mycelium_fractal_net.analytics import compute_features, FeatureConfig
+    >>> from analytics import compute_features, FeatureConfig
     >>> features = compute_features(field_history, config=FeatureConfig())
     >>> print(features.D_box, features.V_mean)
 """
@@ -122,6 +122,17 @@ class FeatureVector:
     N_clusters_high: int = 0
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
+
+    def __getitem__(self, key: str) -> float:
+        """Allow dict-like access to features."""
+        if not hasattr(self, key):
+            raise KeyError(f"Unknown feature: {key}")
+        return float(getattr(self, key))
+
+    @property
+    def values(self) -> dict[str, float]:
+        """Get all feature values as a dictionary (for backwards compatibility)."""
+        return self.to_dict()
 
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary with float values."""

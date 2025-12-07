@@ -38,6 +38,26 @@
 
 ---
 
+## 📦 Canonical Imports
+
+**Important**: Always use the fully qualified `mycelium_fractal_net.*` namespace for imports.
+
+✅ **Correct** (canonical):
+```python
+from mycelium_fractal_net.analytics import FeatureVector, compute_features
+from mycelium_fractal_net.experiments import generate_dataset
+```
+
+❌ **Incorrect** (namespace pollution risk):
+```python
+from analytics import FeatureVector  # Don't use this!
+from experiments import generate_dataset  # Don't use this!
+```
+
+The package only provides `mycelium_fractal_net` at the top level to avoid conflicts with other packages.
+
+---
+
 ## Архітектура
 
 ```
@@ -466,16 +486,16 @@ with 18 standardized fractal features. See [docs/MFN_DATA_PIPELINES.md](docs/MFN
 
 ```bash
 # List available presets
-python -m experiments.generate_dataset --list-presets
+python -m mycelium_fractal_net.experiments.generate_dataset --list-presets
 
 # Generate a small test dataset (~10 samples, <10 seconds)
-python -m experiments.generate_dataset --preset small
+python -m mycelium_fractal_net.experiments.generate_dataset --preset small
 
 # Generate a medium dataset (~100 samples, ~1-2 minutes)
-python -m experiments.generate_dataset --preset medium
+python -m mycelium_fractal_net.experiments.generate_dataset --preset medium
 
 # Generate a large production dataset (~500 samples)
-python -m experiments.generate_dataset --preset large
+python -m mycelium_fractal_net.experiments.generate_dataset --preset large
 ```
 
 ### Preset Summary
