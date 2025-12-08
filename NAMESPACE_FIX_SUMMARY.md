@@ -39,6 +39,8 @@ exclude = ["tests*", "docs*", "examples*"]
 
 - Moved `analytics/` → `src/mycelium_fractal_net/analytics/`
 - Moved `experiments/` → `src/mycelium_fractal_net/experiments/`
+- **Removed redundant top-level `analytics/` and `experiments/` directories**
+- Added `.gitignore` entries to prevent accidental recreation
 - Updated all internal imports to use relative imports (`..analytics`)
 
 ### 3. Updated All Import Statements
@@ -66,6 +68,9 @@ Added compatibility layers to ensure existing code continues to work:
 - Added prominent "Canonical Imports" section to README
 - Updated all usage examples to use namespaced imports
 - Updated CLI command examples in docstrings
+- Updated `docs/MFN_INTEGRATION_SPEC.md` to reflect new structure
+- Updated `docs/MFN_DATA_MODEL.md` module references
+- Updated `docs/reports/MFN_TEST_HEALTH_2025-11-30.md` coverage tables
 
 ## Validation
 
@@ -202,10 +207,12 @@ python -c "from mycelium_fractal_net.analytics import FeatureVector; from myceli
 ## Conclusion
 
 ✅ **Problem resolved**: No more top-level `analytics` or `experiments` packages  
+✅ **Source cleaned**: Removed redundant top-level directories from repository  
 ✅ **Backwards compatible**: All existing canonical imports continue to work  
 ✅ **Fully tested**: 159 tests passing, comprehensive validation  
 ✅ **Secure**: 0 security alerts from CodeQL  
-✅ **Documented**: README and docstrings updated  
+✅ **Documented**: README, docstrings, and technical docs updated  
+✅ **Prevention added**: .gitignore entries to prevent accidental recreation  
 ✅ **Production ready**: Safe to release immediately  
 
-The fix is **minimal**, **focused**, and **production-safe**. The package now follows Python packaging best practices and eliminates the P0 namespace collision risk.
+The fix is **complete**, **minimal**, **focused**, and **production-safe**. The package now follows Python packaging best practices, eliminates the P0 namespace collision risk, and maintains a clean repository structure with no redundant code.

@@ -115,3 +115,7 @@ examples/*.png
 examples/*.gif
 notebooks/*.png
 notebooks/*.gif
+
+# Prevent top-level analytics and experiments (moved to src/mycelium_fractal_net/)
+/analytics/
+/experiments/

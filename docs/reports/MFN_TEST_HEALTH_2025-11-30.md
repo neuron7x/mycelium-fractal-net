@@ -78,8 +78,8 @@ No actionable warnings related to MFN code.
 | Module | Coverage |
 |--------|----------|
 | `__init__.py` | 100% |
-| `analytics/__init__.py` | 100% |
-| `analytics/fractal_features.py` | 100% |
+| `mycelium_fractal_net/analytics/__init__.py` | 100% |
+| `mycelium_fractal_net/analytics/fractal_features.py` | 100% |
 | `core/__init__.py` | 100% |
 | `core/nernst.py` | 100% |
 | `core/turing.py` | 100% |

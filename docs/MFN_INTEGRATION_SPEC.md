@@ -17,19 +17,19 @@ mycelium-fractal-net/                    # Repository root
 │   └── mycelium_fractal_net/            # Main installable package (src-layout)
 │       ├── __init__.py                  # Public API exports (35+ symbols)
 │       ├── model.py                     # Core algorithms (~1000 LOC)
+│       ├── analytics/                   # Feature extraction subpackage
+│       │   ├── __init__.py
+│       │   └── fractal_features.py
+│       ├── experiments/                 # Dataset generation subpackage
+│       │   ├── __init__.py
+│       │   ├── generate_dataset.py
+│       │   └── inspect_features.py
 │       └── core/                        # Numerical engine subpackage
 │           ├── __init__.py
 │           ├── exceptions.py
 │           ├── membrane_engine.py
 │           ├── reaction_diffusion_engine.py
 │           └── fractal_growth_engine.py
-├── analytics/                           # Feature extraction package (top-level)
-│   ├── __init__.py
-│   └── fractal_features.py
-├── experiments/                         # Dataset generation package (top-level)
-│   ├── __init__.py
-│   ├── generate_dataset.py
-│   └── inspect_features.py
 ├── api.py                               # FastAPI REST server
 ├── mycelium_fractal_net_v4_1.py         # CLI entry point
 ├── Dockerfile                           # Container build
@@ -114,28 +114,26 @@ mycelium-fractal-net/
 │   │   ├── MyceliumFractalNet           # Neural network model
 │   │   ├── ValidationConfig             # Configuration dataclass
 │   │   └── run_validation()             # Validation pipeline
-│   └── core/                            # [NUMERICS] Numerical engines
-│       ├── __init__.py                  # Engine exports
-│       ├── exceptions.py                # StabilityError, ValueOutOfRangeError, NumericalInstabilityError
-│       ├── membrane_engine.py           # MembraneEngine: Nernst/GHK ODE integration
-│       ├── reaction_diffusion_engine.py # ReactionDiffusionEngine: Turing PDE solver
-│       └── fractal_growth_engine.py     # FractalGrowthEngine: IFS/DLA with Lyapunov
-│
-├── analytics/                           # [ANALYTICS] Feature extraction
-│   ├── __init__.py                      # Exports: FeatureConfig, FeatureVector, compute_features, etc.
-│   └── fractal_features.py              # 18 fractal/statistical features
-│       ├── FeatureConfig                # Configuration for feature extraction
-│       ├── FeatureVector                # Dataclass with D_box, V_mean, etc.
-│       ├── compute_features()           # Main entry point
-│       ├── compute_fractal_features()   # Box-counting dimension
-│       ├── compute_basic_stats()        # V_min, V_max, V_mean, V_std, skew, kurt
-│       ├── compute_temporal_features()  # dV_mean, dV_max, T_stable, E_trend
-│       └── compute_structural_features()# f_active, N_clusters, cluster stats
-│
-├── experiments/                         # [EXPERIMENTS] Dataset generation
-│   ├── __init__.py                      # Exports: generate_dataset, SweepConfig, etc.
-│   ├── generate_dataset.py              # Parameter sweep pipeline → parquet output
-│   └── inspect_features.py              # Exploratory analysis utilities
+│   ├── core/                            # [NUMERICS] Numerical engines
+│   │   ├── __init__.py                  # Engine exports
+│   │   ├── exceptions.py                # StabilityError, ValueOutOfRangeError, NumericalInstabilityError
+│   │   ├── membrane_engine.py           # MembraneEngine: Nernst/GHK ODE integration
+│   │   ├── reaction_diffusion_engine.py # ReactionDiffusionEngine: Turing PDE solver
+│   │   └── fractal_growth_engine.py     # FractalGrowthEngine: IFS/DLA with Lyapunov
+│   ├── analytics/                       # [ANALYTICS] Feature extraction subpackage
+│   │   ├── __init__.py                  # Exports: FeatureConfig, FeatureVector, compute_features, etc.
+│   │   └── fractal_features.py          # 18 fractal/statistical features
+│   │       ├── FeatureConfig            # Configuration for feature extraction
+│   │       ├── FeatureVector            # Dataclass with D_box, V_mean, etc.
+│   │       ├── compute_features()       # Main entry point
+│   │       ├── compute_fractal_features()   # Box-counting dimension
+│   │       ├── compute_basic_stats()    # V_min, V_max, V_mean, V_std, skew, kurt
+│   │       ├── compute_temporal_features()  # dV_mean, dV_max, T_stable, E_trend
+│   │       └── compute_structural_features()# f_active, N_clusters, cluster stats
+│   └── experiments/                     # [EXPERIMENTS] Dataset generation subpackage
+│       ├── __init__.py                  # Exports: generate_dataset, SweepConfig, etc.
+│       ├── generate_dataset.py          # Parameter sweep pipeline → parquet output
+│       └── inspect_features.py          # Exploratory analysis utilities
 │
 ├── configs/                             # [CONFIG] Simulation configurations
 │   ├── small.json                       # Dev: grid=32, steps=32
@@ -180,8 +178,8 @@ mycelium-fractal-net/
 |--------|----------|----------------|
 | **Core Package** | `src/mycelium_fractal_net/` | Public API, main algorithms, numerical engines |
 | **Numerics** | `src/mycelium_fractal_net/core/` | Stable PDE/ODE solvers, stability-guaranteed engines |
-| **Analytics** | `analytics/` | Feature extraction (18 features), statistical analysis |
-| **Experiments** | `experiments/` | Dataset generation, parameter sweeps, reproducible pipelines |
+| **Analytics** | `src/mycelium_fractal_net/analytics/` | Feature extraction (18 features), statistical analysis |
+| **Experiments** | `src/mycelium_fractal_net/experiments/` | Dataset generation, parameter sweeps, reproducible pipelines |
 | **Configs** | `configs/` | Predefined simulation configurations (small/medium/large) |
 | **Benchmarks** | `benchmarks/` | Performance measurement and profiling |
 | **Validation** | `validation/` | Scientific validation against known physics |
@@ -207,13 +205,13 @@ src/mycelium_fractal_net/                # Main package (EXISTING)
     ├── reaction_diffusion_engine.py     # Turing morphogenesis PDE solver
     └── fractal_growth_engine.py         # IFS fractal generation with Lyapunov
 
-analytics/                               # Feature extraction (EXISTING)
+src/mycelium_fractal_net/analytics/     # Feature extraction subpackage
 ├── __init__.py                          # Module exports
 │   └── Purpose: Expose FeatureConfig, FeatureVector, compute_features()
 └── fractal_features.py                  # 18-feature extraction pipeline
     └── Purpose: Extract D_box, V_stats, temporal features, structural features
 
-experiments/                             # Dataset generation (EXISTING)
+src/mycelium_fractal_net/experiments/   # Dataset generation subpackage
 ├── __init__.py                          # Module exports
 │   └── Purpose: Expose generate_dataset(), SweepConfig
 ├── generate_dataset.py                  # Sweep pipeline

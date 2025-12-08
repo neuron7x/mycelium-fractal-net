@@ -492,7 +492,7 @@ Datasets follow a canonical column order:
 | Layer | Types Used |
 |-------|-----------|
 | **core/** | SimulationConfig, SimulationResult |
-| **analytics/** | FeatureVector, FeatureConfig |
+| **mycelium_fractal_net.analytics/** | FeatureVector, FeatureConfig |
 | **pipelines/** | ScenarioConfig, DatasetMeta, DatasetRow |
 | **integration/** | API request/response models |
 | **examples/** | All configuration and result types |
