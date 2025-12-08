@@ -132,23 +132,23 @@ def validate_imports():
     
     try:
         # Test analytics imports
-        from mycelium_fractal_net.analytics import (
-            FeatureConfig,
-            FeatureVector,
-            compute_features,
-            compute_fractal_features,
+        from mycelium_fractal_net.analytics import (  # noqa: F401
+            FeatureConfig,  # noqa: F401
+            FeatureVector,  # noqa: F401
+            compute_features,  # noqa: F401
+            compute_fractal_features,  # noqa: F401
         )
         print("✓ mycelium_fractal_net.analytics imports work")
         
         # Test experiments imports
-        from mycelium_fractal_net.experiments import (
-            SweepConfig,
-            generate_dataset,
+        from mycelium_fractal_net.experiments import (  # noqa: F401
+            SweepConfig,  # noqa: F401
+            generate_dataset,  # noqa: F401
         )
         print("✓ mycelium_fractal_net.experiments imports work")
         
         # Test submodule access via main package
-        from mycelium_fractal_net import analytics, experiments
+        from mycelium_fractal_net import analytics, experiments  # noqa: F401
         print("✓ Submodules accessible from main package")
         
         return True

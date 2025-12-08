@@ -17,6 +17,7 @@ from .fractal_features import (
     FeatureConfig,
     FeatureVector,
     compute_basic_stats,
+    compute_box_counting_dimension,
     compute_features,
     compute_fractal_features as _compute_fractal_features_low_level,
     compute_structural_features,
@@ -84,6 +85,7 @@ __all__ = [
     "compute_features",
     "compute_fractal_features",
     "compute_basic_stats",
+    "compute_box_counting_dimension",
     "compute_temporal_features",
     "compute_structural_features",
 ]

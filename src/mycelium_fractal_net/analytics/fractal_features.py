@@ -286,6 +286,34 @@ def _box_counting_dimension(
     return fractal_dim, r_squared
 
 
+def compute_box_counting_dimension(
+    binary: NDArray[np.bool_],
+    min_box_size: int = 2,
+    max_box_size: int | None = None,
+    num_scales: int = 5,
+) -> Tuple[float, float]:
+    """
+    Public API for box-counting dimension (backwards compatibility).
+    
+    Parameters
+    ----------
+    binary : NDArray[bool]
+        Binary 2D field.
+    min_box_size : int
+        Minimum box size. Default 2.
+    max_box_size : int | None
+        Maximum box size (None = auto). Default None.
+    num_scales : int
+        Number of scales. Default 5.
+    
+    Returns
+    -------
+    tuple[float, float]
+        (D, R²) - fractal dimension and regression quality.
+    """
+    return _box_counting_dimension(binary, min_box_size, max_box_size, num_scales)
+
+
 def compute_fractal_features(
     field: NDArray[np.floating],
     config: FeatureConfig,
