@@ -252,6 +252,8 @@ class RateLimiter:
 
             if bucket.consume():
                 remaining = int(bucket.tokens)
+                # Probabilistic cleanup to prevent unbounded memory growth
+                self._maybe_cleanup()
                 return True, limit, remaining, None
             else:
                 retry_after = int(bucket.time_until_available()) + 1
@@ -262,7 +264,7 @@ class RateLimiter:
         Remove expired bucket entries to prevent memory leaks.
 
         Args:
-            max_age_seconds: Maximum age before removal.
+            max_age_seconds: Maximum age before removal (default: 1 hour).
 
         Returns:
             int: Number of buckets removed.
@@ -282,6 +284,23 @@ class RateLimiter:
                 removed += 1
 
         return removed
+
+    def _maybe_cleanup(self) -> None:
+        """
+        Probabilistically trigger cleanup to prevent unbounded memory growth.
+        
+        Uses a 1% chance per call to trigger cleanup, which provides automatic
+        eviction without requiring a background thread.
+        """
+        import random
+        
+        # 1% chance to trigger cleanup on any rate limit check
+        if random.random() < 0.01:
+            removed = self.cleanup_expired(max_age_seconds=3600)
+            if removed > 0:
+                import logging
+                logger = logging.getLogger("rate_limiter")
+                logger.debug(f"Cleaned up {removed} expired rate limit buckets")
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

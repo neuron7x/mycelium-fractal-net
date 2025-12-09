@@ -181,6 +181,51 @@ jobs:
       - name: Run scientific validation
         run: python validation/scientific_validation.py
 
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t mycelium-fractal-net:test .
+      - name: Verify non-root user
+        run: |
+          USER_ID=$(docker run --rm mycelium-fractal-net:test id -u)
+          if [ "$USER_ID" = "0" ]; then
+            echo "✗ Container runs as root (uid 0)"
+            exit 1
+          fi
+          echo "✓ Container runs as non-root user (uid $USER_ID)"
+      - name: Verify API starts correctly
+        run: |
+          # Start container in background
+          docker run -d --name mfn-test \
+            -e MFN_ENV=dev \
+            -e MFN_API_KEY=test-key-12345678 \
+            -p 8000:8000 \
+            mycelium-fractal-net:test
+          
+          # Wait for startup
+          sleep 10
+          
+          # Check health endpoint
+          curl -f http://localhost:8000/health || exit 1
+          echo "✓ API health check passed"
+          
+          # Cleanup
+          docker stop mfn-test
+          docker rm mfn-test
+      - name: Verify healthcheck uses /health endpoint
+        run: |
+          HEALTHCHECK=$(docker inspect mycelium-fractal-net:test --format='{{.Config.Healthcheck.Test}}')
+          if echo "$HEALTHCHECK" | grep -q "health"; then
+            echo "✓ Healthcheck uses /health endpoint"
+          else
+            echo "✗ Healthcheck does not use /health endpoint"
+            exit 1
+          fi
+
   scalability-test:
     runs-on: ubuntu-latest
     permissions:
@@ -257,14 +302,26 @@ jobs:
           python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/security/__init__.py" || exit 1
           python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/types/__init__.py" || exit 1
           echo "✓ All expected subpackages found in wheel"
-      - name: Verify analytics package is included
+      - name: Verify mycelium_fractal_net.analytics is included
         run: |
-          python -m zipfile -l dist/*.whl | grep "analytics/__init__.py" || exit 1
-          echo "✓ Analytics package included in wheel"
-      - name: Verify excluded packages are not in wheel
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/analytics/__init__.py" || exit 1
+          echo "✓ mycelium_fractal_net.analytics package included in wheel"
+      - name: Verify mycelium_fractal_net.experiments is included
         run: |
-          if python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+[[:space:]]+.*[[:space:]]+(experiments|tests|docs)/__init__.py" | grep -v "mycelium_fractal_net"; then
-            echo "✗ Found excluded runtime packages in wheel"
+          python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/experiments/__init__.py" || exit 1
+          echo "✓ mycelium_fractal_net.experiments package included in wheel"
+      - name: Verify NO top-level analytics/experiments
+        run: |
+          # Check that we don't have top-level analytics/ or experiments/ (only mycelium_fractal_net/*)
+          if python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+.*[[:space:]](analytics|experiments)/__init__.py$"; then
+            echo "✗ Found top-level analytics or experiments package (namespace collision risk)"
             exit 1
           fi
-          echo "✓ No excluded runtime packages in wheel"
+          echo "✓ No top-level analytics/experiments packages (namespace hygiene OK)"
+      - name: Verify excluded packages are not in wheel
+        run: |
+          if python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+.*[[:space:]](tests|docs|planning|assets)/__init__.py"; then
+            echo "✗ Found excluded dev-only packages in wheel"
+            exit 1
+          fi
+          echo "✓ No excluded dev-only packages in wheel"
