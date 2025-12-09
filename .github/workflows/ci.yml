@@ -310,14 +310,16 @@ jobs:
         run: |
           python -m zipfile -l dist/*.whl | grep "mycelium_fractal_net/experiments/__init__.py" || exit 1
           echo "✓ mycelium_fractal_net.experiments package included in wheel"
-      - name: Verify NO top-level analytics/experiments
+      - name: Verify NO top-level packages (namespace hygiene)
         run: |
-          # Check that we don't have top-level analytics/ or experiments/ (only mycelium_fractal_net/*)
+          # Ensure no top-level packages leak into distribution (analytics, experiments, etc.)
+          # Only mycelium_fractal_net/* should be present
           if python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+.*[[:space:]](analytics|experiments)/__init__.py$"; then
-            echo "✗ Found top-level analytics or experiments package (namespace collision risk)"
+            echo "✗ Found top-level package that creates namespace collision risk"
+            python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+.*[[:space:]](analytics|experiments)/__init__.py$"
             exit 1
           fi
-          echo "✓ No top-level analytics/experiments packages (namespace hygiene OK)"
+          echo "✓ No top-level packages (namespace hygiene OK)"
       - name: Verify excluded packages are not in wheel
         run: |
           if python -m zipfile -l dist/*.whl | grep -E "^[[:space:]]+[0-9]+.*[[:space:]](tests|docs|planning|assets)/__init__.py"; then

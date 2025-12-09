@@ -1,40 +1,31 @@
 """
-Analytics submodule for MyceliumFractalNet.
+Analytics module for MyceliumFractalNet.
 
-Provides feature extraction and analysis utilities for fractal analysis.
-
-Main API:
-- compute_fractal_features(result: SimulationResult) -> FeatureVector
-- compute_box_counting_dimension(field, ...) -> float
-- compute_basic_stats(field) -> Dict[str, float]
-
-Reference: docs/MFN_FEATURE_SCHEMA.md
+Provides feature extraction utilities for fractal analysis:
+- Box-counting fractal dimension
+- Basic field statistics
+- Temporal dynamics features
+- Structural/connectivity features
 """
 
-from typing import TYPE_CHECKING
-
-import numpy as np
-from numpy.typing import NDArray
-
 from .fractal_features import (
+    FEATURE_COUNT,
+    FeatureConfig,
     FeatureVector,
     compute_basic_stats,
-    compute_box_counting_dimension,
+    compute_features,
     compute_fractal_features,
+    compute_structural_features,
+    compute_temporal_features,
 )
 
-if TYPE_CHECKING:
-    pass
-
-
-# Legacy type alias for compatibility
-FeatureArray = NDArray[np.float64]
-"""Type alias for 18-element feature array (see MFN_FEATURE_SCHEMA.md)."""
-
 __all__ = [
+    "FEATURE_COUNT",
+    "FeatureConfig",
     "FeatureVector",
-    "FeatureArray",
+    "compute_features",
     "compute_fractal_features",
-    "compute_box_counting_dimension",
     "compute_basic_stats",
+    "compute_temporal_features",
+    "compute_structural_features",
 ]
