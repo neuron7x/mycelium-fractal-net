@@ -19,13 +19,15 @@ from .fractal_features import (
     compute_basic_stats,
     compute_box_counting_dimension,
     compute_features,
-    compute_fractal_features as _compute_fractal_features_low_level,
     compute_structural_features,
     compute_temporal_features,
 )
+from .fractal_features import (
+    compute_fractal_features as _compute_fractal_features_low_level,  # noqa: F401
+)
 
 if TYPE_CHECKING:
-    from ..core.types import SimulationResult
+    from ..core.types import SimulationResult  # noqa: F401
 
 
 def compute_fractal_features(

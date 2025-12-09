@@ -93,8 +93,8 @@ class TestPipeline2ResultToFeatures:
 
     def test_complete_pipeline_flow(self) -> None:
         """Test feature extraction from simulation result."""
-        from mycelium_fractal_net.analytics import FeatureVector, compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net.analytics import FeatureVector, compute_features
 
         # Run simulation
         config = SimulationConfig(grid_size=32, steps=30, seed=42)
@@ -113,8 +113,8 @@ class TestPipeline2ResultToFeatures:
 
     def test_feature_extraction_from_single_field(self) -> None:
         """Test feature extraction from single field (no history)."""
-        from mycelium_fractal_net.analytics import FeatureVector, compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation
+        from mycelium_fractal_net.analytics import FeatureVector, compute_features
 
         config = SimulationConfig(grid_size=32, steps=20, seed=42)
         result = run_mycelium_simulation(config)
@@ -127,8 +127,8 @@ class TestPipeline2ResultToFeatures:
 
     def test_feature_ranges_match_spec(self) -> None:
         """Test feature values are within expected ranges from FEATURE_SCHEMA.md."""
-        from mycelium_fractal_net.analytics import compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net.analytics import compute_features
 
         config = SimulationConfig(grid_size=64, steps=50, seed=42)
         result = run_mycelium_simulation_with_history(config)
@@ -254,8 +254,8 @@ class TestEndToEndPipeline:
 
     def test_full_workflow(self) -> None:
         """Test complete workflow: config → simulation → features → dataset record."""
-        from mycelium_fractal_net.analytics import compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net.analytics import compute_features
 
         # Step 1: Configure simulation
         config = SimulationConfig(
@@ -300,8 +300,8 @@ class TestEndToEndPipeline:
 
     def test_workflow_with_multiple_configs(self) -> None:
         """Test workflow with parameter variations."""
-        from mycelium_fractal_net.analytics import compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net.analytics import compute_features
 
         configs = [
             SimulationConfig(grid_size=32, steps=20, seed=1, turing_enabled=True),

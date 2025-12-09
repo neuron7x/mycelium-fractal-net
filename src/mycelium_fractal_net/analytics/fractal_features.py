@@ -19,7 +19,7 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Tuple
 
 import numpy as np
@@ -123,25 +123,29 @@ class FeatureVector:
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
     
-    # Support for legacy API
-    values: dict[str, float] | None = None
+    # Support for legacy API - use field with init=False to avoid conflict with property
+    _init_values: dict[str, float] | None = field(default=None, init=False, repr=False)
     
-    def __post_init__(self):
-        """Initialize from values dict if provided (backward compatibility)."""
-        if self.values is not None:
-            for key, value in self.values.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-            # Clear values to avoid confusion
-            object.__setattr__(self, 'values', None)
+    def __init__(self, *, values: dict[str, float] | None = None, **kwargs):
+        """Initialize FeatureVector with either values dict or individual fields."""
+        if values is not None:
+            # Legacy API: initialize from values dict
+            for key, value in values.items():
+                if key in self.feature_names():
+                    kwargs[key] = value
+        
+        # Set all fields
+        for field_name in self.feature_names():
+            default = 0.0 if field_name != 'T_stable' else 0
+            setattr(self, field_name, kwargs.get(field_name, default))
     
     def __contains__(self, key: str) -> bool:
         """Check if feature name exists."""
-        return hasattr(self, key) and key in self.feature_names()
+        return key in self.feature_names()
 
     def __getitem__(self, key: str) -> float:
         """Allow dict-like access to features."""
-        if not hasattr(self, key):
+        if key not in self.feature_names():
             raise KeyError(f"Unknown feature: {key}")
         return float(getattr(self, key))
 

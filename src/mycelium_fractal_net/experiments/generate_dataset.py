@@ -10,7 +10,8 @@ Usage (scenario-based - recommended):
     python -m mycelium_fractal_net.experiments.generate_dataset --preset large
 
 Usage (legacy sweep mode):
-    python -m mycelium_fractal_net.experiments.generate_dataset --output data/mycelium_dataset.parquet --sweep default
+    python -m mycelium_fractal_net.experiments.generate_dataset \\
+        --output data/mycelium_dataset.parquet --sweep default
 
 Features:
 - Scenario-based data generation with small/medium/large presets
@@ -40,7 +41,6 @@ import numpy as np
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from ..analytics import FeatureConfig, FeatureVector, compute_features
 from mycelium_fractal_net.core import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
@@ -51,6 +51,8 @@ from mycelium_fractal_net.pipelines import (
     list_presets,
     run_scenario,
 )
+
+from ..analytics import FeatureConfig, FeatureVector, compute_features
 
 # Get MFN version
 try:
@@ -415,7 +417,8 @@ def generate_dataset(
         configs = generate_parameter_configs(sweep)
     else:
         raise ValueError(
-            "Either provide 'sweep' (new API) or both 'num_samples' and 'config_sampler' (legacy API)"
+            "Either provide 'sweep' (new API) or both 'num_samples' "
+            "and 'config_sampler' (legacy API)"
         )
     n_configs = len(configs)
 
@@ -520,7 +523,8 @@ Examples:
   python -m mycelium_fractal_net.experiments.generate_dataset --preset medium
 
   # Legacy sweep mode
-  python -m mycelium_fractal_net.experiments.generate_dataset --sweep default --output data/my_dataset.parquet
+  python -m mycelium_fractal_net.experiments.generate_dataset \\
+      --sweep default --output data/my_dataset.parquet
 
 Available presets: small, medium, large, benchmark
         """,

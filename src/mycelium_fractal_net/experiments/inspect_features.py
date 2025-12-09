@@ -5,7 +5,8 @@ Loads a generated dataset and provides summary statistics, correlations,
 and basic visualizations.
 
 Usage:
-    python -m mycelium_fractal_net.experiments.inspect_features --input data/mycelium_dataset.parquet
+    python -m mycelium_fractal_net.experiments.inspect_features \\
+        --input data/mycelium_dataset.parquet
 
 Features:
 - Descriptive statistics for all features
