@@ -35,6 +35,9 @@ spec:
             - containerPort: 8000
               name: http
           resources:
+            # Note: Large gap between requests and limits is intentional
+            # /validate and /simulate endpoints are expensive but bursty
+            # Normal operation uses ~512Mi, but validation can spike to 2Gi
             requests:
               memory: "512Mi"
               cpu: "500m"

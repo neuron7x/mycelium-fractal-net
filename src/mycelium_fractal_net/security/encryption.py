@@ -49,7 +49,7 @@ def _check_production_guard() -> None:
     Raises:
         RuntimeError: If MFN_ENV is set to 'prod' or 'production'.
     """
-    env = os.getenv("MFN_ENV", "dev").lower()
+    env = os.getenv("MFN_ENV", "prod").lower()
     if env in ("prod", "production"):
         raise RuntimeError(
             "security.encryption module is deprecated and disabled in production. "

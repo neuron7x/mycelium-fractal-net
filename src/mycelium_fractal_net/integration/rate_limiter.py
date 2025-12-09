@@ -25,7 +25,9 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-002
 
 from __future__ import annotations
 
+import logging
 import os
+import random
 import time
 from dataclasses import dataclass
 from threading import Lock
@@ -37,6 +39,9 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 from .api_config import RateLimitConfig, get_api_config
+
+# Module-level logger
+_logger = logging.getLogger("rate_limiter")
 
 
 @dataclass
@@ -135,9 +140,7 @@ class RateLimiter:
         suppress_warning = os.getenv("MFN_RATE_LIMIT_WARN_MULTI_REPLICA", "true").lower() == "false"
         
         if env in ("prod", "production") and not suppress_warning:
-            import logging
-            logger = logging.getLogger("rate_limiter")
-            logger.warning(
+            _logger.warning(
                 "In-memory rate limiting is enabled in production. "
                 "This does NOT share state across replicas and provides weak protection "
                 "in multi-instance deployments. Each replica has independent rate limits. "
@@ -292,15 +295,11 @@ class RateLimiter:
         Uses a 1% chance per call to trigger cleanup, which provides automatic
         eviction without requiring a background thread.
         """
-        import random
-        
         # 1% chance to trigger cleanup on any rate limit check
         if random.random() < 0.01:
             removed = self.cleanup_expired(max_age_seconds=3600)
             if removed > 0:
-                import logging
-                logger = logging.getLogger("rate_limiter")
-                logger.debug(f"Cleaned up {removed} expired rate limit buckets")
+                _logger.debug(f"Cleaned up {removed} expired rate limit buckets")
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
