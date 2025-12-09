@@ -4,10 +4,16 @@ Rate limiting middleware for MyceliumFractalNet API.
 Implements in-memory rate limiting to prevent API abuse.
 Uses a token bucket algorithm with configurable limits per endpoint.
 
-Note: In-memory rate limiting does not persist across restarts and
-does not share state between multiple instances. For production
-deployments with multiple replicas, consider using Redis-based
-rate limiting.
+**PRODUCTION WARNING**: In-memory rate limiting does not persist across restarts
+and does NOT share state between multiple instances. This provides a false sense
+of security in multi-replica deployments where each instance has its own rate limits.
+
+For production deployments with multiple replicas (>1), you MUST:
+- Set MFN_RATE_LIMIT_ENABLED=false and implement distributed rate limiting (Redis)
+- OR accept that rate limits are per-instance (actual limit = config * num_replicas)
+- Set MFN_RATE_LIMIT_WARN_MULTI_REPLICA=false to suppress startup warning
+
+The middleware will log a warning if enabled in production without explicit acknowledgment.
 
 Usage:
     from mycelium_fractal_net.integration.rate_limiter import RateLimitMiddleware
@@ -19,6 +25,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-002
 
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass
 from threading import Lock
@@ -96,6 +103,8 @@ class RateLimiter:
     In-memory rate limiter using token buckets.
 
     Thread-safe implementation with per-client tracking.
+    
+    **WARNING**: Does NOT synchronize across multiple replicas.
 
     Attributes:
         config: Rate limit configuration.
@@ -113,13 +122,37 @@ class RateLimiter:
         self.config = config or get_api_config().rate_limit
         self.buckets: Dict[str, TokenBucket] = {}
         self._lock = Lock()
+        
+        # Warn if enabled in production without acknowledgment
+        self._check_production_warning()
+
+    def _check_production_warning(self) -> None:
+        """Log warning if in-memory rate limiting is used in production."""
+        if not self.config.enabled:
+            return
+        
+        env = os.getenv("MFN_ENV", "prod").lower()
+        suppress_warning = os.getenv("MFN_RATE_LIMIT_WARN_MULTI_REPLICA", "true").lower() == "false"
+        
+        if env in ("prod", "production") and not suppress_warning:
+            import logging
+            logger = logging.getLogger("rate_limiter")
+            logger.warning(
+                "In-memory rate limiting is enabled in production. "
+                "This does NOT share state across replicas and provides weak protection "
+                "in multi-instance deployments. Each replica has independent rate limits. "
+                "For true distributed rate limiting, use Redis or disable with "
+                "MFN_RATE_LIMIT_ENABLED=false. To suppress this warning, set "
+                "MFN_RATE_LIMIT_WARN_MULTI_REPLICA=false."
+            )
 
     def _get_client_key(self, request: Request) -> str:
         """
         Get a unique key for the client.
 
         Uses IP address as the primary identifier.
-        Falls back to X-Forwarded-For if behind proxy.
+        SECURITY: Only trusts X-Forwarded-For if explicitly enabled via config.
+        By default, uses direct client IP to prevent spoofing.
 
         Args:
             request: The incoming request.
@@ -127,13 +160,23 @@ class RateLimiter:
         Returns:
             str: Client identifier key.
         """
-        # Check for forwarded header (behind proxy)
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            # Take the first IP in the chain (original client)
-            return str(forwarded.split(",")[0].strip())
+        # Check if we should trust proxy headers
+        # In production, this should only be enabled when behind a trusted reverse proxy
+        trust_proxy = os.getenv("MFN_TRUST_PROXY_HEADERS", "false").lower() in ("true", "1", "yes")
+        
+        if trust_proxy:
+            # Only when explicitly configured, check X-Real-IP first (more reliable)
+            real_ip = request.headers.get("X-Real-IP", "")
+            if real_ip:
+                return real_ip.strip()
+            
+            # Fall back to X-Forwarded-For
+            forwarded = request.headers.get("X-Forwarded-For", "")
+            if forwarded:
+                # Take the first IP in the chain (original client)
+                return str(forwarded.split(",")[0].strip())
 
-        # Fall back to direct client IP
+        # Default: use direct client IP (secure against spoofing)
         if request.client:
             return str(request.client.host)
 

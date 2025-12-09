@@ -1,31 +1,27 @@
 """
 Data encryption utilities for MyceliumFractalNet.
 
-Provides symmetric encryption for sensitive data at rest using a
-key derivation and XOR-based cipher with HMAC authentication.
-Suitable for encrypting configuration secrets and API keys.
+**DEPRECATED**: This module uses a custom XOR-based encryption scheme and is
+NOT suitable for production use. It is provided for development/testing only.
 
-NOTE: For high-security production use cases requiring regulatory
-compliance (PCI-DSS, HIPAA), consider using the `cryptography`
-library with Fernet or AES-GCM encryption.
+For production use, use the AES-256-GCM implementation in:
+    mycelium_fractal_net.crypto.symmetric
 
-Security Properties:
+This module will raise an error if used when MFN_ENV=prod.
+
+Security Properties (DEV/TEST ONLY):
     - PBKDF2 key derivation with 100,000 iterations
-    - SHA256-based cipher key generation
+    - XOR-based cipher (NOT cryptographically secure for production)
     - HMAC-SHA256 for authentication and tamper detection
     - URL-safe base64 encoding
 
-Usage:
-    >>> from mycelium_fractal_net.security.encryption import (
-    ...     encrypt_data,
-    ...     decrypt_data,
-    ...     generate_key,
-    ... )
-    >>> key = generate_key()
-    >>> ciphertext = encrypt_data("sensitive data", key)
-    >>> plaintext = decrypt_data(ciphertext, key)
+Production Alternative:
+    >>> from mycelium_fractal_net.crypto.symmetric import AESGCMCipher
+    >>> cipher = AESGCMCipher()
+    >>> ciphertext = cipher.encrypt(b"sensitive data")
+    >>> plaintext = cipher.decrypt(ciphertext)
 
-Reference: docs/MFN_SECURITY.md
+Reference: docs/MFN_SECURITY.md, docs/MFN_CRYPTOGRAPHY.md
 """
 
 from __future__ import annotations
@@ -35,6 +31,7 @@ import hashlib
 import hmac
 import os
 import secrets
+import warnings
 from dataclasses import dataclass
 from typing import Optional, Union
 
@@ -43,6 +40,28 @@ class EncryptionError(Exception):
     """Raised when encryption or decryption fails."""
 
     pass
+
+
+def _check_production_guard() -> None:
+    """
+    Guard against using this deprecated encryption in production.
+    
+    Raises:
+        RuntimeError: If MFN_ENV is set to 'prod' or 'production'.
+    """
+    env = os.getenv("MFN_ENV", "dev").lower()
+    if env in ("prod", "production"):
+        raise RuntimeError(
+            "security.encryption module is deprecated and disabled in production. "
+            "Use mycelium_fractal_net.crypto.symmetric.AESGCMCipher instead."
+        )
+    
+    # Warn in all cases
+    warnings.warn(
+        "security.encryption is deprecated. Use crypto.symmetric.AESGCMCipher for production.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
 
 
 def generate_key() -> bytes:
@@ -101,11 +120,13 @@ def encrypt_data(
 ) -> str:
     """
     Encrypt data using symmetric encryption.
+    
+    **DEPRECATED**: Use crypto.symmetric.AESGCMCipher for production.
 
     Uses a simplified encryption scheme based on:
     - Random 16-byte salt for key derivation
     - Random 16-byte IV
-    - XOR encryption with derived key
+    - XOR encryption with derived key (NOT secure for production)
     - HMAC-SHA256 for authentication
 
     Args:
@@ -118,6 +139,7 @@ def encrypt_data(
 
     Raises:
         EncryptionError: If encryption fails.
+        RuntimeError: If called in production environment.
 
     Example:
         >>> key = generate_key()
@@ -125,6 +147,7 @@ def encrypt_data(
         >>> isinstance(ciphertext, str)
         True
     """
+    _check_production_guard()
     try:
         # Convert string to bytes if needed
         if isinstance(data, str):
@@ -163,6 +186,8 @@ def decrypt_data(
 ) -> str:
     """
     Decrypt data that was encrypted with encrypt_data.
+    
+    **DEPRECATED**: Use crypto.symmetric.AESGCMCipher for production.
 
     Verifies HMAC before decryption to prevent tampering.
 
@@ -176,6 +201,7 @@ def decrypt_data(
 
     Raises:
         EncryptionError: If decryption fails or HMAC verification fails.
+        RuntimeError: If called in production environment.
 
     Example:
         >>> key = generate_key()
@@ -183,6 +209,7 @@ def decrypt_data(
         >>> decrypt_data(ciphertext, key)
         'secret'
     """
+    _check_production_guard()
     try:
         # Decode base64
         data = base64.urlsafe_b64decode(ciphertext.encode("ascii"))

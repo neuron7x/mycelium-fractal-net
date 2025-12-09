@@ -117,12 +117,12 @@ def _get_cors_origins() -> List[str]:
     Get CORS origins from environment or defaults.
 
     In development (MFN_ENV=dev), allows all origins.
-    In production (MFN_ENV=prod), requires explicit configuration via MFN_CORS_ORIGINS.
+    In production (default or MFN_ENV=prod), requires explicit configuration via MFN_CORS_ORIGINS.
 
     Returns:
         List of allowed origin strings.
     """
-    env = os.getenv("MFN_ENV", "dev").lower()
+    env = os.getenv("MFN_ENV", "prod").lower()
     cors_origins = os.getenv("MFN_CORS_ORIGINS", "")
 
     if cors_origins:

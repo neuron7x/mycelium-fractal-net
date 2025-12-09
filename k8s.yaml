@@ -29,16 +29,26 @@ spec:
         - name: mycelium-fractal-net
           image: mycelium-fractal-net:v4.1
           imagePullPolicy: IfNotPresent
+          command: ["uvicorn"]
+          args: ["api:app", "--host", "0.0.0.0", "--port", "8000"]
           ports:
             - containerPort: 8000
               name: http
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
               memory: "512Mi"
               cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
@@ -136,22 +146,21 @@ data:
     }
 ---
 # Secret for API keys and sensitive configuration
-# Note: Values are base64 encoded. Create with:
+# REQUIRED: Create this secret before deploying:
 #   kubectl create secret generic mfn-secrets \
 #     --from-literal=api-key=$(openssl rand -base64 32) \
 #     -n mycelium-fractal-net
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mfn-secrets
-  namespace: mycelium-fractal-net
-type: Opaque
-data:
-  # WARNING: This is a placeholder value! MUST be replaced before production deployment!
-  # Generate a secure key with: openssl rand -base64 32 | base64
-  # Or create secret with kubectl command above (recommended)
-  # Placeholder decodes to: "placeholder-api-key" (DO NOT USE IN PRODUCTION!)
-  api-key: cGxhY2Vob2xkZXItYXBpLWtleQ==
+#
+# This manifest is provided as a template only.
+# DO NOT apply this file directly - it will fail due to missing required secret data.
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: mfn-secrets
+#   namespace: mycelium-fractal-net
+# type: Opaque
+# data:
+#   api-key: <REQUIRED - create via kubectl command above>
 ---
 # Ingress for external HTTP(S) access
 # Note: Requires an ingress controller (nginx, traefik, etc.)
@@ -166,9 +175,10 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     # Rate limiting
     nginx.ingress.kubernetes.io/limit-rps: "100"
-    # CORS
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    # CORS - REQUIRED: Set MFN_CORS_ORIGINS environment variable in deployment
+    # For production, explicitly configure allowed origins via environment variable
+    # nginx.ingress.kubernetes.io/enable-cors: "true"
+    # nginx.ingress.kubernetes.io/cors-allow-origin: "https://your-domain.com"
     # Cert-manager for automatic TLS
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:

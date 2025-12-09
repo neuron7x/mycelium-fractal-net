@@ -240,7 +240,7 @@ class APIConfig:
         metrics: Metrics configuration.
     """
 
-    env: Environment = Environment.DEV
+    env: Environment = Environment.PROD
     auth: AuthConfig = field(default_factory=AuthConfig)
     rate_limit: RateLimitConfig = field(default_factory=RateLimitConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
@@ -254,11 +254,11 @@ class APIConfig:
         Returns:
             APIConfig: Fully configured API settings.
         """
-        env_str = os.getenv("MFN_ENV", "dev").lower()
+        env_str = os.getenv("MFN_ENV", "prod").lower()
         try:
             env = Environment(env_str)
         except ValueError:
-            env = Environment.DEV
+            env = Environment.PROD
 
         return cls(
             env=env,
