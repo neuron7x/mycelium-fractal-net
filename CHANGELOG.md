@@ -27,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING**: Docker now runs as non-root user (uid 1000 `mfnuser`)
 - **BREAKING**: K8s deployment now explicitly runs API via `command` and `args`
 - **BREAKING**: Fixed pyproject.toml package discovery to only include `mycelium_fractal_net*` from `src/`
-  - Removed top-level `analytics` from distribution
+  - Moved top-level `analytics` module into `mycelium_fractal_net.analytics` (eliminates namespace collision)
+  - All imports updated: `from analytics import X` → `from mycelium_fractal_net.analytics import X`
+  - Top-level `experiments` excluded from distribution (dev-only)
   - Package now correctly auto-discovers all subpackages
 - Docker HEALTHCHECK now uses lightweight `/health` endpoint (was: expensive validation)
 - K8s deployment now includes securityContext with non-root user and capability drop

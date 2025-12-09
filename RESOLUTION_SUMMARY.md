@@ -10,8 +10,10 @@
    exclude = ["tests*", "docs*", "examples*", "planning*", "assets*"]
    ```
 
-2) **Namespace hygiene** — `pyproject.toml` — Prevents ecosystem collision with top-level `analytics`/`experiments` — `packaging` job fails if found
-   - Removed `"analytics"` and `"."` from `where`
+2) **Namespace hygiene** — `pyproject.toml` + code refactoring — Prevents ecosystem collision — `packaging` job fails if found
+   - **Moved** top-level `analytics` into `mycelium_fractal_net.analytics`
+   - Updated all imports: `from analytics import X` → `from mycelium_fractal_net.analytics import X`
+   - Excluded top-level `experiments` from distribution (dev-only)
    - Package only includes `mycelium_fractal_net.*` namespace
 
 3) **Docker API default** — `Dockerfile` — Production expects API server, not validation — `docker` CI job validates API startup
