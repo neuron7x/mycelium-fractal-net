@@ -20,7 +20,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -125,7 +125,9 @@ class FeatureVector:
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
     
-    def __init__(self, *, values: dict[str, float] | None = None, **kwargs):
+    def __init__(
+        self, *, values: dict[str, float] | None = None, **kwargs: float | int
+    ) -> None:
         """
         Initialize FeatureVector with either values dict or individual fields.
         
@@ -361,7 +363,9 @@ def compute_box_counting_dimension(
                 "Field must be boolean when threshold is not provided. "
                 "Use threshold parameter to binarize float fields."
             )
-        return _box_counting_dimension(field, min_box_size, max_box_size, num_scales)
+        # Cast to bool_ explicitly for mypy
+        binary_field: NDArray[np.bool_] = field.astype(np.bool_)
+        return _box_counting_dimension(binary_field, min_box_size, max_box_size, num_scales)
 
 
 def compute_fractal_features(
@@ -395,11 +399,11 @@ def compute_fractal_features(
     )
 
 
-class BasicStats(dict):
+class BasicStats(dict[str, float]):
     """Dict-like container for basic statistics (backward compatibility)."""
     
     def __init__(self, min_val: float, max_val: float, mean: float, 
-                 std: float, skew: float, kurt: float):
+                 std: float, skew: float, kurt: float) -> None:
         super().__init__({
             'min': min_val,
             'max': max_val,
@@ -411,11 +415,11 @@ class BasicStats(dict):
         # Also support tuple unpacking for backward compatibility
         self._tuple = (min_val, max_val, mean, std, skew, kurt)
     
-    def __iter__(self):
+    def __iter__(self):  # type: ignore[no-untyped-def]
         """Support tuple unpacking."""
         return iter(self._tuple)
     
-    def __getitem__(self, key):
+    def __getitem__(self, key: str | int) -> float:
         """Support both dict and tuple access."""
         if isinstance(key, int):
             return self._tuple[key]
@@ -770,7 +774,10 @@ def compute_features(
 
     # Compute all feature groups
     D_box, D_r2 = compute_fractal_features(field, config)
-    V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(field)
+    # Cast to tuple for unpacking (BasicStats supports both dict and tuple access)
+    V_min, V_max, V_mean, V_std, V_skew, V_kurt = cast(
+        Tuple[float, float, float, float, float, float], compute_basic_stats(field)
+    )
     dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
     f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
         field, config

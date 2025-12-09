@@ -305,10 +305,16 @@ def generate_parameter_configs(
     configs = []
     sim_id = 0
 
-    for grid_size in sweep.grid_sizes:
-        for steps in sweep.steps_list:
-            for alpha in sweep.alpha_values:
-                for turing in sweep.turing_values:
+    # Ensure all lists are not None
+    grid_sizes = sweep.grid_sizes or []
+    steps_list = sweep.steps_list or []
+    alpha_values = sweep.alpha_values or []
+    turing_values = sweep.turing_values or []
+
+    for grid_size in grid_sizes:
+        for steps in steps_list:
+            for alpha in alpha_values:
+                for turing in turing_values:
                     for seed_offset in range(sweep.seeds_per_config):
                         seed = sweep.base_seed + sim_id
                         configs.append(

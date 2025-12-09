@@ -10,7 +10,7 @@ Provides feature extraction utilities for fractal analysis:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .fractal_features import (
     FEATURE_COUNT,
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 def compute_fractal_features(
-    result,  # SimulationResult or ndarray
+    result: Any,  # SimulationResult or ndarray
     config: FeatureConfig | None = None,
 ) -> FeatureVector:
     """
