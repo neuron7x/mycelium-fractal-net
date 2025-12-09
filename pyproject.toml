@@ -23,6 +23,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Development dependencies
 dev = [
   "pytest>=7.0",
   "pytest-cov>=4.0",
@@ -35,7 +36,38 @@ dev = [
   "httpx>=0.24.0",
   "hypothesis>=6.0.0",
   "uvicorn>=0.20.0",
+  "bandit>=1.7.5",
+  "safety>=3.0.0",
+  "pip-audit>=2.6.0",
+  "pre-commit>=3.5.0",
+]
+
+# Web server (FastAPI/uvicorn with performance optimizations)
+server = [
+  "uvicorn[standard]>=0.27.0",
+]
+
+# Load testing
+load-testing = [
   "locust>=2.20.0",
+]
+
+# Data export and analysis (optional, for experiments)
+analytics = [
+  "aiohttp>=3.9.0",
+  "kafka-python>=2.0.2",
+]
+
+# Scientific computing extras
+scientific = [
+  "scipy>=1.11.0",
+  "matplotlib>=3.7.0",
+  "jupyter>=1.0.0",
+]
+
+# All optional dependencies
+all = [
+  "mycelium-fractal-net[dev,server,load-testing,analytics,scientific]",
 ]
 
 [build-system]

@@ -1,0 +1,35 @@
+# CODEOWNERS file for MyceliumFractalNet
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo
+* @neuron7x
+
+# Core simulation and scientific code
+/src/mycelium_fractal_net/core/ @neuron7x
+/src/mycelium_fractal_net/model.py @neuron7x
+/src/mycelium_fractal_net/numerics/ @neuron7x
+
+# Security and cryptography (requires security review)
+/src/mycelium_fractal_net/crypto/ @neuron7x
+/src/mycelium_fractal_net/security/ @neuron7x
+/tests/crypto/ @neuron7x
+/tests/security/ @neuron7x
+
+# API and integration layer
+/src/mycelium_fractal_net/integration/ @neuron7x
+/api.py @neuron7x
+
+# Infrastructure and deployment
+/Dockerfile @neuron7x
+/k8s.yaml @neuron7x
+/.github/workflows/ @neuron7x
+
+# Documentation and policies
+/docs/ @neuron7x
+/SECURITY.md @neuron7x
+/LICENSE @neuron7x
+
+# Package configuration (requires careful review)
+/pyproject.toml @neuron7x
+/setup.py @neuron7x
+/requirements.txt @neuron7x
