@@ -130,23 +130,31 @@ def check_documentation_consistency():
         # Look for old-style top-level references (but not in src/)
         lines = content.split('\n')
         for i, line in enumerate(lines, 1):
-            # Skip if it's within mycelium_fractal_net tree (indicated by indentation showing it's a subpackage)
+            # Skip if within mycelium_fractal_net tree (indicated by indentation)
             if "│   " in line and ("analytics/" in line or "experiments/" in line):
                 continue
             if "│       " in line and ("analytics/" in line or "experiments/" in line):
                 continue
-            if "mycelium_fractal_net/analytics" in line or "mycelium_fractal_net/experiments" in line:
+            if (
+                "mycelium_fractal_net/analytics" in line
+                or "mycelium_fractal_net/experiments" in line
+            ):
                 continue
             
             # Flag ONLY root-level references (no indentation, at root of tree)
             # Must be like: "├── analytics/" at the root level without being under src/
             is_root_level_ref = False
             
-            if line.strip().startswith("├── analytics/") or line.strip().startswith("├── experiments/"):
+            if line.strip().startswith(
+                "├── analytics/"
+            ) or line.strip().startswith("├── experiments/"):
                 # Check if previous lines show we're in the root, not under src/
                 is_root_level_ref = True
             
-            if "| **Analytics** | `analytics/`" in line or "| **Experiments** | `experiments/`" in line:
+            if (
+                "| **Analytics** | `analytics/`" in line
+                or "| **Experiments** | `experiments/`" in line
+            ):
                 is_root_level_ref = True
             
             if is_root_level_ref:

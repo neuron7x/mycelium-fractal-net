@@ -122,6 +122,22 @@ class FeatureVector:
     N_clusters_high: int = 0
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
+    
+    # Support for legacy API
+    values: dict[str, float] | None = None
+    
+    def __post_init__(self):
+        """Initialize from values dict if provided (backward compatibility)."""
+        if self.values is not None:
+            for key, value in self.values.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+            # Clear values to avoid confusion
+            object.__setattr__(self, 'values', None)
+    
+    def __contains__(self, key: str) -> bool:
+        """Check if feature name exists."""
+        return hasattr(self, key) and key in self.feature_names()
 
     def __getitem__(self, key: str) -> float:
         """Allow dict-like access to features."""
@@ -145,29 +161,32 @@ class FeatureVector:
             dtype=np.float64,
         )
 
+    # Class variable for backward compatibility
+    _FEATURE_NAMES = [
+        "D_box",
+        "D_r2",
+        "V_min",
+        "V_max",
+        "V_mean",
+        "V_std",
+        "V_skew",
+        "V_kurt",
+        "dV_mean",
+        "dV_max",
+        "T_stable",
+        "E_trend",
+        "f_active",
+        "N_clusters_low",
+        "N_clusters_med",
+        "N_clusters_high",
+        "max_cluster_size",
+        "cluster_size_std",
+    ]
+    
     @classmethod
     def feature_names(cls) -> list[str]:
         """Get list of feature names in order."""
-        return [
-            "D_box",
-            "D_r2",
-            "V_min",
-            "V_max",
-            "V_mean",
-            "V_std",
-            "V_skew",
-            "V_kurt",
-            "dV_mean",
-            "dV_max",
-            "T_stable",
-            "E_trend",
-            "f_active",
-            "N_clusters_low",
-            "N_clusters_med",
-            "N_clusters_high",
-            "max_cluster_size",
-            "cluster_size_std",
-        ]
+        return cls._FEATURE_NAMES
 
     @classmethod
     def from_array(cls, arr: NDArray[np.float64]) -> "FeatureVector":
@@ -287,31 +306,50 @@ def _box_counting_dimension(
 
 
 def compute_box_counting_dimension(
-    binary: NDArray[np.bool_],
+    field: NDArray[np.floating] | NDArray[np.bool_],
     min_box_size: int = 2,
     max_box_size: int | None = None,
     num_scales: int = 5,
-) -> Tuple[float, float]:
+    *,
+    threshold: float | None = None,
+) -> float | Tuple[float, float]:
     """
     Public API for box-counting dimension (backwards compatibility).
     
     Parameters
     ----------
-    binary : NDArray[bool]
-        Binary 2D field.
+    field : NDArray[float] | NDArray[bool]
+        Field data (will be binarized if float, using threshold).
     min_box_size : int
         Minimum box size. Default 2.
     max_box_size : int | None
         Maximum box size (None = auto). Default None.
     num_scales : int
         Number of scales. Default 5.
+    threshold : float | None
+        Threshold for binarization (only used if field is float).
+        If None, field must be boolean. Default None.
     
     Returns
     -------
-    tuple[float, float]
-        (D, R²) - fractal dimension and regression quality.
+    float | tuple[float, float]
+        If threshold provided: returns only D (dimension).
+        Otherwise: returns (D, R²) tuple.
     """
-    return _box_counting_dimension(binary, min_box_size, max_box_size, num_scales)
+    # Handle threshold parameter (legacy API)
+    if threshold is not None:
+        # Binarize the field using threshold
+        binary = field > threshold
+        D, R2 = _box_counting_dimension(binary, min_box_size, max_box_size, num_scales)
+        return D  # Legacy API returns only dimension
+    else:
+        # New API: field should be boolean
+        if field.dtype != np.bool_:
+            raise TypeError(
+                "Field must be boolean when threshold is not provided. "
+                "Use threshold parameter to binarize float fields."
+            )
+        return _box_counting_dimension(field, min_box_size, max_box_size, num_scales)
 
 
 def compute_fractal_features(
@@ -345,9 +383,36 @@ def compute_fractal_features(
     )
 
 
+class BasicStats(dict):
+    """Dict-like container for basic statistics (backward compatibility)."""
+    
+    def __init__(self, min_val: float, max_val: float, mean: float, 
+                 std: float, skew: float, kurt: float):
+        super().__init__({
+            'min': min_val,
+            'max': max_val,
+            'mean': mean,
+            'std': std,
+            'skew': skew,
+            'kurt': kurt,
+        })
+        # Also support tuple unpacking for backward compatibility
+        self._tuple = (min_val, max_val, mean, std, skew, kurt)
+    
+    def __iter__(self):
+        """Support tuple unpacking."""
+        return iter(self._tuple)
+    
+    def __getitem__(self, key):
+        """Support both dict and tuple access."""
+        if isinstance(key, int):
+            return self._tuple[key]
+        return super().__getitem__(key)
+
+
 def compute_basic_stats(
     field: NDArray[np.floating],
-) -> Tuple[float, float, float, float, float, float]:
+) -> BasicStats:
     """
     Compute basic field statistics.
 
@@ -358,8 +423,9 @@ def compute_basic_stats(
 
     Returns
     -------
-    tuple[float, ...]
-        (V_min, V_max, V_mean, V_std, V_skew, V_kurt) in mV.
+    BasicStats
+        Dict-like object with keys: 'min', 'max', 'mean', 'std', 'skew', 'kurt' (all in mV).
+        Also supports tuple unpacking for backward compatibility.
     """
     # Convert to mV
     field_mv = field * 1000.0
@@ -380,7 +446,7 @@ def compute_basic_stats(
         V_skew = 0.0
         V_kurt = 0.0
 
-    return V_min, V_max, V_mean, V_std, V_skew, V_kurt
+    return BasicStats(V_min, V_max, V_mean, V_std, V_skew, V_kurt)
 
 
 def compute_temporal_features(

@@ -369,31 +369,54 @@ def run_simulation(
 
 
 def generate_dataset(
-    sweep: SweepConfig,
+    sweep: SweepConfig | None = None,
     output_path: Path | None = None,
     feature_config: FeatureConfig | None = None,
+    *,
+    num_samples: int | None = None,
+    config_sampler: ConfigSampler | None = None,
 ) -> dict[str, Any]:
     """
     Generate complete dataset with parameter sweep.
 
     Parameters
     ----------
-    sweep : SweepConfig
-        Sweep configuration.
+    sweep : SweepConfig | None
+        Sweep configuration (new API).
     output_path : Path | None
         Output path for parquet file.
     feature_config : FeatureConfig | None
         Feature extraction configuration.
+    num_samples : int | None
+        Number of samples to generate (legacy API with config_sampler).
+    config_sampler : ConfigSampler | None
+        Configuration sampler (legacy API with num_samples).
 
     Returns
     -------
     dict
         Dataset statistics and metadata.
+        
+    Notes
+    -----
+    Supports both old and new API:
+    - New: generate_dataset(sweep=SweepConfig(...))
+    - Old: generate_dataset(num_samples=N, config_sampler=ConfigSampler(...))
     """
     if feature_config is None:
         feature_config = FeatureConfig()
 
-    configs = generate_parameter_configs(sweep)
+    # Handle legacy API: num_samples + config_sampler
+    if num_samples is not None and config_sampler is not None:
+        # Convert ConfigSampler to list of configs
+        configs = list(config_sampler.sample(num_samples))
+    # Handle new API: sweep
+    elif sweep is not None:
+        configs = generate_parameter_configs(sweep)
+    else:
+        raise ValueError(
+            "Either provide 'sweep' (new API) or both 'num_samples' and 'config_sampler' (legacy API)"
+        )
     n_configs = len(configs)
 
     logger.info(f"Starting dataset generation with {n_configs} configurations")

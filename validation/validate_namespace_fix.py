@@ -12,7 +12,6 @@ Run this after building the distribution to verify the fix.
 
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 

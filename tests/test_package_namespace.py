@@ -97,18 +97,14 @@ def test_canonical_imports_work() -> None:
 
 def test_top_level_analytics_not_importable() -> None:
     """Verify that top-level 'analytics' is not accidentally importable from package."""
-    import importlib.util
-
     # Check if 'analytics' package exists at top level from our distribution
     # Note: This may fail if another package named 'analytics' is installed
     # but that's actually the point - we don't want to conflict with others!
 
     # The key check is that OUR distribution doesn't provide it
     try:
-        import mycelium_fractal_net
-
-        # If we can import mycelium_fractal_net.analytics, that's good
-        from mycelium_fractal_net import analytics
+        # Test that canonical import works
+        from mycelium_fractal_net import analytics  # noqa: F401
 
         assert analytics is not None
 
