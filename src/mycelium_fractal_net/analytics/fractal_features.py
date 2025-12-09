@@ -19,7 +19,7 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Tuple
 
 import numpy as np
@@ -89,12 +89,14 @@ class FeatureConfig:
             raise ValueError("connectivity must be 4 or 8")
 
 
-@dataclass
+@dataclass(init=False)
 class FeatureVector:
     """
     Complete feature vector from a simulation.
 
     All 18 features as defined in FEATURE_SCHEMA.md.
+    
+    Note: Uses custom __init__ for backward compatibility with legacy API.
     """
 
     # Fractal features
@@ -123,11 +125,17 @@ class FeatureVector:
     max_cluster_size: int = 0
     cluster_size_std: float = 0.0
     
-    # Support for legacy API - use field with init=False to avoid conflict with property
-    _init_values: dict[str, float] | None = field(default=None, init=False, repr=False)
-    
     def __init__(self, *, values: dict[str, float] | None = None, **kwargs):
-        """Initialize FeatureVector with either values dict or individual fields."""
+        """
+        Initialize FeatureVector with either values dict or individual fields.
+        
+        Parameters
+        ----------
+        values : dict | None
+            Legacy API: dict of feature name -> value mappings.
+        **kwargs
+            Direct field initialization (e.g., D_box=1.5).
+        """
         if values is not None:
             # Legacy API: initialize from values dict
             for key, value in values.items():
