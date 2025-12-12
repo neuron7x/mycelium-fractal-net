@@ -15,6 +15,8 @@ Components:
     - rate_limiter: Rate limiting middleware
     - metrics: Prometheus metrics collection
     - logging_config: Structured JSON logging
+    - event_middleware: Middleware for comprehensive event logging
+    - event_api: API for accessing event logs with access control
     - data_integrations: 77 data integrations for iteration optimization
     - ws_schemas: WebSocket message schemas for streaming
     - ws_manager: WebSocket connection manager
@@ -32,6 +34,7 @@ Usage:
     ...     INTEGRATION_COUNT,
     ...     RESTConnector,
     ...     WebhookPublisher,
+    ...     EventLoggingMiddleware,
     ... )
     >>> ctx = ServiceContext(seed=42)
     >>> request = ValidateRequest(seed=42, epochs=1)
@@ -107,6 +110,20 @@ from .data_integrations import (
     get_integration_categories,
     list_all_integrations,
     reset_data_integration_config,
+)
+from .event_api import (
+    EventAccessControl,
+    EventAPI,
+    EventFilter,
+    EventListResponse,
+    EventResponse,
+    EventStatsResponse,
+    EventTypesResponse,
+    UserRole,
+    get_event_api,
+)
+from .event_middleware import (
+    EventLoggingMiddleware,
 )
 from .logging_config import (
     REQUEST_ID_HEADER,
@@ -230,6 +247,17 @@ __all__ = [
     "sign_message_adapter",
     "verify_signature_adapter",
     "generate_keypair_adapter",
+    # Event Logging
+    "EventLoggingMiddleware",
+    "EventAPI",
+    "EventFilter",
+    "EventResponse",
+    "EventListResponse",
+    "EventTypesResponse",
+    "EventStatsResponse",
+    "EventAccessControl",
+    "UserRole",
+    "get_event_api",
     # API Configuration
     "Environment",
     "AuthConfig",
