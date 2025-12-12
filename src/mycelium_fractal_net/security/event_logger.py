@@ -201,9 +201,12 @@ class SystemEventLogger:
         """
         self.logger = logging.getLogger(name)
         self.storage_enabled = storage_enabled
+        # Use secure default path in production, /tmp only in dev
+        env = os.getenv("MFN_ENV", "dev").lower()
+        default_path = "/tmp/mfn_events" if env == "dev" else "/var/log/mfn/events"
         self.storage_path = storage_path or os.getenv(
             "MFN_EVENT_STORAGE_PATH",
-            "/tmp/mfn_events"
+            default_path
         )
         self._configure_logger()
         self._setup_storage()

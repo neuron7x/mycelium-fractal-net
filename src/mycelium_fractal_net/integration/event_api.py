@@ -20,6 +20,7 @@ Reference: Problem statement - Логування всіх подій та ді�
 
 from __future__ import annotations
 
+import os
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -180,17 +181,23 @@ class EventAccessControl:
         Returns:
             User role.
         """
-        # This is a simplified implementation
-        # In production, you would look up the role from a database
-
+        # This is a simplified implementation for development/testing
+        # In production, this MUST be replaced with proper authentication
+        # that validates API keys against a secure database or authentication service
+        
         if not api_key:
             return UserRole.ANONYMOUS
 
-        # Check for admin key (example)
-        admin_keys = ["admin_key", "mfn_admin"]  # Example admin keys
-        if any(key in api_key.lower() for key in admin_keys):
-            return UserRole.ADMIN
+        # Check admin keys from environment (secure configuration)
+        # Example: MFN_ADMIN_KEYS="key1,key2,key3"
+        admin_keys_env = os.getenv("MFN_ADMIN_KEYS", "")
+        if admin_keys_env:
+            admin_keys = [k.strip() for k in admin_keys_env.split(",") if k.strip()]
+            if api_key in admin_keys:
+                return UserRole.ADMIN
 
+        # Default to user role for any valid API key
+        # In production, validate against key database
         return UserRole.USER
 
 

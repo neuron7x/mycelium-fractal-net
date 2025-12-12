@@ -915,9 +915,13 @@ def _get_user_id_from_request(request: Request) -> str:
     Returns:
         User identifier.
     """
+    import hashlib
+    
     api_key = request.headers.get(API_KEY_HEADER)
     if api_key:
-        return f"api_key:{api_key[:8]}"
+        # Use SHA256 hash to avoid exposing any part of the key
+        key_hash = hashlib.sha256(api_key.encode()).hexdigest()[:16]
+        return f"api_key:{key_hash}"
     
     if request.client:
         return f"ip:{request.client.host}"

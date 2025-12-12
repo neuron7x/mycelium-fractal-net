@@ -62,8 +62,10 @@ class EventLoggingMiddleware(BaseHTTPMiddleware):
         # Try to get from API key header
         api_key = request.headers.get("X-API-Key")
         if api_key:
-            # Use a hash or identifier from the key
-            return f"api_key:{api_key[:8]}"
+            # Use SHA256 hash to avoid exposing any part of the key
+            import hashlib
+            key_hash = hashlib.sha256(api_key.encode()).hexdigest()[:16]
+            return f"api_key:{key_hash}"
 
         # Try to get from authentication state
         if hasattr(request.state, "user_id"):
@@ -89,7 +91,7 @@ class EventLoggingMiddleware(BaseHTTPMiddleware):
             return request.client.host
         return None
 
-    def _extract_files_from_request(self, request: Request) -> list[str]:
+    def _extract_files_from_request(self, request: Request) -> List[str]:
         """
         Extract file paths from request if applicable.
 
