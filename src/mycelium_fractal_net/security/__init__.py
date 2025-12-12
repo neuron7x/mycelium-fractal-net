@@ -5,6 +5,7 @@ Provides security utilities including:
     - Data encryption for sensitive data at rest
     - Input validation and sanitization
     - Audit logging for security-relevant operations
+    - System event logging for all operations
     - Secrets management utilities
     - Security iteration configuration (6 levels)
 
@@ -19,6 +20,7 @@ Usage:
     ...     decrypt_data,
     ...     validate_input,
     ...     audit_log,
+    ...     log_system_event,
     ...     SecurityLevel,
     ...     get_iteration_count,
     ... )
@@ -32,6 +34,14 @@ from .audit import (
     AuditSeverity,
     audit_log,
     get_audit_logger,
+)
+from .event_logger import (
+    EventStatus,
+    EventType,
+    SystemEvent,
+    SystemEventLogger,
+    get_event_logger,
+    log_system_event,
 )
 from .encryption import (
     DataEncryptor,
@@ -80,6 +90,13 @@ __all__ = [
     "AuditSeverity",
     "audit_log",
     "get_audit_logger",
+    # Event Logging
+    "EventType",
+    "EventStatus",
+    "SystemEvent",
+    "SystemEventLogger",
+    "get_event_logger",
+    "log_system_event",
     # Security Iterations (6 levels)
     "SecurityLevel",
     "SecurityIterationConfig",
