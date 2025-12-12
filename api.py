@@ -60,6 +60,7 @@ from mycelium_fractal_net.integration import (
     DecryptResponse,
     EncryptRequest,
     EncryptResponse,
+    EventLoggingMiddleware,
     ExecutionMode,
     FederatedAggregateRequest,
     FederatedAggregateResponse,
@@ -166,16 +167,19 @@ if _cors_origins:
 # 1. Request logging (outermost - logs all requests)
 app.add_middleware(RequestLoggingMiddleware)
 
-# 2. Request ID generation (needed for logging context)
+# 2. Event logging (comprehensive system event logging)
+app.add_middleware(EventLoggingMiddleware)
+
+# 3. Request ID generation (needed for logging context)
 app.add_middleware(RequestIDMiddleware)
 
-# 3. Metrics collection
+# 4. Metrics collection
 app.add_middleware(MetricsMiddleware)
 
-# 4. Rate limiting
+# 5. Rate limiting
 app.add_middleware(RateLimitMiddleware)
 
-# 5. Authentication (innermost - first check)
+# 6. Authentication (innermost - first check)
 app.add_middleware(APIKeyMiddleware)
 
 # Initialize WebSocket connection manager
@@ -869,6 +873,162 @@ async def _stream_simulation_task(
             },
         }
         await manager.send_message(connection_id, error_msg)
+
+
+# Event Logging API Endpoints
+# Reference: Problem statement - Логування всіх подій та дій системи
+
+from mycelium_fractal_net.integration import (
+    EventAPI,
+    EventFilter,
+    EventListResponse,
+    EventStatsResponse,
+    EventTypesResponse,
+    UserRole,
+    get_event_api,
+)
+
+
+def _get_user_role_from_request(request: Request) -> UserRole:
+    """
+    Determine user role from request.
+    
+    Args:
+        request: FastAPI request.
+        
+    Returns:
+        UserRole for the request.
+    """
+    from mycelium_fractal_net.integration.event_api import EventAccessControl
+    
+    api_key = request.headers.get(API_KEY_HEADER)
+    return EventAccessControl.determine_role(api_key)
+
+
+def _get_user_id_from_request(request: Request) -> str:
+    """
+    Get user ID from request.
+    
+    Args:
+        request: FastAPI request.
+        
+    Returns:
+        User identifier.
+    """
+    api_key = request.headers.get(API_KEY_HEADER)
+    if api_key:
+        return f"api_key:{api_key[:8]}"
+    
+    if request.client:
+        return f"ip:{request.client.host}"
+    
+    return "anonymous"
+
+
+@app.get("/events", response_model=EventListResponse)
+async def get_events(
+    request: Request,
+    date: str = None,
+    event_type: str = None,
+    status: str = None,
+    limit: int = 100,
+) -> EventListResponse:
+    """
+    Get system events with filtering.
+    
+    Access Control:
+    - Admins: Can view all events
+    - Regular users: Can only view their own events
+    - Anonymous: Access denied
+    
+    Query Parameters:
+        date: Date to filter events (YYYY-MM-DD format)
+        event_type: Filter by event type
+        status: Filter by event status
+        limit: Maximum number of events to return (1-1000)
+    
+    Returns:
+        List of events matching the filter criteria.
+    """
+    try:
+        event_api = get_event_api()
+        user_role = _get_user_role_from_request(request)
+        user_id = _get_user_id_from_request(request)
+        
+        # Build filter
+        from mycelium_fractal_net.security.event_logger import EventType, EventStatus
+        
+        filter_params = EventFilter(
+            date=date,
+            event_type=EventType(event_type) if event_type else None,
+            status=EventStatus(status) if status else None,
+            limit=min(limit, 1000),
+        )
+        
+        return event_api.get_events(
+            filter_params=filter_params,
+            user_role=user_role,
+            user_id=user_id,
+        )
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid parameter: {e}")
+    except Exception as e:
+        logger.error(f"Failed to retrieve events: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to retrieve events")
+
+
+@app.get("/events/types", response_model=EventTypesResponse)
+async def get_event_types() -> EventTypesResponse:
+    """
+    Get available event types and their descriptions.
+    
+    Returns:
+        List of event types with descriptions.
+    """
+    try:
+        event_api = get_event_api()
+        return event_api.get_event_types()
+    except Exception as e:
+        logger.error(f"Failed to get event types: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get event types")
+
+
+@app.get("/events/stats", response_model=EventStatsResponse)
+async def get_event_stats(
+    request: Request,
+    date: str = None,
+) -> EventStatsResponse:
+    """
+    Get event statistics for a date.
+    
+    Access Control:
+    - Admins: Statistics for all events
+    - Regular users: Statistics for their own events only
+    - Anonymous: Access denied
+    
+    Query Parameters:
+        date: Date to get statistics for (YYYY-MM-DD format)
+    
+    Returns:
+        Event statistics including counts by type and status.
+    """
+    try:
+        event_api = get_event_api()
+        user_role = _get_user_role_from_request(request)
+        user_id = _get_user_id_from_request(request)
+        
+        return event_api.get_event_stats(
+            date=date,
+            user_role=user_role,
+            user_id=user_id,
+        )
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to retrieve event stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to retrieve event stats")
 
 
 if __name__ == "__main__":
