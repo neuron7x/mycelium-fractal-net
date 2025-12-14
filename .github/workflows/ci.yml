@@ -22,10 +22,26 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
+      - name: Check dependency graph status
+        id: dependency_graph
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const repo = await github.request('GET /repos/{owner}/{repo}', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const status = repo.data.security_and_analysis?.dependency_graph?.status || 'disabled';
+            core.setOutput('enabled', status === 'enabled');
+            core.info(`Dependency graph status: ${status}`);
       - name: Dependency review
+        if: steps.dependency_graph.outputs.enabled == 'true'
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
+      - name: Skip dependency review (graph disabled)
+        if: steps.dependency_graph.outputs.enabled != 'true'
+        run: echo "Dependency graph disabled or unavailable; skipping dependency review."
 
   lint:
     runs-on: ubuntu-latest
@@ -83,7 +99,7 @@ jobs:
       - name: Run Bandit security scan
         run: bandit -r src/ -ll -ii --exclude tests
       - name: Check dependencies for vulnerabilities
-        run: pip-audit --strict --desc on
+        run: pip-audit -r requirements.txt --strict --desc on
       - name: Run security tests
         run: pytest tests/security/ -v --tb=short
 
