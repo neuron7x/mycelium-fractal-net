@@ -90,6 +90,17 @@ class TestReactionDiffusionConfig:
             ReactionDiffusionConfig(grid_size=2)
 
 
+class TestSimulationInputValidation:
+    """Validate simulation entrypoints reject invalid inputs."""
+
+    def test_steps_must_be_positive(self) -> None:
+        """steps < 1 should raise a clear ValueError instead of stack errors."""
+        engine = ReactionDiffusionEngine(ReactionDiffusionConfig(grid_size=8))
+
+        with pytest.raises(ValueError, match="steps must be at least 1"):
+            engine.simulate(steps=0)
+
+
 class TestReactionDiffusionSimulation:
     """Test simulation execution."""
 
