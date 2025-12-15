@@ -20,6 +20,7 @@ dependencies = [
   "prometheus_client>=0.17.0",
   "cryptography>=44.0.0",
   "websockets>=12.0",
+  "httpx>=0.24.0",
 ]
 
 [project.optional-dependencies]
@@ -53,7 +54,7 @@ exclude = ["tests*", "docs*", "examples*", "experiments*"]
 [tool.pytest.ini_options]
 addopts = "-q --disable-warnings"
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = [".", "src"]
 
 [tool.ruff]
 line-length = 100
