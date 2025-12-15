@@ -87,6 +87,20 @@ class TestSimulationConfig:
         assert config.alpha == 0.18  # default
         assert config.seed is None  # default
 
+    def test_from_dict_parses_bool_strings(self) -> None:
+        """Test from_dict handles serialized boolean strings correctly."""
+        d = {
+            "turing_enabled": "false",
+            "quantum_jitter": "True",
+            "spike_probability": 0.1,
+        }
+
+        config = SimulationConfig.from_dict(d)
+
+        assert config.turing_enabled is False
+        assert config.quantum_jitter is True
+        assert config.spike_probability == 0.1
+
     def test_roundtrip_dict(self) -> None:
         """Test dictionary roundtrip conversion."""
         original = SimulationConfig(
