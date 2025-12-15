@@ -281,10 +281,22 @@ class TestDatasetConfigValidation:
         with pytest.raises(ValueError, match="num_samples"):
             DatasetConfig(num_samples=0)
 
+    def test_num_samples_invalid_from_dict(self) -> None:
+        """from_dict should not mask invalid num_samples values."""
+
+        with pytest.raises(ValueError, match="num_samples"):
+            DatasetConfig.from_dict({"num_samples": 0})
+
     def test_grid_sizes_empty_invalid(self) -> None:
         """Test empty grid_sizes raises error."""
         with pytest.raises(ValueError, match="grid_sizes must not be empty"):
             DatasetConfig(grid_sizes=[])
+
+    def test_grid_sizes_empty_invalid_from_dict(self) -> None:
+        """from_dict should not fall back when provided empty grid_sizes."""
+
+        with pytest.raises(ValueError, match="grid_sizes must not be empty"):
+            DatasetConfig.from_dict({"grid_sizes": []})
 
     def test_grid_sizes_out_of_range(self) -> None:
         """Test grid_sizes out of range raises error.
