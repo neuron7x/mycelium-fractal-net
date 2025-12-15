@@ -338,8 +338,33 @@ class FractalGrowthEngine:
         """
         self.reset()
 
-        n_points = num_points or self.config.num_points
-        n_transforms = num_transforms or self.config.num_transforms
+        n_points = self.config.num_points if num_points is None else num_points
+        n_transforms = (
+            self.config.num_transforms if num_transforms is None else num_transforms
+        )
+
+        if not (NUM_POINTS_MIN <= n_points <= NUM_POINTS_MAX):
+            raise ValueOutOfRangeError(
+                (
+                    "num_points must be in "
+                    f"[{NUM_POINTS_MIN}, {NUM_POINTS_MAX}] for meaningful fractal structure"
+                ),
+                value=float(n_points),
+                min_bound=float(NUM_POINTS_MIN),
+                max_bound=float(NUM_POINTS_MAX),
+                parameter_name="num_points",
+            )
+        if not (NUM_TRANSFORMS_MIN <= n_transforms <= NUM_TRANSFORMS_MAX):
+            raise ValueOutOfRangeError(
+                (
+                    "num_transforms must be in "
+                    f"[{NUM_TRANSFORMS_MIN}, {NUM_TRANSFORMS_MAX}] for interesting patterns"
+                ),
+                value=float(n_transforms),
+                min_bound=float(NUM_TRANSFORMS_MIN),
+                max_bound=float(NUM_TRANSFORMS_MAX),
+                parameter_name="num_transforms",
+            )
 
         # Generate random contractive affine transformations
         scales = self._rng.uniform(
