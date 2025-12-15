@@ -12,6 +12,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+pytest.importorskip("pytest_asyncio")
+
 from mycelium_fractal_net.integration.connectors import (
     ConnectorConfig,
     ConnectorStatus,

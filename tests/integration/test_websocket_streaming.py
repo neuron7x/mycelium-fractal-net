@@ -21,6 +21,8 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 
+pytest.importorskip("pytest_asyncio")
+
 from mycelium_fractal_net.integration import (
     WSMessageType,
     WSStreamType,
