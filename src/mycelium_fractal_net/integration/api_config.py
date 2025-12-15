@@ -221,7 +221,10 @@ class MetricsConfig:
         enabled_env = os.getenv("MFN_METRICS_ENABLED", "true").lower()
         enabled = enabled_env in ("true", "1", "yes")
 
-        return cls(enabled=enabled)
+        include_in_auth_env = os.getenv("MFN_METRICS_INCLUDE_IN_AUTH", "false").lower()
+        include_in_auth = include_in_auth_env in ("true", "1", "yes")
+
+        return cls(enabled=enabled, include_in_auth=include_in_auth)
 
 
 @dataclass
@@ -245,6 +248,20 @@ class APIConfig:
     rate_limit: RateLimitConfig = field(default_factory=RateLimitConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     metrics: MetricsConfig = field(default_factory=MetricsConfig)
+
+    def __post_init__(self) -> None:
+        """Align authentication config with metrics exposure settings."""
+        metrics_path = self.metrics.endpoint
+        public_endpoints = list(self.auth.public_endpoints)
+
+        if self.metrics.include_in_auth:
+            # Ensure metrics endpoint is protected
+            self.auth.public_endpoints = [
+                endpoint for endpoint in public_endpoints if endpoint != metrics_path
+            ]
+        elif metrics_path not in public_endpoints:
+            # Maintain metrics as public when authentication is not required
+            self.auth.public_endpoints.append(metrics_path)
 
     @classmethod
     def from_env(cls) -> "APIConfig":
