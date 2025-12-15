@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("pytest_asyncio")
+
 from mycelium_fractal_net.integration.publishers import (
     FilePublisher,
     PublisherConfig,
