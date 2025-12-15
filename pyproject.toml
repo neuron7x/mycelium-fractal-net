@@ -53,7 +53,9 @@ exclude = ["tests*", "docs*", "examples*", "experiments*"]
 [tool.pytest.ini_options]
 addopts = "-q --disable-warnings"
 testpaths = ["tests"]
-pythonpath = ["."]
+# Ensure the source tree is on the import path for test runs so that
+# `mycelium_fractal_net` can be imported without an editable install.
+pythonpath = ["src", "."]
 
 [tool.ruff]
 line-length = 100
