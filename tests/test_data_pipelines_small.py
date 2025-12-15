@@ -68,6 +68,11 @@ class TestScenarioConfig:
         with pytest.raises(ValueError, match="alpha must be in"):
             ScenarioConfig(name="test", alpha_values=[0.0])
 
+    def test_empty_alpha_values(self) -> None:
+        """Reject scenarios without any alpha sweep values."""
+        with pytest.raises(ValueError, match="alpha_values must contain"):
+            ScenarioConfig(name="test", alpha_values=[])
+
 
 class TestPresets:
     """Tests for preset configurations."""
