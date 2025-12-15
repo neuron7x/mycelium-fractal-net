@@ -196,6 +196,19 @@ class TestSecurityIterationConfig:
         config.update_iterations(SecurityLevel.HIGH, 220_000)
         assert config.high == 220_000
 
+    def test_adaptive_iterations_respect_sensitivity(self) -> None:
+        """Adaptive iterations should scale with the provided sensitivity score."""
+        config = SecurityIterationConfig(adaptive_min=120_000, adaptive_max=220_000)
+
+        low = config.get_iterations(SecurityLevel.ADAPTIVE, sensitivity_score=0.0)
+        mid = config.get_iterations(SecurityLevel.ADAPTIVE, sensitivity_score=0.5)
+        high = config.get_iterations(SecurityLevel.ADAPTIVE, sensitivity_score=1.0)
+
+        assert low == config.adaptive_min
+        assert high == config.adaptive_max
+        assert mid > low
+        assert mid < high
+
 
 class TestGetIterationCount:
     """Tests for get_iteration_count function."""
@@ -219,6 +232,18 @@ class TestGetIterationCount:
             get_iteration_count(SecurityLevel.QUANTUM_RESISTANT)
             == QUANTUM_RESISTANT_ITERATIONS
         )
+
+    def test_adaptive_level_respects_sensitivity(self) -> None:
+        """Global helper should forward sensitivity to adaptive calculations."""
+        config = get_security_iteration_config()
+        config.adaptive_min = 90_000
+        config.adaptive_max = 150_000
+
+        low = get_iteration_count(SecurityLevel.ADAPTIVE, sensitivity_score=0.0)
+        high = get_iteration_count(SecurityLevel.ADAPTIVE, sensitivity_score=1.0)
+
+        assert low == config.adaptive_min
+        assert high == config.adaptive_max
 
 
 class TestValidateIterationCount:
