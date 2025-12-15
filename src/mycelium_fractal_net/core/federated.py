@@ -45,6 +45,7 @@ Example:
 
 from __future__ import annotations
 
+import math
 from typing import List
 
 import numpy as np
@@ -116,6 +117,30 @@ class HierarchicalKrumAggregator:
         self.num_clusters = num_clusters
         self.byzantine_fraction = byzantine_fraction
         self.sample_fraction = sample_fraction
+
+    def _estimate_byzantine_count(self, group_size: int) -> int:
+        """Estimate Byzantine budget while respecting Krum constraints.
+
+        The theoretical guarantee for Krum requires ``n > 2f + 2`` where ``n``
+        is the number of gradients and ``f`` the expected Byzantine count.
+        This helper clamps the estimate to the maximum value that still
+        satisfies the constraint and never forces at least one Byzantine client
+        when the configured ``byzantine_fraction`` is zero.
+
+        Args:
+            group_size: Number of gradients available for aggregation.
+
+        Returns:
+            Clamped Byzantine count consistent with the current group size.
+        """
+
+        if group_size <= 0:
+            return 0
+
+        estimated = int(math.ceil(group_size * self.byzantine_fraction))
+        max_allowed = max(0, (group_size - 3) // 2)
+
+        return min(estimated, max_allowed)
 
     def krum_select(
         self,
@@ -202,9 +227,7 @@ class HierarchicalKrumAggregator:
             cluster_mask = cluster_assignments == c
             cluster_grads = [g for g, m in zip(client_gradients, cluster_mask) if m]
             if len(cluster_grads) > 0:
-                cluster_byzantine = max(
-                    1, int(len(cluster_grads) * self.byzantine_fraction)
-                )
+                cluster_byzantine = self._estimate_byzantine_count(len(cluster_grads))
                 selected = self.krum_select(cluster_grads, cluster_byzantine)
                 cluster_gradients.append(selected)
 
@@ -212,7 +235,7 @@ class HierarchicalKrumAggregator:
             return client_gradients[0].clone()
 
         # Level 2: Global aggregation using Krum + median
-        global_byzantine = max(1, int(len(cluster_gradients) * self.byzantine_fraction))
+        global_byzantine = self._estimate_byzantine_count(len(cluster_gradients))
         krum_result = self.krum_select(cluster_gradients, global_byzantine)
 
         stacked = torch.stack(cluster_gradients)

@@ -20,6 +20,7 @@ import numpy as np
 import pytest
 import torch
 
+from mycelium_fractal_net.core import HierarchicalKrumAggregator as CoreHierarchicalKrumAggregator
 from mycelium_fractal_net.model import HierarchicalKrumAggregator
 
 
@@ -179,6 +180,39 @@ class TestKrumByzantineRobustness:
         assert agg._estimate_byzantine_count(2) == 0
 
         rng = np.random.default_rng(123)
+        grads = [torch.randn(3) for _ in range(2)]
+
+        result = agg.aggregate(grads, rng=rng)
+
+        assert result.shape == (3,)
+
+
+class TestCoreKrumParityWithModel:
+    """Ensure core aggregator mirrors validated model behavior for safety."""
+
+    def test_zero_byzantine_fraction_does_not_force_budget(self) -> None:
+        """Core aggregator should not invent Byzantine clients when fraction is zero."""
+
+        agg = CoreHierarchicalKrumAggregator(byzantine_fraction=0.0, num_clusters=1)
+
+        assert agg._estimate_byzantine_count(10) == 0
+
+        rng = np.random.default_rng(7)
+        grads = [torch.randn(4) for _ in range(5)]
+
+        result = agg.aggregate(grads, rng=rng)
+
+        honest_mean = torch.stack(grads).mean(dim=0)
+        assert torch.norm(result - honest_mean) < 5
+
+    def test_byzantine_budget_clamped_for_small_groups(self) -> None:
+        """When there are too few gradients, budget should clamp to zero."""
+
+        agg = CoreHierarchicalKrumAggregator(byzantine_fraction=0.3, num_clusters=1)
+
+        assert agg._estimate_byzantine_count(2) == 0
+
+        rng = np.random.default_rng(11)
         grads = [torch.randn(3) for _ in range(2)]
 
         result = agg.aggregate(grads, rng=rng)
