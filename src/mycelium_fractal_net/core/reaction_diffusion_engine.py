@@ -448,6 +448,9 @@ class ReactionDiffusionEngine:
         NumericalInstabilityError
             If NaN or Inf values are detected during simulation.
         """
+        if steps < 1:
+            raise ValueError("steps must be at least 1")
+
         self.reset()
 
         if self._field is None:
