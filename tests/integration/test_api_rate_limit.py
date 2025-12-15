@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import time
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
@@ -315,6 +316,51 @@ class TestRateLimitMiddleware:
         # - error_code: "rate_limit_exceeded"
         # - retry_after: seconds to wait
         pass  # Format validation is done in rate_limit_exceeded_behavior test
+
+    def test_middleware_refreshes_dynamic_config(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Middleware should adopt updated rate limit config at runtime."""
+        from mycelium_fractal_net.integration.api_config import RateLimitConfig
+        from mycelium_fractal_net.integration.rate_limiter import RateLimitMiddleware
+
+        enabled_cfg = SimpleNamespace(
+            rate_limit=RateLimitConfig(max_requests=1, window_seconds=60, enabled=True)
+        )
+        disabled_cfg = SimpleNamespace(
+            rate_limit=RateLimitConfig(max_requests=1, window_seconds=60, enabled=False)
+        )
+
+        monkeypatch.setattr(
+            "mycelium_fractal_net.integration.rate_limiter.get_api_config",
+            mock.Mock(side_effect=[enabled_cfg, disabled_cfg]),
+        )
+
+        middleware = RateLimitMiddleware(app=None, config=None)
+
+        class MockRequest:
+            def __init__(self) -> None:
+                self.url = type("obj", (object,), {"path": "/dynamic"})()
+                self.headers: dict[str, str] = {}
+                self.client = type("obj", (object,), {"host": "127.0.0.1"})()
+
+        request = MockRequest()
+
+        limiter = middleware.limiter
+        assert limiter.config.enabled is True
+
+        allowed1, _, _, _ = limiter.check_rate_limit(request)
+        allowed2, _, _, _ = limiter.check_rate_limit(request)
+
+        # Update limiter with disabled config and verify it now bypasses enforcement
+        middleware.limiter  # triggers update_config with the disabled settings
+        assert limiter.config.enabled is False
+
+        allowed3, _, _, _ = limiter.check_rate_limit(request)
+
+        assert allowed1 is True
+        assert allowed2 is False
+        assert allowed3 is True
 
     def test_disabled_rate_limiting_in_dev(self, unlimited_client: TestClient) -> None:
         """With rate limiting disabled (dev mode), all requests should succeed."""
