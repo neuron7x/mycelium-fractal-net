@@ -107,6 +107,8 @@ class ScenarioConfig:
             raise ValueError(
                 f"seeds_per_config must be >= 1, got {self.seeds_per_config}"
             )
+        if not self.alpha_values:
+            raise ValueError("alpha_values must contain at least one value")
         for alpha in self.alpha_values:
             if alpha <= 0 or alpha >= 0.25:
                 raise ValueError(
