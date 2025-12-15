@@ -100,15 +100,38 @@ class SimulationConfig:
         Returns:
             New SimulationConfig instance.
         """
+        def _parse_bool(value: Any, default: bool) -> bool:
+            """Parse booleans from common serialized formats.
+
+            Supports native bools, string representations ("true"/"false"),
+            and numeric 0/1 flags. Falls back to the provided default when the
+            value is None or unrecognized.
+            """
+
+            if value is None:
+                return default
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in {"true", "1", "yes", "y", "on"}:
+                    return True
+                if normalized in {"false", "0", "no", "n", "off"}:
+                    return False
+                return default
+            if isinstance(value, (int, float)):
+                return bool(value)
+            return default
+
         seed_value = data.get("seed")
         return cls(
             grid_size=int(data.get("grid_size", 64)),
             steps=int(data.get("steps", 64)),
             alpha=float(data.get("alpha", 0.18)),
             spike_probability=float(data.get("spike_probability", 0.25)),
-            turing_enabled=bool(data.get("turing_enabled", True)),
+            turing_enabled=_parse_bool(data.get("turing_enabled"), True),
             turing_threshold=float(data.get("turing_threshold", 0.75)),
-            quantum_jitter=bool(data.get("quantum_jitter", False)),
+            quantum_jitter=_parse_bool(data.get("quantum_jitter"), False),
             jitter_var=float(data.get("jitter_var", 0.0005)),
             seed=int(seed_value) if seed_value is not None else None,
         )
