@@ -114,6 +114,34 @@ class RateLimiter:
         self.buckets: Dict[str, TokenBucket] = {}
         self._lock = Lock()
 
+    def update_config(self, config: RateLimitConfig) -> None:
+        """Update configuration and refresh existing buckets.
+
+        When rate limiting settings change at runtime (for example via
+        environment reload), we reuse the existing token buckets but
+        recompute their limits to match the new configuration.
+        """
+
+        # Fast-path: nothing to do if config is unchanged
+        if self.config == config:
+            return
+
+        self.config = config
+
+        with self._lock:
+            for key, bucket in self.buckets.items():
+                try:
+                    # Keys are created via _get_bucket_key(client, endpoint)
+                    _, endpoint = key.split(":", 1)
+                except ValueError:
+                    # Malformed key; skip adjustment but keep the bucket
+                    continue
+
+                limit = self._get_limit_for_endpoint(endpoint)
+                bucket.max_tokens = limit
+                bucket.refill_rate = limit / self.config.window_seconds
+                bucket.tokens = min(bucket.tokens, bucket.max_tokens)
+
     def _get_client_key(self, request: Request) -> str:
         """
         Get a unique key for the client.
@@ -281,8 +309,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     @property
     def limiter(self) -> RateLimiter:
         """Get the rate limiter instance."""
+        current_config = self.config
+
         if self._limiter is None:
-            self._limiter = RateLimiter(self.config)
+            self._limiter = RateLimiter(current_config)
+        else:
+            self._limiter.update_config(current_config)
+
         return self._limiter
 
     async def dispatch(
