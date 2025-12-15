@@ -356,24 +356,25 @@ class FractalGrowthEngine:
 
             self._transforms.append((a, b, c, d, e, f))
 
-        # Run IFS iteration
-        points = np.zeros((n_points, 2), dtype=np.float64)
+        # Vectorize RNG draws and determinant accumulation to reduce Python overhead
+        transforms_arr = np.asarray(self._transforms, dtype=np.float64)
+        a, b, c, d, e, f = transforms_arr.T
+
+        indices = self._rng.integers(0, n_transforms, size=n_points)
+        points = np.empty((n_points, 2), dtype=np.float64)
         x, y = 0.0, 0.0
-        log_jacobian_sum = 0.0
 
-        for i in range(n_points):
-            idx = int(self._rng.integers(0, n_transforms))
-            a, b, c, d, e, f = self._transforms[idx]
+        det_values = np.abs(a * d - b * c)
+        log_det = np.where(det_values > 1e-10, np.log(det_values), 0.0)
+        log_jacobian_sum = float(np.sum(log_det[indices]))
 
-            x_new = a * x + b * y + e
-            y_new = c * x + d * y + f
+        for i, idx in enumerate(indices):
+            ai, bi, ci, di, ei, fi = a[idx], b[idx], c[idx], d[idx], e[idx], f[idx]
+
+            x_new = ai * x + bi * y + ei
+            y_new = ci * x + di * y + fi
             x, y = x_new, y_new
             points[i] = [x, y]
-
-            # Accumulate Jacobian determinant for Lyapunov exponent
-            det = abs(a * d - b * c)
-            if det > 1e-10:
-                log_jacobian_sum += np.log(det)
 
         # Lyapunov exponent (average log contraction)
         lyapunov = log_jacobian_sum / n_points
