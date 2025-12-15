@@ -22,7 +22,8 @@ def test_load_and_validate_builtin_profile(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 def test_environment_override_applied(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MFN_CONFIG_OVERRIDES", "validation.steps=64,simulation.turing_enabled=false")
+    overrides = "validation.steps=64,simulation.turing_enabled=false"
+    monkeypatch.setenv("MFN_CONFIG_OVERRIDES", overrides)
     profile = load_config_profile("small")
     assert profile.validation.steps == 64
     assert profile.simulation.turing_enabled is False

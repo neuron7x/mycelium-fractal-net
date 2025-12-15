@@ -225,7 +225,15 @@ class ConfigProfile:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ConfigProfile":
-        required_keys = {"name", "description", "validation", "model", "simulation", "federated", "expected_metrics"}
+        required_keys = {
+            "name",
+            "description",
+            "validation",
+            "model",
+            "simulation",
+            "federated",
+            "expected_metrics",
+        }
         missing = required_keys - data.keys()
         if missing:
             raise ConfigValidationError(f"Missing keys in profile: {sorted(missing)}")
