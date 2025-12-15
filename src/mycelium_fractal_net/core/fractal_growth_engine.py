@@ -342,22 +342,32 @@ class FractalGrowthEngine:
         n_transforms = num_transforms or self.config.num_transforms
 
         # Generate random contractive affine transformations
-        self._transforms = []
-        for _ in range(n_transforms):
-            scale = self._rng.uniform(self.config.scale_min, self.config.scale_max)
-            angle = self._rng.uniform(0, 2 * np.pi)
+        scales = self._rng.uniform(
+            self.config.scale_min, self.config.scale_max, size=n_transforms
+        )
+        angles = self._rng.uniform(0, 2 * np.pi, size=n_transforms)
+        translations = self._rng.uniform(
+            -self.config.translation_range,
+            self.config.translation_range,
+            size=(n_transforms, 2),
+        )
 
-            a = scale * np.cos(angle)
-            b = -scale * np.sin(angle)
-            c = scale * np.sin(angle)
-            d = scale * np.cos(angle)
-            e = self._rng.uniform(-self.config.translation_range, self.config.translation_range)
-            f = self._rng.uniform(-self.config.translation_range, self.config.translation_range)
-
-            self._transforms.append((a, b, c, d, e, f))
+        cos_angles = np.cos(angles)
+        sin_angles = np.sin(angles)
 
         # Vectorize RNG draws and determinant accumulation to reduce Python overhead
-        transforms_arr = np.asarray(self._transforms, dtype=np.float64)
+        transforms_arr = np.column_stack(
+            (
+                scales * cos_angles,
+                -scales * sin_angles,
+                scales * sin_angles,
+                scales * cos_angles,
+                translations[:, 0],
+                translations[:, 1],
+            )
+        )
+
+        self._transforms = [tuple(map(float, row)) for row in transforms_arr]
         a, b, c, d, e, f = transforms_arr.T
 
         indices = self._rng.integers(0, n_transforms, size=n_points)
@@ -368,8 +378,9 @@ class FractalGrowthEngine:
         log_det = np.where(det_values > 1e-10, np.log(det_values), 0.0)
         log_jacobian_sum = float(np.sum(log_det[indices]))
 
-        for i, idx in enumerate(indices):
-            ai, bi, ci, di, ei, fi = a[idx], b[idx], c[idx], d[idx], e[idx], f[idx]
+        selected_transforms = transforms_arr[indices]
+
+        for i, (ai, bi, ci, di, ei, fi) in enumerate(selected_transforms):
 
             x_new = ai * x + bi * y + ei
             y_new = ci * x + di * y + fi
