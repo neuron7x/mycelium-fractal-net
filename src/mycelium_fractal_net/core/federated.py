@@ -187,7 +187,7 @@ class HierarchicalKrumAggregator:
 
         # Sample clients if too many
         if n_clients > 1000:
-            sample_size = int(n_clients * self.sample_fraction)
+            sample_size = max(1, int(np.ceil(n_clients * self.sample_fraction)))
             indices = rng.choice(n_clients, size=sample_size, replace=False)
             client_gradients = [client_gradients[i] for i in indices]
 

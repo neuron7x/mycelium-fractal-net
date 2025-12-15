@@ -210,3 +210,17 @@ class TestKrumNumericalStability:
         result2 = agg.aggregate(grads, rng=rng2)
 
         assert torch.allclose(result1, result2)
+
+    def test_sampling_respects_minimum_client_selection(self) -> None:
+        """Ensure sampling keeps at least one client even with tiny fractions."""
+        # sample_fraction is validated as >0, but very small values should still select
+        # at least one client when sampling from large populations.
+        agg = HierarchicalKrumAggregator(num_clusters=5, sample_fraction=0.0005)
+
+        rng = np.random.default_rng(123)
+        grads = [torch.randn(3) for _ in range(1500)]  # triggers sampling branch
+
+        result = agg.aggregate(grads, rng=rng)
+
+        assert result.shape == (3,)
+        assert torch.isfinite(result).all()
