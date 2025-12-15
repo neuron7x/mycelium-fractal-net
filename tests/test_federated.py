@@ -154,6 +154,37 @@ class TestKrumByzantineRobustness:
         # Result should be closer to zero (honest) than 100 (Byzantine)
         assert torch.norm(result).item() < 50
 
+    def test_byzantine_budget_respects_zero_fraction(self) -> None:
+        """Ensure zero Byzantine fraction doesn't force a phantom attacker budget."""
+
+        agg = HierarchicalKrumAggregator(byzantine_fraction=0.0, num_clusters=1)
+
+        assert agg._estimate_byzantine_count(10) == 0
+
+        rng = np.random.default_rng(0)
+        grads = [torch.randn(4) for _ in range(5)]
+
+        result = agg.aggregate(grads, rng=rng)
+
+        # With no expected Byzantines, aggregation should stay close to mean honest direction
+        honest_mean = torch.stack(grads).mean(dim=0)
+        assert torch.norm(result - honest_mean) < 5
+
+    def test_byzantine_budget_clamps_when_group_too_small(self) -> None:
+        """Clamp Byzantine budget when clusters are smaller than theoretical limit."""
+
+        agg = HierarchicalKrumAggregator(byzantine_fraction=0.4, num_clusters=1)
+
+        # Only two gradients cannot support any Byzantine budget
+        assert agg._estimate_byzantine_count(2) == 0
+
+        rng = np.random.default_rng(123)
+        grads = [torch.randn(3) for _ in range(2)]
+
+        result = agg.aggregate(grads, rng=rng)
+
+        assert result.shape == (3,)
+
 
 class TestKrumNumericalStability:
     """Tests for numerical stability of Krum aggregation."""
