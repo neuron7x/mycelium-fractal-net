@@ -63,6 +63,12 @@ from .config import (
     validate_feature_config,
     validate_simulation_config,
 )
+from .config_profiles import (
+    ConfigProfile,
+    ConfigValidationError,
+    apply_overrides,
+    load_config_profile,
+)
 
 # === Core Domain Modules (Canonical API) ===
 from .core import (
@@ -170,6 +176,10 @@ __all__ = [
     "run_validation_cli",
     "MyceliumFractalNet",
     "ValidationConfig",
+    "ConfigProfile",
+    "ConfigValidationError",
+    "load_config_profile",
+    "apply_overrides",
     # === SIMULATION API ===
     "run_mycelium_simulation",
     "run_mycelium_simulation_with_history",
