@@ -338,42 +338,79 @@ class FractalGrowthEngine:
         """
         self.reset()
 
-        n_points = num_points or self.config.num_points
-        n_transforms = num_transforms or self.config.num_transforms
+        n_points = self.config.num_points if num_points is None else num_points
+        n_transforms = (
+            self.config.num_transforms if num_transforms is None else num_transforms
+        )
+
+        if not (NUM_POINTS_MIN <= n_points <= NUM_POINTS_MAX):
+            raise ValueOutOfRangeError(
+                (
+                    "num_points must be in "
+                    f"[{NUM_POINTS_MIN}, {NUM_POINTS_MAX}] for meaningful fractal structure"
+                ),
+                value=float(n_points),
+                min_bound=float(NUM_POINTS_MIN),
+                max_bound=float(NUM_POINTS_MAX),
+                parameter_name="num_points",
+            )
+        if not (NUM_TRANSFORMS_MIN <= n_transforms <= NUM_TRANSFORMS_MAX):
+            raise ValueOutOfRangeError(
+                (
+                    "num_transforms must be in "
+                    f"[{NUM_TRANSFORMS_MIN}, {NUM_TRANSFORMS_MAX}] for interesting patterns"
+                ),
+                value=float(n_transforms),
+                min_bound=float(NUM_TRANSFORMS_MIN),
+                max_bound=float(NUM_TRANSFORMS_MAX),
+                parameter_name="num_transforms",
+            )
 
         # Generate random contractive affine transformations
-        self._transforms = []
-        for _ in range(n_transforms):
-            scale = self._rng.uniform(self.config.scale_min, self.config.scale_max)
-            angle = self._rng.uniform(0, 2 * np.pi)
+        scales = self._rng.uniform(
+            self.config.scale_min, self.config.scale_max, size=n_transforms
+        )
+        angles = self._rng.uniform(0, 2 * np.pi, size=n_transforms)
+        translations = self._rng.uniform(
+            -self.config.translation_range,
+            self.config.translation_range,
+            size=(n_transforms, 2),
+        )
 
-            a = scale * np.cos(angle)
-            b = -scale * np.sin(angle)
-            c = scale * np.sin(angle)
-            d = scale * np.cos(angle)
-            e = self._rng.uniform(-self.config.translation_range, self.config.translation_range)
-            f = self._rng.uniform(-self.config.translation_range, self.config.translation_range)
+        cos_angles = np.cos(angles)
+        sin_angles = np.sin(angles)
 
-            self._transforms.append((a, b, c, d, e, f))
+        # Vectorize RNG draws and determinant accumulation to reduce Python overhead
+        transforms_arr = np.column_stack(
+            (
+                scales * cos_angles,
+                -scales * sin_angles,
+                scales * sin_angles,
+                scales * cos_angles,
+                translations[:, 0],
+                translations[:, 1],
+            )
+        )
 
-        # Run IFS iteration
-        points = np.zeros((n_points, 2), dtype=np.float64)
+        self._transforms = [tuple(map(float, row)) for row in transforms_arr]
+        a, b, c, d, e, f = transforms_arr.T
+
+        indices = self._rng.integers(0, n_transforms, size=n_points)
+        points = np.empty((n_points, 2), dtype=np.float64)
         x, y = 0.0, 0.0
-        log_jacobian_sum = 0.0
 
-        for i in range(n_points):
-            idx = int(self._rng.integers(0, n_transforms))
-            a, b, c, d, e, f = self._transforms[idx]
+        det_values = np.abs(a * d - b * c)
+        log_det = np.where(det_values > 1e-10, np.log(det_values), 0.0)
+        log_jacobian_sum = float(np.sum(log_det[indices]))
 
-            x_new = a * x + b * y + e
-            y_new = c * x + d * y + f
+        selected_transforms = transforms_arr[indices]
+
+        for i, (ai, bi, ci, di, ei, fi) in enumerate(selected_transforms):
+
+            x_new = ai * x + bi * y + ei
+            y_new = ci * x + di * y + fi
             x, y = x_new, y_new
             points[i] = [x, y]
-
-            # Accumulate Jacobian determinant for Lyapunov exponent
-            det = abs(a * d - b * c)
-            if det > 1e-10:
-                log_jacobian_sum += np.log(det)
 
         # Lyapunov exponent (average log contraction)
         lyapunov = log_jacobian_sum / n_points
