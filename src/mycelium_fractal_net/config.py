@@ -218,10 +218,22 @@ class DatasetConfig:
         Returns:
             New DatasetConfig instance.
         """
-        steps_range_raw = data.get("steps_range") or (50, 200)
-        alpha_range_raw = data.get("alpha_range") or (0.10, 0.20)
-        spike_prob_range_raw = data.get("spike_prob_range") or (0.15, 0.35)
-        turing_threshold_range_raw = data.get("turing_threshold_range") or (0.65, 0.85)
+        steps_range_raw = (
+            data["steps_range"] if data.get("steps_range") is not None else (50, 200)
+        )
+        alpha_range_raw = (
+            data["alpha_range"] if data.get("alpha_range") is not None else (0.10, 0.20)
+        )
+        spike_prob_range_raw = (
+            data["spike_prob_range"]
+            if data.get("spike_prob_range") is not None
+            else (0.15, 0.35)
+        )
+        turing_threshold_range_raw = (
+            data["turing_threshold_range"]
+            if data.get("turing_threshold_range") is not None
+            else (0.65, 0.85)
+        )
 
         # Convert to list for safe indexing
         steps_range_list = list(steps_range_raw)
@@ -229,11 +241,18 @@ class DatasetConfig:
         spike_prob_range_list = list(spike_prob_range_raw)
         turing_threshold_range_list = list(turing_threshold_range_raw)
 
-        grid_sizes_raw = data.get("grid_sizes") or [32, 64]
-        turing_values_raw = data.get("turing_values") or [True, False]
+        grid_sizes_raw = (
+            data["grid_sizes"] if data.get("grid_sizes") is not None else [32, 64]
+        )
+        turing_values_raw = (
+            data["turing_values"] if data.get("turing_values") is not None else [True, False]
+        )
+
+        num_samples_value = data.get("num_samples")
+        base_seed_value = data.get("base_seed")
 
         return cls(
-            num_samples=int(data.get("num_samples") or 200),
+            num_samples=int(num_samples_value) if num_samples_value is not None else 200,
             grid_sizes=list(grid_sizes_raw),
             steps_range=(int(steps_range_list[0]), int(steps_range_list[1])),
             alpha_range=(float(alpha_range_list[0]), float(alpha_range_list[1])),
@@ -246,8 +265,14 @@ class DatasetConfig:
                 float(turing_threshold_range_list[0]),
                 float(turing_threshold_range_list[1]),
             ),
-            base_seed=int(data.get("base_seed") or 42),
-            output_path=Path(str(data.get("output_path") or "data/mfn_dataset.parquet")),
+            base_seed=int(base_seed_value) if base_seed_value is not None else 42,
+            output_path=Path(
+                str(
+                    data["output_path"]
+                    if data.get("output_path") is not None
+                    else "data/mfn_dataset.parquet"
+                )
+            ),
         )
 
 
