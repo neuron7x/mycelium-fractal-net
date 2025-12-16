@@ -403,14 +403,25 @@ class FractalGrowthEngine:
         log_det = np.where(det_values > 1e-10, np.log(det_values), 0.0)
         log_jacobian_sum = float(np.sum(log_det[indices]))
 
-        selected_transforms = transforms_arr[indices]
+        # Convert tiny transform arrays to Python lists for faster scalar
+        # arithmetic under tracemalloc instrumentation.
+        a_list = a.tolist()
+        b_list = b.tolist()
+        c_list = c.tolist()
+        d_list = d.tolist()
+        e_list = e.tolist()
+        f_list = f.tolist()
+        indices_list = indices.tolist()
 
-        for i, (ai, bi, ci, di, ei, fi) in enumerate(selected_transforms):
+        x_out = points[:, 0]
+        y_out = points[:, 1]
 
-            x_new = ai * x + bi * y + ei
-            y_new = ci * x + di * y + fi
+        for i, idx in enumerate(indices_list):
+            x_new = a_list[idx] * x + b_list[idx] * y + e_list[idx]
+            y_new = c_list[idx] * x + d_list[idx] * y + f_list[idx]
             x, y = x_new, y_new
-            points[i] = [x, y]
+            x_out[i] = x
+            y_out[i] = y
 
         # Lyapunov exponent (average log contraction)
         lyapunov = log_jacobian_sum / n_points
