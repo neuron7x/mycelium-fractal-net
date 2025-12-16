@@ -68,7 +68,7 @@ from .secrets_manager import (
     SecretsBackend,
 )
 
-__all__ = [
+__all__ = (
     # Encryption
     "DataEncryptor",
     "encrypt_data",
@@ -105,4 +105,4 @@ __all__ = [
     "SecretManagerConfig",
     "SecretRetrievalError",
     "SecretsBackend",
-]
+)
