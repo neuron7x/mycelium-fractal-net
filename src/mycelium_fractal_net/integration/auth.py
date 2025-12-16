@@ -78,13 +78,14 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         Returns:
             bool: True if endpoint is public.
         """
-        # Exact match
+        # Exact match first
         if path in self.auth_config.public_endpoints:
             return True
 
-        # Prefix match for docs and static
+        # Prefix match with path boundary (e.g., /docs/ -> allow, but not /docs-foo)
         for public in self.auth_config.public_endpoints:
-            if path.startswith(public):
+            boundary_prefix = public.rstrip("/") + "/"
+            if path.startswith(boundary_prefix):
                 return True
 
         return False
