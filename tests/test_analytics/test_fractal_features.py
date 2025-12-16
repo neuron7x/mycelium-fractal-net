@@ -218,6 +218,22 @@ class TestTemporalFeatures:
         dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
         assert dV_mean > 0  # Should have non-zero change
 
+    def test_short_history_without_stability_window(self) -> None:
+        """Histories shorter than the stability window should report no stability."""
+
+        # Two-frame history cannot satisfy a stability window of 5
+        history = np.stack(
+            [
+                np.full((8, 8), -0.070),
+                np.full((8, 8), -0.0695),
+            ]
+        )
+        config = FeatureConfig(stability_window=5, stability_threshold_mv=0.0001)
+
+        _, _, T_stable, _ = compute_temporal_features(history, config)
+
+        assert T_stable == 0
+
 
 class TestStructuralFeatures:
     """Test structural feature computation."""

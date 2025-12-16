@@ -380,7 +380,8 @@ def compute_temporal_features(
     # Steps to quasi-stationary
     threshold = config.stability_threshold_mv
     window = config.stability_window
-    T_stable = T  # Default: never reached stability
+    # Default to 0 to indicate stability was not reached during the windowed scan
+    T_stable = 0
 
     if T > window:
         # Compute rolling std of diffs
@@ -394,6 +395,11 @@ def compute_temporal_features(
                     break
             else:
                 consecutive = 0
+
+        # If no stable window was found in a sufficiently long sequence,
+        # report the full duration to signal "not stabilized" rather than 0.
+        if T_stable == 0:
+            T_stable = T
 
     # Energy trend (L2 norm over time)
     energies = np.array([float(np.sum(h**2)) for h in history_mv])
