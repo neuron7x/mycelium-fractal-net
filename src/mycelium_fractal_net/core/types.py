@@ -197,10 +197,28 @@ class SimulationResult:
 
     @property
     def num_steps(self) -> int:
-        """Return number of time steps in history, or 1 if no history."""
+        """Return the number of simulated time steps represented by the result.
+
+        Preference order:
+        1. Explicit history length when available.
+        2. ``steps_computed`` in metadata produced by the simulation engine.
+        3. ``config['steps']`` when present in metadata.
+        4. Fallback to ``0`` when no information is available.
+        """
         if self.history is not None:
             return int(self.history.shape[0])
-        return 1
+
+        steps_computed = self.metadata.get("steps_computed")
+        if isinstance(steps_computed, (int, float)):
+            return int(steps_computed)
+
+        config_metadata = self.metadata.get("config")
+        if isinstance(config_metadata, dict):
+            steps_value = config_metadata.get("steps")
+            if isinstance(steps_value, (int, float)):
+                return int(steps_value)
+
+        return 0
 
     def to_dict(self, include_arrays: bool = False) -> dict[str, Any]:
         """
