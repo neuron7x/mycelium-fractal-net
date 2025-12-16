@@ -152,12 +152,20 @@ class SecurityIterationConfig:
             }
         )
 
-    def get_iterations(self, level: SecurityLevel) -> int:
+    def get_iterations(
+        self,
+        level: SecurityLevel,
+        *,
+        sensitivity_score: float | None = None,
+    ) -> int:
         """
         Get iteration count for specified security level.
 
         Args:
             level: Security level to get iterations for.
+            sensitivity_score: Optional sensitivity score in [0.0, 1.0] used
+                when ``level`` is ``SecurityLevel.ADAPTIVE``. If omitted, the
+                default midpoint (0.5) is used.
 
         Returns:
             int: Iteration count for the specified level.
@@ -172,7 +180,9 @@ class SecurityIterationConfig:
             SecurityLevel.ENHANCED: self.enhanced,
             SecurityLevel.HIGH: self.high,
             SecurityLevel.MAXIMUM: self.maximum,
-            SecurityLevel.ADAPTIVE: self._compute_adaptive(),
+            SecurityLevel.ADAPTIVE: self._compute_adaptive(
+                sensitivity_score if sensitivity_score is not None else 0.5
+            ),
             SecurityLevel.QUANTUM_RESISTANT: self.quantum_resistant,
         }
         return level_map[level]
@@ -275,6 +285,8 @@ def reset_security_iteration_config() -> None:
 
 def get_iteration_count(
     level: SecurityLevel = SecurityLevel.BASE,
+    *,
+    sensitivity_score: float | None = None,
 ) -> int:
     """
     Get iteration count for specified security level.
@@ -283,6 +295,7 @@ def get_iteration_count(
 
     Args:
         level: Security level to get iterations for.
+        sensitivity_score: Optional sensitivity score for adaptive level.
 
     Returns:
         int: Iteration count for the specified level.
@@ -291,7 +304,9 @@ def get_iteration_count(
         >>> get_iteration_count(SecurityLevel.HIGH)
         200000
     """
-    return get_security_iteration_config().get_iterations(level)
+    return get_security_iteration_config().get_iterations(
+        level, sensitivity_score=sensitivity_score
+    )
 
 
 def validate_iteration_count(count: int, min_count: int = 10_000) -> bool:
