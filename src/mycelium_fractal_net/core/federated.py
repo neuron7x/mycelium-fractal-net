@@ -165,8 +165,18 @@ class HierarchicalKrumAggregator:
         n = len(gradients)
         if n == 0:
             raise ValueError("No gradients provided")
-        if n == 1:
-            return gradients[0]
+
+        # Krum requires more than ``num_byzantine + 2`` gradients to have at
+        # least one non-Byzantine neighbor (see Blanchard et al., 2017). The
+        # original implementation silently fell back to ``num_neighbors = 1``
+        # even when the theoretical constraint was violated, which could
+        # return an arbitrary gradient and break Byzantine robustness for
+        # small client groups.
+        if n <= num_byzantine + 2 or n < self.MIN_CLIENTS_FOR_KRUM:
+            raise ValueError(
+                "Krum requires at least three gradients and n > 2f + 2. "
+                f"Received n={n}, f={num_byzantine}."
+            )
 
         flat_grads = torch.stack([g.flatten() for g in gradients])
         distances = torch.cdist(flat_grads.unsqueeze(0), flat_grads.unsqueeze(0))[0]
