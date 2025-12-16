@@ -113,6 +113,12 @@ class TestAuthorizationEnforcement:
 
         assert response.status_code == 401
 
+    def test_similar_public_path_not_allowed(self, secured_client: TestClient) -> None:
+        """Paths that merely start with a public endpoint should still require auth."""
+        response = secured_client.get("/healthcare")
+
+        assert response.status_code == 401
+
 
 class TestInputValidation:
     """Tests for input validation security."""
