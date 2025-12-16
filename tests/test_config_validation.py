@@ -305,7 +305,7 @@ class TestDatasetConfigValidation:
 
     def test_grid_sizes_out_of_range(self) -> None:
         """Test grid_sizes out of range raises error.
-        
+
         Note: DatasetConfig uses GRID_SIZE_MIN=4 (stricter than SimulationConfig min=2).
         """
         with pytest.raises(ValueError, match="grid_sizes"):
@@ -318,10 +318,22 @@ class TestDatasetConfigValidation:
         with pytest.raises(ValueError, match="steps_range"):
             DatasetConfig(steps_range=(100, 50))
 
+    def test_steps_range_from_dict_requires_two_values(self) -> None:
+        """from_dict should surface malformed steps_range arrays clearly."""
+
+        with pytest.raises(ValueError, match="steps_range must contain exactly two"):
+            DatasetConfig.from_dict({"steps_range": [100]})
+
     def test_alpha_range_invalid_order(self) -> None:
         """Test alpha_range min >= max raises error."""
         with pytest.raises(ValueError, match="alpha_range"):
             DatasetConfig(alpha_range=(0.20, 0.15))
+
+    def test_alpha_range_from_dict_requires_two_values(self) -> None:
+        """from_dict should not index past missing alpha_range bounds."""
+
+        with pytest.raises(ValueError, match="alpha_range must contain exactly two"):
+            DatasetConfig.from_dict({"alpha_range": [0.1]})
 
     def test_alpha_range_outside_cfl(self) -> None:
         """Test alpha_range outside CFL stability raises error."""
@@ -337,6 +349,20 @@ class TestDatasetConfigValidation:
         """Test invalid spike_prob_range raises error."""
         with pytest.raises(ValueError, match="spike_prob_range"):
             DatasetConfig(spike_prob_range=(0.5, 0.3))
+
+    def test_spike_prob_range_from_dict_requires_two_values(self) -> None:
+        """from_dict should validate spike_prob_range length before indexing."""
+
+        with pytest.raises(ValueError, match="spike_prob_range must contain exactly two"):
+            DatasetConfig.from_dict({"spike_prob_range": [0.1]})
+
+    def test_turing_threshold_range_from_dict_requires_two_values(self) -> None:
+        """from_dict should guard turing_threshold_range length."""
+
+        with pytest.raises(
+            ValueError, match="turing_threshold_range must contain exactly two"
+        ):
+            DatasetConfig.from_dict({"turing_threshold_range": [0.1]})
 
     def test_turing_threshold_range_invalid(self) -> None:
         """Test invalid turing_threshold_range raises error."""

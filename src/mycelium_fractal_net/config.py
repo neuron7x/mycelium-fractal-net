@@ -265,9 +265,24 @@ class DatasetConfig:
 
         # Convert to list for safe indexing
         steps_range_list = list(steps_range_raw)
+        if len(steps_range_list) != 2:
+            raise ValueError("steps_range must contain exactly two values (min, max)")
+
         alpha_range_list = list(alpha_range_raw)
+        if len(alpha_range_list) != 2:
+            raise ValueError("alpha_range must contain exactly two values (min, max)")
+
         spike_prob_range_list = list(spike_prob_range_raw)
+        if len(spike_prob_range_list) != 2:
+            raise ValueError(
+                "spike_prob_range must contain exactly two values (min, max)"
+            )
+
         turing_threshold_range_list = list(turing_threshold_range_raw)
+        if len(turing_threshold_range_list) != 2:
+            raise ValueError(
+                "turing_threshold_range must contain exactly two values (min, max)"
+            )
 
         grid_sizes_raw = (
             data["grid_sizes"] if data.get("grid_sizes") is not None else [32, 64]
