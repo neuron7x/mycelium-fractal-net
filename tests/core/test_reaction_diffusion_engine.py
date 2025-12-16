@@ -56,15 +56,22 @@ class TestReactionDiffusionConfig:
         assert config.turing_threshold == DEFAULT_TURING_THRESHOLD
 
     def test_cfl_violation_raises(self) -> None:
-        """Diffusion coefficient >= 0.25 should raise StabilityError."""
+        """Diffusion coefficient above CFL limit should raise StabilityError."""
         with pytest.raises(StabilityError, match="CFL"):
-            ReactionDiffusionConfig(alpha=0.25)
-        
+            ReactionDiffusionConfig(alpha=0.26)
+
         with pytest.raises(StabilityError, match="CFL"):
             ReactionDiffusionConfig(d_activator=0.30)
-        
+
         with pytest.raises(StabilityError, match="CFL"):
-            ReactionDiffusionConfig(d_inhibitor=0.25)
+            ReactionDiffusionConfig(d_inhibitor=0.26)
+
+    def test_cfl_limit_allowed(self) -> None:
+        """Diffusion coefficients at CFL limit are permitted."""
+        config = ReactionDiffusionConfig(alpha=MAX_STABLE_DIFFUSION)
+        engine = ReactionDiffusionEngine(config)
+
+        assert engine.validate_cfl_condition()
 
     def test_negative_diffusion_raises(self) -> None:
         """Negative diffusion should raise ValueOutOfRangeError."""

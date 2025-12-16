@@ -65,7 +65,7 @@ TURING_THRESHOLD_MAX: float = 0.95  # Above this, patterns rarely form
 
 # Field diffusion coefficient bounds
 ALPHA_MIN: float = 0.05   # Minimum for observable diffusion
-ALPHA_MAX: float = 0.24   # Just below CFL limit (0.25)
+ALPHA_MAX: float = 0.25   # CFL limit (dt=dx=1)
 
 # Jitter variance bounds
 JITTER_VAR_MIN: float = 0.0       # No jitter
@@ -120,7 +120,7 @@ def _validate_diffusion_coefficient(
     ValueOutOfRangeError
         If value is below minimum.
     """
-    if value >= cfl_limit:
+    if value > cfl_limit:
         raise StabilityError(
             f"{name}={value} exceeds CFL stability limit "
             f"of {cfl_limit}. Reduce to maintain numerical stability."
@@ -148,10 +148,10 @@ class ReactionDiffusionConfig:
         Size of the square grid (N x N). Default 64.
     d_activator : float
         Activator diffusion coefficient. Default 0.1.
-        Valid range: 0.01-0.5, must be < 0.25 for stability.
+        Valid range: 0.01-0.5, must be ≤ 0.25 for stability.
     d_inhibitor : float
         Inhibitor diffusion coefficient. Default 0.05.
-        Valid range: 0.01-0.3, must be < 0.25 for stability.
+        Valid range: 0.01-0.3, must be ≤ 0.25 for stability.
     r_activator : float
         Activator reaction rate. Default 0.01.
         Valid range: 0.001-0.1.
@@ -163,7 +163,7 @@ class ReactionDiffusionConfig:
         Valid range: 0.5-0.95.
     alpha : float
         Field diffusion coefficient. Default 0.18.
-        Valid range: 0.05-0.24 (must be < 0.25 for stability).
+        Valid range: 0.05-0.25 (must be ≤ 0.25 for stability).
     boundary_condition : BoundaryCondition
         Boundary condition type. Default PERIODIC.
     quantum_jitter : bool
@@ -197,7 +197,7 @@ class ReactionDiffusionConfig:
 
         Invariants enforced:
         - Grid size: [4, 1024] for computational feasibility
-        - Diffusion coefficients: < 0.25 for CFL stability, within biophysical ranges
+        - Diffusion coefficients: ≤ 0.25 for CFL stability, within biophysical ranges
         - Reaction rates: [0.001, 0.1] for stable pattern formation
         - Turing threshold: [0.5, 0.95] for meaningful pattern activation
         - Jitter variance: [0, 0.01] for stability
@@ -686,4 +686,4 @@ class ReactionDiffusionEngine:
             self.config.d_inhibitor,
             self.config.alpha,
         )
-        return max_d < MAX_STABLE_DIFFUSION
+        return max_d <= MAX_STABLE_DIFFUSION

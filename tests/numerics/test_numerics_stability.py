@@ -242,7 +242,7 @@ class TestNumericsModuleStability:
         field = rng.normal(-0.07, 0.01, size=(32, 32))
         
         # Test with various valid diffusion coefficients
-        for alpha in [0.05, 0.10, 0.18, 0.24]:
+        for alpha in [0.05, 0.10, 0.18, 0.24, 0.25]:
             assert validate_cfl_condition(alpha), f"CFL violated for alpha={alpha}"
             
             field_new = diffusion_update(field, alpha)
