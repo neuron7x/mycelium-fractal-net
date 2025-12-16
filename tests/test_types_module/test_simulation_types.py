@@ -196,6 +196,14 @@ class TestSimulationResult:
         assert d["clamping_events"] == 2
         assert "field" not in d
 
+    def test_num_steps_uses_metadata_when_no_history(self) -> None:
+        """num_steps should use recorded step count when history is absent."""
+        field = np.zeros((16, 16), dtype=np.float64) - 0.070
+        result = SimulationResult(field=field, metadata={"steps_computed": 12})
+
+        assert result.has_history is False
+        assert result.num_steps == 12
+
     def test_to_dict_with_arrays(self) -> None:
         """Test conversion to dictionary with arrays."""
         field = np.zeros((8, 8), dtype=np.float64) - 0.070

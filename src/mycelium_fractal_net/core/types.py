@@ -200,7 +200,17 @@ class SimulationResult:
         """Return number of time steps in history, or 1 if no history."""
         if self.history is not None:
             return int(self.history.shape[0])
-        return 1
+        # Prefer explicit step counts recorded in metadata when history is absent
+        steps = self.metadata.get("steps_computed")
+        if steps is None:
+            config_meta = self.metadata.get("config")
+            if isinstance(config_meta, dict):
+                steps = config_meta.get("steps")
+
+        try:
+            return int(steps) if steps is not None else 1
+        except (TypeError, ValueError):
+            return 1
 
     def to_dict(self, include_arrays: bool = False) -> dict[str, Any]:
         """
