@@ -32,6 +32,9 @@ from analytics.fractal_features import (
 from analytics.fractal_features import (
     compute_fractal_features as _compute_fractal_dim,
 )
+from analytics.fractal_features import (
+    compute_temporal_features as _compute_temporal_features,
+)
 
 if TYPE_CHECKING:
     from mycelium_fractal_net.core.types import SimulationResult
@@ -41,6 +44,7 @@ __all__ = [
     "compute_fractal_features",
     "compute_box_counting_dimension",
     "compute_basic_stats",
+    "compute_temporal_features",
 ]
 
 
@@ -242,6 +246,16 @@ def compute_basic_stats(field: NDArray[np.floating[Any]]) -> Dict[str, float]:
         "mean": V_mean,
         "std": V_std,
     }
+
+
+def compute_temporal_features(
+    history: NDArray[np.floating[Any]],
+    config: FeatureConfig | None = None,
+) -> tuple[float, float, int, float]:
+    """Expose temporal feature computation with package defaults."""
+
+    cfg = config or FeatureConfig()
+    return _compute_temporal_features(history, cfg)
 
 
 def compute_fractal_features(result: "SimulationResult") -> FeatureVector:

@@ -14,9 +14,11 @@ import pytest
 
 from mycelium_fractal_net import SimulationResult, compute_fractal_features
 from mycelium_fractal_net.analytics.fractal_features import (
+    FeatureConfig,
     FeatureVector,
     compute_basic_stats,
     compute_box_counting_dimension,
+    compute_temporal_features,
 )
 
 
@@ -229,6 +231,25 @@ class TestComputeFractalFeaturesIntegration:
 
         with pytest.raises(TypeError, match="SimulationResult"):
             compute_fractal_features(invalid_input)  # type: ignore
+
+
+class TestTemporalFeatureStabilityBehavior:
+    """Temporal stability reporting should handle short histories correctly."""
+
+    def test_short_history_reports_duration_when_unstable(self) -> None:
+        """When stability window exceeds history, T_stable should default to T."""
+
+        # Construct a short sequence with meaningful spatial variance so std exceeds threshold
+        base = np.indices((4, 4))[0].astype(np.float64)
+        history = np.stack(
+            [base * scale for scale in (0.0, 0.5, 1.5, 3.0, 5.0)], axis=0
+        )
+
+        config = FeatureConfig(stability_window=10, stability_threshold_mv=0.001)
+
+        _, _, T_stable, _ = compute_temporal_features(history, config)
+
+        assert T_stable == history.shape[0]
 
 
 class TestFeatureVectorMethods:
