@@ -105,6 +105,9 @@ def compute_stability_metrics(
     >>> 'lyapunov_exponent' in metrics
     True
     """
+    if dt <= 0:
+        raise ValueError("dt must be positive for stability metrics")
+
     lyapunov = compute_lyapunov_exponent(field_history, dt)
     
     # Compute change rates
