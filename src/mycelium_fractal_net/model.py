@@ -101,12 +101,13 @@ def compute_nernst_potential(
     if z_valence == 0:
         raise ValueError("Ion valence cannot be zero for Nernst potential.")
 
-    # Clamp concentrations to avoid log(0) or negative values
+    # Concentrations must be physically meaningful before clamping
+    if concentration_out_molar <= 0 or concentration_in_molar <= 0:
+        raise ValueError("Concentrations must be positive for Nernst potential.")
+
+    # Clamp extremely small concentrations to avoid log(0)
     c_out = max(concentration_out_molar, ION_CLAMP_MIN)
     c_in = max(concentration_in_molar, ION_CLAMP_MIN)
-
-    if c_out <= 0 or c_in <= 0:
-        raise ValueError("Concentrations must be positive for Nernst potential.")
 
     ratio = c_out / c_in
     return (R_GAS_CONSTANT * temperature_k) / (z_valence * FARADAY_CONSTANT) * math.log(ratio)

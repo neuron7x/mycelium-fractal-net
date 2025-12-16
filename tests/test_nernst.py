@@ -25,3 +25,21 @@ def test_nernst_zero_valence_rejected() -> None:
             concentration_out_molar=5e-3,
             concentration_in_molar=140e-3,
         )
+
+
+def test_nernst_negative_concentration_rejected() -> None:
+    """Negative concentrations should not be silently clamped."""
+
+    with pytest.raises(ValueError):
+        compute_nernst_potential(
+            z_valence=1,
+            concentration_out_molar=-5e-3,
+            concentration_in_molar=140e-3,
+        )
+
+    with pytest.raises(ValueError):
+        compute_nernst_potential(
+            z_valence=1,
+            concentration_out_molar=5e-3,
+            concentration_in_molar=-140e-3,
+        )
