@@ -236,8 +236,17 @@ class WSConnectionManager:
             )
             return False
 
+        # Optional authentication should not break on missing or malformed keys
+        if not api_config.auth.api_key_required and api_key is not None:
+            if not isinstance(api_key, str):
+                logger.warning(
+                    "Authentication provided non-string API key; ignoring for optional auth",
+                    extra={"connection_id": connection_id, "api_key_type": type(api_key).__name__},
+                )
+                api_key = None
+
         connection.authenticated = True
-        connection.api_key_used = api_key[:8] + "..."  # Log partial key for audit
+        connection.api_key_used = self._mask_api_key(api_key)
         connection.update_heartbeat()
 
         logger.info(
@@ -249,6 +258,17 @@ class WSConnectionManager:
         )
 
         return True
+
+    @staticmethod
+    def _mask_api_key(api_key: str | None) -> str | None:
+        """Return a redacted API key for audit logging without raising errors."""
+        if not api_key or not isinstance(api_key, str):
+            return None
+
+        if len(api_key) <= 8:
+            return api_key
+
+        return api_key[:8] + "..."
 
     def _validate_api_key(self, api_key: str | None) -> bool:
         """Validate API key against configured keys."""

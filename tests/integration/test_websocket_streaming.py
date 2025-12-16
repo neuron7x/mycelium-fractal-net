@@ -503,3 +503,61 @@ class TestWebSocketConnectionManager:
 
             assert manager.authenticate(connection_id, None, timestamp) is False
             assert manager.connections[connection_id].authenticated is False
+
+    async def test_optional_authentication_with_missing_key(self):
+        """Optional auth must succeed without an API key and not set a masked value."""
+        from mycelium_fractal_net.integration import (
+            WSConnectionManager,
+            WSConnectionState,
+        )
+
+        with mock.patch.dict(
+            os.environ,
+            {
+                "MFN_ENV": "staging",
+                "MFN_API_KEY_REQUIRED": "false",
+                "MFN_RATE_LIMIT_ENABLED": "false",
+            },
+            clear=False,
+        ):
+            manager = WSConnectionManager()
+            connection_id = "conn-optional-no-key"
+            manager.connections[connection_id] = WSConnectionState(
+                connection_id=connection_id,
+                websocket=mock.Mock(),
+            )
+
+            timestamp = time.time() * 1000
+
+            assert manager.authenticate(connection_id, None, timestamp) is True
+            assert manager.connections[connection_id].authenticated is True
+            assert manager.connections[connection_id].api_key_used is None
+
+    async def test_optional_authentication_with_non_string_key(self):
+        """Optional auth should ignore non-string keys instead of crashing."""
+        from mycelium_fractal_net.integration import (
+            WSConnectionManager,
+            WSConnectionState,
+        )
+
+        with mock.patch.dict(
+            os.environ,
+            {
+                "MFN_ENV": "staging",
+                "MFN_API_KEY_REQUIRED": "false",
+                "MFN_RATE_LIMIT_ENABLED": "false",
+            },
+            clear=False,
+        ):
+            manager = WSConnectionManager()
+            connection_id = "conn-optional-bad-key"
+            manager.connections[connection_id] = WSConnectionState(
+                connection_id=connection_id,
+                websocket=mock.Mock(),
+            )
+
+            timestamp = time.time() * 1000
+
+            assert manager.authenticate(connection_id, 12345, timestamp) is True
+            assert manager.connections[connection_id].authenticated is True
+            assert manager.connections[connection_id].api_key_used is None
