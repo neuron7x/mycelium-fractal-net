@@ -302,6 +302,9 @@ hard-coding them into configuration files or images.
 - `vault`: load from HashiCorp Vault KV v2 using `MFN_SECRETS_VAULT_URL`,
   `MFN_SECRETS_VAULT_PATH`, and the token stored in `MFN_VAULT_TOKEN`.
 
+> Secrets files must be UTF-8 encoded text and are capped at 64KB to prevent
+> accidental binary uploads or oversized payloads.
+
 **Environment variables**
 
 ```bash

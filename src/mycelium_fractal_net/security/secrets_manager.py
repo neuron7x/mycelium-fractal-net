@@ -260,7 +260,12 @@ class SecretManager:
         if len(raw_bytes) > 64 * 1024:
             raise SecretRetrievalError("Secrets file exceeds 64KB limit; aborting load")
 
-        text = raw_bytes.decode("utf-8")
+        try:
+            text = raw_bytes.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise SecretRetrievalError(
+                f"Secrets file {path} is not valid UTF-8 encoded text"
+            ) from exc
 
         # JSON mapping
         if path.suffix.lower() in {".json", ".jsn"}:
@@ -296,7 +301,12 @@ class SecretManager:
         raw_bytes = path.read_bytes()
         if len(raw_bytes) > 64 * 1024:
             raise SecretRetrievalError("Secret file exceeds 64KB limit; aborting load")
-        return raw_bytes.decode("utf-8").strip()
+        try:
+            return raw_bytes.decode("utf-8").strip()
+        except UnicodeDecodeError as exc:
+            raise SecretRetrievalError(
+                f"Secret file {path} is not valid UTF-8 encoded text"
+            ) from exc
 
     def _load_aws_secrets(self) -> Dict[str, str]:
         if not self.config.aws_secret_name:

@@ -64,3 +64,32 @@ def test_invalid_env_file_line_raises(tmp_path: Path, monkeypatch: pytest.Monkey
     manager = SecretManager()
     with pytest.raises(SecretRetrievalError):
         manager.get_secret("ANY_KEY")
+
+
+def test_invalid_backend_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MFN_SECRETS_BACKEND", "not-supported")
+    with pytest.raises(SecretRetrievalError):
+        SecretManager()
+
+
+def test_list_from_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    keys_file = tmp_path / "keys.list"
+    keys_file.write_text("first\nsecond\nthird\n")
+
+    monkeypatch.setenv("MFN_API_KEYS_FILE", str(keys_file))
+    manager = SecretManager()
+
+    assert manager.get_list("MFN_API_KEYS") == ["first", "second", "third"]
+
+
+def test_utf8_validation(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    bad_file = tmp_path / "secrets.bin"
+    bad_file.write_bytes(b"\xff\xfe\xfa")
+
+    monkeypatch.setenv("MFN_SECRETS_BACKEND", "file")
+    monkeypatch.setenv("MFN_SECRETS_FILE", str(bad_file))
+
+    manager = SecretManager()
+
+    with pytest.raises(SecretRetrievalError):
+        manager.get_secret("ANY_KEY")
