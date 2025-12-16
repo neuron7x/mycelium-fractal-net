@@ -314,7 +314,7 @@ class SecretManager:
                 "MFN_SECRETS_AWS_NAME must be set when using the aws secrets backend"
             )
         try:
-            import boto3  # type: ignore
+            import boto3
         except Exception as exc:  # pragma: no cover - optional dependency
             raise SecretRetrievalError(
                 "boto3 is required for AWS Secrets Manager integration"
@@ -350,7 +350,7 @@ class SecretManager:
                 f"Vault token not found in environment variable {self.config.vault_token_env}"
             )
         try:
-            import hvac  # type: ignore
+            import hvac
         except Exception as exc:  # pragma: no cover - optional dependency
             raise SecretRetrievalError("hvac is required for Vault integration") from exc
 
