@@ -168,6 +168,14 @@ class TestComputeStabilityMetrics:
         for key, value in metrics.items():
             assert np.isfinite(value), f"Metric {key} is not finite: {value}"
 
+    @pytest.mark.parametrize("bad_dt", [0.0, -1.0])
+    def test_compute_stability_metrics_invalid_dt(self, bad_dt: float) -> None:
+        """Ensure invalid dt values raise an error instead of dividing by zero."""
+        history = np.random.randn(10, 4, 4)
+
+        with pytest.raises(ValueError, match="dt must be positive"):
+            compute_stability_metrics(history, dt=bad_dt)
+
 
 class TestLyapunovExponentEdgeCases:
     """Additional edge case tests for Lyapunov exponent computation."""
