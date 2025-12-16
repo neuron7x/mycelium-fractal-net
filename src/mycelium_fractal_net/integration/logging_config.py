@@ -266,17 +266,19 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
         set_request_context(context)
 
-        # Process request
-        response = await call_next(request)
+        try:
+            # Process request
+            response = await call_next(request)
 
-        # Add request ID to response headers
-        response.headers[REQUEST_ID_HEADER] = request_id
+            # Add request ID to response headers
+            response.headers[REQUEST_ID_HEADER] = request_id
 
-        # Clear context
-        set_request_id(None)  # type: ignore
-        set_request_context({})
-
-        return response
+            return response
+        finally:
+            # Always clear context to avoid leaking request metadata when
+            # downstream handlers raise exceptions.
+            set_request_id(None)  # type: ignore
+            set_request_context({})
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
