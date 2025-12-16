@@ -218,6 +218,11 @@ class TestFeatureConfigValidation:
                 threshold_low_mv=-70.0, threshold_med_mv=-40.0, threshold_high_mv=-40.0
             )
 
+    def test_from_dict_preserves_invalid_values_for_validation(self) -> None:
+        """Ensure falsy user values do not get replaced with defaults."""
+        with pytest.raises(ValueError, match="min_box_size"):
+            FeatureConfig.from_dict({"min_box_size": 0, "num_scales": 5})
+
     def test_connectivity_valid_values(self) -> None:
         """Test valid connectivity values (4 and 8)."""
         config = FeatureConfig(connectivity=4)
