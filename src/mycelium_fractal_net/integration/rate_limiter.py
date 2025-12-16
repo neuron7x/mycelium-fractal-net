@@ -84,6 +84,10 @@ class TokenBucket:
         Returns:
             float: Seconds until next token available.
         """
+        if self.refill_rate <= 0:
+            # Prevent division by zero when misconfigured
+            return float("inf")
+
         if self.tokens >= 1:
             return 0.0
 
@@ -222,7 +226,14 @@ class RateLimiter:
         bucket_key = self._get_bucket_key(client, endpoint)
 
         limit = self._get_limit_for_endpoint(endpoint)
-        refill_rate = limit / self.config.window_seconds
+        window_seconds = self.config.window_seconds
+
+        # Gracefully handle misconfigurations that would cause division by zero
+        if limit <= 0 or window_seconds <= 0:
+            remaining = max(0, int(limit))
+            return True, limit, remaining, None
+
+        refill_rate = limit / window_seconds
 
         with self._lock:
             if bucket_key not in self.buckets:
