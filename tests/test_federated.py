@@ -16,6 +16,8 @@ Complexity:
     Hierarchical: O(n²/C × d + C² × d)
 """
 
+from typing import Any
+
 import numpy as np
 import pytest
 import torch
@@ -275,6 +277,30 @@ class TestKrumNumericalStability:
         result2 = agg.aggregate(grads, rng=rng2)
 
         assert torch.allclose(result1, result2)
+
+    def test_default_rng_uses_entropy_when_not_provided(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Ensure default aggregation RNG is not hard-seeded to a fixed value."""
+
+        original_default_rng = np.random.default_rng
+        calls: list[Any] = []
+
+        def fake_default_rng(seed: Any = None) -> np.random.Generator:
+            calls.append(seed)
+            return original_default_rng(0)
+
+        monkeypatch.setattr(np.random, "default_rng", fake_default_rng)
+
+        grads = [torch.randn(4) for _ in range(4)]
+
+        agg = HierarchicalKrumAggregator(num_clusters=2)
+        agg.aggregate(grads)
+
+        core_agg = CoreHierarchicalKrumAggregator(num_clusters=2)
+        core_agg.aggregate(grads)
+
+        assert calls == [None, None]
 
     def test_sampling_respects_minimum_client_selection(self) -> None:
         """Ensure sampling keeps at least one client even with tiny fractions."""
