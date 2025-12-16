@@ -195,7 +195,9 @@ class WSConnectionManager:
             },
         )
 
-    def authenticate(self, connection_id: str, api_key: str, timestamp: float) -> bool:
+    def authenticate(
+        self, connection_id: str, api_key: str | None, timestamp: float
+    ) -> bool:
         """
         Authenticate a WebSocket connection.
 
@@ -248,8 +250,11 @@ class WSConnectionManager:
 
         return True
 
-    def _validate_api_key(self, api_key: str) -> bool:
+    def _validate_api_key(self, api_key: str | None) -> bool:
         """Validate API key against configured keys."""
+        if not api_key or not isinstance(api_key, str):
+            return False
+
         api_config = get_api_config()
         if not api_config.auth.api_key_required:
             return True
