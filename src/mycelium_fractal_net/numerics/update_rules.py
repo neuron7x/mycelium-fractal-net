@@ -121,10 +121,10 @@ class UpdateParameters:
             ("d_inhibitor", self.d_inhibitor),
             ("alpha", self.alpha),
         ]:
-            if value >= MAX_STABLE_DIFFUSION:
+            if value > MAX_STABLE_DIFFUSION:
                 raise StabilityError(
                     f"Diffusion coefficient {name}={value} violates CFL stability "
-                    f"condition (must be < {MAX_STABLE_DIFFUSION})"
+                    f"condition (must be ≤ {MAX_STABLE_DIFFUSION})"
                 )
             if value < 0:
                 raise ValueOutOfRangeError(
