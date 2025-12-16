@@ -140,17 +140,45 @@ class FeatureConfig:
         Returns:
             New FeatureConfig instance.
         """
+        min_box_value = data.get("min_box_size")
         max_box_value = data.get("max_box_size")
+        num_scales_value = data.get("num_scales")
+        threshold_low_value = data.get("threshold_low_mv")
+        threshold_med_value = data.get("threshold_med_mv")
+        threshold_high_value = data.get("threshold_high_mv")
+        stability_threshold_value = data.get("stability_threshold_mv")
+        stability_window_value = data.get("stability_window")
+        connectivity_value = data.get("connectivity")
         return cls(
-            min_box_size=int(data.get("min_box_size") or 2),
-            max_box_size=int(max_box_value) if max_box_value else None,
-            num_scales=int(data.get("num_scales") or 5),
-            threshold_low_mv=float(data.get("threshold_low_mv") or -60.0),
-            threshold_med_mv=float(data.get("threshold_med_mv") or -50.0),
-            threshold_high_mv=float(data.get("threshold_high_mv") or -40.0),
-            stability_threshold_mv=float(data.get("stability_threshold_mv") or 0.001),
-            stability_window=int(data.get("stability_window") or 10),
-            connectivity=int(data.get("connectivity") or 4),
+            min_box_size=int(min_box_value) if min_box_value is not None else 2,
+            max_box_size=int(max_box_value) if max_box_value is not None else None,
+            num_scales=int(num_scales_value) if num_scales_value is not None else 5,
+            threshold_low_mv=(
+                float(threshold_low_value)
+                if threshold_low_value is not None
+                else -60.0
+            ),
+            threshold_med_mv=(
+                float(threshold_med_value)
+                if threshold_med_value is not None
+                else -50.0
+            ),
+            threshold_high_mv=(
+                float(threshold_high_value)
+                if threshold_high_value is not None
+                else -40.0
+            ),
+            stability_threshold_mv=(
+                float(stability_threshold_value)
+                if stability_threshold_value is not None
+                else 0.001
+            ),
+            stability_window=(
+                int(stability_window_value)
+                if stability_window_value is not None
+                else 10
+            ),
+            connectivity=int(connectivity_value) if connectivity_value is not None else 4,
         )
 
 
