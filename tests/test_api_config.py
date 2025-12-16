@@ -35,3 +35,21 @@ def test_metrics_can_be_protected(monkeypatch) -> None:
 
     assert config.metrics.include_in_auth is True
     assert "/metrics" not in config.auth.public_endpoints
+
+
+def test_auth_required_without_keys_raises(monkeypatch) -> None:
+    """Requiring API keys should fail fast when no keys are configured."""
+
+    _clear_env_vars()
+    monkeypatch.setenv("MFN_API_KEY_REQUIRED", "true")
+    # Ensure no default keys are injected
+    monkeypatch.delenv("MFN_API_KEY", raising=False)
+    monkeypatch.delenv("MFN_API_KEYS", raising=False)
+    reset_config()
+
+    try:
+        APIConfig.from_env()
+    except ValueError as exc:
+        assert "no API keys were provided" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError when auth is required but no keys set")
