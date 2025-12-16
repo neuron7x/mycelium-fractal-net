@@ -206,7 +206,7 @@ class HierarchicalKrumAggregator:
             raise ValueError("No gradients to aggregate")
 
         if rng is None:
-            rng = np.random.default_rng(42)
+            rng = np.random.default_rng()
 
         n_clients = len(client_gradients)
 
