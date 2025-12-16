@@ -285,7 +285,45 @@ MFN_ENV=dev  # Automatically allows all origins
 
 ---
 
-## 8. Compliance
+## 8. Secrets Management
+
+The secrets manager provides a safe, flexible way to inject credentials without
+hard-coding them into configuration files or images.
+
+**Backends**
+
+- `env` (default): reads `MFN_API_KEY`, `MFN_API_KEYS`, and other secrets
+  directly from environment variables. For Kubernetes, you can mount
+  `mfn-secrets` and point `MFN_API_KEY_FILE` or `MFN_API_KEYS_FILE` to the
+  mounted files.
+- `file`: read a JSON or `.env` style mapping via `MFN_SECRETS_FILE`.
+- `aws`: load from AWS Secrets Manager. Configure `MFN_SECRETS_AWS_NAME` and
+  optionally `MFN_SECRETS_AWS_REGION`.
+- `vault`: load from HashiCorp Vault KV v2 using `MFN_SECRETS_VAULT_URL`,
+  `MFN_SECRETS_VAULT_PATH`, and the token stored in `MFN_VAULT_TOKEN`.
+
+**Environment variables**
+
+```bash
+export MFN_SECRETS_BACKEND=env           # env|file|aws|vault
+export MFN_API_KEY_FILE=/var/run/secrets/api_key
+export MFN_API_KEYS_FILE=/var/run/secrets/api_keys
+export MFN_SECRETS_FILE=/etc/mfn/secrets.json
+```
+
+**Python API**
+
+```python
+from mycelium_fractal_net.security import SecretManager
+
+manager = SecretManager()  # auto-configured from environment
+api_key = manager.get_secret("MFN_API_KEY", required=True)
+api_keys = manager.get_list("MFN_API_KEYS")
+```
+
+---
+
+## 9. Compliance
 
 ### GDPR Compliance
 
@@ -307,7 +345,7 @@ MFN_ENV=dev  # Automatically allows all origins
 
 ---
 
-## 9. Security Best Practices
+## 10. Security Best Practices
 
 ### Deployment Checklist
 

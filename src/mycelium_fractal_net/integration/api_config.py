@@ -9,7 +9,9 @@ Environment Variables:
     MFN_ENV                  - Environment name: dev, staging, prod (default: dev)
     MFN_API_KEY_REQUIRED     - Whether API key authentication is required (default: false in dev)
     MFN_API_KEY              - Primary API key for authentication
+    MFN_API_KEY_FILE         - Path to a file containing the primary API key
     MFN_API_KEYS             - Comma-separated list of valid API keys
+    MFN_API_KEYS_FILE        - Path to a file with newline/CSV/JSON list of keys
     MFN_RATE_LIMIT_REQUESTS  - Max requests per minute (default: 100)
     MFN_RATE_LIMIT_WINDOW    - Rate limit window in seconds (default: 60)
     MFN_LOG_LEVEL            - Log level: DEBUG, INFO, WARNING, ERROR (default: INFO)
@@ -24,6 +26,8 @@ import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional
+
+from mycelium_fractal_net.security import SecretManager, SecretRetrievalError
 
 
 class Environment(str, Enum):
@@ -62,6 +66,8 @@ class AuthConfig:
         Returns:
             AuthConfig: Configured authentication settings.
         """
+        secret_manager = SecretManager()
+
         # Determine if auth is required based on environment
         env_required = os.getenv("MFN_API_KEY_REQUIRED", "").lower()
         if env_required:
@@ -73,17 +79,26 @@ class AuthConfig:
         # Collect API keys from environment
         api_keys: List[str] = []
 
-        # Single key
-        single_key = os.getenv("MFN_API_KEY", "")
+        # Single key via env or file-backed secret
+        try:
+            single_key = secret_manager.get_secret(
+                "MFN_API_KEY", file_env_key="MFN_API_KEY_FILE"
+            )
+        except SecretRetrievalError as exc:
+            raise ValueError(str(exc)) from exc
         if single_key:
             api_keys.append(single_key)
 
-        # Multiple keys (comma-separated)
-        multi_keys = os.getenv("MFN_API_KEYS", "")
-        if multi_keys:
-            api_keys.extend(
-                key.strip() for key in multi_keys.split(",") if key.strip()
+        # Multiple keys (comma-separated/newline/JSON) via env or file
+        try:
+            multi_keys = secret_manager.get_list(
+                "MFN_API_KEYS", file_env_key="MFN_API_KEYS_FILE"
             )
+        except SecretRetrievalError as exc:
+            raise ValueError(str(exc)) from exc
+
+        if multi_keys:
+            api_keys.extend(multi_keys)
 
         # Guard against misconfiguration: authentication required but no keys provided
         if api_key_required and not api_keys:

@@ -46,6 +46,12 @@ from .input_validation import (
     validate_api_key_format,
     validate_numeric_range,
 )
+from .secrets_manager import (
+    SecretManager,
+    SecretManagerConfig,
+    SecretRetrievalError,
+    SecretsBackend,
+)
 from .iterations import (
     ADAPTIVE_MAX_ITERATIONS,
     ADAPTIVE_MIN_ITERATIONS,
@@ -94,4 +100,9 @@ __all__ = [
     "get_security_iteration_config",
     "reset_security_iteration_config",
     "validate_iteration_count",
+    # Secrets management
+    "SecretManager",
+    "SecretManagerConfig",
+    "SecretRetrievalError",
+    "SecretsBackend",
 ]
