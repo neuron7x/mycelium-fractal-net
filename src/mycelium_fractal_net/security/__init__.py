@@ -61,8 +61,14 @@ from .iterations import (
     reset_security_iteration_config,
     validate_iteration_count,
 )
+from .secrets_manager import (
+    SecretManager,
+    SecretManagerConfig,
+    SecretRetrievalError,
+    SecretsBackend,
+)
 
-__all__ = [
+__all__ = (
     # Encryption
     "DataEncryptor",
     "encrypt_data",
@@ -94,4 +100,9 @@ __all__ = [
     "get_security_iteration_config",
     "reset_security_iteration_config",
     "validate_iteration_count",
-]
+    # Secrets management
+    "SecretManager",
+    "SecretManagerConfig",
+    "SecretRetrievalError",
+    "SecretsBackend",
+)
