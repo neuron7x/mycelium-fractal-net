@@ -85,7 +85,15 @@ class AuthConfig:
                 key.strip() for key in multi_keys.split(",") if key.strip()
             )
 
-        # In dev mode without explicit keys, add a dev key for convenience
+        # Guard against misconfiguration: authentication required but no keys provided
+        if api_key_required and not api_keys:
+            raise ValueError(
+                "API key authentication is required but no API keys were provided. "
+                "Set MFN_API_KEY or MFN_API_KEYS to configure valid credentials."
+            )
+
+        # In dev mode without explicit keys and when auth isn't enforced,
+        # add a convenience key to simplify local testing.
         if env == Environment.DEV and not api_keys:
             api_keys.append("dev-key-for-testing")
 
