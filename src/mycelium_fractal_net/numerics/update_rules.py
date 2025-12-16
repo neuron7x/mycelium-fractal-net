@@ -24,7 +24,7 @@ Discretization Scheme:
     - Unit grid spacing: dx = 1
 
 Stability Conditions:
-    - CFL: D_max < 0.25 (for dt=dx=1)
+- CFL: D_max ≤ 0.25 (for dt=dx=1)
     - Reaction rates: r < 0.1 (empirically stable)
     
 Parameter Defaults (from MFN_MATH_MODEL.md Section 2.3):
@@ -83,10 +83,10 @@ class UpdateParameters:
     ----------
     d_activator : float
         Activator diffusion coefficient D_a. Default 0.1.
-        Valid range: [0.01, 0.25). CFL constraint: < 0.25.
+    Valid range: [0.01, 0.25]. CFL constraint: ≤ 0.25.
     d_inhibitor : float
         Inhibitor diffusion coefficient D_i. Default 0.05.
-        Valid range: [0.01, 0.25). CFL constraint: < 0.25.
+    Valid range: [0.01, 0.25]. CFL constraint: ≤ 0.25.
     r_activator : float
         Activator reaction rate r_a. Default 0.01.
         Valid range: [0.001, 0.1].
@@ -95,7 +95,7 @@ class UpdateParameters:
         Valid range: [0.001, 0.1].
     alpha : float
         Field diffusion coefficient α. Default 0.18.
-        Valid range: [0.05, 0.25). CFL constraint: < 0.25.
+    Valid range: [0.05, 0.25]. CFL constraint: ≤ 0.25.
     turing_threshold : float
         Threshold θ for Turing pattern activation. Default 0.75.
         Valid range: [0.5, 0.95].
@@ -176,14 +176,14 @@ def diffusion_update(
         - Time step dt = 1 (implicit in coefficient)
     
     Stability condition:
-        D < 0.25 for unit grid spacing (MFN_MATH_MODEL.md Section 2.5)
+        D ≤ 0.25 for unit grid spacing (MFN_MATH_MODEL.md Section 2.5)
     
     Parameters
     ----------
     field : NDArray[np.floating]
         Current field state V^n of shape (N, M).
     diffusion_coeff : float
-        Diffusion coefficient D. Must be < 0.25 for stability.
+        Diffusion coefficient D. Must be ≤ 0.25 for stability.
     boundary : BoundaryCondition
         Boundary condition for Laplacian.
     check_stability : bool
@@ -197,7 +197,7 @@ def diffusion_update(
     Raises
     ------
     StabilityError
-        If diffusion_coeff >= 0.25 (CFL violation).
+        If diffusion_coeff > 0.25 (CFL violation).
     NumericalInstabilityError
         If NaN/Inf detected in result.
     
@@ -207,10 +207,10 @@ def diffusion_update(
     >>> field = np.random.randn(64, 64) * 0.01
     >>> field_new = diffusion_update(field, diffusion_coeff=0.18)
     """
-    if diffusion_coeff >= MAX_STABLE_DIFFUSION:
+    if diffusion_coeff > MAX_STABLE_DIFFUSION:
         raise StabilityError(
             f"Diffusion coefficient {diffusion_coeff} violates CFL stability "
-            f"condition (must be < {MAX_STABLE_DIFFUSION})"
+            f"condition (must be ≤ {MAX_STABLE_DIFFUSION})"
         )
     
     laplacian = compute_laplacian(field, boundary, check_stability=check_stability)
@@ -241,7 +241,7 @@ def activator_inhibitor_update(
         - Clamping to [0, 1] after update (MFN_MATH_MODEL.md Section 4.3)
     
     Stability conditions:
-        - D_a, D_i < 0.25 (CFL condition)
+        - D_a, D_i ≤ 0.25 (CFL condition)
         - D_i > D_a typically required for Turing instability
     
     Parameters
@@ -576,4 +576,4 @@ def validate_cfl_condition(diffusion_coeff: float) -> bool:
     bool
         True if coefficient satisfies CFL condition.
     """
-    return diffusion_coeff < MAX_STABLE_DIFFUSION
+    return diffusion_coeff <= MAX_STABLE_DIFFUSION
