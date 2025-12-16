@@ -183,6 +183,18 @@ class WSConnectionManager:
         for stream_id in list(connection.subscriptions):
             await self._remove_from_stream(connection_id, stream_id)
 
+        # Close the underlying WebSocket to release transport resources
+        try:
+            await connection.websocket.close()
+        except Exception as exc:  # pragma: no cover - defensive cleanup
+            logger.warning(
+                "WebSocket close failed during disconnect",
+                extra={
+                    "connection_id": connection_id,
+                    "error": str(exc),
+                },
+            )
+
         # Remove connection
         del self.connections[connection_id]
 
