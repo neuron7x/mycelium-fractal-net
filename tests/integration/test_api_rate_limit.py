@@ -195,6 +195,38 @@ class TestRateLimiter:
         assert retry_after is not None
         assert retry_after > 0
 
+    @pytest.mark.parametrize(
+        "max_requests, window_seconds",
+        [
+            (0, 60),  # disabled via zero limit
+            (10, 0),  # disabled via zero-length window
+        ],
+    )
+    def test_rate_limiter_handles_non_positive_limits(
+        self, max_requests: int, window_seconds: int
+    ) -> None:
+        """Non-positive limits should not crash the limiter."""
+        from mycelium_fractal_net.integration.api_config import RateLimitConfig
+
+        config = RateLimitConfig(
+            max_requests=max_requests, window_seconds=window_seconds, enabled=True
+        )
+        limiter = RateLimiter(config)
+
+        class MockRequest:
+            def __init__(self):
+                self.url = type("obj", (object,), {"path": "/test"})()
+                self.headers = {}
+                self.client = type("obj", (object,), {"host": "127.0.0.1"})()
+
+        request = MockRequest()
+        allowed, limit, remaining, retry_after = limiter.check_rate_limit(request)
+
+        assert allowed is True
+        assert limit == max_requests
+        assert retry_after is None
+        assert remaining >= 0
+
     def test_rate_limiter_cleanup(self) -> None:
         """Rate limiter can clean up old entries."""
         from mycelium_fractal_net.integration.api_config import RateLimitConfig
