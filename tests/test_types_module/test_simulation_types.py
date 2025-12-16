@@ -185,16 +185,27 @@ class TestSimulationResult:
             growth_events=10,
             turing_activations=50,
             clamping_events=2,
+            metadata={"steps_computed": 12},
         )
         d = result.to_dict(include_arrays=False)
 
         assert d["grid_size"] == 32
-        assert d["num_steps"] == 1
+        assert d["num_steps"] == 12
         assert d["has_history"] is False
         assert d["growth_events"] == 10
         assert d["turing_activations"] == 50
         assert d["clamping_events"] == 2
         assert "field" not in d
+
+    def test_num_steps_falls_back_to_config_metadata(self) -> None:
+        """Should use config metadata when history and steps_computed are absent."""
+        field = np.zeros((16, 16), dtype=np.float64)
+        result = SimulationResult(
+            field=field,
+            metadata={"config": {"steps": 7}},
+        )
+
+        assert result.num_steps == 7
 
     def test_to_dict_with_arrays(self) -> None:
         """Test conversion to dictionary with arrays."""
