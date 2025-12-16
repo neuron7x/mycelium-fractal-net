@@ -404,7 +404,8 @@ def estimate_fractal_dimension(
 
     sizes = np.geomspace(min_box_size, max_box_size, num_scales).astype(int)
     sizes = np.unique(sizes)
-    counts = []
+    counts: list[float] = []
+    used_sizes: list[int] = []
 
     for size in sizes:
         if size <= 0:
@@ -416,14 +417,18 @@ def estimate_fractal_dimension(
             n_boxes, size, n_boxes, size
         )
         occupied = reshaped.any(axis=(1, 3))
-        counts.append(occupied.sum())
+        counts.append(float(occupied.sum()))
+        used_sizes.append(int(size))
+
+    if not counts:
+        return 0.0
 
     counts_arr = np.array(counts, dtype=float)
     valid = counts_arr > 0
     if valid.sum() < 2:
         return 0.0
 
-    sizes = sizes[valid]
+    sizes = np.array(used_sizes, dtype=int)[valid]
     counts_arr = counts_arr[valid]
 
     inv_eps = 1.0 / sizes.astype(float)
