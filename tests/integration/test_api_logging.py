@@ -12,6 +12,8 @@ Reference: docs/MFN_BACKLOG.md#MFN-LOG-001
 
 from __future__ import annotations
 
+import importlib
+import io
 import json
 import logging
 import os
@@ -209,6 +211,59 @@ class TestJSONFormatter:
 
         # Clean up
         set_request_id(None)  # type: ignore
+
+
+class TestRequestLoggingMiddleware:
+    """Integration tests for RequestLoggingMiddleware behavior."""
+
+    def test_auth_failures_are_logged(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Unauthorized requests should still be captured by the logger."""
+        with mock.patch.dict(
+            os.environ,
+            {
+                "MFN_ENV": "dev",
+                "MFN_API_KEY_REQUIRED": "true",
+                "MFN_API_KEY": "secret",
+                "MFN_RATE_LIMIT_ENABLED": "false",
+                "MFN_LOG_LEVEL": "INFO",
+                "MFN_LOG_FORMAT": "text",
+            },
+            clear=False,
+        ):
+            reset_config()
+            import api as api_module
+
+            api_reloaded = importlib.reload(api_module)
+            client = TestClient(api_reloaded.app)
+
+            log_buffer = io.StringIO()
+            handler = logging.StreamHandler(log_buffer)
+            logger = logging.getLogger("mfn.api")
+            logger.addHandler(handler)
+
+            try:
+                response = client.post(
+                    "/nernst",
+                    json={
+                        "z_valence": 1,
+                        "concentration_out_molar": 0.1,
+                        "concentration_in_molar": 0.05,
+                        "temperature_k": 310.0,
+                    },
+                )
+
+                assert response.status_code == 401
+
+                handler.flush()
+                assert "Request completed: POST /nernst -> 401" in log_buffer.getvalue()
+            finally:
+                logger.removeHandler(handler)
+
+        # Restore default configuration and app state for downstream tests
+        reset_config()
+        import api as api_module
+
+        importlib.reload(api_module)
 
     def test_json_formatter_handles_exception(self) -> None:
         """JSON formatter should include exception info."""
