@@ -128,7 +128,8 @@ async def stream_simulation_live_adapter(
     """
     # Override context seed if provided
     if params.seed != ctx.seed:
-        ctx = ServiceContext(seed=params.seed, mode=ctx.mode)
+        # Preserve the existing context metadata/configuration while swapping the seed.
+        ctx = ctx.with_seed(params.seed)
 
     # Initialize engine with proper config
     config = ReactionDiffusionConfig(
