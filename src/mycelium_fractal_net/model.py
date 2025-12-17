@@ -234,7 +234,10 @@ def compute_lyapunov_exponent(
 
     for t in range(1, T):
         diff = np.abs(field_history[t] - field_history[t - 1])
-        norm_diff = float(np.sqrt(np.sum(diff**2)))
+        # Use RMS difference to make the exponent invariant to grid size.
+        # Without normalization, identical dynamics on larger grids would
+        # artificially inflate the norm by sqrt(N²), skewing the exponent.
+        norm_diff = float(np.sqrt(np.mean(diff**2)))
         # When successive states are identical, the divergence contribution
         # should be zero (log(1) = 0) rather than an exaggerated negative value
         # from log(eps). Treat near-zero differences as neutral to keep stable
