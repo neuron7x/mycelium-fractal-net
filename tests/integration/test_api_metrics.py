@@ -48,6 +48,25 @@ def metrics_client():
         yield TestClient(app)
 
 
+@pytest.fixture
+def metrics_disabled_client():
+    """Create test client with metrics explicitly disabled."""
+    with mock.patch.dict(
+        os.environ,
+        {
+            "MFN_ENV": "dev",
+            "MFN_API_KEY_REQUIRED": "false",
+            "MFN_RATE_LIMIT_ENABLED": "false",
+            "MFN_METRICS_ENABLED": "false",
+        },
+        clear=False,
+    ):
+        reset_config()
+        from api import app
+
+        yield TestClient(app)
+
+
 class TestMetricsEndpoint:
     """Tests for /metrics endpoint."""
 
@@ -55,6 +74,13 @@ class TestMetricsEndpoint:
         """Metrics endpoint should return 200."""
         response = metrics_client.get("/metrics")
         assert response.status_code == 200
+
+    def test_metrics_endpoint_returns_404_when_disabled(
+        self, metrics_disabled_client: TestClient
+    ) -> None:
+        """Metrics endpoint should not expose data when disabled."""
+        response = metrics_disabled_client.get("/metrics")
+        assert response.status_code == 404
 
     def test_metrics_content_type(self, metrics_client: TestClient) -> None:
         """Metrics endpoint should return text/plain content type."""

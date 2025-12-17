@@ -245,6 +245,11 @@ async def metrics_endpoint(request: Request) -> Response:
     Returns:
         Response: Prometheus metrics in text format.
     """
+    config = get_api_config().metrics
+    if not config.enabled:
+        # Return 404 to avoid leaking information when metrics are disabled
+        return Response(status_code=404)
+
     metrics_output = generate_latest()
 
     return Response(
