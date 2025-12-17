@@ -163,20 +163,13 @@ if _cors_origins:
     )
 
 # Add production middleware (order matters: last added = first executed)
-# 1. Request logging (outermost - logs all requests)
-app.add_middleware(RequestLoggingMiddleware)
-
-# 2. Request ID generation (needed for logging context)
-app.add_middleware(RequestIDMiddleware)
-
-# 3. Metrics collection
-app.add_middleware(MetricsMiddleware)
-
-# 4. Rate limiting
-app.add_middleware(RateLimitMiddleware)
-
-# 5. Authentication (innermost - first check)
+# Desired execution order: RequestID → RequestLogging → Metrics → RateLimit → APIKey
+# Add in reverse so Starlette wraps them correctly.
 app.add_middleware(APIKeyMiddleware)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(MetricsMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(RequestIDMiddleware)
 
 # Initialize WebSocket connection manager
 ws_manager = WSConnectionManager(
