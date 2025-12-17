@@ -234,6 +234,23 @@ class TestTemporalFeatures:
 
         assert T_stable == 0
 
+    def test_history_exactly_at_stability_window(self) -> None:
+        """When history length equals the stability window, report full duration if unstable."""
+
+        window = 4
+        # Four frames → three diffs; with jitter this should not meet the threshold window
+        rng = np.random.default_rng(7)
+        base = rng.normal(-0.070, 0.001, size=(8, 8))
+        history = np.stack(
+            [base + rng.normal(0, 0.0005, size=(8, 8)) * i for i in range(window)]
+        )
+
+        config = FeatureConfig(stability_window=window, stability_threshold_mv=0.0001)
+
+        _, _, T_stable, _ = compute_temporal_features(history, config)
+
+        assert T_stable == window
+
 
 class TestStructuralFeatures:
     """Test structural feature computation."""
