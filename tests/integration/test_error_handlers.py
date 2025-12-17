@@ -61,8 +61,14 @@ def test_create_error_response_includes_core_fields():
 
 
 def test_register_error_handlers_registers_expected_handlers(app_with_handlers: FastAPI):
-    assert app_with_handlers.exception_handlers[RequestValidationError] is validation_exception_handler
-    assert app_with_handlers.exception_handlers[ValidationError] is pydantic_validation_exception_handler
+    assert (
+        app_with_handlers.exception_handlers[RequestValidationError]
+        is validation_exception_handler
+    )
+    assert (
+        app_with_handlers.exception_handlers[ValidationError]
+        is pydantic_validation_exception_handler
+    )
     assert app_with_handlers.exception_handlers[ValueError] is value_error_handler
     assert app_with_handlers.exception_handlers[Exception] is internal_error_handler
 
@@ -100,7 +106,9 @@ def test_error_handlers_apply_standard_error_schema(
 
 def test_validation_exception_handler_includes_details(app_with_handlers: FastAPI):
     client = TestClient(app_with_handlers, raise_server_exceptions=False)
-    response = client.post("/items", json={"value": "not-an-int"}, headers={"X-Request-ID": "req-1"})
+    response = client.post(
+        "/items", json={"value": "not-an-int"}, headers={"X-Request-ID": "req-1"}
+    )
 
     payload = response.json()
     assert response.status_code == 422
