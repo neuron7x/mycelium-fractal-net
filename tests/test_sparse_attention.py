@@ -46,6 +46,11 @@ class TestSparseAttentionParameterValidation:
         with pytest.raises(ValueError, match="num_heads"):
             SparseAttention(embed_dim=32, num_heads=0)
 
+    def test_sparse_attention_requires_divisible_embed_dim(self) -> None:
+        """Embed dimension must be divisible by number of heads."""
+        with pytest.raises(ValueError, match="divisible"):
+            SparseAttention(embed_dim=10, num_heads=3)
+
 
 class TestSparseAttentionMathematicalProperties:
     """Tests for sparse attention mathematical model correctness."""
@@ -97,6 +102,37 @@ class TestSparseAttentionMathematicalProperties:
 
         # Verify topk indices shape
         assert topk_indices.shape == (1, 8, 2)
+
+    def test_sparse_attention_multihead_scaling(self) -> None:
+        """Multi-head attention should scale by per-head dimensionality."""
+        torch.manual_seed(0)
+        attn = SparseAttention(embed_dim=4, num_heads=2, topk=2)
+
+        # Identity projections to make manual computation straightforward
+        for proj in (attn.q_proj, attn.k_proj, attn.v_proj, attn.out_proj):
+            proj.weight.data = torch.eye(4)
+            proj.bias.data.zero_()
+
+        x = torch.tensor(
+            [[[1.0, 0.0, -1.0, 2.0], [0.5, 0.5, 0.5, 0.5], [0.0, -1.0, 1.0, 0.0]]]
+        )
+
+        # Manual multi-head sparse attention computation
+        head_dim = 2
+        q = x.view(1, 3, 2, head_dim).transpose(1, 2).reshape(2, 3, head_dim)
+        k = q.clone()
+        v = q.clone()
+        scores = torch.bmm(q, k.transpose(1, 2)) / math.sqrt(head_dim)
+        topk_values, topk_indices = scores.topk(2, dim=-1)
+        sparse_scores = torch.full_like(scores, float("-inf"))
+        sparse_scores.scatter_(-1, topk_indices, topk_values)
+        attn_weights = torch.softmax(sparse_scores, dim=-1)
+        attn_weights = torch.nan_to_num(attn_weights, nan=0.0)
+        out = torch.bmm(attn_weights, v)
+        manual = out.view(1, 2, 3, head_dim).transpose(1, 2).reshape(1, 3, 4)
+
+        result = attn(x)
+        assert torch.allclose(result, manual)
 
     def test_sparse_attention_handles_short_sequence(self) -> None:
         """Test sparse attention handles sequences shorter than topk.

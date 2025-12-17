@@ -661,10 +661,15 @@ class SparseAttention(nn.Module):
             raise ValueError(f"topk={topk} must be >= {self.TOPK_MIN}")
         if num_heads < 1:
             raise ValueError(f"num_heads={num_heads} must be >= 1")
+        if embed_dim % num_heads != 0:
+            raise ValueError(
+                "embed_dim must be divisible by num_heads for multi-head attention."
+            )
 
         self.embed_dim = embed_dim
         self.num_heads = num_heads
         self.topk = topk
+        self.head_dim = embed_dim // num_heads
 
         self.q_proj = nn.Linear(embed_dim, embed_dim)
         self.k_proj = nn.Linear(embed_dim, embed_dim)
@@ -691,9 +696,21 @@ class SparseAttention(nn.Module):
         k = self.k_proj(x)
         v = self.v_proj(x)
 
-        # Compute attention scores
-        scale = math.sqrt(self.embed_dim)
-        scores = torch.bmm(q, k.transpose(1, 2)) / scale
+        # Reshape for multi-head attention: (batch * heads, seq_len, head_dim)
+        def split_heads(tensor: torch.Tensor) -> torch.Tensor:
+            return (
+                tensor.view(batch_size, seq_len, self.num_heads, self.head_dim)
+                .transpose(1, 2)
+                .reshape(batch_size * self.num_heads, seq_len, self.head_dim)
+            )
+
+        q_flat = split_heads(q)
+        k_flat = split_heads(k)
+        v_flat = split_heads(v)
+
+        # Compute attention scores per head
+        scale = math.sqrt(self.head_dim)
+        scores = torch.bmm(q_flat, k_flat.transpose(1, 2)) / scale
 
         # Sparse top-k selection
         topk_val = min(self.topk, seq_len)
@@ -708,9 +725,13 @@ class SparseAttention(nn.Module):
         attn_weights = torch.nan_to_num(attn_weights, nan=0.0)
 
         # Apply attention
-        out = torch.bmm(attn_weights, v)
-        result: torch.Tensor = self.out_proj(out)
-        return result
+        out_flat = torch.bmm(attn_weights, v_flat)
+        out = (
+            out_flat.view(batch_size, self.num_heads, seq_len, self.head_dim)
+            .transpose(1, 2)
+            .reshape(batch_size, seq_len, self.embed_dim)
+        )
+        return self.out_proj(out)
 
 
 class HierarchicalKrumAggregator:
