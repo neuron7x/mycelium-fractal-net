@@ -246,6 +246,21 @@ class TestCoreKrumParityWithModel:
 
         assert result.shape == (3,)
 
+    def test_core_krum_rejects_insufficient_neighbors(self) -> None:
+        """Core Krum should enforce the n > 2f + 2 requirement like the model."""
+
+        agg = CoreHierarchicalKrumAggregator(num_clusters=1)
+
+        # n=2, f=0 violates requirement (2 <= 2*0 + 2)
+        grads_two = [torch.randn(5) for _ in range(2)]
+        with pytest.raises(ValueError, match="2f \+ 2"):
+            agg.krum_select(grads_two, num_byzantine=0)
+
+        # n=3, f=1 also violates requirement (3 <= 2*1 + 2)
+        grads_three = [torch.randn(5) for _ in range(3)]
+        with pytest.raises(ValueError, match="2f \+ 2"):
+            agg.krum_select(grads_three, num_byzantine=1)
+
 
 class TestKrumNumericalStability:
     """Tests for numerical stability of Krum aggregation."""

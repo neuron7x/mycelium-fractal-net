@@ -168,6 +168,16 @@ class HierarchicalKrumAggregator:
         if n == 1:
             return gradients[0]
 
+        # Krum requires at least n > 2f + 2 points to compute scores using
+        # (n - f - 2) neighbors. Without this, the neighbor set is empty and
+        # the algorithm loses its Byzantine robustness guarantee. The model
+        # layer enforces this; the core implementation should mirror that
+        # contract instead of silently proceeding with an invalid configuration.
+        if n <= 2 * num_byzantine + 2:
+            raise ValueError(
+                "Insufficient gradients for Krum: need more than 2f + 2 points"
+            )
+
         flat_grads = torch.stack([g.flatten() for g in gradients])
         distances = torch.cdist(flat_grads.unsqueeze(0), flat_grads.unsqueeze(0))[0]
 
@@ -228,7 +238,15 @@ class HierarchicalKrumAggregator:
             cluster_grads = [g for g, m in zip(client_gradients, cluster_mask) if m]
             if len(cluster_grads) > 0:
                 cluster_byzantine = self._estimate_byzantine_count(len(cluster_grads))
-                selected = self.krum_select(cluster_grads, cluster_byzantine)
+                if len(cluster_grads) == 1:
+                    # Single client in cluster: no neighbors to compare
+                    selected = cluster_grads[0].clone()
+                elif len(cluster_grads) <= 2 * cluster_byzantine + 2:
+                    # Not enough gradients to satisfy Krum neighbor requirement;
+                    # fall back to simple mean to retain stability.
+                    selected = torch.stack(cluster_grads).mean(dim=0)
+                else:
+                    selected = self.krum_select(cluster_grads, cluster_byzantine)
                 cluster_gradients.append(selected)
 
         if len(cluster_gradients) == 0:
@@ -236,7 +254,10 @@ class HierarchicalKrumAggregator:
 
         # Level 2: Global aggregation using Krum + median
         global_byzantine = self._estimate_byzantine_count(len(cluster_gradients))
-        krum_result = self.krum_select(cluster_gradients, global_byzantine)
+        if len(cluster_gradients) <= 2 * global_byzantine + 2:
+            krum_result = torch.stack(cluster_gradients).mean(dim=0)
+        else:
+            krum_result = self.krum_select(cluster_gradients, global_byzantine)
 
         stacked = torch.stack(cluster_gradients)
         median_result = torch.median(stacked, dim=0).values
