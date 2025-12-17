@@ -57,18 +57,18 @@ class SimulationConfig:
 
     def __post_init__(self) -> None:
         """Validate configuration parameters."""
-        if self.grid_size < 2:
-            raise ValueError("grid_size must be at least 2")
-        if self.steps < 1:
-            raise ValueError("steps must be at least 1")
+        if not (4 <= self.grid_size <= 512):
+            raise ValueError("grid_size must be between 4 and 512")
+        if not (1 <= self.steps <= 10000):
+            raise ValueError("steps must be between 1 and 10000")
         if not (0.0 < self.alpha <= 0.25):
             raise ValueError("alpha must be in (0, 0.25] for CFL stability")
         if not (0.0 <= self.spike_probability <= 1.0):
             raise ValueError("spike_probability must be in [0, 1]")
         if not (0.0 <= self.turing_threshold <= 1.0):
             raise ValueError("turing_threshold must be in [0, 1]")
-        if self.jitter_var < 0.0:
-            raise ValueError("jitter_var must be non-negative")
+        if not (0.0 <= self.jitter_var <= 0.01):
+            raise ValueError("jitter_var must be between 0.0 and 0.01")
 
     def to_dict(self) -> dict[str, Any]:
         """
