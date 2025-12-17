@@ -1,8 +1,8 @@
 """
 Fractal Feature Extraction for SimulationResult.
 
-Provides integration between the core simulation results and fractal analytics.
-Implements the API specified in MFN_FEATURE_SCHEMA.md.
+Provides integration between the core simulation results and fractal analytics
+while implementing the API specified in ``MFN_FEATURE_SCHEMA.md``.
 
 Usage:
     >>> from mycelium_fractal_net import run_mycelium_simulation, SimulationConfig
@@ -182,6 +182,7 @@ def compute_box_counting_dimension(
     ------
     ValueError
         If field is not 2D or not square.
+        If field contains NaN or infinite values.
 
     Notes
     -----
@@ -194,6 +195,9 @@ def compute_box_counting_dimension(
     >>> D = compute_box_counting_dimension(field)
     >>> print(f"Fractal dimension: {D:.3f}")
     """
+    if not np.isfinite(field).all():
+        raise ValueError("field contains NaN or Inf values")
+
     if field.ndim != 2:
         raise ValueError(f"field must be 2D, got {field.ndim}D")
     if field.shape[0] != field.shape[1]:
