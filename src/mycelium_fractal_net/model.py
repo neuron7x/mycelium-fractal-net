@@ -235,8 +235,14 @@ def compute_lyapunov_exponent(
     for t in range(1, T):
         diff = np.abs(field_history[t] - field_history[t - 1])
         norm_diff = float(np.sqrt(np.sum(diff**2)))
-        safe_norm = max(norm_diff, eps)
-        log_divergence += math.log(safe_norm)
+        # When successive states are identical, the divergence contribution
+        # should be zero (log(1) = 0) rather than an exaggerated negative value
+        # from log(eps). Treat near-zero differences as neutral to keep stable
+        # trajectories at a Lyapunov exponent of ~0.
+        if norm_diff <= eps:
+            continue
+
+        log_divergence += math.log(norm_diff)
 
     # Normalize by total simulated time to avoid inflating estimates
     total_time = steps * dt
