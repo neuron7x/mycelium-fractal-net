@@ -300,3 +300,40 @@ jobs:
             exit 1
           fi
           echo "✓ No excluded runtime packages in wheel"
+
+  sbom:
+    name: SBOM & Supply Chain
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-sbom-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-sbom-
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install "cyclonedx-bom>=4.1.2"
+      - name: Generate CycloneDX SBOM (JSON/XML)
+        run: |
+          cyclonedx-bom -F json -o sbom.json
+          cyclonedx-bom -F xml -o sbom.xml
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: |
+            sbom.json
+            sbom.xml

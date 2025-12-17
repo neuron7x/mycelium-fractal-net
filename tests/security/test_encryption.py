@@ -6,6 +6,8 @@ Verifies that sensitive data can be securely encrypted and decrypted.
 
 from __future__ import annotations
 
+import secrets
+
 import pytest
 
 from mycelium_fractal_net.security.encryption import (
@@ -104,7 +106,7 @@ class TestEncryptDecrypt:
 
         ciphertext = encrypt_data(plaintext, key1)
 
-        with pytest.raises(EncryptionError, match="HMAC verification failed"):
+        with pytest.raises(EncryptionError, match="Authentication failed"):
             decrypt_data(ciphertext, key2)
 
     def test_decrypt_tampered_data_fails(self) -> None:
@@ -118,6 +120,16 @@ class TestEncryptDecrypt:
 
         with pytest.raises(EncryptionError):
             decrypt_data(tampered, key)
+
+    def test_rejects_wrong_key_length(self) -> None:
+        """Encryption should require 256-bit keys to avoid weak configs."""
+        key = secrets.token_bytes(16)
+        with pytest.raises(EncryptionError, match="key length"):
+            encrypt_data("data", key)
+
+        ciphertext = encrypt_data("ok", generate_key())
+        with pytest.raises(EncryptionError, match="key length"):
+            decrypt_data(ciphertext, key)
 
     def test_decrypt_invalid_base64_fails(self) -> None:
         """Decryption of invalid base64 should fail."""
