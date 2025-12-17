@@ -8,7 +8,12 @@ from mycelium_fractal_net.integration.api_config import APIConfig, reset_config
 
 
 def _clear_env_vars() -> None:
-    for var in ["MFN_ENV", "MFN_METRICS_ENABLED", "MFN_METRICS_INCLUDE_IN_AUTH"]:
+    for var in [
+        "MFN_ENV",
+        "MFN_METRICS_ENABLED",
+        "MFN_METRICS_INCLUDE_IN_AUTH",
+        "MFN_METRICS_ENDPOINT",
+    ]:
         os.environ.pop(var, None)
 
 
@@ -34,6 +39,20 @@ def test_metrics_can_be_protected(monkeypatch) -> None:
     config = APIConfig.from_env()
 
     assert config.metrics.include_in_auth is True
+    assert "/metrics" not in config.auth.public_endpoints
+
+
+def test_metrics_endpoint_can_be_customized(monkeypatch) -> None:
+    """Custom metrics paths should propagate into public endpoints."""
+
+    _clear_env_vars()
+    monkeypatch.setenv("MFN_METRICS_ENDPOINT", "/custom-metrics")
+    reset_config()
+
+    config = APIConfig.from_env()
+
+    assert config.metrics.endpoint == "/custom-metrics"
+    assert "/custom-metrics" in config.auth.public_endpoints
     assert "/metrics" not in config.auth.public_endpoints
 
 
