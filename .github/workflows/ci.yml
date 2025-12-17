@@ -326,10 +326,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
           pip install "cyclonedx-bom>=4.1.2"
+          python -m cyclonedx_py --version
       - name: Generate CycloneDX SBOM (JSON/XML)
         run: |
-          cyclonedx-bom -F json -o sbom.json
-          cyclonedx-bom -F xml -o sbom.xml
+          if command -v cyclonedx-bom >/dev/null 2>&1; then
+            cyclonedx-bom -F json -o sbom.json
+            cyclonedx-bom -F xml -o sbom.xml
+          else
+            python -m cyclonedx_py -F json -o sbom.json
+            python -m cyclonedx_py -F xml -o sbom.xml
+          fi
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
         with:
