@@ -326,6 +326,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e .
           python -m pip install "cyclonedx-bom>=4.1.2"
+      - name: Ensure CycloneDX CLI on PATH
+        run: echo "$(python - <<'PY'
+import site
+print(site.getuserbase() + '/bin')
+PY
+)" >> "$GITHUB_PATH"
       - name: Verify CycloneDX CLI availability
         run: cyclonedx-bom --version
       - name: Generate CycloneDX SBOM (JSON/XML)
