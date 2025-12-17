@@ -301,8 +301,16 @@ def list_presets() -> list[str]:
 # =============================================================================
 
 
-def _generate_param_configs(config: ScenarioConfig) -> list[dict[str, Any]]:
-    """Generate all parameter combinations for the scenario."""
+def _generate_param_configs(
+    config: ScenarioConfig, rng: np.random.Generator | None = None
+) -> list[dict[str, Any]]:
+    """Generate all parameter combinations for the scenario.
+
+    If a random generator is provided, the resulting configurations are
+    shuffled to avoid deterministic ordering while keeping per-simulation
+    seeds stable. This makes dataset generation reproducible when a seeded
+    generator is supplied via ``run_scenario``.
+    """
     configs: list[dict[str, Any]] = []
     sim_id = 0
 
@@ -327,6 +335,11 @@ def _generate_param_configs(config: ScenarioConfig) -> list[dict[str, Any]]:
                 sim_id += 1
             if len(configs) >= config.num_samples:
                 break
+
+    # Shuffle deterministically when an RNG is provided without mutating seeds
+    if rng is not None and len(configs) > 1:
+        order = rng.permutation(len(configs))
+        configs = [configs[i] for i in order]
 
     return configs
 
@@ -431,8 +444,8 @@ def run_scenario(
     output_filename = f"dataset.{config.output_format}"
     output_path = output_dir / output_filename
 
-    # Generate parameter configurations
-    param_configs = _generate_param_configs(config)
+    # Generate parameter configurations (optionally shuffled with provided RNG)
+    param_configs = _generate_param_configs(config, rng=rng)
     n_configs = len(param_configs)
 
     logger.info(f"Starting scenario '{config.name}' with {n_configs} configurations")
