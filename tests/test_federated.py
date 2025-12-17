@@ -113,6 +113,20 @@ class TestKrumAlgorithmCorrectness:
 
         assert result.shape == (10,)
 
+    def test_krum_requires_sufficient_neighbors(self) -> None:
+        """Krum should reject configurations that violate n > 2f + 2."""
+        agg = HierarchicalKrumAggregator()
+
+        # n=2, f=0 violates requirement (2 <= 2*0 + 2)
+        grads_two = [torch.randn(5) for _ in range(2)]
+        with pytest.raises(ValueError, match="2f \+ 2"):
+            agg.krum_select(grads_two, num_byzantine=0)
+
+        # n=3, f=1 violates requirement (3 <= 2*1 + 2)
+        grads_three = [torch.randn(5) for _ in range(3)]
+        with pytest.raises(ValueError, match="2f \+ 2"):
+            agg.krum_select(grads_three, num_byzantine=1)
+
 
 class TestKrumByzantineRobustness:
     """Tests for Byzantine fault tolerance guarantees."""
@@ -187,6 +201,17 @@ class TestKrumByzantineRobustness:
         result = agg.aggregate(grads, rng=rng)
 
         assert result.shape == (3,)
+
+    def test_aggregate_fallback_when_krum_not_applicable(self) -> None:
+        """Aggregation should fall back when n <= 2f + 2."""
+
+        agg = HierarchicalKrumAggregator(num_clusters=1, byzantine_fraction=0.0)
+        grads = [torch.randn(6) for _ in range(2)]
+
+        result = agg.aggregate(grads, rng=np.random.default_rng(0))
+
+        expected = torch.stack(grads).mean(dim=0)
+        assert torch.allclose(result, expected)
 
 
 class TestCoreKrumParityWithModel:
