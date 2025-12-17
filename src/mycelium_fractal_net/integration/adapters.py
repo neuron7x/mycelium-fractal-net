@@ -112,8 +112,11 @@ def run_simulation_adapter(
         ValueError: If simulation parameters are invalid.
         RuntimeError: If simulation fails.
     """
-    # Use seed from request
-    rng = np.random.default_rng(request.seed)
+    # Use request seed when provided; otherwise fall back to service context RNG
+    if request.seed is None:
+        rng = ctx.rng
+    else:
+        rng = np.random.default_rng(request.seed)
 
     # Run simulation using core function
     field, growth_events = simulate_mycelium_field(

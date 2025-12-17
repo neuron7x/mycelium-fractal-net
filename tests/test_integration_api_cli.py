@@ -10,6 +10,9 @@ Reference: docs/ARCHITECTURE.md
 
 from __future__ import annotations
 
+from typing import Any
+
+import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
@@ -203,6 +206,21 @@ class TestAdapters:
         assert response.pot_min_mV >= -95.0
         assert response.pot_max_mV <= 40.0
         assert 0.0 <= response.fractal_dimension <= 2.0
+
+    def test_simulation_adapter_uses_context_rng_when_seed_missing(self, monkeypatch: Any) -> None:
+        """Seedless requests should fall back to the service context RNG."""
+        ctx = ServiceContext(seed=123, mode=ExecutionMode.API)
+        request = SimulateRequest(seed=None, grid_size=16, steps=8)
+
+        # Ensure numpy.default_rng is not called when seed is None
+        def _raise_if_called(*args: Any, **kwargs: Any) -> None:
+            raise AssertionError("default_rng should not be called when seed is None")
+
+        monkeypatch.setattr(np.random, "default_rng", _raise_if_called)
+
+        response = run_simulation_adapter(request, ctx)
+
+        assert response.growth_events >= 0
 
     def test_nernst_adapter(self) -> None:
         """Test Nernst adapter converts correctly."""

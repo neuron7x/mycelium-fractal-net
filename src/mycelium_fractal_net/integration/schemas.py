@@ -95,7 +95,7 @@ class SimulateRequest(BaseModel):
     Request parameters for mycelium field simulation.
 
     Attributes:
-        seed: Random seed for reproducibility. Range: [0, ∞). Default: 42.
+        seed: Random seed for reproducibility. Range: [0, ∞). Default: None (use context).
         grid_size: Size of simulation grid (NxN). Range: [8, 256]. Default: 64.
         steps: Number of simulation steps. Range: [1, 1000]. Default: 64.
         alpha: Diffusion coefficient (CFL stability requires <= 0.25).
@@ -105,7 +105,7 @@ class SimulateRequest(BaseModel):
         turing_enabled: Enable Turing morphogenesis. Default: True.
     """
 
-    seed: int = Field(default=42, ge=0)
+    seed: int | None = Field(default=None, ge=0)
     grid_size: int = Field(default=64, ge=8, le=256)
     steps: int = Field(default=64, ge=1, le=1000)
     alpha: float = Field(default=0.18, ge=0.0, le=1.0)
