@@ -104,7 +104,19 @@ class MyceliumField:
             New random seed. None keeps current seed behavior.
         """
         if seed is not None:
+            # Update configuration seed so downstream consumers see the new value
+            # and reinitialize RNG for deterministic resets.
+            self._config.seed = seed
             self._rng = np.random.default_rng(seed)
+        elif self._config.seed is not None:
+            # Recreate RNG from the existing configuration seed to return to the
+            # initial deterministic state rather than continuing from the
+            # previous generator's advanced state.
+            self._rng = np.random.default_rng(self._config.seed)
+        else:
+            # No seed configured; start with a fresh generator to avoid sharing
+            # the advanced state across resets.
+            self._rng = np.random.default_rng()
         self._step_count = 0
         self._field = np.full(
             (self._config.grid_size, self._config.grid_size),
