@@ -69,3 +69,13 @@ def test_lyapunov_exponent_short_history() -> None:
     lyapunov = compute_lyapunov_exponent(history)
 
     assert lyapunov == 0.0
+
+
+def test_lyapunov_zero_divergence_is_zero() -> None:
+    """Stable trajectories with no change should have zero Lyapunov exponent."""
+    # Constant field over time
+    history = np.zeros((5, 4, 4))
+
+    lyapunov = compute_lyapunov_exponent(history)
+
+    assert lyapunov == 0.0
