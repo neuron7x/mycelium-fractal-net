@@ -142,8 +142,19 @@ class RateLimiter:
                     continue
 
                 limit = self._get_limit_for_endpoint(endpoint)
+                window_seconds = self.config.window_seconds
+
+                # Mirror the defensive behavior of check_rate_limit to avoid
+                # division-by-zero crashes when configuration is mis-set at
+                # runtime (e.g., MFN_RATE_LIMIT_WINDOW=0).
+                if limit <= 0 or window_seconds <= 0:
+                    bucket.max_tokens = max(0, int(limit))
+                    bucket.refill_rate = 0.0
+                    bucket.tokens = bucket.max_tokens
+                    continue
+
                 bucket.max_tokens = limit
-                bucket.refill_rate = limit / self.config.window_seconds
+                bucket.refill_rate = limit / window_seconds
                 bucket.tokens = min(bucket.tokens, bucket.max_tokens)
 
     def _get_client_key(self, request: Request) -> str:

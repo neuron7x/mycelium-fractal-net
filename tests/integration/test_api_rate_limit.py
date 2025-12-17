@@ -227,6 +227,32 @@ class TestRateLimiter:
         assert retry_after is None
         assert remaining >= 0
 
+    def test_update_config_handles_zero_window(self) -> None:
+        """Updating config with an invalid window shouldn't crash."""
+        from mycelium_fractal_net.integration.api_config import RateLimitConfig
+        from mycelium_fractal_net.integration.rate_limiter import RateLimiter
+
+        initial_config = RateLimitConfig(max_requests=3, window_seconds=30, enabled=True)
+        limiter = RateLimiter(initial_config)
+
+        class MockRequest:
+            def __init__(self) -> None:
+                self.url = type("obj", (object,), {"path": "/test"})()
+                self.headers = {}
+                self.client = type("obj", (object,), {"host": "127.0.0.1"})()
+
+        request = MockRequest()
+        allowed, _, _, _ = limiter.check_rate_limit(request)
+        assert allowed is True
+
+        new_config = RateLimitConfig(max_requests=2, window_seconds=0, enabled=True)
+        limiter.update_config(new_config)
+
+        allowed_after, limit, remaining, retry_after = limiter.check_rate_limit(request)
+        assert allowed_after is True
+        assert limit == 2
+        assert retry_after is None
+
     def test_rate_limiter_cleanup(self) -> None:
         """Rate limiter can clean up old entries."""
         from mycelium_fractal_net.integration.api_config import RateLimitConfig
