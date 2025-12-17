@@ -201,8 +201,25 @@ class TestBoxCounting:
         
         binary = np.random.default_rng(42).random((64, 64)) > 0.5
         engine.estimate_dimension(binary)
-        
+
         assert 0 <= engine.metrics.dimension_r_squared <= 1
+
+    def test_dimension_r_squared_resets_when_insufficient_data(self) -> None:
+        """R² metric should reset when regression cannot run."""
+        config = FractalConfig()
+        engine = FractalGrowthEngine(config)
+
+        # First compute a valid regression to set R²
+        binary = np.random.default_rng(123).random((64, 64)) > 0.5
+        engine.estimate_dimension(binary)
+        assert engine.metrics.dimension_r_squared > 0
+
+        # Then provide an empty field which produces no occupied boxes
+        empty = np.zeros((64, 64), dtype=bool)
+        dim = engine.estimate_dimension(empty)
+
+        assert dim == 0.0
+        assert engine.metrics.dimension_r_squared == 0.0
 
     def test_non_square_raises(self) -> None:
         """Non-square field should raise ValueError."""

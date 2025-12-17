@@ -550,6 +550,7 @@ class FractalGrowthEngine:
         # Need at least 2 points for regression
         if len(counts) < 2:
             self._metrics.fractal_dimension = 0.0
+            self._metrics.dimension_r_squared = 0.0
             return 0.0
 
         # Linear regression: ln(N) = D * ln(1/ε) + c
