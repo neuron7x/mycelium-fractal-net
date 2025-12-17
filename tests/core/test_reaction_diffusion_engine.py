@@ -340,13 +340,16 @@ class TestHistoryCollection:
     """Test field history collection."""
 
     def test_history_shape(self) -> None:
-        """History should have shape (steps, N, N)."""
+        """History should include t=0 and each step (steps + 1 frames)."""
         config = ReactionDiffusionConfig(grid_size=16, random_seed=42)
         engine = ReactionDiffusionEngine(config)
-        
+
         history, metrics = engine.simulate(steps=50, return_history=True)
-        
-        assert history.shape == (50, 16, 16)
+
+        # Includes the initial field at t=0 plus each simulated step
+        assert history.shape == (51, 16, 16)
+        assert history[0].shape == (16, 16)
+        assert np.isfinite(history[0]).all()
 
     def test_history_finite(self) -> None:
         """All history frames should be finite."""

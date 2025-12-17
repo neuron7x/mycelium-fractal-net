@@ -139,7 +139,7 @@ print(f"Turing activations: {metrics.turing_activations}")
 
 # Get field history for Lyapunov analysis
 history, metrics = engine.simulate(steps=100, return_history=True)
-print(f"History shape: {history.shape}")  # (100, 64, 64)
+print(f"History shape: {history.shape}")  # (101, 64, 64) — includes t=0
 ```
 
 ### CFL Stability

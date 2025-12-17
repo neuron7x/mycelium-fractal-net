@@ -462,6 +462,10 @@ class ReactionDiffusionEngine:
 
         history = []
 
+        if return_history:
+            # Capture the initial field so histories include the t=0 state.
+            history.append(self._field.copy())
+
         for step in range(steps):
             self._simulation_step(step, turing_enabled)
 
