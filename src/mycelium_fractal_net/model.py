@@ -179,6 +179,7 @@ def generate_fractal_ifs(
     points = np.zeros((num_points, 2))
     x, y = 0.0, 0.0
     log_jacobian_sum = 0.0
+    jacobian_count = 0
 
     for i in range(num_points):
         idx = rng.integers(0, num_transforms)
@@ -192,9 +193,16 @@ def generate_fractal_ifs(
         det = abs(a * d - b * c)
         if det > 1e-10:
             log_jacobian_sum += np.log(det)
+            jacobian_count += 1
 
     # Lyapunov exponent (average log contraction)
-    lyapunov = log_jacobian_sum / num_points
+    if jacobian_count == 0:
+        # If no valid Jacobians were recorded (e.g., degenerate transforms),
+        # return a neutral stability indicator instead of underestimating
+        # contraction by dividing by the total number of points.
+        return points, 0.0
+
+    lyapunov = log_jacobian_sum / jacobian_count
 
     return points, lyapunov
 
