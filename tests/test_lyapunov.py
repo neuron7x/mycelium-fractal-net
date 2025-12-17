@@ -79,3 +79,23 @@ def test_lyapunov_zero_divergence_is_zero() -> None:
     lyapunov = compute_lyapunov_exponent(history)
 
     assert lyapunov == 0.0
+
+
+def test_lyapunov_grid_size_invariant() -> None:
+    """Lyapunov exponent should not inflate solely from larger grids."""
+    base_history = np.stack(
+        [
+            np.zeros((2, 2)),
+            np.full((2, 2), 0.01),
+            np.full((2, 2), 0.02),
+        ]
+    )
+
+    # Tile the same dynamics to a larger grid; divergence per cell is identical.
+    tiled_history = np.tile(base_history, (1, 2, 2))
+
+    small_exponent = compute_lyapunov_exponent(base_history)
+    large_exponent = compute_lyapunov_exponent(tiled_history)
+
+    assert small_exponent != 0.0
+    assert np.isclose(small_exponent, large_exponent)
