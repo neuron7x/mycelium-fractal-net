@@ -18,16 +18,22 @@ import os
 from unittest import mock
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from mycelium_fractal_net.integration import (
     REQUEST_ID_HEADER,
+    RequestIDMiddleware,
     get_request_id,
     reset_config,
     set_request_id,
     setup_logging,
 )
-from mycelium_fractal_net.integration.logging_config import JSONFormatter, TextFormatter
+from mycelium_fractal_net.integration.logging_config import (
+    JSONFormatter,
+    TextFormatter,
+    get_request_context,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -83,6 +89,24 @@ class TestRequestID:
             "/health", headers={REQUEST_ID_HEADER: custom_id}
         )
         assert response.headers.get(REQUEST_ID_HEADER) == custom_id
+
+    def test_request_context_cleared_on_exception(self) -> None:
+        """Context variables should be cleared even when a request fails."""
+        app = FastAPI()
+        app.add_middleware(RequestIDMiddleware)
+
+        @app.get("/boom")
+        async def boom():  # pragma: no cover - exercised via client
+            raise RuntimeError("boom")
+
+        client = TestClient(app, raise_server_exceptions=False)
+
+        response = client.get("/boom")
+        assert response.status_code == 500
+
+        # Context vars should be reset after the failed request
+        assert get_request_id() is None
+        assert get_request_context() == {}
 
     def test_different_requests_get_different_ids(self, logging_client: TestClient) -> None:
         """Different requests should get different IDs."""
