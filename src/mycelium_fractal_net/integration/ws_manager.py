@@ -226,9 +226,16 @@ class WSConnectionManager:
 
         connection = self.connections[connection_id]
 
-        # Check timestamp (allow 5 minute window)
+        # Check timestamp (allow 5 minute window). Some clients send seconds
+        # instead of milliseconds despite the schema specification, so we
+        # normalize both formats to milliseconds to avoid rejecting otherwise
+        # valid authentication attempts.
+        ts_ms = float(timestamp)
+        if ts_ms < 1e12:  # Likely seconds-since-epoch
+            ts_ms *= 1000
+
         current_time = time.time() * 1000  # Convert to milliseconds
-        time_diff = abs(current_time - timestamp)
+        time_diff = abs(current_time - ts_ms)
         if time_diff > 5 * 60 * 1000:  # 5 minutes
             logger.warning(
                 "Authentication failed: timestamp out of range",
