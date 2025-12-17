@@ -221,24 +221,26 @@ def compute_lyapunov_exponent(
     float
         Estimated Lyapunov exponent.
     """
+    if dt <= 0:
+        raise ValueError("dt must be positive for Lyapunov exponent")
+
     if len(field_history) < 2:
         return 0.0
 
     T = len(field_history)
     log_divergence = 0.0
-    count = 0
+    steps = T - 1
+    eps = 1e-12
 
     for t in range(1, T):
         diff = np.abs(field_history[t] - field_history[t - 1])
-        norm_diff = np.sqrt(np.sum(diff**2))
-        if norm_diff > 1e-10:
-            log_divergence += np.log(norm_diff)
-            count += 1
+        norm_diff = float(np.sqrt(np.sum(diff**2)))
+        safe_norm = max(norm_diff, eps)
+        log_divergence += math.log(safe_norm)
 
-    if count == 0:
-        return 0.0
-
-    return log_divergence / (count * dt)
+    # Normalize by total simulated time to avoid inflating estimates
+    total_time = steps * dt
+    return log_divergence / total_time
 
 
 def simulate_mycelium_field(
