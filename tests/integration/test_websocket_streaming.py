@@ -561,3 +561,34 @@ class TestWebSocketConnectionManager:
             assert manager.authenticate(connection_id, 12345, timestamp) is True
             assert manager.connections[connection_id].authenticated is True
             assert manager.connections[connection_id].api_key_used is None
+
+    async def test_authenticate_with_invalid_timestamp(self):
+        """Authentication should fail cleanly when timestamp cannot be parsed."""
+        from mycelium_fractal_net.integration import (
+            WSConnectionManager,
+            WSConnectionState,
+        )
+
+        with mock.patch.dict(
+            os.environ,
+            {
+                "MFN_ENV": "staging",
+                "MFN_API_KEY_REQUIRED": "true",
+                "MFN_API_KEY": "test-ws-key-12345",
+            },
+            clear=False,
+        ):
+            manager = WSConnectionManager()
+            connection_id = "conn-invalid-timestamp"
+            manager.connections[connection_id] = WSConnectionState(
+                connection_id=connection_id,
+                websocket=mock.Mock(),
+            )
+
+            invalid_timestamp = "not-a-number"
+
+            assert (
+                manager.authenticate(connection_id, "test-ws-key-12345", invalid_timestamp)
+                is False
+            )
+            assert manager.connections[connection_id].authenticated is False

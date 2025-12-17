@@ -230,7 +230,18 @@ class WSConnectionManager:
         # instead of milliseconds despite the schema specification, so we
         # normalize both formats to milliseconds to avoid rejecting otherwise
         # valid authentication attempts.
-        ts_ms = float(timestamp)
+        try:
+            ts_ms = float(timestamp)
+        except (TypeError, ValueError):
+            logger.warning(
+                "Authentication failed: invalid timestamp format",
+                extra={
+                    "connection_id": connection_id,
+                    "timestamp": timestamp,
+                },
+            )
+            return False
+
         if ts_ms < 1e12:  # Likely seconds-since-epoch
             ts_ms *= 1000
 
