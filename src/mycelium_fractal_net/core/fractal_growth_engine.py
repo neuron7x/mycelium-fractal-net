@@ -508,8 +508,31 @@ class FractalGrowthEngine:
             )
 
         n = binary_field.shape[0]
-        min_box = min_box_size or self.config.min_box_size
-        scales = num_scales or self.config.num_scales
+
+        if min_box_size is None:
+            min_box = self.config.min_box_size
+        else:
+            min_box = int(min_box_size)
+            if min_box < MIN_BOX_SIZE_BOUND:
+                raise ValueOutOfRangeError(
+                    f"min_box_size must be >= {MIN_BOX_SIZE_BOUND}",
+                    value=float(min_box),
+                    min_bound=float(MIN_BOX_SIZE_BOUND),
+                    parameter_name="min_box_size",
+                )
+
+        if num_scales is None:
+            scales = self.config.num_scales
+        else:
+            scales = int(num_scales)
+            if not (NUM_SCALES_MIN <= scales <= NUM_SCALES_MAX):
+                raise ValueOutOfRangeError(
+                    f"num_scales must be in [{NUM_SCALES_MIN}, {NUM_SCALES_MAX}]",
+                    value=float(scales),
+                    min_bound=float(NUM_SCALES_MIN),
+                    max_bound=float(NUM_SCALES_MAX),
+                    parameter_name="num_scales",
+                )
 
         # Determine max box size
         if max_box_size is not None:

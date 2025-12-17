@@ -176,12 +176,32 @@ class TestBoxCounting:
         """Empty field should have dimension 0."""
         config = FractalConfig()
         engine = FractalGrowthEngine(config)
-        
+
         empty = np.zeros((64, 64), dtype=bool)
         dim = engine.estimate_dimension(empty)
-        
+
         # Empty field has no occupied boxes → dimension 0
         assert dim == 0.0
+
+    def test_invalid_min_box_override_raises(self) -> None:
+        """Overriding min_box_size below bound should raise ValueOutOfRangeError."""
+        config = FractalConfig()
+        engine = FractalGrowthEngine(config)
+
+        binary = np.ones((32, 32), dtype=bool)
+
+        with pytest.raises(ValueOutOfRangeError, match="min_box_size"):
+            engine.estimate_dimension(binary, min_box_size=0)
+
+    def test_invalid_num_scales_override_raises(self) -> None:
+        """Overriding num_scales outside bounds should raise ValueOutOfRangeError."""
+        config = FractalConfig()
+        engine = FractalGrowthEngine(config)
+
+        binary = np.ones((32, 32), dtype=bool)
+
+        with pytest.raises(ValueOutOfRangeError, match="num_scales"):
+            engine.estimate_dimension(binary, num_scales=2)
 
     def test_line_dimension(self) -> None:
         """Horizontal line should have dimension ~1."""
