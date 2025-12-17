@@ -31,17 +31,31 @@ from __future__ import annotations
 import base64
 import os
 import secrets
-from dataclasses import dataclass
-from typing import Optional, Union
+from dataclasses import dataclass, field
+from typing import Final, Optional, Union
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+MAX_PLAINTEXT_SIZE: Final[int] = 1_048_576  # 1 MiB safety guard
 
 
 class EncryptionError(Exception):
     """Raised when encryption or decryption fails."""
 
-    pass
+
+def _normalize_key(key: Union[bytes, bytearray]) -> bytes:
+    """Validate and normalize encryption keys.
+
+    Enforces byte-like input and 32-byte length to avoid silent misuse.
+    """
+
+    if not isinstance(key, (bytes, bytearray)):
+        raise EncryptionError("Invalid key type: expected bytes or bytearray")
+    key_bytes = bytes(key)
+    if len(key_bytes) != 32:
+        raise EncryptionError("Invalid key length: expected 32 bytes for AES-256-GCM")
+    return key_bytes
 
 
 def generate_key() -> bytes:
@@ -86,20 +100,18 @@ def encrypt_data(
         >>> isinstance(ciphertext, str)
         True
     """
-    # Enforce key size and payload limits before any crypto operations
-    if len(key) != 32:
-        raise EncryptionError("Invalid key length: expected 32 bytes for AES-256-GCM")
+    key_bytes = _normalize_key(key)
 
     try:
         # Convert string to bytes if needed
         if isinstance(data, str):
             data = data.encode(encoding)
 
-        if len(data) > 1_048_576:  # 1 MiB safety guard
+        if len(data) > MAX_PLAINTEXT_SIZE:
             raise EncryptionError("Plaintext too large; refused to encrypt")
 
         nonce = os.urandom(12)  # 96-bit nonce per RFC 5116
-        cipher = AESGCM(key)
+        cipher = AESGCM(key_bytes)
         ciphertext = cipher.encrypt(nonce, data, associated_data=None)
 
         result = nonce + ciphertext
@@ -119,7 +131,8 @@ def decrypt_data(
     """
     Decrypt data that was encrypted with encrypt_data.
 
-    Verifies HMAC before decryption to prevent tampering.
+    Authenticates the ciphertext via AES-GCM tags before returning
+    plaintext, failing closed on tampering or key mismatch.
 
     Args:
         ciphertext: Base64-encoded ciphertext.
@@ -138,8 +151,7 @@ def decrypt_data(
         >>> decrypt_data(ciphertext, key)
         'secret'
     """
-    if len(key) != 32:
-        raise EncryptionError("Invalid key length: expected 32 bytes for AES-256-GCM")
+    key_bytes = _normalize_key(key)
 
     try:
         # Decode base64
@@ -152,7 +164,7 @@ def decrypt_data(
         nonce = decoded[:12]
         encrypted = decoded[12:]
 
-        cipher = AESGCM(key)
+        cipher = AESGCM(key_bytes)
         plaintext_bytes = cipher.decrypt(nonce, encrypted, associated_data=None)
 
         return plaintext_bytes.decode(encoding)
@@ -183,7 +195,7 @@ class DataEncryptor:
         'secret'
     """
 
-    key: bytes
+    key: bytes = field(repr=False)
 
     def __init__(self, key: Optional[bytes] = None) -> None:
         """
@@ -192,7 +204,7 @@ class DataEncryptor:
         Args:
             key: Encryption key. If None, generates a new key.
         """
-        self.key = key if key is not None else generate_key()
+        self.key = _normalize_key(key) if key is not None else generate_key()
 
     def encrypt(self, data: Union[str, bytes]) -> str:
         """

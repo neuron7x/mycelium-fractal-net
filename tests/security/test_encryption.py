@@ -131,6 +131,25 @@ class TestEncryptDecrypt:
         with pytest.raises(EncryptionError, match="key length"):
             decrypt_data(ciphertext, key)
 
+    def test_rejects_non_bytes_key(self) -> None:
+        """Keys must be bytes-like to avoid accidental misuse of secrets."""
+
+        with pytest.raises(EncryptionError, match="key type"):
+            encrypt_data("data", "not-bytes")  # type: ignore[arg-type]
+
+        ciphertext = encrypt_data("ok", generate_key())
+        with pytest.raises(EncryptionError, match="key type"):
+            decrypt_data(ciphertext, "not-bytes")  # type: ignore[arg-type]
+
+    def test_rejects_oversized_payload(self) -> None:
+        """Encryption must fail closed for payloads exceeding configured guardrails."""
+
+        key = generate_key()
+        oversized = b"A" * (1_048_576 + 1)
+
+        with pytest.raises(EncryptionError, match="too large"):
+            encrypt_data(oversized, key)
+
     def test_decrypt_invalid_base64_fails(self) -> None:
         """Decryption of invalid base64 should fail."""
         key = generate_key()

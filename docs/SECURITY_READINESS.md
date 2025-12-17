@@ -6,7 +6,7 @@
 - **Top risks**: weak/invented crypto, missing provenance/SBOM, unbounded payloads, insufficient auditability, supply-chain exposure to transitive vulns.
 - **Mitigations delivered**:
   - Replaced home-grown XOR+HMAC with **AES-256-GCM** using `cryptography` and strict key length enforcement.
-  - Added payload size guardrails and tamper-evident failures.
+  - Added payload size guardrails, key-type normalization, and tamper-evident failures.
   - CI hardening with SBOM emission for dependency visibility (CycloneDX 1.7 JSON).
   - Regression tests for crypto edge cases.
 - **Definition of Done (increment)**:
