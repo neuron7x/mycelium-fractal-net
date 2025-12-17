@@ -324,8 +324,10 @@ jobs:
       - name: Install tooling
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
-          pip install "cyclonedx-bom>=4.1.2"
+          python -m pip install -e .
+          python -m pip install "cyclonedx-bom>=4.1.2"
+      - name: Verify CycloneDX CLI availability
+        run: cyclonedx-bom --version
       - name: Generate CycloneDX SBOM (JSON/XML)
         run: |
           cyclonedx-bom -F json -o sbom.json
