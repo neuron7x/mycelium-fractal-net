@@ -18,11 +18,14 @@ import os
 from unittest import mock
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from mycelium_fractal_net.integration import (
     REQUEST_ID_HEADER,
+    get_request_context,
     get_request_id,
+    RequestIDMiddleware,
     reset_config,
     set_request_id,
     setup_logging,
@@ -112,6 +115,21 @@ class TestRequestIDContext:
         # Clear any existing value
         set_request_id(None)  # type: ignore
         assert get_request_id() is None
+
+    def test_request_id_cleared_on_exception(self) -> None:
+        """Context should be cleared even when request handling raises."""
+        app = FastAPI()
+        app.add_middleware(RequestIDMiddleware)
+
+        @app.get("/error")
+        async def _():
+            raise RuntimeError("boom")
+
+        with pytest.raises(RuntimeError):
+            TestClient(app).get("/error")
+
+        assert get_request_id() is None
+        assert get_request_context() == {}
 
 
 class TestJSONFormatter:

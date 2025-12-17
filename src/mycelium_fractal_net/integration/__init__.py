@@ -113,7 +113,9 @@ from .logging_config import (
     RequestIDMiddleware,
     RequestLoggingMiddleware,
     get_logger,
+    get_request_context,
     get_request_id,
+    set_request_context,
     set_request_id,
     setup_logging,
 )
@@ -263,7 +265,9 @@ __all__ = [
     "RequestLoggingMiddleware",
     "setup_logging",
     "get_logger",
+    "get_request_context",
     "get_request_id",
+    "set_request_context",
     "set_request_id",
     # Data Integrations (77 integrations for iteration optimization)
     "INTEGRATION_COUNT",
