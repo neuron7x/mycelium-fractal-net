@@ -16,6 +16,7 @@ Environment Variables:
     MFN_RATE_LIMIT_WINDOW    - Rate limit window in seconds (default: 60)
     MFN_LOG_LEVEL            - Log level: DEBUG, INFO, WARNING, ERROR (default: INFO)
     MFN_LOG_FORMAT           - Log format: json or text (default: json in prod, text in dev)
+    MFN_METRICS_ENDPOINT     - Metrics endpoint path (default: /metrics)
 
 Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-LOG-001
 """
@@ -247,7 +248,13 @@ class MetricsConfig:
         include_in_auth_env = os.getenv("MFN_METRICS_INCLUDE_IN_AUTH", "false").lower()
         include_in_auth = include_in_auth_env in ("true", "1", "yes")
 
-        return cls(enabled=enabled, include_in_auth=include_in_auth)
+        endpoint = os.getenv("MFN_METRICS_ENDPOINT", cls.endpoint)
+
+        return cls(
+            enabled=enabled,
+            include_in_auth=include_in_auth,
+            endpoint=endpoint,
+        )
 
 
 @dataclass
@@ -275,16 +282,21 @@ class APIConfig:
     def __post_init__(self) -> None:
         """Align authentication config with metrics exposure settings."""
         metrics_path = self.metrics.endpoint
-        public_endpoints = list(self.auth.public_endpoints)
+        public_endpoints = [
+            endpoint
+            for endpoint in self.auth.public_endpoints
+            if endpoint not in {metrics_path, "/metrics"}
+        ]
 
         if self.metrics.include_in_auth:
             # Ensure metrics endpoint is protected
             self.auth.public_endpoints = [
                 endpoint for endpoint in public_endpoints if endpoint != metrics_path
             ]
-        elif metrics_path not in public_endpoints:
+        else:
             # Maintain metrics as public when authentication is not required
-            self.auth.public_endpoints.append(metrics_path)
+            public_endpoints.append(metrics_path)
+            self.auth.public_endpoints = public_endpoints
 
     @classmethod
     def from_env(cls) -> "APIConfig":
