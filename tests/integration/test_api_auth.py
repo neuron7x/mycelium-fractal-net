@@ -11,6 +11,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-001
 
 from __future__ import annotations
 
+import logging
 import os
 from unittest import mock
 
@@ -20,6 +21,7 @@ from fastapi.testclient import TestClient
 from mycelium_fractal_net.integration import (
     API_KEY_HEADER,
     AuthConfig,
+    RateLimitConfig,
     reset_config,
 )
 
@@ -250,3 +252,26 @@ class TestAuthConfig:
         assert "/health" in config.public_endpoints
         assert "/metrics" in config.public_endpoints
         assert "/docs" in config.public_endpoints
+
+
+class TestRateLimitConfig:
+    """Tests for rate limit configuration parsing."""
+
+    def test_invalid_rate_limit_values_use_defaults(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Ensure invalid env values do not crash and fall back to defaults."""
+        from mycelium_fractal_net.integration.api_config import Environment
+
+        with mock.patch.dict(
+            os.environ,
+            {
+                "MFN_RATE_LIMIT_REQUESTS": "not-a-number",
+                "MFN_RATE_LIMIT_WINDOW": "-5",
+            },
+            clear=False,
+        ), caplog.at_level(logging.WARNING):
+            config = RateLimitConfig.from_env(Environment.PROD)
+
+        assert config.max_requests == 100
+        assert config.window_seconds == 60
+        assert "MFN_RATE_LIMIT_REQUESTS" in caplog.text
+        assert "MFN_RATE_LIMIT_WINDOW" in caplog.text

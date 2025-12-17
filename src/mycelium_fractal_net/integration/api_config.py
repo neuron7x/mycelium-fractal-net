@@ -22,12 +22,16 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-LOG-001
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional
 
 from mycelium_fractal_net.security import SecretManager, SecretRetrievalError
+
+
+logger = logging.getLogger(__name__)
 
 
 class Environment(str, Enum):
@@ -146,8 +150,12 @@ class RateLimitConfig:
         Returns:
             RateLimitConfig: Configured rate limiting settings.
         """
-        max_requests = int(os.getenv("MFN_RATE_LIMIT_REQUESTS", "100"))
-        window_seconds = int(os.getenv("MFN_RATE_LIMIT_WINDOW", "60"))
+        max_requests = cls._parse_positive_int(
+            env_var="MFN_RATE_LIMIT_REQUESTS", default=100
+        )
+        window_seconds = cls._parse_positive_int(
+            env_var="MFN_RATE_LIMIT_WINDOW", default=60
+        )
 
         # Disable rate limiting in dev by default unless explicitly enabled
         enabled_env = os.getenv("MFN_RATE_LIMIT_ENABLED", "").lower()
@@ -171,6 +179,32 @@ class RateLimitConfig:
             enabled=enabled,
             per_endpoint_limits=per_endpoint_limits,
         )
+
+    @staticmethod
+    def _parse_positive_int(env_var: str, default: int) -> int:
+        """Parse positive integers from the environment with safe fallback.
+
+        Args:
+            env_var: Environment variable name to parse.
+            default: Default value to use when parsing fails.
+
+        Returns:
+            Parsed positive integer or the provided default.
+        """
+        raw_value = os.getenv(env_var)
+        if raw_value is None or raw_value.strip() == "":
+            return default
+
+        try:
+            parsed = int(raw_value)
+            if parsed <= 0:
+                raise ValueError
+            return parsed
+        except ValueError:
+            logger.warning(
+                "Invalid %s value '%s'; falling back to default %s", env_var, raw_value, default
+            )
+            return default
 
 
 @dataclass
