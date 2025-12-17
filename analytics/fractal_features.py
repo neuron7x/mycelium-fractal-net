@@ -383,7 +383,7 @@ def compute_temporal_features(
     # Default to 0 to indicate stability was not reached during the windowed scan
     T_stable = 0
 
-    if T > window:
+    if T >= window:
         # Compute rolling std of diffs
         diff_stds = [float(np.std(d)) for d in diffs]
         consecutive = 0
