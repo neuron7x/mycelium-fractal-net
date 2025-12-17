@@ -179,6 +179,24 @@ class TestMyceliumField:
         assert mf.step_count == 0
         assert np.allclose(mf.field, -0.070)
 
+    def test_reset_reseeds_rng(self) -> None:
+        """Reset should restore RNG state for deterministic behavior."""
+        from mycelium_fractal_net import MyceliumField, SimulationConfig
+
+        config = SimulationConfig(grid_size=8, seed=123)
+        mf = MyceliumField(config)
+
+        first_draw = mf.rng.random()
+
+        # Advance RNG state and reset; the next draw should match the initial
+        # draw because reset re-seeds the generator.
+        _ = mf.rng.random()
+        mf.reset()
+
+        second_draw = mf.rng.random()
+
+        assert first_draw == pytest.approx(second_draw)
+
     def test_get_state_returns_copy(self) -> None:
         """Test that get_state returns a copy."""
         from mycelium_fractal_net import MyceliumField, SimulationConfig
