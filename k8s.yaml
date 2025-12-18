@@ -5,6 +5,48 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: mycelium-fractal-net
+  labels:
+    app: mycelium-fractal-net
+    pod-security.kubernetes.io/enforce: "restricted"
+    pod-security.kubernetes.io/audit: "restricted"
+    pod-security.kubernetes.io/warn: "restricted"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mfn-limit-range
+  namespace: mycelium-fractal-net
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: "250m"
+        memory: "256Mi"
+      default:
+        cpu: "500m"
+        memory: "512Mi"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: mfn-resource-quota
+  namespace: mycelium-fractal-net
+spec:
+  hard:
+    pods: "150"
+    requests.cpu: "30"
+    limits.cpu: "60"
+    requests.memory: "32Gi"
+    limits.memory: "48Gi"
+    requests.ephemeral-storage: "30Gi"
+    limits.ephemeral-storage: "60Gi"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mfn-service-account
+  namespace: mycelium-fractal-net
+automountServiceAccountToken: false
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,10 +67,25 @@ spec:
         app: mycelium-fractal-net
         version: v4.1
     spec:
+      serviceAccountName: mfn-service-account
+      automountServiceAccountToken: false
+      enableServiceLinks: false
       securityContext:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mycelium-fractal-net
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: mycelium-fractal-net
           image: mycelium-fractal-net:v4.1
@@ -51,35 +108,33 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          envFrom:
+            - configMapRef:
+                name: mfn-app-env
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
-            - name: MFN_SEED
-              value: "42"
-            - name: MFN_ENV
-              value: "prod"
-            - name: MFN_API_KEY_REQUIRED
-              value: "true"
             - name: MFN_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: mfn-secrets
                   key: api-key
-            - name: MFN_RATE_LIMIT_ENABLED
-              value: "true"
-            - name: MFN_RATE_LIMIT_REQUESTS
-              value: "100"
-            - name: MFN_LOG_FORMAT
-              value: "json"
-            - name: MFN_LOG_LEVEL
-              value: "INFO"
-            - name: MFN_METRICS_ENABLED
-              value: "true"
+            - name: MFN_API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: mfn-secrets
+                  key: api-keys
           livenessProbe:
             httpGet:
               path: /health
               port: 8000
             initialDelaySeconds: 30
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            failureThreshold: 6
             periodSeconds: 10
           readinessProbe:
             httpGet:
@@ -133,6 +188,26 @@ spec:
           type: Utilization
           averageUtilization: 80
 ---
+# ConfigMap for API/environment configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mfn-app-env
+  namespace: mycelium-fractal-net
+data:
+  MFN_SEED: "42"
+  MFN_ENV: "prod"
+  MFN_API_KEY_REQUIRED: "true"
+  MFN_RATE_LIMIT_ENABLED: "true"
+  MFN_RATE_LIMIT_REQUESTS: "100"
+  MFN_RATE_LIMIT_WINDOW: "60"
+  MFN_LOG_FORMAT: "json"
+  MFN_LOG_LEVEL: "INFO"
+  MFN_METRICS_ENABLED: "true"
+  MFN_METRICS_ENDPOINT: "/metrics"
+  MFN_METRICS_INCLUDE_IN_AUTH: "false"
+  MFN_CORS_ORIGINS: "https://mfn.example.com"
+---
 # ConfigMap for model configuration
 apiVersion: v1
 kind: ConfigMap
@@ -167,6 +242,7 @@ type: Opaque
 stringData:
   # Set a strong value before deployment; leave blank to force override in CI/CD or secret manager
   api-key: ""
+  api-keys: ""
 ---
 # Ingress for external HTTP(S) access
 # Note: Requires an ingress controller (nginx, traefik, etc.)
