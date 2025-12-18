@@ -136,6 +136,8 @@ jobs:
           fetch-depth: 0
       - name: Scan repository for secrets
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: detect --source . --redact --report-format sarif --report-path gitleaks.sarif --exit-code 1
       - name: Upload secret scan report
