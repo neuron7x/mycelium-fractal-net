@@ -247,6 +247,24 @@ class TestMetricsConfig:
             config = MetricsConfig.from_env(Environment.PROD)
             assert config.enabled is False
 
+    def test_metrics_can_be_removed_from_public_endpoints(self) -> None:
+        """Including metrics in auth should remove both default and custom endpoints."""
+        from mycelium_fractal_net.integration.api_config import APIConfig
+
+        with mock.patch.dict(
+            os.environ,
+            {
+                "MFN_METRICS_INCLUDE_IN_AUTH": "true",
+                "MFN_METRICS_ENDPOINT": "/secure-metrics",
+            },
+            clear=False,
+        ):
+            reset_config()
+            config = APIConfig.from_env()
+
+        assert "/metrics" not in config.auth.public_endpoints
+        assert "/secure-metrics" not in config.auth.public_endpoints
+
     def test_prometheus_availability_check(self) -> None:
         """Should be able to check if prometheus is available."""
         # This should not raise

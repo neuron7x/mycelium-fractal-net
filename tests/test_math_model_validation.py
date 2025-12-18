@@ -1,4 +1,4 @@
-"""Tests for mathematical model validation as specified in MFN_MFN_MATH_MODEL.md.
+"""Tests for mathematical model validation as specified in MFN_MATH_MODEL.md.
 
 This module provides property-based and unit tests that validate:
 1. Membrane Potentials (Nernst equation)
@@ -35,7 +35,7 @@ from mycelium_fractal_net import (
     simulate_mycelium_field,
 )
 
-# === Test Constants (from MFN_MFN_MATH_MODEL.md) ===
+# === Test Constants (from MFN_MATH_MODEL.md) ===
 
 # Physiological Ca2+ concentrations (mol/L)
 CA_OUT_PHYSIOLOGICAL_MOLAR: float = 2e-3      # ~2 mM extracellular
@@ -51,12 +51,12 @@ FRACTAL_DIMENSION_BIO_MAX: float = 2.2
 
 
 class TestNernstMathematicalProperties:
-    """Validate Nernst equation against MFN_MFN_MATH_MODEL.md specifications."""
+    """Validate Nernst equation against MFN_MATH_MODEL.md specifications."""
 
     def test_nernst_factor_at_body_temperature(self) -> None:
         """Verify RT/zF at 37°C equals ~26.73 mV for z=1.
         
-        From MFN_MFN_MATH_MODEL.md:
+        From MFN_MATH_MODEL.md:
         - RT/zF at 37°C, z=1 = 26.73 mV
         """
         rtf_calculated = (R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT) * 1000.0
@@ -66,7 +66,7 @@ class TestNernstMathematicalProperties:
     def test_potassium_equilibrium_potential(self) -> None:
         """Verify E_K ≈ -89 mV for standard K+ concentrations.
         
-        From MFN_MFN_MATH_MODEL.md parameter table:
+        From MFN_MATH_MODEL.md parameter table:
         - [K]_in = 140 mM, [K]_out = 5 mM → E_K ≈ -89 mV
         """
         e_k = compute_nernst_potential(
@@ -80,7 +80,7 @@ class TestNernstMathematicalProperties:
     def test_sodium_equilibrium_potential(self) -> None:
         """Verify E_Na ≈ +65 mV for standard Na+ concentrations.
         
-        From MFN_MFN_MATH_MODEL.md parameter table:
+        From MFN_MATH_MODEL.md parameter table:
         - [Na]_in = 12 mM, [Na]_out = 145 mM → E_Na ≈ +65 mV
         """
         e_na = compute_nernst_potential(
@@ -94,7 +94,7 @@ class TestNernstMathematicalProperties:
     def test_calcium_equilibrium_potential(self) -> None:
         """Verify E_Ca for Ca2+ (z=2).
         
-        From MFN_MFN_MATH_MODEL.md parameter table:
+        From MFN_MATH_MODEL.md parameter table:
         - [Ca]_in = 0.0001 mM, [Ca]_out = 2 mM, z=2 → E_Ca ≈ +129 mV
         """
         e_ca = compute_nernst_potential(
@@ -108,7 +108,7 @@ class TestNernstMathematicalProperties:
     def test_physical_bounds(self) -> None:
         """Verify potentials stay within physical bounds for physiological concentrations.
         
-        From MFN_MFN_MATH_MODEL.md validation invariants:
+        From MFN_MATH_MODEL.md validation invariants:
         - Physical bounds: -150 mV ≤ E_X ≤ +150 mV for typical physiological conditions
         
         Note: Extreme concentration ratios can produce larger potentials, but
@@ -130,7 +130,7 @@ class TestNernstMathematicalProperties:
     def test_sign_consistency(self) -> None:
         """Verify sign consistency: [X]_out > [X]_in and z > 0 → E > 0.
         
-        From MFN_MFN_MATH_MODEL.md validation invariants.
+        From MFN_MATH_MODEL.md validation invariants.
         """
         # Cation with higher outside concentration → positive potential
         e = compute_nernst_potential(
@@ -158,7 +158,7 @@ class TestNernstMathematicalProperties:
     def test_ion_clamping_prevents_log_zero(self) -> None:
         """Verify clamping prevents log(0) errors.
         
-        From MFN_MFN_MATH_MODEL.md: Ion concentrations clamped to min = 1e-6 mol/L
+        From MFN_MATH_MODEL.md: Ion concentrations clamped to min = 1e-6 mol/L
         """
         # Near-zero concentration should be clamped
         e = compute_nernst_potential(
@@ -170,16 +170,16 @@ class TestNernstMathematicalProperties:
 
 
 class TestReactionDiffusionMathematicalProperties:
-    """Validate reaction-diffusion (Turing) model against MFN_MFN_MATH_MODEL.md."""
+    """Validate reaction-diffusion (Turing) model against MFN_MATH_MODEL.md."""
 
     def test_turing_threshold_specification(self) -> None:
-        """Verify TURING_THRESHOLD = 0.75 as specified in MFN_MFN_MATH_MODEL.md."""
+        """Verify TURING_THRESHOLD = 0.75 as specified in MFN_MATH_MODEL.md."""
         assert abs(TURING_THRESHOLD - 0.75) < 1e-10
 
     def test_diffusion_coefficient_stability(self) -> None:
         """Verify alpha = 0.18 is below stability limit 0.25.
         
-        From MFN_MFN_MATH_MODEL.md stability criterion:
+        From MFN_MATH_MODEL.md stability criterion:
         - Maximum stable diffusion coefficient: D_max = 0.25
         - Our choice alpha = 0.18 is safely below this limit
         """
@@ -190,7 +190,7 @@ class TestReactionDiffusionMathematicalProperties:
     def test_field_potential_bounds(self) -> None:
         """Verify field stays in [-95, 40] mV range.
         
-        From MFN_MFN_MATH_MODEL.md: Clamping: V ∈ [-95, 40] mV
+        From MFN_MATH_MODEL.md: Clamping: V ∈ [-95, 40] mV
         """
         rng = np.random.default_rng(42)
         field, _ = simulate_mycelium_field(
@@ -204,7 +204,7 @@ class TestReactionDiffusionMathematicalProperties:
     def test_stability_no_nan_after_many_steps(self) -> None:
         """Verify no NaN/Inf after 1000+ steps.
         
-        From MFN_MFN_MATH_MODEL.md validation invariants: Stability: No NaN/Inf after 1000+ steps
+        From MFN_MATH_MODEL.md validation invariants: Stability: No NaN/Inf after 1000+ steps
         """
         rng = np.random.default_rng(42)
         field, _ = simulate_mycelium_field(
@@ -215,7 +215,7 @@ class TestReactionDiffusionMathematicalProperties:
     def test_turing_pattern_formation(self) -> None:
         """Verify Turing-enabled runs show measurably different statistics.
         
-        From MFN_MFN_MATH_MODEL.md: Pattern formation: Turing-enabled runs show measurably 
+        From MFN_MATH_MODEL.md: Pattern formation: Turing-enabled runs show measurably 
         different statistics
         """
         rng1 = np.random.default_rng(42)
@@ -234,7 +234,7 @@ class TestReactionDiffusionMathematicalProperties:
     def test_growth_events_probability(self) -> None:
         """Verify growth events scale with probability.
         
-        From MFN_MFN_MATH_MODEL.md: With p = 0.25, expect ~25 events per 100 steps
+        From MFN_MATH_MODEL.md: With p = 0.25, expect ~25 events per 100 steps
         """
         rng = np.random.default_rng(42)
         _, growth_events = simulate_mycelium_field(
@@ -263,12 +263,12 @@ class TestReactionDiffusionMathematicalProperties:
 
 
 class TestFractalMathematicalProperties:
-    """Validate fractal generation and analysis against MFN_MFN_MATH_MODEL.md."""
+    """Validate fractal generation and analysis against MFN_MATH_MODEL.md."""
 
     def test_ifs_contraction_stability(self) -> None:
         """Verify IFS produces stable (negative Lyapunov) dynamics.
         
-        From MFN_MFN_MATH_MODEL.md: λ < 0: Stable (contractive) dynamics
+        From MFN_MATH_MODEL.md: λ < 0: Stable (contractive) dynamics
         Expected value for MFN IFS: λ ≈ -2.1 (stable)
         """
         rng = np.random.default_rng(42)
@@ -278,7 +278,7 @@ class TestFractalMathematicalProperties:
     def test_ifs_lyapunov_range(self) -> None:
         """Verify Lyapunov exponent is in expected range.
         
-        From MFN_MFN_MATH_MODEL.md: Expected λ ≈ -2.1 for contractive IFS
+        From MFN_MATH_MODEL.md: Expected λ ≈ -2.1 for contractive IFS
         """
         lyapunov_values = []
         for seed in range(10):
@@ -296,7 +296,7 @@ class TestFractalMathematicalProperties:
     def test_fractal_dimension_bounds(self) -> None:
         """Verify fractal dimension is in valid range 0 < D < 2.
         
-        From MFN_MFN_MATH_MODEL.md: Dimension bounds: 0 < D < 2 for 2D binary fields
+        From MFN_MATH_MODEL.md: Dimension bounds: 0 < D < 2 for 2D binary fields
         """
         rng = np.random.default_rng(42)
         field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100)
@@ -308,7 +308,7 @@ class TestFractalMathematicalProperties:
     def test_fractal_dimension_biological_range(self) -> None:
         """Verify fractal dimension converges to biological range [1.4, 1.9].
         
-        From MFN_MFN_MATH_MODEL.md: MFN simulation: 1.4–1.9 (Validated)
+        From MFN_MATH_MODEL.md: MFN simulation: 1.4–1.9 (Validated)
         """
         dimensions = []
         for seed in range(10):
@@ -333,7 +333,7 @@ class TestFractalMathematicalProperties:
     def test_reproducibility_same_seed(self) -> None:
         """Verify same seed produces identical fractal dimension.
         
-        From MFN_MFN_MATH_MODEL.md: Reproducibility: Same seed → identical D
+        From MFN_MATH_MODEL.md: Reproducibility: Same seed → identical D
         """
         rng1 = np.random.default_rng(42)
         rng2 = np.random.default_rng(42)
@@ -423,7 +423,7 @@ class TestNumericalStability:
     def test_diffusion_coefficient_range(self, alpha: float) -> None:
         """Verify simulation stable across valid alpha range.
         
-        From MFN_MFN_MATH_MODEL.md: Field diffusion alpha valid range 0.05–0.24
+        From MFN_MATH_MODEL.md: Field diffusion alpha valid range 0.05–0.24
         """
         rng = np.random.default_rng(42)
         field, _ = simulate_mycelium_field(rng, grid_size=32, steps=100, alpha=alpha)
@@ -466,7 +466,7 @@ class TestNumericalStability:
 
 
 class TestClampingAndBounds:
-    """Validate all clamping and bounds as specified in MFN_MFN_MATH_MODEL.md."""
+    """Validate all clamping and bounds as specified in MFN_MATH_MODEL.md."""
 
     def test_ion_concentration_clamping(self) -> None:
         """Verify ION_CLAMP_MIN = 1e-6 as specified."""

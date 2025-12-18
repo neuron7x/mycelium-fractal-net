@@ -15,7 +15,7 @@ This module implements:
 - run_validation / run_validation_cli: validation pipeline
 
 Physics parameters (from empirical validation):
-- Nernst RT/zF = 58.17 mV at 37°C for z=1
+- Nernst RT/zF ≈ 26.73 mV at 37°C for z=1 (natural log; log10 form ≈ 58.17 mV)
 - Turing morphogenesis threshold = 0.75
 - STDP tau± = 20ms, a+ = 0.01, a- = 0.012
 - Sparse attention topk = 4
@@ -45,7 +45,7 @@ R_GAS_CONSTANT: float = 8.314  # J/(mol*K)
 FARADAY_CONSTANT: float = 96485.33212  # C/mol
 BODY_TEMPERATURE_K: float = 310.0  # K (~37°C)
 
-# === Nernst RT/zF at 37°C (z=1) ===
+# === Nernst RT/zF at 37°C (z=1), natural log (ln) ===
 NERNST_RTFZ_MV: float = (R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT) * 1000.0
 
 # === Ion concentration clamp minimum (for numerical stability) ===
