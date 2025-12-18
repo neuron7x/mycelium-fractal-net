@@ -62,6 +62,27 @@ def generate_key() -> bytes:
     return secrets.token_bytes(32)
 
 
+def _validate_key(key: bytes | bytearray) -> bytes:
+    """
+    Validate that the encryption key is sufficiently strong.
+
+    Args:
+        key: Candidate key material.
+
+    Returns:
+        bytes: Normalized key bytes.
+
+    Raises:
+        EncryptionError: If the key is not bytes-like or too short.
+    """
+    if not isinstance(key, (bytes, bytearray)):
+        raise EncryptionError("Encryption key must be bytes")
+    normalized = bytes(key)
+    if len(normalized) < 32:
+        raise EncryptionError("Encryption key must be at least 32 bytes")
+    return normalized
+
+
 def _derive_key(key: bytes, salt: bytes) -> bytes:
     """
     Derive an encryption key from the master key using PBKDF2.
@@ -125,6 +146,7 @@ def encrypt_data(
         >>> isinstance(ciphertext, str)
         True
     """
+    key = _validate_key(key)
     try:
         # Convert string to bytes if needed
         if isinstance(data, str):
@@ -183,6 +205,7 @@ def decrypt_data(
         >>> decrypt_data(ciphertext, key)
         'secret'
     """
+    key = _validate_key(key)
     try:
         # Decode base64
         data = base64.urlsafe_b64decode(ciphertext.encode("ascii"))
@@ -248,7 +271,7 @@ class DataEncryptor:
         Args:
             key: Encryption key. If None, generates a new key.
         """
-        self.key = key if key is not None else generate_key()
+        self.key = _validate_key(key) if key is not None else generate_key()
 
     def encrypt(self, data: Union[str, bytes]) -> str:
         """

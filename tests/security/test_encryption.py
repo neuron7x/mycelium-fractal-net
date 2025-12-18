@@ -143,6 +143,16 @@ class TestEncryptDecrypt:
 
         assert decrypted == plaintext
 
+    def test_encrypt_rejects_short_key(self) -> None:
+        """Encryption should fail fast when key length is insufficient."""
+        with pytest.raises(EncryptionError, match="at least 32 bytes"):
+            encrypt_data("data", b"short-key")
+
+    def test_encrypt_rejects_wrong_key_type(self) -> None:
+        """Encryption should validate key type is bytes-like."""
+        with pytest.raises(EncryptionError, match="must be bytes"):
+            encrypt_data("data", "not-bytes")  # type: ignore[arg-type]
+
 
 class TestDataEncryptor:
     """Tests for DataEncryptor class."""
@@ -180,3 +190,8 @@ class TestDataEncryptor:
         decrypted = encryptor2.decrypt(ciphertext)
 
         assert decrypted == plaintext
+
+    def test_encryptor_rejects_short_custom_key(self) -> None:
+        """Custom keys must meet minimum length requirements."""
+        with pytest.raises(EncryptionError, match="at least 32 bytes"):
+            DataEncryptor(key=b"too-short-key")
