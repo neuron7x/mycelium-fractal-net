@@ -460,13 +460,19 @@ class ReactionDiffusionEngine:
         assert self._activator is not None
         assert self._inhibitor is not None
 
-        history = []
+        history: NDArray[np.floating] | None = None
+        if return_history:
+            history = np.empty(
+                (steps, self.config.grid_size, self.config.grid_size),
+                dtype=self._field.dtype,
+            )
 
         for step in range(steps):
             self._simulation_step(step, turing_enabled)
 
             if return_history:
-                history.append(self._field.copy())
+                assert history is not None
+                history[step] = self._field
 
             self._metrics.steps_computed += 1
 
@@ -474,7 +480,8 @@ class ReactionDiffusionEngine:
         self._update_field_metrics()
 
         if return_history:
-            return np.stack(history), self._metrics
+            assert history is not None
+            return history, self._metrics
 
         return self._field.copy(), self._metrics
 
@@ -520,10 +527,11 @@ class ReactionDiffusionEngine:
             self._field = self._field + jitter
 
         # Clamping to physiological bounds
-        field_before = self._field.copy()
-        self._field = np.clip(self._field, FIELD_V_MIN, FIELD_V_MAX)
-        clamped = np.sum(self._field != field_before)
-        self._metrics.clamping_events += int(clamped)
+        clamped_mask = (self._field > FIELD_V_MAX) | (self._field < FIELD_V_MIN)
+        clamped = int(np.count_nonzero(clamped_mask))
+        if clamped:
+            np.clip(self._field, FIELD_V_MIN, FIELD_V_MAX, out=self._field)
+        self._metrics.clamping_events += clamped
 
         # Stability check
         if self.config.check_stability:
