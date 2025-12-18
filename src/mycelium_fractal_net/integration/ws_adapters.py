@@ -289,7 +289,8 @@ def _compute_fractal_dimension(field: NDArray[np.floating[Any]], threshold: floa
 
     # Box counting at a few scales
     sizes = [2, 4, 8, 16]
-    counts = []
+    counts: list[int] = []
+    used_sizes: list[int] = []
 
     for size in sizes:
         if size > min(field.shape):
@@ -307,18 +308,26 @@ def _compute_fractal_dimension(field: NDArray[np.floating[Any]], threshold: floa
                     count += 1
 
         counts.append(count)
+        used_sizes.append(size)
 
-    if len(counts) < 2:
-        return 1.0
+    # Ignore scales with zero occupied boxes to avoid log(0) instability
+    valid_counts = [(s, c) for s, c in zip(used_sizes, counts) if c > 0]
+    if len(valid_counts) < 2:
+        return 0.0
+
+    valid_sizes, counts = zip(*valid_counts)
 
     # Linear regression in log-log space
-    log_sizes = np.log([sizes[i] for i in range(len(counts))])
-    log_counts = np.log(counts)
+    log_sizes = np.log(np.asarray(valid_sizes, dtype=float))
+    log_counts = np.log(np.asarray(counts, dtype=float))
 
-    # Simple linear fit
-    if len(log_sizes) > 1:
-        slope = (log_counts[-1] - log_counts[0]) / (log_sizes[-1] - log_sizes[0])
-        dimension = -slope
-        return float(np.clip(dimension, 0.0, 2.0))
+    size_span = log_sizes[-1] - log_sizes[0]
+    if size_span == 0:
+        return 0.0
 
-    return 1.0
+    slope = (log_counts[-1] - log_counts[0]) / size_span
+    dimension = -slope
+    if not np.isfinite(dimension):
+        return 0.0
+
+    return float(np.clip(dimension, 0.0, 2.0))
