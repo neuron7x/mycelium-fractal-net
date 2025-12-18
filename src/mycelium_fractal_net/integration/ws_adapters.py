@@ -311,9 +311,22 @@ def _compute_fractal_dimension(field: NDArray[np.floating[Any]], threshold: floa
     if len(counts) < 2:
         return 1.0
 
-    # Linear regression in log-log space
-    log_sizes = np.log([sizes[i] for i in range(len(counts))])
-    log_counts = np.log(counts)
+    sizes_used = sizes[: len(counts)]
+    positive_samples = [(s, c) for s, c in zip(sizes_used, counts) if c > 0]
+
+    # If no boxes are active at any scale, the fractal dimension is undefined;
+    # return 0.0 to avoid propagating NaNs from log(0) while signaling an empty
+    # pattern to downstream consumers.
+    if not positive_samples:
+        return 0.0
+
+    # Require at least two scales with signal to perform a slope estimate.
+    if len(positive_samples) < 2:
+        return 1.0
+
+    # Linear regression in log-log space using only scales with activity
+    log_sizes = np.log([s for s, _ in positive_samples])
+    log_counts = np.log([c for _, c in positive_samples])
 
     # Simple linear fit
     if len(log_sizes) > 1:
