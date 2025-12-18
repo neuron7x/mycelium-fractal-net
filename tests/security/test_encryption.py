@@ -83,6 +83,20 @@ class TestEncryptDecrypt:
         # But ciphertext should be different due to random IV/salt
         assert ciphertext1 != ciphertext2
 
+    def test_encrypt_decrypt_with_aad(self) -> None:
+        """AAD should be required to decrypt when provided."""
+        key = generate_key()
+        plaintext = "context bound"
+        aad = "session-123"
+
+        ciphertext = encrypt_data(plaintext, key, associated_data=aad)
+        decrypted = decrypt_data(ciphertext, key, associated_data=aad)
+
+        assert decrypted == plaintext
+
+        with pytest.raises(EncryptionError, match="authentication error"):
+            decrypt_data(ciphertext, key, associated_data="wrong-aad")
+
     def test_ciphertext_is_base64(self) -> None:
         """Ciphertext should be URL-safe base64 encoded."""
         key = generate_key()

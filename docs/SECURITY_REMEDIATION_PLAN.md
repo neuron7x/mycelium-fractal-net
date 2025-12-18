@@ -78,6 +78,7 @@ standard.
 - Round-trip encryption/decryption tests updated
 - Wrong-key and tampering cases return authentication errors
 - Short/invalid ciphertexts are rejected early
+- Associated Data (AAD) binding supported to prevent context replay
 
 ### 3.2 Cryptographic API Endpoints
 
