@@ -56,12 +56,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: none
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   lint:
     runs-on: ubuntu-latest
@@ -140,9 +140,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: detect --source . --redact --report-format sarif --report-path gitleaks.sarif --exit-code 1
+      - name: Ensure SARIF exists
+        if: always()
+        run: |
+          if [ ! -f gitleaks.sarif ]; then
+            echo 'Gitleaks produced no SARIF; creating empty report.'
+            cat <<'EOF' > gitleaks.sarif
+            {
+              "version": "2.1.0",
+              "runs": [
+                {
+                  "tool": { "driver": { "name": "gitleaks" } },
+                  "results": []
+                }
+              ]
+            }
+            EOF
+          fi
       - name: Upload secret scan report
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: gitleaks.sarif
 
@@ -165,7 +182,7 @@ jobs:
           exit-code: 1
       - name: Upload Trivy config findings
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-config.sarif
 
