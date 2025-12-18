@@ -119,7 +119,9 @@ jobs:
       - name: Run Bandit security scan
         run: bandit -r src/ -ll -ii --exclude tests
       - name: Check dependencies for vulnerabilities
-        run: pip-audit -r requirements.txt --strict --desc on
+        run: |
+          pip-audit -r requirements.txt --strict --desc on
+          pip-audit -P pyproject.toml --strict --desc on
       - name: Run security tests
         run: pytest tests/security/ -v --tb=short
 
@@ -135,7 +137,7 @@ jobs:
       - name: Scan repository for secrets
         uses: gitleaks/gitleaks-action@v2
         with:
-          args: detect --source . --no-git --redact --report-format sarif --report-path gitleaks.sarif
+          args: detect --source . --redact --report-format sarif --report-path gitleaks.sarif --exit-code 1
       - name: Upload secret scan report
         if: always()
         uses: github/codeql-action/upload-sarif@v3

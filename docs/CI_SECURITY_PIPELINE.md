@@ -34,6 +34,8 @@ Set **Require branches to be up to date** and **Require pull request reviews bef
 | Unit/integration tests | Pytest matrix | The `test` job exercises the full suite with coverage across Python 3.10–3.12. |
 | Validation/benchmarks | Domain validations and benchmarks | See `validate`, `benchmark`, `scientific-validation`, `scalability-test`, and `packaging` jobs. |
 
+Secrets scanning walks the full git history of the pull request branch and uploads SARIF results to GitHub code scanning. Dependency audits check both `requirements.txt` and `pyproject.toml`.
+
 ## Notifications
 
 The `notify` job aggregates all workflow results and can fan out alerts:
