@@ -1147,8 +1147,10 @@ def _build_dataset(cfg: ValidationConfig) -> Tuple[TensorDataset, Dict[str, floa
         lyapunov_values.append(lyapunov)
 
     stats_arr = np.asarray(stats, dtype=np.float32)
-    # Normalize potentials (Volts) to ~[-1, 1]
-    stats_arr[:, 1:] *= 100.0
+    # Normalize potentials (Volts) to ~[-1, 1] by scaling to decivolts.
+    # Typical ranges are ~[-0.095, 0.040] V; multiplying by 10 keeps values
+    # within a unit scale for stable optimization.
+    stats_arr[:, 1:] *= 10.0
 
     # Target: linear combination of statistics
     target_arr = (
