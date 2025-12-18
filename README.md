@@ -211,6 +211,11 @@ curl -H "X-API-Key: your-secret-key" http://localhost:8000/validate
 | `MFN_RATE_LIMIT_ENABLED` | Enable rate limiting | false (dev), true (prod) |
 | `MFN_LOG_FORMAT` | Log format (json/text) | text (dev), json (prod) |
 
+## Deployment
+
+- **Kubernetes**: Production-ready manifest with restricted Pod Security, ResourceQuota/LimitRange, HPA, PodDisruptionBudget, NetworkPolicy, Ingress, ServiceMonitor, and TLS annotations lives in [`k8s.yaml`](k8s.yaml).
+- **Config & secrets**: Use `mfn-app-env` ConfigMap for non-secret tuning and `mfn-secrets` for API keys. A detailed step-by-step runbook is in [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md).
+
 ---
 
 ## Security
