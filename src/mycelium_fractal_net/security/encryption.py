@@ -33,10 +33,10 @@ from dataclasses import dataclass
 from typing import Optional, Union
 
 from mycelium_fractal_net.crypto import (
-    AESGCMCipher,
     AES_KEY_SIZE,
     GCM_NONCE_SIZE,
     GCM_TAG_SIZE,
+    AESGCMCipher,
     SymmetricEncryptionError,
     generate_aes_key,
 )
@@ -46,6 +46,7 @@ class EncryptionError(Exception):
     """Raised when encryption or decryption fails."""
 
     pass
+
 
 def generate_key(length: int = AES_KEY_SIZE) -> bytes:
     """
@@ -77,7 +78,9 @@ def _validate_key(key: bytes | bytearray) -> bytes:
     return normalized
 
 
-def _normalize_associated_data(associated_data: Optional[Union[str, bytes]], encoding: str) -> Optional[bytes]:
+def _normalize_associated_data(
+    associated_data: Optional[Union[str, bytes]], encoding: str
+) -> Optional[bytes]:
     """Normalize associated data to bytes if provided."""
 
     if associated_data is None:
