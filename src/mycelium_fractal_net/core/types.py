@@ -124,6 +124,36 @@ class SimulationConfig:
             return default
 
         seed_value = data.get("seed")
+
+        def _parse_seed(value: Any) -> int | None:
+            """Parse optional seed values from loosely-typed inputs.
+
+            Accepts integers or numeric strings and treats empty strings or
+            ``None`` as absence of a seed rather than raising an error. This
+            makes the deserializer resilient to common scenarios where form
+            fields or environment variables provide blank values.
+            """
+
+            if value is None:
+                return None
+
+            if isinstance(value, str):
+                if value.strip() == "":
+                    return None
+                try:
+                    return int(value)
+                except ValueError as exc:
+                    raise ValueError(
+                        f"seed must be an integer when provided, got {value!r}"
+                    ) from exc
+
+            try:
+                return int(value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"seed must be an integer when provided, got {value!r}"
+                ) from exc
+
         return cls(
             grid_size=int(data.get("grid_size", 64)),
             steps=int(data.get("steps", 64)),
@@ -133,7 +163,7 @@ class SimulationConfig:
             turing_threshold=float(data.get("turing_threshold", 0.75)),
             quantum_jitter=_parse_bool(data.get("quantum_jitter"), False),
             jitter_var=float(data.get("jitter_var", 0.0005)),
-            seed=int(seed_value) if seed_value is not None else None,
+            seed=_parse_seed(seed_value),
         )
 
 
