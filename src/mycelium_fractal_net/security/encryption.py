@@ -193,6 +193,9 @@ def decrypt_data(
             raw_ciphertext, associated_data=aad, return_bytes=True
         )
 
+        if isinstance(plaintext_bytes, str):
+            return plaintext_bytes
+
         return plaintext_bytes.decode(encoding)
 
     except (binascii.Error, UnicodeDecodeError, ValueError) as exc:
