@@ -886,8 +886,12 @@ class HierarchicalKrumAggregator:
         # Stack gradients for distance computation
         flat_grads = torch.stack([g.flatten() for g in gradients])
 
-        # Compute pairwise distances
-        distances = torch.cdist(flat_grads.unsqueeze(0), flat_grads.unsqueeze(0))[0]
+        # Compute squared pairwise distances directly. Krum's scoring uses
+        # ||g_i - g_j||^2; avoiding the sqrt from torch.cdist preserves the
+        # intended heavier penalty for distant outliers and matches the core
+        # federated implementation.
+        diffs = flat_grads.unsqueeze(1) - flat_grads.unsqueeze(0)
+        distances = (diffs * diffs).sum(dim=-1)
 
         # Number of neighbors to consider
         num_neighbors = max(1, n - num_byzantine - 2)
