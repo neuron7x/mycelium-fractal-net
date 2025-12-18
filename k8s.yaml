@@ -25,10 +25,22 @@ spec:
         app: mycelium-fractal-net
         version: v4.1
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: mycelium-fractal-net
           image: mycelium-fractal-net:v4.1
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsUser: 1000
+            runAsGroup: 1000
           ports:
             - containerPort: 8000
               name: http
@@ -75,6 +87,12 @@ spec:
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 5
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -136,7 +154,7 @@ data:
     }
 ---
 # Secret for API keys and sensitive configuration
-# Note: Values are base64 encoded. Create with:
+# Recommended: create the secret out-of-band (CI/CD or secret manager), e.g.:
 #   kubectl create secret generic mfn-secrets \
 #     --from-literal=api-key=$(openssl rand -base64 32) \
 #     -n mycelium-fractal-net
@@ -146,12 +164,9 @@ metadata:
   name: mfn-secrets
   namespace: mycelium-fractal-net
 type: Opaque
-data:
-  # WARNING: This is a placeholder value! MUST be replaced before production deployment!
-  # Generate a secure key with: openssl rand -base64 32 | base64
-  # Or create secret with kubectl command above (recommended)
-  # Placeholder decodes to: "placeholder-api-key" (DO NOT USE IN PRODUCTION!)
-  api-key: cGxhY2Vob2xkZXItYXBpLWtleQ==
+stringData:
+  # Set a strong value before deployment; leave blank to force override in CI/CD or secret manager
+  api-key: ""
 ---
 # Ingress for external HTTP(S) access
 # Note: Requires an ingress controller (nginx, traefik, etc.)
@@ -168,7 +183,7 @@ metadata:
     nginx.ingress.kubernetes.io/limit-rps: "100"
     # CORS
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://mfn.example.com"
     # Cert-manager for automatic TLS
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:

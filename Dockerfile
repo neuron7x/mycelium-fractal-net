@@ -14,14 +14,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements first for caching
 COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Install dependencies system-wide to allow non-root runtime user
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY . .
 
 # Install package
-RUN pip install --no-cache-dir --user -e .
+RUN pip install --no-cache-dir -e .
 
 # Production stage
 FROM python:3.10-slim
@@ -29,13 +29,21 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /usr/local /usr/local
 
 # Copy source code
 COPY . .
 
-# Add .local/bin to PATH
-ENV PATH=/root/.local/bin:$PATH
+# Add non-root runtime user
+RUN addgroup --system --gid 1000 mfn \
+    && adduser --system --uid 1000 --ingroup mfn --home /app mfn \
+    && chown -R mfn:mfn /app
+
+# Ensure system Python/bin are available
+ENV PATH=/usr/local/bin:/usr/local/sbin:$PATH
+
+# Drop privileges for runtime
+USER mfn
 
 # Expose port for API
 EXPOSE 8000
