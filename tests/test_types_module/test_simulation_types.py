@@ -101,6 +101,20 @@ class TestSimulationConfig:
         assert config.quantum_jitter is True
         assert config.spike_probability == 0.1
 
+    def test_from_dict_handles_empty_seed(self) -> None:
+        """Empty seed strings should be treated as missing values."""
+        d = {
+            "grid_size": 32,
+            "steps": 10,
+            "seed": "  ",
+        }
+
+        config = SimulationConfig.from_dict(d)
+
+        assert config.grid_size == 32
+        assert config.steps == 10
+        assert config.seed is None
+
     def test_roundtrip_dict(self) -> None:
         """Test dictionary roundtrip conversion."""
         original = SimulationConfig(
