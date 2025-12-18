@@ -39,8 +39,9 @@ RUN addgroup --system --gid 1000 mfn \
     && adduser --system --uid 1000 --ingroup mfn --home /app mfn \
     && chown -R mfn:mfn /app
 
-# Ensure system Python/bin are available
-ENV PATH=/usr/local/bin:/usr/local/sbin:$PATH
+# Ensure system Python/bin are available and prevent bytecode writes on read-only filesystems
+ENV PATH=/usr/local/bin:/usr/local/sbin:$PATH \
+    PYTHONDONTWRITEBYTECODE=1
 
 # Drop privileges for runtime
 USER mfn
