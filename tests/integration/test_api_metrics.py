@@ -13,12 +13,27 @@ Reference: docs/MFN_BACKLOG.md#MFN-OBS-001
 from __future__ import annotations
 
 import os
+import importlib
 from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
 
 from mycelium_fractal_net.integration import is_prometheus_available, reset_config
+
+
+def _reload_api_module(env_vars: dict[str, str]):
+    """
+    Reload the api module with specific environment variables applied.
+
+    This allows tests to validate configuration-dependent routes like
+    custom metrics endpoints without leaking state across tests.
+    """
+    import api as api_module
+
+    with mock.patch.dict(os.environ, env_vars, clear=False):
+        reset_config()
+        return importlib.reload(api_module)
 
 
 @pytest.fixture(autouse=True)
@@ -146,6 +161,38 @@ class TestMetricsEndpoint:
         if is_prometheus_available():
             # Check for endpoint labels
             assert 'endpoint="/health"' in content or "endpoint" in content
+
+    def test_custom_metrics_endpoint_respected(self) -> None:
+        """Custom metrics endpoint from config should be used instead of the default."""
+        custom_path = "/observability/metrics"
+
+        api_module = _reload_api_module(
+            {
+                "MFN_ENV": "dev",
+                "MFN_API_KEY_REQUIRED": "false",
+                "MFN_RATE_LIMIT_ENABLED": "false",
+                "MFN_METRICS_ENABLED": "true",
+                "MFN_METRICS_ENDPOINT": custom_path,
+            }
+        )
+        client = TestClient(api_module.app)
+
+        try:
+            response = client.get(custom_path)
+            assert response.status_code == 200
+
+            default_response = client.get("/metrics")
+            assert default_response.status_code == 404
+        finally:
+            # Restore default routing for subsequent tests
+            _reload_api_module(
+                {
+                    "MFN_ENV": "dev",
+                    "MFN_API_KEY_REQUIRED": "false",
+                    "MFN_RATE_LIMIT_ENABLED": "false",
+                    "MFN_METRICS_ENABLED": "true",
+                }
+            )
 
 
 class TestMetricsCollection:

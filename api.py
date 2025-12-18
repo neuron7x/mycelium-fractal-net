@@ -16,7 +16,7 @@ Usage:
 
 Endpoints:
     GET  /health          - Health check (public)
-    GET  /metrics         - Prometheus metrics (public)
+    GET  /metrics (configurable via MFN_METRICS_ENDPOINT) - Prometheus metrics (public)
     POST /validate        - Run validation cycle
     POST /simulate        - Simulate mycelium field
     POST /nernst          - Compute Nernst potential
@@ -139,6 +139,21 @@ def _get_cors_origins() -> List[str]:
         return []
 
 
+def _normalize_endpoint_path(path: str) -> str:
+    """
+    Normalize an endpoint path to ensure FastAPI routing works.
+
+    Args:
+        path: Raw endpoint path (with or without leading slash).
+
+    Returns:
+        Normalized path with a single leading slash.
+    """
+    if not path.startswith("/"):
+        return f"/{path}"
+    return path
+
+
 app = FastAPI(
     title="MyceliumFractalNet API",
     description="Bio-inspired adaptive network with fractal dynamics",
@@ -147,6 +162,7 @@ app = FastAPI(
 
 # Get API configuration
 api_config = get_api_config()
+metrics_path = _normalize_endpoint_path(api_config.metrics.endpoint)
 
 # Configure CORS middleware
 # Reference: docs/MFN_BACKLOG.md#MFN-API-003
@@ -210,7 +226,7 @@ async def health_check() -> HealthResponse:
     return HealthResponse()
 
 
-@app.get("/metrics")
+@app.get(metrics_path)
 async def get_metrics(request: Request) -> Response:
     """
     Prometheus metrics endpoint (public, no auth required).

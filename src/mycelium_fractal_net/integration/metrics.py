@@ -177,6 +177,12 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
         ]
 
+        metrics_endpoint = self.config.endpoint
+        if not metrics_endpoint.startswith("/"):
+            metrics_endpoint = f"/{metrics_endpoint}"
+        if metrics_endpoint not in known_endpoints:
+            known_endpoints.append(metrics_endpoint)
+
         for endpoint in known_endpoints:
             if path == endpoint or path.startswith(endpoint + "/"):
                 return endpoint
