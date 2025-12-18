@@ -43,6 +43,26 @@ jobs:
         if: steps.dependency_graph.outputs.enabled != 'true'
         run: echo "Dependency graph disabled or unavailable; skipping dependency review."
 
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["python"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
   lint:
     runs-on: ubuntu-latest
     permissions:
@@ -102,6 +122,48 @@ jobs:
         run: pip-audit -r requirements.txt --strict --desc on
       - name: Run security tests
         run: pytest tests/security/ -v --tb=short
+
+  secret-detection:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan repository for secrets
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --source . --no-git --redact --report-format sarif --report-path gitleaks.sarif
+      - name: Upload secret scan report
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks.sarif
+
+  config-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy config scan
+        uses: aquasecurity/trivy-action@v0.22.0
+        with:
+          scan-type: config
+          hide-progress: true
+          format: sarif
+          output: trivy-config.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          exit-code: 1
+      - name: Upload Trivy config findings
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-config.sarif
 
   test:
     runs-on: ubuntu-latest
@@ -300,3 +362,96 @@ jobs:
             exit 1
           fi
           echo "✓ No excluded runtime packages in wheel"
+
+  notify:
+    runs-on: ubuntu-latest
+    needs:
+      - dependency-review
+      - codeql
+      - lint
+      - security
+      - secret-detection
+      - config-scan
+      - test
+      - validate
+      - benchmark
+      - scientific-validation
+      - scalability-test
+      - packaging
+    if: always()
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+      EMAIL_SMTP_SERVER: ${{ secrets.EMAIL_SMTP_SERVER }}
+      EMAIL_SMTP_USERNAME: ${{ secrets.EMAIL_SMTP_USERNAME }}
+      EMAIL_SMTP_PASSWORD: ${{ secrets.EMAIL_SMTP_PASSWORD }}
+      EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+    steps:
+      - name: Prepare notification payload
+        id: payload
+        run: |
+          summary="CI status for ${GITHUB_REPOSITORY}@${GITHUB_REF_NAME}"
+          cat <<EOF > payload.txt
+          ${summary}
+          dependency-review: ${{ needs.dependency-review.result }}
+          codeql: ${{ needs.codeql.result }}
+          lint: ${{ needs.lint.result }}
+          security: ${{ needs.security.result }}
+          secret-detection: ${{ needs.secret-detection.result }}
+          config-scan: ${{ needs.config-scan.result }}
+          test: ${{ needs.test.result }}
+          validate: ${{ needs.validate.result }}
+          benchmark: ${{ needs.benchmark.result }}
+          scientific-validation: ${{ needs.scientific-validation.result }}
+          scalability-test: ${{ needs.scalability-test.result }}
+          packaging: ${{ needs.packaging.result }}
+          overall: ${{ job.status }}
+          EOF
+          echo "summary=${summary}" >> "$GITHUB_OUTPUT"
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "*${{ steps.payload.outputs.summary }}*\n- dependency-review: ${{ needs.dependency-review.result }}\n- codeql: ${{ needs.codeql.result }}\n- lint: ${{ needs.lint.result }}\n- security: ${{ needs.security.result }}\n- secret-detection: ${{ needs.secret-detection.result }}\n- config-scan: ${{ needs.config-scan.result }}\n- test: ${{ needs.test.result }}\n- validate: ${{ needs.validate.result }}\n- benchmark: ${{ needs.benchmark.result }}\n- scientific-validation: ${{ needs.scientific-validation.result }}\n- scalability-test: ${{ needs.scalability-test.result }}\n- packaging: ${{ needs.packaging.result }}\n- overall: ${{ job.status }}"
+            }
+
+      - name: Send Microsoft Teams notification
+        if: env.TEAMS_WEBHOOK_URL != ''
+        run: |
+          payload=$(cat payload.txt | python -c 'import json,sys; data=sys.stdin.read(); print(json.dumps({"text": data}))')
+          curl -H "Content-Type: application/json" -d "$payload" "$TEAMS_WEBHOOK_URL"
+
+      - name: Send email notification
+        if: env.EMAIL_SMTP_SERVER != '' && env.EMAIL_TO != '' && env.EMAIL_FROM != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ env.EMAIL_SMTP_SERVER }}
+          username: ${{ env.EMAIL_SMTP_USERNAME }}
+          password: ${{ env.EMAIL_SMTP_PASSWORD }}
+          from: ${{ env.EMAIL_FROM }}
+          to: ${{ env.EMAIL_TO }}
+          subject: "${{ steps.payload.outputs.summary }}"
+          body: |
+            ${{ steps.payload.outputs.summary }}
+            dependency-review: ${{ needs.dependency-review.result }}
+            codeql: ${{ needs.codeql.result }}
+            lint: ${{ needs.lint.result }}
+            security: ${{ needs.security.result }}
+            secret-detection: ${{ needs.secret-detection.result }}
+            config-scan: ${{ needs.config-scan.result }}
+            test: ${{ needs.test.result }}
+            validate: ${{ needs.validate.result }}
+            benchmark: ${{ needs.benchmark.result }}
+            scientific-validation: ${{ needs.scientific-validation.result }}
+            scalability-test: ${{ needs.scalability-test.result }}
+            packaging: ${{ needs.packaging.result }}
+            overall: ${{ job.status }}
+
+      - name: Guidance when notifications are disabled
+        if: env.SLACK_WEBHOOK_URL == '' && env.TEAMS_WEBHOOK_URL == '' && (env.EMAIL_SMTP_SERVER == '' || env.EMAIL_TO == '' || env.EMAIL_FROM == '')
+        run: |
+          echo "No notification endpoints configured. Add SLACK_WEBHOOK_URL, TEAMS_WEBHOOK_URL, or email SMTP secrets to enable alerts."
