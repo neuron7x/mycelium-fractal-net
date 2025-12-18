@@ -83,6 +83,20 @@ class TestEncryptDecrypt:
         # But ciphertext should be different due to random IV/salt
         assert ciphertext1 != ciphertext2
 
+    def test_encrypt_decrypt_with_aad(self) -> None:
+        """AAD should be required to decrypt when provided."""
+        key = generate_key()
+        plaintext = "context bound"
+        aad = "session-123"
+
+        ciphertext = encrypt_data(plaintext, key, associated_data=aad)
+        decrypted = decrypt_data(ciphertext, key, associated_data=aad)
+
+        assert decrypted == plaintext
+
+        with pytest.raises(EncryptionError, match="authentication error"):
+            decrypt_data(ciphertext, key, associated_data="wrong-aad")
+
     def test_ciphertext_is_base64(self) -> None:
         """Ciphertext should be URL-safe base64 encoded."""
         key = generate_key()
@@ -104,7 +118,7 @@ class TestEncryptDecrypt:
 
         ciphertext = encrypt_data(plaintext, key1)
 
-        with pytest.raises(EncryptionError, match="HMAC verification failed"):
+        with pytest.raises(EncryptionError, match="authentication error"):
             decrypt_data(ciphertext, key2)
 
     def test_decrypt_tampered_data_fails(self) -> None:
@@ -145,7 +159,7 @@ class TestEncryptDecrypt:
 
     def test_encrypt_rejects_short_key(self) -> None:
         """Encryption should fail fast when key length is insufficient."""
-        with pytest.raises(EncryptionError, match="at least 32 bytes"):
+        with pytest.raises(EncryptionError, match="exactly 32 bytes"):
             encrypt_data("data", b"short-key")
 
     def test_encrypt_rejects_wrong_key_type(self) -> None:
@@ -193,5 +207,5 @@ class TestDataEncryptor:
 
     def test_encryptor_rejects_short_custom_key(self) -> None:
         """Custom keys must meet minimum length requirements."""
-        with pytest.raises(EncryptionError, match="at least 32 bytes"):
+        with pytest.raises(EncryptionError, match="exactly 32 bytes"):
             DataEncryptor(key=b"too-short-key")
