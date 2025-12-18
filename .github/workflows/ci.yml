@@ -157,6 +157,12 @@ jobs:
             }
             EOF
           fi
+      - name: Upload Gitleaks SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-sarif
+          path: gitleaks.sarif
       - name: Upload secret scan report
         if: always()
         uses: github/codeql-action/upload-sarif@v4
