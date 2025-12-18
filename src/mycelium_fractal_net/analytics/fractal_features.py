@@ -38,10 +38,16 @@ if TYPE_CHECKING:
 
 __all__ = [
     "FeatureVector",
+    "FeatureConfig",
     "compute_fractal_features",
     "compute_box_counting_dimension",
     "compute_basic_stats",
+    "compute_features",
 ]
+
+# Public alias to the canonical analytics implementation to ensure consumers can
+# access the full feature pipeline via the namespaced package.
+compute_features = _compute_features
 
 
 @dataclass
