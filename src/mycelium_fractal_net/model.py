@@ -98,6 +98,9 @@ def compute_nernst_potential(
     float
         Membrane potential in volts.
     """
+    if concentration_out_molar <= 0 or concentration_in_molar <= 0:
+        raise ValueError("Concentrations must be positive for Nernst potential.")
+
     if z_valence == 0:
         raise ValueError("Ion valence cannot be zero for Nernst potential.")
 

@@ -25,3 +25,14 @@ def test_nernst_zero_valence_rejected() -> None:
             concentration_out_molar=5e-3,
             concentration_in_molar=140e-3,
         )
+
+
+def test_negative_concentrations_rejected() -> None:
+    """Negative concentrations should be treated as invalid input."""
+
+    with pytest.raises(ValueError, match="Concentrations must be positive"):
+        compute_nernst_potential(
+            z_valence=1,
+            concentration_out_molar=-1e-3,
+            concentration_in_molar=140e-3,
+        )
