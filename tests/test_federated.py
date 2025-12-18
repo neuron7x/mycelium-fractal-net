@@ -113,6 +113,21 @@ class TestKrumAlgorithmCorrectness:
 
         assert result.shape == (10,)
 
+    def test_krum_uses_squared_distance_scoring(self) -> None:
+        """Krum scoring should use squared Euclidean distances (Σ||g_i-g_j||²).
+
+        Using raw Euclidean distances would overweight clusters of close points
+        less than intended. This configuration produces a different winner
+        depending on whether distances are squared. The squared formulation
+        should select the gradient at value 2.0.
+        """
+        agg = HierarchicalKrumAggregator(byzantine_fraction=0.0)
+        grads = [torch.tensor([v], dtype=torch.float32) for v in (0.0, 1.0, 2.0, 4.0, 5.0)]
+
+        result = agg.krum_select(grads, num_byzantine=0)
+
+        assert torch.allclose(result, grads[2])
+
     def test_krum_requires_sufficient_neighbors(self) -> None:
         """Krum should reject configurations that violate n > 2f + 2."""
         agg = HierarchicalKrumAggregator()
