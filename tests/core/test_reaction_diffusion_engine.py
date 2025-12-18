@@ -238,6 +238,34 @@ class TestBoundaryConditions:
         
         assert np.isfinite(field).all()
 
+    def test_dirichlet_laplacian_respects_zero_boundary(self) -> None:
+        """Dirichlet Laplacian should treat out-of-domain neighbors as zero."""
+        config = ReactionDiffusionConfig(
+            grid_size=4,
+            boundary_condition=BoundaryCondition.DIRICHLET,
+            random_seed=123,
+        )
+        engine = ReactionDiffusionEngine(config)
+
+        field = np.array(
+            [
+                [1.0, 2.0, 3.0, 4.0],
+                [5.0, 6.0, 7.0, 8.0],
+                [9.0, 10.0, 11.0, 12.0],
+                [13.0, 14.0, 15.0, 16.0],
+            ]
+        )
+
+        laplacian = engine._compute_laplacian(field)
+
+        expected_up = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode="constant")
+        expected_down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant")
+        expected_left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant")
+        expected_right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant")
+        expected = expected_up + expected_down + expected_left + expected_right - 4 * field
+
+        assert np.allclose(laplacian, expected)
+
 
 class TestQuantumJitter:
     """Test stochastic noise term."""

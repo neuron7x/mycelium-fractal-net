@@ -613,10 +613,10 @@ class ReactionDiffusionEngine:
             right[:, -1] = field[:, -1]  # Last column copies itself
         else:  # DIRICHLET
             # Zero value at boundaries
-            up = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant")
-            down = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode="constant")
-            left = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant")
-            right = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant")
+            up = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode="constant")
+            down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant")
+            left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant")
+            right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant")
 
         return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
 
