@@ -15,6 +15,7 @@ Usage:
     >>> from mycelium_fractal_net.security.input_validation import (
     ...     validate_numeric_range,
     ...     sanitize_string,
+    ...     validate_safe_token,
     ...     InputValidator,
     ... )
 
@@ -71,6 +72,8 @@ XSS_PATTERNS: List[Pattern[str]] = [
 
 # Valid API key pattern (alphanumeric with dashes, 20-64 chars)
 API_KEY_PATTERN = re.compile(r"^[a-zA-Z0-9\-_]{20,64}$")
+# Strict “safe token” pattern (alphanumeric plus _ . - :)
+SAFE_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
 
 
 def validate_numeric_range(
@@ -202,6 +205,58 @@ def detect_xss(value: str) -> bool:
         if pattern.search(value):
             return True
     return False
+
+
+def validate_safe_token(
+    value: str,
+    *,
+    field_name: str = "value",
+    max_length: int = 128,
+) -> str:
+    """
+    Validate that a token-like string is free of dangerous characters.
+
+    Accepts only alphanumeric characters plus `_ . : -` and enforces a
+    maximum length to avoid oversized inputs. Rejects characters commonly
+    used in injection payloads such as `<`, `>`, `'`, `"`, `/`, and `\\`.
+
+    Args:
+        value: The string to validate.
+        field_name: Name for error messages.
+        max_length: Maximum allowed length.
+
+    Returns:
+        The validated value.
+
+    Raises:
+        ValidationError: If the value is empty, too long, or contains
+            disallowed characters.
+    """
+    if value is None:
+        raise ValidationError(f"{field_name} is required", field=field_name)
+
+    if not isinstance(value, str):
+        raise ValidationError(f"{field_name} must be a string", field=field_name)
+
+    value = value.strip()
+    if not value:
+        raise ValidationError(f"{field_name} cannot be empty", field=field_name)
+
+    if len(value) > max_length:
+        raise ValidationError(
+            f"{field_name} must be <= {max_length} characters",
+            field=field_name,
+            value=value[:max_length],
+        )
+
+    if not SAFE_TOKEN_PATTERN.match(value):
+        raise ValidationError(
+            f"{field_name} contains invalid characters; only letters, numbers, '_', '.', ':', and '-' are allowed",
+            field=field_name,
+            value=value,
+        )
+
+    return value
 
 
 def validate_api_key_format(api_key: str) -> bool:

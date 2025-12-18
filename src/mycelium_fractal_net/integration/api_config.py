@@ -14,6 +14,7 @@ Environment Variables:
     MFN_API_KEYS_FILE        - Path to a file with newline/CSV/JSON list of keys
     MFN_RATE_LIMIT_REQUESTS  - Max requests per minute (default: 100)
     MFN_RATE_LIMIT_WINDOW    - Rate limit window in seconds (default: 60)
+    MFN_RATE_LIMIT_TRUST_FORWARD_HEADERS - Trust X-Forwarded-For for client identity (default: false)
     MFN_LOG_LEVEL            - Log level: DEBUG, INFO, WARNING, ERROR (default: INFO)
     MFN_LOG_FORMAT           - Log format: json or text (default: json in prod, text in dev)
     MFN_METRICS_ENDPOINT     - Metrics endpoint path (default: /metrics)
@@ -129,12 +130,14 @@ class RateLimitConfig:
         window_seconds: Time window for rate limit counting.
         enabled: Whether rate limiting is enabled.
         per_endpoint_limits: Optional per-endpoint rate limits.
+        trust_forwarded_headers: Whether to trust X-Forwarded-For for client identity.
     """
 
     max_requests: int = 100
     window_seconds: int = 60
     enabled: bool = True
     per_endpoint_limits: Dict[str, int] = field(default_factory=dict)
+    trust_forwarded_headers: bool = False
 
     @classmethod
     def from_env(cls, env: Environment) -> "RateLimitConfig":
@@ -157,6 +160,12 @@ class RateLimitConfig:
         else:
             enabled = env != Environment.DEV
 
+        trust_forwarded_env = os.getenv("MFN_RATE_LIMIT_TRUST_FORWARD_HEADERS", "").lower()
+        if trust_forwarded_env:
+            trust_forwarded_headers = trust_forwarded_env in ("true", "1", "yes")
+        else:
+            trust_forwarded_headers = False
+
         # Per-endpoint limits (can be extended via config files)
         per_endpoint_limits = {
             "/health": 1000,  # Health checks can be frequent
@@ -171,6 +180,7 @@ class RateLimitConfig:
             window_seconds=window_seconds,
             enabled=enabled,
             per_endpoint_limits=per_endpoint_limits,
+            trust_forwarded_headers=trust_forwarded_headers,
         )
 
 

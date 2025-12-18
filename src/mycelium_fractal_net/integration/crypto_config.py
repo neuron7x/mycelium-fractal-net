@@ -10,6 +10,7 @@ Environment Variables:
     MFN_CRYPTO_KEY_SIZE      - Key size in bits: 128, 192, 256 (default: 256)
     MFN_CRYPTO_SIGNATURE_ALG - Signature algorithm: Ed25519 or ECDSA (default: Ed25519)
     MFN_CRYPTO_AUDIT_LOG     - Enable audit logging for crypto operations (default: true)
+    MFN_CRYPTO_MAX_KEYS_PER_USER - Maximum number of server-managed keys allowed (default: 100)
 
 Reference: docs/MFN_CRYPTOGRAPHY.md, Step 4: API Integration & System Compatibility
 """
@@ -36,6 +37,7 @@ class CryptoConfig:
         audit_logging: Whether to log cryptographic operations.
         max_plaintext_size: Maximum plaintext size in bytes (default: 1 MB).
         max_keys_per_user: Maximum stored keys per user (default: 100).
+            Used to prevent unbounded in-memory key creation.
     """
 
     enabled: bool = True
@@ -84,12 +86,21 @@ class CryptoConfig:
         audit_env = os.getenv("MFN_CRYPTO_AUDIT_LOG", "true").lower()
         audit_logging = audit_env in ("true", "1", "yes")
 
+        max_keys_env = os.getenv("MFN_CRYPTO_MAX_KEYS_PER_USER", "")
+        try:
+            max_keys_per_user = int(max_keys_env) if max_keys_env else cls.max_keys_per_user
+            if max_keys_per_user <= 0:
+                max_keys_per_user = cls.max_keys_per_user
+        except ValueError:
+            max_keys_per_user = cls.max_keys_per_user
+
         return cls(
             enabled=enabled,
             cipher_suite=cipher_suite,
             key_size_bits=key_size_bits,
             signature_algorithm=sig_alg,
             audit_logging=audit_logging,
+            max_keys_per_user=max_keys_per_user,
         )
 
 

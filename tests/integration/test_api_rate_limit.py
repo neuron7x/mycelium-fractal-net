@@ -195,6 +195,56 @@ class TestRateLimiter:
         assert retry_after is not None
         assert retry_after > 0
 
+    def test_rate_limiter_ignores_untrusted_forwarded_header(self) -> None:
+        """X-Forwarded-For should not be trusted unless enabled."""
+        from mycelium_fractal_net.integration.api_config import RateLimitConfig
+
+        config = RateLimitConfig(
+            max_requests=2,
+            window_seconds=60,
+            enabled=True,
+            trust_forwarded_headers=False,
+        )
+        limiter = RateLimiter(config)
+
+        class MockRequest:
+            def __init__(self) -> None:
+                self.url = type("obj", (object,), {"path": "/test"})()
+                self.headers = {"X-Forwarded-For": "203.0.113.10"}
+                self.client = type("obj", (object,), {"host": "127.0.0.1"})()
+
+        request = MockRequest()
+        allowed, _, _, _ = limiter.check_rate_limit(request)
+
+        assert allowed is True
+        # Should fall back to client.host instead of spoofed forwarded IP
+        assert "127.0.0.1:/test" in limiter.buckets
+        assert "203.0.113.10:/test" not in limiter.buckets
+
+    def test_rate_limiter_honors_trusted_forwarded_header(self) -> None:
+        """When explicitly enabled, forwarded headers become the client key."""
+        from mycelium_fractal_net.integration.api_config import RateLimitConfig
+
+        config = RateLimitConfig(
+            max_requests=2,
+            window_seconds=60,
+            enabled=True,
+            trust_forwarded_headers=True,
+        )
+        limiter = RateLimiter(config)
+
+        class MockRequest:
+            def __init__(self) -> None:
+                self.url = type("obj", (object,), {"path": "/test"})()
+                self.headers = {"X-Forwarded-For": "203.0.113.10, 10.0.0.5"}
+                self.client = type("obj", (object,), {"host": "127.0.0.1"})()
+
+        request = MockRequest()
+        limiter.check_rate_limit(request)
+
+        assert "203.0.113.10:/test" in limiter.buckets
+        assert "127.0.0.1:/test" not in limiter.buckets
+
     @pytest.mark.parametrize(
         "max_requests, window_seconds",
         [

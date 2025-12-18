@@ -170,11 +170,14 @@ class RateLimiter:
         Returns:
             str: Client identifier key.
         """
-        # Check for forwarded header (behind proxy)
         forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            # Take the first IP in the chain (original client)
-            return str(forwarded.split(",")[0].strip())
+        if self.config.trust_forwarded_headers and forwarded:
+            # Take the first IP in the chain (original client). We intentionally
+            # ignore untrusted forwarded headers unless explicitly enabled to
+            # avoid trivial spoofing of client identity for rate limiting.
+            forwarded_ip = forwarded.split(",")[0].strip()
+            if forwarded_ip:
+                return str(forwarded_ip)
 
         # Fall back to direct client IP
         if request.client:

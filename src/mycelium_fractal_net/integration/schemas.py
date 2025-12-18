@@ -12,7 +12,9 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
+
+from mycelium_fractal_net.security.input_validation import validate_safe_token
 
 # =============================================================================
 # Health Check
@@ -330,14 +332,24 @@ class EncryptRequest(BaseModel):
     )
     key_id: Optional[str] = Field(
         default=None,
-        description="Key identifier for encryption. If not provided, server-managed key is used.",
+        description="Key identifier for encryption. Allowed characters: letters, numbers, '_', '.', ':', '-'.",
         max_length=64,
+        pattern=r"^[A-Za-z0-9_.:-]{1,64}$",
     )
     associated_data: Optional[str] = Field(
         default=None,
         description="Base64-encoded additional authenticated data (AAD)",
         max_length=4096,
     )
+
+    @validator("key_id")
+    def _validate_key_id(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        try:
+            return validate_safe_token(value, field_name="key_id", max_length=64)
+        except Exception as exc:
+            raise ValueError(str(exc)) from exc
 
 
 class EncryptResponse(BaseModel):
@@ -372,14 +384,24 @@ class DecryptRequest(BaseModel):
     )
     key_id: Optional[str] = Field(
         default=None,
-        description="Key identifier for decryption",
+        description="Key identifier for decryption (letters, numbers, '_', '.', ':', '-')",
         max_length=64,
+        pattern=r"^[A-Za-z0-9_.:-]{1,64}$",
     )
     associated_data: Optional[str] = Field(
         default=None,
         description="Base64-encoded AAD used during encryption",
         max_length=4096,
     )
+
+    @validator("key_id")
+    def _validate_key_id(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        try:
+            return validate_safe_token(value, field_name="key_id", max_length=64)
+        except Exception as exc:
+            raise ValueError(str(exc)) from exc
 
 
 class DecryptResponse(BaseModel):
@@ -411,9 +433,19 @@ class SignRequest(BaseModel):
     )
     key_id: Optional[str] = Field(
         default=None,
-        description="Key identifier for signing",
+        description="Key identifier for signing (letters, numbers, '_', '.', ':', '-')",
         max_length=64,
+        pattern=r"^[A-Za-z0-9_.:-]{1,64}$",
     )
+
+    @validator("key_id")
+    def _validate_key_id(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        try:
+            return validate_safe_token(value, field_name="key_id", max_length=64)
+        except Exception as exc:
+            raise ValueError(str(exc)) from exc
 
 
 class SignResponse(BaseModel):
@@ -459,8 +491,9 @@ class VerifyRequest(BaseModel):
     )
     key_id: Optional[str] = Field(
         default=None,
-        description="Key identifier to look up public key",
+        description="Key identifier to look up public key (letters, numbers, '_', '.', ':', '-')",
         max_length=64,
+        pattern=r"^[A-Za-z0-9_.:-]{1,64}$",
     )
 
 
@@ -480,6 +513,15 @@ class VerifyResponse(BaseModel):
     )
     algorithm: str = Field(default="Ed25519", description="Signature algorithm")
 
+    @validator("key_id")
+    def _validate_key_id(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        try:
+            return validate_safe_token(value, field_name="key_id", max_length=64)
+        except Exception as exc:
+            raise ValueError(str(exc)) from exc
+
 
 class KeypairRequest(BaseModel):
     """
@@ -497,9 +539,19 @@ class KeypairRequest(BaseModel):
     )
     key_id: Optional[str] = Field(
         default=None,
-        description="Custom key identifier. Auto-generated if not provided.",
+        description="Custom key identifier. Auto-generated if not provided. Allowed characters: letters, numbers, '_', '.', ':', '-'.",
         max_length=64,
+        pattern=r"^[A-Za-z0-9_.:-]{1,64}$",
     )
+
+    @validator("key_id")
+    def _validate_key_id(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        try:
+            return validate_safe_token(value, field_name="key_id", max_length=64)
+        except Exception as exc:
+            raise ValueError(str(exc)) from exc
 
 
 class KeypairResponse(BaseModel):

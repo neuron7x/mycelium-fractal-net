@@ -469,6 +469,43 @@ class TestKeypairEndpoint:
         )
 
         assert response.status_code == 422  # Validation error
+    
+    def test_key_id_rejects_special_characters(self, client: TestClient) -> None:
+        """Key identifiers must reject dangerous special characters."""
+        response = client.post(
+            "/api/keypair",
+            json={"algorithm": "Ed25519", "key_id": "bad<key>"},
+        )
+
+        assert response.status_code == 422
+        assert "pattern" in response.text.lower()
+
+    def test_generate_respects_key_capacity_limit(self) -> None:
+        """Should reject additional key creation when capacity is reached."""
+        with mock.patch.dict(
+            os.environ,
+            {
+                "MFN_ENV": "dev",
+                "MFN_API_KEY_REQUIRED": "false",
+                "MFN_RATE_LIMIT_ENABLED": "false",
+                "MFN_CRYPTO_ENABLED": "true",
+                "MFN_CRYPTO_MAX_KEYS_PER_USER": "1",
+            },
+            clear=False,
+        ):
+            reset_config()
+            reset_crypto_config()
+            reset_key_store()
+            from api import app
+
+            with TestClient(app) as limited_client:
+                first = limited_client.post("/api/keypair", json={"algorithm": "Ed25519"})
+                assert first.status_code == 200
+
+                second = limited_client.post("/api/keypair", json={"algorithm": "Ed25519"})
+                assert second.status_code == 400
+                detail = second.json().get("detail", "")
+                assert "capacity" in detail.lower()
 
 
 class TestCryptoToggle:

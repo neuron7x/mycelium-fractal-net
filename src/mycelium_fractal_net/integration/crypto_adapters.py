@@ -54,6 +54,31 @@ def _generate_key_id() -> str:
     return f"key_{secrets.token_hex(16)}"
 
 
+def _total_managed_keys(key_store: "KeyStore") -> int:
+    """Count total managed keys across all key stores."""
+    return (
+        len(key_store.encryption_keys)
+        + len(key_store.signature_keys)
+        + len(key_store.ecdh_keys)
+    )
+
+
+def _enforce_key_capacity(key_store: "KeyStore", config: "CryptoConfig") -> None:
+    """
+    Prevent unbounded key creation that could exhaust memory.
+
+    Raises:
+        CryptoAPIError: If the configured limit has been reached.
+    """
+    limit = max(config.max_keys_per_user, 1)
+    current = _total_managed_keys(key_store)
+    if current >= limit:
+        raise CryptoAPIError(
+            f"Managed key capacity reached ({current}/{limit}). "
+            "Rotate or delete unused keys or increase MFN_CRYPTO_MAX_KEYS_PER_USER."
+        )
+
+
 def _log_crypto_operation(
     operation: str,
     key_id: str,
@@ -132,6 +157,7 @@ def encrypt_data_adapter(request: EncryptRequest) -> EncryptResponse:
             key = key_store.encryption_keys[key_id]
         else:
             # Create a new default key
+            _enforce_key_capacity(key_store, config)
             key_id = _generate_key_id()
             key = generate_aes_key(config.key_size_bits // 8)
             key_store.encryption_keys[key_id] = key
@@ -289,6 +315,7 @@ def sign_message_adapter(request: SignRequest) -> SignResponse:
             private_key, public_key = key_store.signature_keys[key_id]
         else:
             # Create a new default signing key
+            _enforce_key_capacity(key_store, config)
             key_id = _generate_key_id()
             keypair = generate_signature_keypair()
             key_store.signature_keys[key_id] = (keypair.private_key, keypair.public_key)
@@ -432,6 +459,7 @@ def generate_keypair_adapter(request: KeypairRequest) -> KeypairResponse:
 
         if algorithm == "Ed25519":
             # Generate Ed25519 signature key pair
+            _enforce_key_capacity(key_store, config)
             sig_keypair = generate_signature_keypair()
             key_store.signature_keys[key_id] = (
                 sig_keypair.private_key,
@@ -445,6 +473,7 @@ def generate_keypair_adapter(request: KeypairRequest) -> KeypairResponse:
 
         elif algorithm == "ECDH":
             # Generate X25519 key exchange key pair
+            _enforce_key_capacity(key_store, config)
             ecdh_keypair = generate_ecdh_keypair()
             key_store.ecdh_keys[key_id] = (
                 ecdh_keypair.private_key,
