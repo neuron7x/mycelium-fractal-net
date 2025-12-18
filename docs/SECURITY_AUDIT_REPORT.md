@@ -18,10 +18,15 @@ This document presents the findings of a comprehensive security audit of the Myc
 | Cryptographic Algorithms | ✅ Secure | Low |
 | Key Exchange (ECDH X25519) | ✅ Implemented | Low |
 | Digital Signatures (Ed25519) | ✅ Implemented | Low |
-| Symmetric Encryption | ⚠️ Custom XOR-based | Medium |
+| Symmetric Encryption | ✅ AES-256-GCM (remediated) | Low |
 | Key Management | ⚠️ No HSM Integration | Medium |
 | Dependencies | ⚠️ Missing cryptography library | Low |
 | API Encryption Endpoints | ⚠️ Not Implemented | Medium |
+
+**Update (remediation):** The symmetric encryption layer now uses
+AES-256-GCM in `src/mycelium_fractal_net/security/encryption.py`, replacing the
+previous XOR-based scheme. Tests were updated to enforce authentication-tag
+validation and strict key sizes.
 
 ---
 
@@ -49,7 +54,7 @@ src/mycelium_fractal_net/
 │   └── signatures.py         # Ed25519 implementation
 └── security/
     ├── __init__.py           # Module exports
-    ├── encryption.py         # Symmetric encryption (XOR-based)
+    ├── encryption.py         # Symmetric encryption (AES-256-GCM)
     ├── input_validation.py   # Input sanitization
     ├── audit.py              # Audit logging
     └── iterations.py         # Security iteration config
@@ -74,15 +79,15 @@ src/mycelium_fractal_net/
 
 | Issue | Location | Risk | Recommendation |
 |-------|----------|------|----------------|
-| XOR-based symmetric encryption | `security/encryption.py` | Medium | Migrate to AES-256-GCM |
+| Legacy XOR-based symmetric encryption (remediated) | `security/encryption.py` | Resolved | Migrated to AES-256-GCM |
 | No AES-256 for production | N/A | Medium | Add AES-256-GCM via `cryptography` |
 | No RSA/ECC for legacy systems | N/A | Low | Consider adding for compatibility |
 
 ### 2.3 Algorithm Security Analysis
 
-**XOR Cipher Weakness (security/encryption.py:97-156):**
+**Legacy XOR Cipher (security/encryption.py, pre-remediation):**
 
-The current encryption implementation uses XOR with a derived key:
+The previous encryption implementation used XOR with a derived key:
 ```python
 def _xor_bytes(data: bytes, key: bytes) -> bytes:
     key_len = len(key)

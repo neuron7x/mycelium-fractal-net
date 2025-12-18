@@ -104,7 +104,7 @@ class TestEncryptDecrypt:
 
         ciphertext = encrypt_data(plaintext, key1)
 
-        with pytest.raises(EncryptionError, match="HMAC verification failed"):
+        with pytest.raises(EncryptionError, match="authentication error"):
             decrypt_data(ciphertext, key2)
 
     def test_decrypt_tampered_data_fails(self) -> None:
@@ -145,7 +145,7 @@ class TestEncryptDecrypt:
 
     def test_encrypt_rejects_short_key(self) -> None:
         """Encryption should fail fast when key length is insufficient."""
-        with pytest.raises(EncryptionError, match="at least 32 bytes"):
+        with pytest.raises(EncryptionError, match="exactly 32 bytes"):
             encrypt_data("data", b"short-key")
 
     def test_encrypt_rejects_wrong_key_type(self) -> None:
@@ -193,5 +193,5 @@ class TestDataEncryptor:
 
     def test_encryptor_rejects_short_custom_key(self) -> None:
         """Custom keys must meet minimum length requirements."""
-        with pytest.raises(EncryptionError, match="at least 32 bytes"):
+        with pytest.raises(EncryptionError, match="exactly 32 bytes"):
             DataEncryptor(key=b"too-short-key")

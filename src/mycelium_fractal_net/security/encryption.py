@@ -1,19 +1,15 @@
 """
 Data encryption utilities for MyceliumFractalNet.
 
-Provides symmetric encryption for sensitive data at rest using a
-key derivation and XOR-based cipher with HMAC authentication.
-Suitable for encrypting configuration secrets and API keys.
-
-NOTE: For high-security production use cases requiring regulatory
-compliance (PCI-DSS, HIPAA), consider using the `cryptography`
-library with Fernet or AES-GCM encryption.
+Implements authenticated encryption using AES-256-GCM from the
+``cryptography`` library. This replaces the previous XOR-based
+scheme, eliminating replay/tampering risks and providing modern
+confidentiality + integrity guarantees.
 
 Security Properties:
-    - PBKDF2 key derivation with 100,000 iterations
-    - SHA256-based cipher key generation
-    - HMAC-SHA256 for authentication and tamper detection
-    - URL-safe base64 encoding
+    - AES-256-GCM (AEAD) with 96-bit nonces and 128-bit tags
+    - URL-safe base64 encoding for transport
+    - Strict 32-byte key requirement to enforce AES-256
 
 Usage:
     >>> from mycelium_fractal_net.security.encryption import (
@@ -31,12 +27,18 @@ Reference: docs/MFN_SECURITY.md
 from __future__ import annotations
 
 import base64
-import hashlib
-import hmac
-import os
-import secrets
+import binascii
 from dataclasses import dataclass
 from typing import Optional, Union
+
+from mycelium_fractal_net.crypto import (
+    AESGCMCipher,
+    AES_KEY_SIZE,
+    GCM_NONCE_SIZE,
+    GCM_TAG_SIZE,
+    SymmetricEncryptionError,
+    generate_aes_key,
+)
 
 
 class EncryptionError(Exception):
@@ -44,75 +46,34 @@ class EncryptionError(Exception):
 
     pass
 
-
-def generate_key() -> bytes:
+def generate_key(length: int = AES_KEY_SIZE) -> bytes:
     """
-    Generate a cryptographically secure encryption key.
+    Generate a cryptographically secure AES key.
 
-    Uses os.urandom for secure random generation.
+    Args:
+        length: Key length in bytes (default: 32 for AES-256).
 
     Returns:
-        bytes: 32-byte encryption key suitable for Fernet.
-
-    Example:
-        >>> key = generate_key()
-        >>> len(key) == 32
-        True
+        bytes: Encryption key of the requested length.
     """
-    return secrets.token_bytes(32)
+
+    try:
+        return generate_aes_key(length)
+    except SymmetricEncryptionError as exc:  # pragma: no cover - validated upstream
+        raise EncryptionError(str(exc)) from exc
 
 
 def _validate_key(key: bytes | bytearray) -> bytes:
-    """
-    Validate that the encryption key is sufficiently strong.
+    """Validate that the encryption key is bytes and AES-256 sized."""
 
-    Args:
-        key: Candidate key material.
-
-    Returns:
-        bytes: Normalized key bytes.
-
-    Raises:
-        EncryptionError: If the key is not bytes-like or too short.
-    """
     if not isinstance(key, (bytes, bytearray)):
         raise EncryptionError("Encryption key must be bytes")
+
     normalized = bytes(key)
-    if len(normalized) < 32:
-        raise EncryptionError("Encryption key must be at least 32 bytes")
+    if len(normalized) != AES_KEY_SIZE:
+        raise EncryptionError(f"Encryption key must be exactly {AES_KEY_SIZE} bytes")
+
     return normalized
-
-
-def _derive_key(key: bytes, salt: bytes) -> bytes:
-    """
-    Derive an encryption key from the master key using PBKDF2.
-
-    Args:
-        key: Master encryption key.
-        salt: Random salt for key derivation.
-
-    Returns:
-        bytes: Derived 32-byte key.
-    """
-    return hashlib.pbkdf2_hmac("sha256", key, salt, iterations=100000, dklen=32)
-
-
-def _xor_bytes(data: bytes, key: bytes) -> bytes:
-    """
-    XOR data with key (repeating key if necessary).
-
-    This is a simple encryption primitive used as part of the
-    encryption scheme. NOT secure on its own.
-
-    Args:
-        data: Data to XOR.
-        key: Key bytes.
-
-    Returns:
-        bytes: XORed result.
-    """
-    key_len = len(key)
-    return bytes(d ^ key[i % key_len] for i, d in enumerate(data))
 
 
 def encrypt_data(
@@ -123,19 +84,15 @@ def encrypt_data(
     """
     Encrypt data using symmetric encryption.
 
-    Uses a simplified encryption scheme based on:
-    - Random 16-byte salt for key derivation
-    - Random 16-byte IV
-    - XOR encryption with derived key
-    - HMAC-SHA256 for authentication
+    Uses AES-256-GCM authenticated encryption.
 
     Args:
         data: Data to encrypt (string or bytes).
-        key: 32-byte encryption key.
+        key: 32-byte AES-256 encryption key.
         encoding: String encoding (default: utf-8).
 
     Returns:
-        str: Base64-encoded ciphertext with salt, IV, and HMAC.
+        str: URL-safe base64-encoded ciphertext including nonce and tag.
 
     Raises:
         EncryptionError: If encryption fails.
@@ -151,31 +108,21 @@ def encrypt_data(
         # Convert string to bytes if needed
         if isinstance(data, str):
             data = data.encode(encoding)
+        elif not isinstance(data, (bytes, bytearray)):
+            raise TypeError("data must be bytes or string")
 
-        # Generate random salt and IV
-        salt = os.urandom(16)
-        iv = os.urandom(16)
+        cipher = AESGCMCipher(key=key)
+        ciphertext = cipher.encrypt(bytes(data))
 
-        # Derive encryption key
-        derived_key = _derive_key(key, salt)
+        # Return URL-safe base64 encoding
+        return base64.urlsafe_b64encode(ciphertext).decode("ascii")
 
-        # Create cipher stream by combining IV with derived key
-        cipher_key = hashlib.sha256(iv + derived_key).digest()
-
-        # Encrypt data using XOR with cipher key
-        encrypted = _xor_bytes(data, cipher_key)
-
-        # Create HMAC for authentication
-        mac = hmac.new(derived_key, salt + iv + encrypted, hashlib.sha256).digest()
-
-        # Combine: salt + iv + encrypted + mac
-        result = salt + iv + encrypted + mac
-
-        # Return base64-encoded result
-        return base64.urlsafe_b64encode(result).decode("ascii")
-
-    except Exception as e:
-        raise EncryptionError(f"Encryption failed: {e}") from e
+    except (TypeError, ValueError) as exc:
+        raise EncryptionError(f"Encryption failed: {exc}") from exc
+    except SymmetricEncryptionError as exc:
+        raise EncryptionError(f"Encryption failed: {exc}") from exc
+    except Exception as exc:  # pragma: no cover - defensive
+        raise EncryptionError(f"Encryption failed: {exc}") from exc
 
 
 def decrypt_data(
@@ -185,8 +132,6 @@ def decrypt_data(
 ) -> str:
     """
     Decrypt data that was encrypted with encrypt_data.
-
-    Verifies HMAC before decryption to prevent tampering.
 
     Args:
         ciphertext: Base64-encoded ciphertext.
@@ -207,41 +152,24 @@ def decrypt_data(
     """
     key = _validate_key(key)
     try:
-        # Decode base64
-        data = base64.urlsafe_b64decode(ciphertext.encode("ascii"))
+        raw_ciphertext = base64.urlsafe_b64decode(ciphertext.encode("ascii"))
 
-        # Minimum size: salt(16) + iv(16) + mac(32) = 64 bytes
-        if len(data) < 64:
-            raise EncryptionError("Invalid ciphertext: too short")
+        # Validate minimum length for AES-GCM (nonce + tag)
+        min_length = GCM_NONCE_SIZE + GCM_TAG_SIZE
+        if len(raw_ciphertext) < min_length:
+            raise EncryptionError("Invalid ciphertext: too short for AES-GCM")
 
-        # Extract components
-        salt = data[:16]
-        iv = data[16:32]
-        mac = data[-32:]
-        encrypted = data[32:-32]
+        cipher = AESGCMCipher(key=key)
+        plaintext_bytes = cipher.decrypt(raw_ciphertext, return_bytes=True)
 
-        # Derive encryption key
-        derived_key = _derive_key(key, salt)
+        return plaintext_bytes.decode(encoding)
 
-        # Verify HMAC
-        expected_mac = hmac.new(
-            derived_key, salt + iv + encrypted, hashlib.sha256
-        ).digest()
-        if not hmac.compare_digest(mac, expected_mac):
-            raise EncryptionError("HMAC verification failed: data may be tampered")
-
-        # Create cipher stream
-        cipher_key = hashlib.sha256(iv + derived_key).digest()
-
-        # Decrypt using XOR
-        decrypted = _xor_bytes(encrypted, cipher_key)
-
-        return decrypted.decode(encoding)
-
-    except EncryptionError:
-        raise
-    except Exception as e:
-        raise EncryptionError(f"Decryption failed: {e}") from e
+    except (binascii.Error, UnicodeDecodeError, ValueError) as exc:
+        raise EncryptionError("Invalid ciphertext encoding") from exc
+    except SymmetricEncryptionError as exc:
+        raise EncryptionError("Decryption failed: authentication error") from exc
+    except Exception as exc:  # pragma: no cover - defensive
+        raise EncryptionError(f"Decryption failed: {exc}") from exc
 
 
 @dataclass
