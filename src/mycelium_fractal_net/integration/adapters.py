@@ -203,7 +203,8 @@ def aggregate_gradients_adapter(
         num_clusters=request.num_clusters,
         byzantine_fraction=request.byzantine_fraction,
     )
-    result = aggregator.aggregate(gradients)
+    rng = ctx.rng
+    result = aggregator.aggregate(gradients, rng=rng)
 
     # Convert to response
     return FederatedAggregateResponse(
