@@ -179,7 +179,10 @@ class HierarchicalKrumAggregator:
             )
 
         flat_grads = torch.stack([g.flatten() for g in gradients])
-        distances = torch.cdist(flat_grads.unsqueeze(0), flat_grads.unsqueeze(0))[0]
+        # Krum scoring uses squared Euclidean distances. Compute the squared
+        # pairwise matrix directly to avoid the unnecessary sqrt from cdist.
+        diffs = flat_grads.unsqueeze(1) - flat_grads.unsqueeze(0)
+        distances = (diffs * diffs).sum(dim=-1)
 
         num_neighbors = max(1, n - num_byzantine - 2)
 
