@@ -140,10 +140,10 @@ def compute_laplacian(
         
     else:  # DIRICHLET
         # Fixed value at boundaries (zero by default)
-        up = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant", constant_values=0)
-        down = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode="constant", constant_values=0)
-        left = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant", constant_values=0)
-        right = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant", constant_values=0)
+        up = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode="constant", constant_values=0)
+        down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant", constant_values=0)
+        left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant", constant_values=0)
+        right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant", constant_values=0)
     
     laplacian = up + down + left + right - 4.0 * field
     
