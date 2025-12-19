@@ -488,7 +488,7 @@ kubectl logs -n mycelium-fractal-net -l app=mycelium-fractal-net
 ### Monitoring
 
 ```bash
-# Check metrics endpoint
+# Check metrics endpoint (default: /metrics, configurable via MFN_METRICS_ENDPOINT)
 curl http://localhost:8000/metrics
 
 # Key metrics to monitor:
@@ -509,7 +509,7 @@ spec:
       app: mycelium-fractal-net
   endpoints:
     - port: http
-      path: /metrics
+      path: /metrics # update if MFN_METRICS_ENDPOINT is customized
 EOF
 ```
 

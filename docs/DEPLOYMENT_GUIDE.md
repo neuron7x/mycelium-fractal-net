@@ -53,6 +53,7 @@ kubectl create configmap mfn-app-env \
   --from-literal=MFN_RATE_LIMIT_WINDOW=60 \
   --from-literal=MFN_CORS_ORIGINS="https://mfn.example.com" \
   --from-literal=MFN_METRICS_ENABLED=true \
+  --from-literal=MFN_METRICS_ENDPOINT=/metrics \
   --from-literal=MFN_LOG_FORMAT=json \
   --from-literal=MFN_LOG_LEVEL=INFO \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -72,12 +73,12 @@ kubectl -n mycelium-fractal-net logs deploy/mycelium-fractal-net -f
 
 Health expectations:
 - `startupProbe` and `livenessProbe` target `/health`
-- `ServiceMonitor` scrapes `/metrics` on port `http`
+- `ServiceMonitor` scrapes the configured metrics path (default: `/metrics`) on port `http`
 - Ingress publishes HTTPS at `https://mfn.example.com/` (update host as needed)
 
 ## 5) Observability and rate limiting
 
-- **Metrics**: Prometheus-compatible metrics are exposed via `/metrics` and scraped by `ServiceMonitor mfn-metrics`.
+- **Metrics**: Prometheus-compatible metrics are exposed via `MFN_METRICS_ENDPOINT` (default: `/metrics`) and scraped by `ServiceMonitor mfn-metrics`.
 - **Logging**: Structured JSON logs include `X-Request-ID` for correlation.
 - **Rate limiting**: Defaults to 100 req/min with a 60s window. Adjust `MFN_RATE_LIMIT_REQUESTS` and `MFN_RATE_LIMIT_WINDOW` in `mfn-app-env`.
 - **Headers**: Rate-limit headers (`X-RateLimit-*`) and request ID (`X-Request-ID`) are returned on protected routes.
@@ -94,4 +95,3 @@ Health expectations:
 - **HPA** targets 70% CPU / 80% memory utilization across replicas.
 - **Pod anti-affinity** keeps replicas on different nodes; adjust if your cluster has fewer nodes.
 - For controlled rollouts: `kubectl rollout status deploy/mycelium-fractal-net` and `kubectl rollout undo deploy/mycelium-fractal-net`.
-
