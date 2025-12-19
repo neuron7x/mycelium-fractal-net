@@ -104,6 +104,7 @@ jobs:
         run: pytest tests/security/ -v --tb=short
 
   test:
+    name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -140,6 +141,55 @@ jobs:
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  config-scan:
+    name: Configuration Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy config scan
+        uses: aquasecurity/trivy-action@v0.24.0
+        with:
+          scan-type: config
+          hide-progress: true
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
 
   validate:
     runs-on: ubuntu-latest
@@ -300,3 +350,90 @@ jobs:
             exit 1
           fi
           echo "✓ No excluded runtime packages in wheel"
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - dependency-review
+      - lint
+      - security
+      - test
+      - codeql
+      - secrets-scan
+      - config-scan
+      - validate
+      - benchmark
+      - scientific-validation
+      - scalability-test
+      - packaging
+    permissions:
+      contents: read
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+      SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      NOTIFY_EMAIL_TO: ${{ secrets.NOTIFY_EMAIL_TO }}
+      NOTIFY_EMAIL_FROM: ${{ secrets.NOTIFY_EMAIL_FROM }}
+    steps:
+      - name: Summarize workflow result
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') }}" = "true" ]; then
+            echo "WORKFLOW_STATUS=failed" >> $GITHUB_ENV
+          elif [ "${{ contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "WORKFLOW_STATUS=cancelled" >> $GITHUB_ENV
+          else
+            echo "WORKFLOW_STATUS=success" >> $GITHUB_ENV
+          fi
+      - name: Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "CI ${{
+              env.WORKFLOW_STATUS }} for ${{
+              github.repository }} on ${{
+              github.ref_name }} (<${{
+              github.server_url }}/${{
+              github.repository }}/actions/runs/${{
+              github.run_id }}|View run>)"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+      - name: Microsoft Teams notification
+        if: env.TEAMS_WEBHOOK_URL != ''
+        uses: skitionek/notify-microsoft-teams@v1.0.0
+        with:
+          webhook_url: ${{ env.TEAMS_WEBHOOK_URL }}
+          summary: "CI ${{
+            env.WORKFLOW_STATUS }} for ${{
+            github.repository }}"
+          title: "CI ${{
+            env.WORKFLOW_STATUS }}: ${{
+            github.ref_name }}"
+          text: "Run: ${{
+            github.server_url }}/${{
+            github.repository }}/actions/runs/${{
+            github.run_id }}"
+      - name: Email notification
+        if: env.SMTP_SERVER != '' && env.NOTIFY_EMAIL_TO != '' && env.NOTIFY_EMAIL_FROM != ''
+        uses: dawidd6/action-send-mail@v4
+        with:
+          server_address: ${{ env.SMTP_SERVER }}
+          server_port: 587
+          username: ${{ env.SMTP_USERNAME }}
+          password: ${{ env.SMTP_PASSWORD }}
+          subject: "CI ${{
+            env.WORKFLOW_STATUS }} for ${{
+            github.repository }} (${{
+            github.ref_name }})"
+          to: ${{ env.NOTIFY_EMAIL_TO }}
+          from: ${{ env.NOTIFY_EMAIL_FROM }}
+          secure: true
+          body: |
+            CI ${{ env.WORKFLOW_STATUS }} for ${{ github.repository }} on ${{ github.ref_name }}.
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
