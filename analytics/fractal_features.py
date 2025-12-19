@@ -647,6 +647,10 @@ def compute_features(
     elif field_snapshots.ndim == 3:
         # History (T, N, N)
         history = field_snapshots
+        if history.shape[0] == 0:
+            raise ValueError(
+                "field_snapshots history must contain at least one snapshot"
+            )
         field = history[-1]  # Use final state for static features
     else:
         raise ValueError(
