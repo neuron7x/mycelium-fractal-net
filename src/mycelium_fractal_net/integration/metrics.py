@@ -173,12 +173,12 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             "/nernst",
             "/federated/aggregate",
             metrics_path,
+            "/metrics" if metrics_path != "/metrics" else None,
             "/docs",
             "/redoc",
             "/openapi.json",
         ]
-
-        for endpoint in known_endpoints:
+        for endpoint in [path for path in known_endpoints if path]:
             if path == endpoint or path.startswith(endpoint + "/"):
                 return endpoint
 

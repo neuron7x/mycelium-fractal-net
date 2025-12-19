@@ -489,3 +489,14 @@ class TestRateLimitConfig:
         assert "/validate" in config.per_endpoint_limits
         # Health should have higher limit than validate
         assert config.per_endpoint_limits["/health"] > config.per_endpoint_limits["/validate"]
+
+    def test_metrics_endpoint_limit_is_customizable(self) -> None:
+        """Custom metrics endpoints should be tracked for rate limiting."""
+        from mycelium_fractal_net.integration.api_config import (
+            Environment,
+            RateLimitConfig,
+        )
+
+        with mock.patch.dict(os.environ, {"MFN_METRICS_ENDPOINT": "stats/metrics"}):
+            config = RateLimitConfig.from_env(Environment.PROD)
+            assert "/stats/metrics" in config.per_endpoint_limits

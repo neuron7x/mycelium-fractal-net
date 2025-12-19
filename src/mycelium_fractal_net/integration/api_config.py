@@ -39,6 +39,21 @@ class Environment(str, Enum):
     PROD = "prod"
 
 
+def _normalize_endpoint_path(value: str, default: str) -> str:
+    """Normalize endpoint paths to ensure leading slash and no trailing slash."""
+    raw = (value or "").strip()
+    if not raw:
+        raw = default
+
+    if not raw.startswith("/"):
+        raw = f"/{raw}"
+
+    if raw != "/" and raw.endswith("/"):
+        raw = raw.rstrip("/")
+
+    return raw
+
+
 @dataclass
 class AuthConfig:
     """
@@ -157,9 +172,15 @@ class RateLimitConfig:
         else:
             enabled = env != Environment.DEV
 
+        metrics_endpoint = _normalize_endpoint_path(
+            os.getenv("MFN_METRICS_ENDPOINT", "/metrics"),
+            "/metrics",
+        )
+
         # Per-endpoint limits (can be extended via config files)
         per_endpoint_limits = {
             "/health": 1000,  # Health checks can be frequent
+            metrics_endpoint: 1000,  # Metrics scraping can be frequent
             "/validate": 50,  # Validation is more expensive
             "/simulate": 50,  # Simulation is expensive
             "/nernst": 200,  # Nernst is lightweight
@@ -248,7 +269,8 @@ class MetricsConfig:
         include_in_auth_env = os.getenv("MFN_METRICS_INCLUDE_IN_AUTH", "false").lower()
         include_in_auth = include_in_auth_env in ("true", "1", "yes")
 
-        endpoint = os.getenv("MFN_METRICS_ENDPOINT", cls.endpoint)
+        endpoint_env = os.getenv("MFN_METRICS_ENDPOINT", cls.endpoint)
+        endpoint = _normalize_endpoint_path(endpoint_env, cls.endpoint)
 
         return cls(
             enabled=enabled,
@@ -281,7 +303,8 @@ class APIConfig:
 
     def __post_init__(self) -> None:
         """Align authentication config with metrics exposure settings."""
-        metrics_path = self.metrics.endpoint
+        metrics_path = _normalize_endpoint_path(self.metrics.endpoint, "/metrics")
+        self.metrics.endpoint = metrics_path
         public_endpoints = [
             endpoint
             for endpoint in self.auth.public_endpoints
@@ -296,7 +319,11 @@ class APIConfig:
         else:
             # Maintain metrics as public when authentication is not required
             public_endpoints.append(metrics_path)
-            self.auth.public_endpoints = public_endpoints
+            deduped: List[str] = []
+            for endpoint in public_endpoints:
+                if endpoint not in deduped:
+                    deduped.append(endpoint)
+            self.auth.public_endpoints = deduped
 
     @classmethod
     def from_env(cls) -> "APIConfig":

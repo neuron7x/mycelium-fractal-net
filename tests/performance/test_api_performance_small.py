@@ -19,7 +19,7 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 
-from mycelium_fractal_net.integration import reset_config
+from mycelium_fractal_net.integration import get_api_config, reset_config
 
 
 @pytest.fixture(autouse=True)
@@ -245,7 +245,7 @@ class TestAPIStress:
                     "concentration_in_molar": 140e-3,
                 },
             ),
-            ("GET", "/metrics", None),
+            ("GET", get_api_config().metrics.endpoint, None),
         ]
 
         errors = 0

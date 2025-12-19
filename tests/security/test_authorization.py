@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 
 from mycelium_fractal_net.integration import (
     API_KEY_HEADER,
+    get_api_config,
     reset_config,
 )
 
@@ -234,5 +235,5 @@ class TestAPISecurityCompliance:
         assert response.status_code == 200
 
         # Metrics
-        response = secured_client.get("/metrics")
+        response = secured_client.get(get_api_config().metrics.endpoint)
         assert response.status_code == 200
