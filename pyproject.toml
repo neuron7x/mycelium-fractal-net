@@ -10,7 +10,7 @@ license = { text = "MIT" }
 keywords = ["neuroscience", "fractal", "mycelium", "simulation", "nernst", "LLM-tools"]
 
 dependencies = [
-  "numpy==2.3.5",
+  "numpy==1.26.4",
   "sympy==1.14.0",
   "torch==2.9.1",
   "pydantic==2.12.5",
