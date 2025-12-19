@@ -52,6 +52,7 @@ from .api_config import (
     Environment,
     LoggingConfig,
     MetricsConfig,
+    PersistenceConfig,
     RateLimitConfig,
     get_api_config,
     reset_config,
@@ -137,6 +138,10 @@ from .publishers import (
 from .rate_limiter import (
     RateLimiter,
     RateLimitMiddleware,
+)
+from .persistence import (
+    PersistenceEvent,
+    ResultStore,
 )
 from .schemas import (
     DecryptRequest,
@@ -236,6 +241,7 @@ __all__ = [
     "RateLimitConfig",
     "LoggingConfig",
     "MetricsConfig",
+    "PersistenceConfig",
     "APIConfig",
     "get_api_config",
     "reset_config",
@@ -253,6 +259,9 @@ __all__ = [
     # Rate Limiting
     "RateLimiter",
     "RateLimitMiddleware",
+    # Persistence
+    "ResultStore",
+    "PersistenceEvent",
     # Metrics
     "MetricsMiddleware",
     "metrics_endpoint",

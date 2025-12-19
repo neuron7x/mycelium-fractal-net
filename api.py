@@ -30,11 +30,16 @@ Environment Variables:
     MFN_API_KEY_REQUIRED - Whether API key auth is required (default: false in dev)
     MFN_API_KEY          - Primary API key for authentication
     MFN_API_KEYS         - Comma-separated list of valid API keys
+    MFN_PUBLIC_ENDPOINTS - Comma-separated list of public endpoints
+    MFN_PUBLIC_DOCS      - Whether API docs are public outside dev (default: false)
     MFN_RATE_LIMIT_REQUESTS - Max requests per minute (default: 100)
     MFN_RATE_LIMIT_ENABLED  - Enable rate limiting (default: false in dev)
+    MFN_TRUST_PROXY_HEADERS - Trust X-Forwarded-For for rate limiting (default: false)
     MFN_LOG_LEVEL        - Log level: DEBUG, INFO, WARNING, ERROR (default: INFO)
     MFN_LOG_FORMAT       - Log format: json or text (default: text in dev)
     MFN_METRICS_ENABLED  - Enable Prometheus metrics (default: true)
+    MFN_RESULTS_ENABLED  - Persist API result summaries to disk (default: false)
+    MFN_RESULTS_PATH     - JSONL path for persisted results
 
 Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-OBS-001, MFN-LOG-001, MFN-API-STREAMING
 """
@@ -69,6 +74,7 @@ from mycelium_fractal_net.integration import (
     MetricsMiddleware,
     NernstRequest,
     NernstResponse,
+    ResultStore,
     RateLimitMiddleware,
     RequestIDMiddleware,
     RequestLoggingMiddleware,
@@ -110,6 +116,38 @@ from mycelium_fractal_net.integration import (
 # Initialize logging
 setup_logging()
 logger = get_logger("api")
+result_store = ResultStore()
+
+
+def _persist_result(
+    endpoint: str,
+    http_request: Request,
+    request_payload: object,
+    response_payload: object,
+) -> None:
+    if not result_store.enabled:
+        return
+
+    try:
+        request_body = (
+            request_payload.model_dump()
+            if hasattr(request_payload, "model_dump")
+            else request_payload
+        )
+        response_body = (
+            response_payload.model_dump()
+            if hasattr(response_payload, "model_dump")
+            else response_payload
+        )
+        result_store.record(
+            endpoint=endpoint,
+            method=http_request.method,
+            request_id=http_request.headers.get(REQUEST_ID_HEADER),
+            request_payload=request_body,
+            response_payload=response_body,
+        )
+    except Exception as exc:  # pragma: no cover - best-effort persistence
+        logger.warning(f"Result persistence failed: {exc}")
 
 
 def _get_cors_origins() -> List[str]:
@@ -247,33 +285,39 @@ async def metrics_fallback(path: str, request: Request) -> Response:
 
 
 @app.post("/validate", response_model=ValidateResponse)
-async def validate(request: ValidateRequest) -> ValidateResponse:
+async def validate(request: ValidateRequest, http_request: Request) -> ValidateResponse:
     """Run validation cycle and return metrics."""
     try:
         ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
-        return run_validation_adapter(request, ctx)
+        response = run_validation_adapter(request, ctx)
+        _persist_result("/validate", http_request, request, response)
+        return response
     except Exception as e:
         logger.error(f"Validation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/simulate", response_model=SimulateResponse)
-async def simulate(request: SimulateRequest) -> SimulateResponse:
+async def simulate(request: SimulateRequest, http_request: Request) -> SimulateResponse:
     """Simulate mycelium field."""
     try:
         ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
-        return run_simulation_adapter(request, ctx)
+        response = run_simulation_adapter(request, ctx)
+        _persist_result("/simulate", http_request, request, response)
+        return response
     except Exception as e:
         logger.error(f"Simulation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/nernst", response_model=NernstResponse)
-async def nernst(request: NernstRequest) -> NernstResponse:
+async def nernst(request: NernstRequest, http_request: Request) -> NernstResponse:
     """Compute Nernst potential."""
     try:
         ctx = ServiceContext(mode=ExecutionMode.API)
-        return compute_nernst_adapter(request, ctx)
+        response = compute_nernst_adapter(request, ctx)
+        _persist_result("/nernst", http_request, request, response)
+        return response
     except Exception as e:
         logger.error(f"Nernst computation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -282,11 +326,14 @@ async def nernst(request: NernstRequest) -> NernstResponse:
 @app.post("/federated/aggregate", response_model=FederatedAggregateResponse)
 async def aggregate_gradients(
     request: FederatedAggregateRequest,
+    http_request: Request,
 ) -> FederatedAggregateResponse:
     """Aggregate gradients using hierarchical Krum."""
     try:
         ctx = ServiceContext(mode=ExecutionMode.API)
-        return aggregate_gradients_adapter(request, ctx)
+        response = aggregate_gradients_adapter(request, ctx)
+        _persist_result("/federated/aggregate", http_request, request, response)
+        return response
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

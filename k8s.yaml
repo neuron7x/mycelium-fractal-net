@@ -201,8 +201,10 @@ data:
   MFN_RATE_LIMIT_ENABLED: "true"
   MFN_RATE_LIMIT_REQUESTS: "100"
   MFN_RATE_LIMIT_WINDOW: "60"
+  MFN_TRUST_PROXY_HEADERS: "true"
   MFN_LOG_FORMAT: "json"
   MFN_LOG_LEVEL: "INFO"
+  MFN_PUBLIC_DOCS: "false"
   MFN_METRICS_ENABLED: "true"
   MFN_METRICS_ENDPOINT: "/metrics"
   MFN_METRICS_INCLUDE_IN_AUTH: "false"
@@ -229,20 +231,10 @@ data:
     }
 ---
 # Secret for API keys and sensitive configuration
-# Recommended: create the secret out-of-band (CI/CD or secret manager), e.g.:
+# Create the secret out-of-band (CI/CD or secret manager), e.g.:
 #   kubectl create secret generic mfn-secrets \
 #     --from-literal=api-key=$(openssl rand -base64 32) \
 #     -n mycelium-fractal-net
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mfn-secrets
-  namespace: mycelium-fractal-net
-type: Opaque
-stringData:
-  # Set a strong value before deployment; leave blank to force override in CI/CD or secret manager
-  api-key: ""
-  api-keys: ""
 ---
 # Ingress for external HTTP(S) access
 # Note: Requires an ingress controller (nginx, traefik, etc.)

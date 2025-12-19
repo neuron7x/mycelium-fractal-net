@@ -12,11 +12,16 @@ Environment Variables:
     MFN_API_KEY_FILE         - Path to a file containing the primary API key
     MFN_API_KEYS             - Comma-separated list of valid API keys
     MFN_API_KEYS_FILE        - Path to a file with newline/CSV/JSON list of keys
+    MFN_PUBLIC_ENDPOINTS     - Comma-separated public endpoints override
+    MFN_PUBLIC_DOCS          - Whether /docs, /redoc, /openapi.json are public
     MFN_RATE_LIMIT_REQUESTS  - Max requests per minute (default: 100)
     MFN_RATE_LIMIT_WINDOW    - Rate limit window in seconds (default: 60)
+    MFN_TRUST_PROXY_HEADERS  - Trust X-Forwarded-For for client IP (default: false)
     MFN_LOG_LEVEL            - Log level: DEBUG, INFO, WARNING, ERROR (default: INFO)
     MFN_LOG_FORMAT           - Log format: json or text (default: json in prod, text in dev)
     MFN_METRICS_ENDPOINT     - Metrics endpoint path (default: /metrics)
+    MFN_RESULTS_ENABLED      - Persist API results to disk (default: false)
+    MFN_RESULTS_PATH         - JSONL path for persisted results
 
 Reference: docs/MFN_BACKLOG.md#MFN-API-001, MFN-API-002, MFN-LOG-001
 """
@@ -67,9 +72,7 @@ class AuthConfig:
 
     api_key_required: bool = False
     api_keys: List[str] = field(default_factory=list)
-    public_endpoints: List[str] = field(
-        default_factory=lambda: ["/health", "/metrics", "/docs", "/redoc", "/openapi.json"]
-    )
+    public_endpoints: List[str] = field(default_factory=lambda: ["/health", "/metrics"])
 
     @classmethod
     def from_env(cls, env: Environment) -> "AuthConfig":
@@ -128,9 +131,24 @@ class AuthConfig:
         if env == Environment.DEV and not api_keys:
             api_keys.append("dev-key-for-testing")
 
+        public_endpoints_env = os.getenv("MFN_PUBLIC_ENDPOINTS", "").strip()
+        public_docs_env = os.getenv("MFN_PUBLIC_DOCS", "").lower()
+
+        if public_endpoints_env:
+            public_endpoints = [
+                endpoint.strip()
+                for endpoint in public_endpoints_env.split(",")
+                if endpoint.strip()
+            ]
+        else:
+            public_endpoints = ["/health", "/metrics"]
+            if env == Environment.DEV or public_docs_env in ("true", "1", "yes"):
+                public_endpoints.extend(["/docs", "/redoc", "/openapi.json"])
+
         return cls(
             api_key_required=api_key_required,
             api_keys=api_keys,
+            public_endpoints=public_endpoints,
         )
 
 
@@ -150,6 +168,7 @@ class RateLimitConfig:
     window_seconds: int = 60
     enabled: bool = True
     per_endpoint_limits: Dict[str, int] = field(default_factory=dict)
+    trust_proxy_headers: bool = False
 
     @classmethod
     def from_env(cls, env: Environment) -> "RateLimitConfig":
@@ -177,6 +196,12 @@ class RateLimitConfig:
             "/metrics",
         )
 
+        trust_proxy_headers = os.getenv("MFN_TRUST_PROXY_HEADERS", "").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+
         # Per-endpoint limits (can be extended via config files)
         per_endpoint_limits = {
             "/health": 1000,  # Health checks can be frequent
@@ -192,6 +217,7 @@ class RateLimitConfig:
             window_seconds=window_seconds,
             enabled=enabled,
             per_endpoint_limits=per_endpoint_limits,
+            trust_proxy_headers=trust_proxy_headers,
         )
 
 
@@ -280,6 +306,27 @@ class MetricsConfig:
 
 
 @dataclass
+class PersistenceConfig:
+    """
+    API result persistence configuration.
+
+    Attributes:
+        enabled: Whether to persist API results.
+        results_path: JSONL file path for persisted results.
+    """
+
+    enabled: bool = False
+    results_path: str = "data/api_results.jsonl"
+
+    @classmethod
+    def from_env(cls) -> "PersistenceConfig":
+        enabled_env = os.getenv("MFN_RESULTS_ENABLED", "false").lower()
+        enabled = enabled_env in ("true", "1", "yes")
+        results_path = os.getenv("MFN_RESULTS_PATH", cls.results_path)
+        return cls(enabled=enabled, results_path=results_path)
+
+
+@dataclass
 class APIConfig:
     """
     Complete API configuration.
@@ -293,6 +340,7 @@ class APIConfig:
         rate_limit: Rate limiting configuration.
         logging: Logging configuration.
         metrics: Metrics configuration.
+        persistence: Result persistence configuration.
     """
 
     env: Environment = Environment.DEV
@@ -300,6 +348,7 @@ class APIConfig:
     rate_limit: RateLimitConfig = field(default_factory=RateLimitConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     metrics: MetricsConfig = field(default_factory=MetricsConfig)
+    persistence: PersistenceConfig = field(default_factory=PersistenceConfig)
 
     def __post_init__(self) -> None:
         """Align authentication config with metrics exposure settings."""
@@ -345,6 +394,7 @@ class APIConfig:
             rate_limit=RateLimitConfig.from_env(env),
             logging=LoggingConfig.from_env(env),
             metrics=MetricsConfig.from_env(env),
+            persistence=PersistenceConfig.from_env(),
         )
 
 
@@ -377,6 +427,7 @@ __all__ = [
     "RateLimitConfig",
     "LoggingConfig",
     "MetricsConfig",
+    "PersistenceConfig",
     "APIConfig",
     "get_api_config",
     "reset_config",

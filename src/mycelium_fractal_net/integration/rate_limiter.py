@@ -2,7 +2,8 @@
 Rate limiting middleware for MyceliumFractalNet API.
 
 Implements in-memory rate limiting to prevent API abuse.
-Uses a token bucket algorithm with configurable limits per endpoint.
+Uses a token bucket algorithm with configurable limits per endpoint and
+optional trusted-proxy header support.
 
 Note: In-memory rate limiting does not persist across restarts and
 does not share state between multiple instances. For production
@@ -170,11 +171,11 @@ class RateLimiter:
         Returns:
             str: Client identifier key.
         """
-        # Check for forwarded header (behind proxy)
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            # Take the first IP in the chain (original client)
-            return str(forwarded.split(",")[0].strip())
+        if self.config.trust_proxy_headers:
+            forwarded = request.headers.get("X-Forwarded-For", "")
+            if forwarded:
+                # Take the first IP in the chain (original client)
+                return str(forwarded.split(",")[0].strip())
 
         # Fall back to direct client IP
         if request.client:
