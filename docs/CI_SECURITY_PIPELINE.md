@@ -34,7 +34,7 @@ Set **Require branches to be up to date** and **Require pull request reviews bef
 | Unit/integration tests | Pytest matrix | The `test` job exercises the full suite with coverage across Python 3.10–3.12. |
 | Validation/benchmarks | Domain validations and benchmarks | See `validate`, `benchmark`, `scientific-validation`, `scalability-test`, and `packaging` jobs. |
 
-Secrets scanning walks the full git history of the pull request branch and uploads SARIF results to GitHub code scanning. Dependency audits check both `requirements.txt` and `pyproject.toml`.
+Secrets scanning walks the full git history of the pull request branch and uploads SARIF results to GitHub code scanning. Dependency audits check both `requirements.txt` and `pyproject.toml` (via `pip-audit --project`), and strict mode rejects builds on findings.
 If Gitleaks produces no SARIF (e.g., no findings), an empty SARIF is generated and stored as an artifact to guarantee uploads succeed for compliance visibility. CodeQL actions are pinned to v4 to avoid deprecation.
 
 ## Notifications
