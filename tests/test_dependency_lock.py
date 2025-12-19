@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 try:
-    import tomllib  # type: ignore[assignment]
+    import tomllib
 except ModuleNotFoundError:  # Python <3.11
-    import tomli as tomllib  # type: ignore[assignment, no-redef]
+    import tomli as tomllib
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 

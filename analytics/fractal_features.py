@@ -286,7 +286,7 @@ def compute_fractal_features(
 
     Parameters
     ----------
-    field : NDArray
+    field : FloatArray
         2D field in Volts.
     config : FeatureConfig
         Feature configuration.
