@@ -12,6 +12,7 @@ This guide helps you diagnose and resolve common issues with MyceliumFractalNet.
 - [Simulation Issues](#simulation-issues)
 - [Docker & Kubernetes](#docker--kubernetes)
 - [Testing Issues](#testing-issues)
+- [FAQ](#faq)
 
 ---
 
@@ -592,6 +593,44 @@ python mycelium_fractal_net_v4_1.py --mode validate
 
 ---
 
+## FAQ
+
+**Q: What is the fastest way to confirm my installation works?**  
+A: Run the validate mode and confirm you get a JSON response without errors:
+```bash
+python mycelium_fractal_net_v4_1.py --mode validate
+```
+
+**Q: Which config should I use for a quick smoke test?**  
+A: Use the demo configuration or the smallest built-in config:
+```python
+from mycelium_fractal_net import make_simulation_config_demo, make_simulation_config
+config = make_simulation_config_demo()  # Known-good defaults
+config_small = make_simulation_config("small")
+```
+
+**Q: How do I turn off rate limiting in development?**  
+A: Disable it via env var:
+```bash
+export MFN_RATE_LIMIT_ENABLED="false"
+```
+
+**Q: Where do I see structured logs with request IDs?**  
+A: Run the API with debug logging and look for `request_id` fields:
+```bash
+export MFN_LOG_LEVEL=DEBUG
+uvicorn api:app --log-level debug
+```
+
+**Q: What should I include when reporting a bug?**  
+A: Provide the error message, reproduction steps, config used, and environment info:
+```bash
+python --version
+pip freeze | rg "mycelium|torch|fastapi"
+```
+
+---
+
 ## Common Error Messages
 
 | Error | Likely Cause | Quick Fix |
@@ -606,5 +645,5 @@ python mycelium_fractal_net_v4_1.py --mode validate
 
 ---
 
-**Last Updated**: 2025-12-03  
+**Last Updated**: 2025-12-04  
 **Version**: 4.1.0
