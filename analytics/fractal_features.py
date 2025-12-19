@@ -278,7 +278,7 @@ def _box_counting_dimension(
 
 
 def compute_fractal_features(
-        field: FloatArray,
+    field: FloatArray,
     config: FeatureConfig,
 ) -> Tuple[float, float]:
     """
@@ -309,7 +309,7 @@ def compute_fractal_features(
 
 
 def compute_basic_stats(
-        field: FloatArray,
+    field: FloatArray,
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Compute basic field statistics.
@@ -347,7 +347,7 @@ def compute_basic_stats(
 
 
 def compute_temporal_features(
-        history: FloatArray,
+    history: FloatArray,
     config: FeatureConfig,
 ) -> Tuple[float, float, int, float]:
     """
@@ -562,7 +562,7 @@ def _count_clusters_8conn(
 
 
 def compute_structural_features(
-        field: FloatArray,
+    field: FloatArray,
     config: FeatureConfig,
 ) -> Tuple[float, int, int, int, int, float]:
     """
@@ -614,7 +614,7 @@ def compute_structural_features(
 
 
 def compute_features(
-        field_snapshots: FloatArray,
+    field_snapshots: FloatArray,
     config: FeatureConfig | None = None,
 ) -> FeatureVector:
     """
