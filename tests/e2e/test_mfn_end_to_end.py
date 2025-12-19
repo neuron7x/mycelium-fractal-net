@@ -122,26 +122,22 @@ class TestFullPipelineDemo:
             assert actual_path.exists(), f"Dataset file not created at {actual_path}"
 
             # Verify dataset contents (if pandas available)
-            try:
-                import pandas as pd
+            pd = pytest.importorskip("pandas")
 
-                df = pd.read_parquet(actual_path)
-                assert len(df) == num_samples, f"Expected {num_samples} rows, got {len(df)}"
+            df = pd.read_parquet(actual_path)
+            assert len(df) == num_samples, f"Expected {num_samples} rows, got {len(df)}"
 
-                # Verify no NaN in feature columns
-                feature_cols = [
-                    "D_box",
-                    "V_mean",
-                    "V_std",
-                    "f_active",
-                ]
-                for col in feature_cols:
-                    if col in df.columns:
-                        assert not df[col].isna().any(), f"NaN found in column {col}"
-                        assert not np.isinf(df[col]).any(), f"Inf found in column {col}"
-
-            except ImportError:
-                pass  # pandas not available, skip detailed verification
+            # Verify no NaN in feature columns
+            feature_cols = [
+                "D_box",
+                "V_mean",
+                "V_std",
+                "f_active",
+            ]
+            for col in feature_cols:
+                if col in df.columns:
+                    assert not df[col].isna().any(), f"NaN found in column {col}"
+                    assert not np.isinf(df[col]).any(), f"Inf found in column {col}"
 
 
 class TestPipelineWithDifferentConfigs:
