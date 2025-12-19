@@ -55,6 +55,12 @@ exclude = ["tests*", "docs*", "examples*", "experiments*"]
 addopts = "-q --disable-warnings"
 testpaths = ["tests"]
 pythonpath = [".", "src"]
+markers = [
+    "deterministic: mark test as requiring deterministic RNG",
+    "slow: mark test as slow running",
+    "integration: mark test as integration test",
+    "security: mark test as security-related",
+]
 
 [tool.ruff]
 line-length = 100
@@ -77,3 +83,11 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
