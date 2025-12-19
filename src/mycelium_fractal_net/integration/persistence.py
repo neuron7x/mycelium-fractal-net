@@ -28,8 +28,6 @@ REDACT_KEYS = {
     "token",
     "password",
     "private_key",
-    "key",
-    "key_id",
     "ciphertext",
     "plaintext",
     "signature",

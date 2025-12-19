@@ -13,3 +13,4 @@ All notable changes to this project will be documented in this file.
 
 ### Observability
 - Added file-based persistence for API request/response summaries (JSONL) for auditability.
+- Tuned persistence redaction rules to preserve key identifiers while masking secrets.
