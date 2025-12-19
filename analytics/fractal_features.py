@@ -316,7 +316,7 @@ def compute_basic_stats(
 
     Parameters
     ----------
-    field : NDArray
+    field : FloatArray
         2D field in Volts.
 
     Returns
@@ -570,7 +570,7 @@ def compute_structural_features(
 
     Parameters
     ----------
-    field : NDArray
+    field : FloatArray
         2D field in Volts.
     config : FeatureConfig
         Feature configuration.
