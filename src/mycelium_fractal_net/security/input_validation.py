@@ -275,6 +275,13 @@ class InputValidator:
         Raises:
             ValidationError: If validation fails in strict mode.
         """
+        if not isinstance(value, str):
+            raise ValidationError(
+                f"{field_name} must be a string",
+                field=field_name,
+                value=type(value).__name__,
+            )
+
         if not allow_empty and not value:
             raise ValidationError(
                 f"{field_name} cannot be empty",

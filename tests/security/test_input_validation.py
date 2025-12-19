@@ -222,6 +222,12 @@ class TestInputValidator:
         result = validator.validate_string("", allow_empty=True)
         assert result == ""
 
+    def test_validate_string_type_enforced(self) -> None:
+        """Should reject non-string values."""
+        validator = InputValidator()
+        with pytest.raises(ValidationError, match="must be a string"):
+            validator.validate_string(123)  # type: ignore[arg-type]
+
     def test_validate_string_sql_injection(self) -> None:
         """Should reject SQL injection in strict mode."""
         validator = InputValidator(strict_mode=True)
@@ -293,6 +299,15 @@ class TestInputValidator:
         body = {}
 
         with pytest.raises(ValidationError, match="is required"):
+            validator.validate_request_body(body, schema)
+
+    def test_validate_request_body_string_type(self) -> None:
+        """Should reject non-string values for string fields."""
+        validator = InputValidator()
+        schema = {"name": {"type": "string"}}
+        body = {"name": 42}
+
+        with pytest.raises(ValidationError, match="must be a string"):
             validator.validate_request_body(body, schema)
 
 
