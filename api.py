@@ -171,6 +171,8 @@ app.add_middleware(MetricsMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
+metrics_path = api_config.metrics.endpoint
+
 # Initialize WebSocket connection manager
 ws_manager = WSConnectionManager(
     backpressure_strategy=BackpressureStrategy.DROP_OLDEST,
@@ -210,7 +212,7 @@ async def health_check() -> HealthResponse:
     return HealthResponse()
 
 
-@app.get("/metrics")
+@app.get(metrics_path)
 async def get_metrics(request: Request) -> Response:
     """
     Prometheus metrics endpoint (public, no auth required).

@@ -164,6 +164,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         Returns:
             str: Normalized endpoint path.
         """
+        metrics_path = get_api_config().metrics.endpoint
         # Keep known endpoints as-is
         known_endpoints = [
             "/health",
@@ -171,7 +172,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             "/simulate",
             "/nernst",
             "/federated/aggregate",
-            "/metrics",
+            metrics_path,
             "/docs",
             "/redoc",
             "/openapi.json",
