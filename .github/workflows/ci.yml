@@ -351,6 +351,18 @@ jobs:
             echo "❌ Validation failed"
             exit 1
           fi
+          if [[ "${{ needs.benchmark.result }}" != "success" ]]; then
+            echo "❌ Benchmark failed"
+            exit 1
+          fi
+          if [[ "${{ needs.scientific-validation.result }}" != "success" ]]; then
+            echo "❌ Scientific validation failed"
+            exit 1
+          fi
+          if [[ "${{ needs.scalability-test.result }}" != "success" ]]; then
+            echo "❌ Scalability test failed"
+            exit 1
+          fi
           if [[ "${{ needs.packaging.result }}" != "success" ]]; then
             echo "❌ Packaging check failed"
             exit 1

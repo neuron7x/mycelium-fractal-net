@@ -149,8 +149,11 @@ def seed_all_rngs(fixed_seed: int) -> Generator[int, None, None]:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(fixed_seed)
     
-    # Enable deterministic mode for PyTorch (may impact performance)
-    torch.use_deterministic_algorithms(False)  # Some ops don't have deterministic impl
+    # Note: torch.use_deterministic_algorithms(True) would provide full determinism
+    # but some PyTorch operations don't have deterministic implementations.
+    # We leave it False to avoid runtime errors in operations like backward passes
+    # through certain layers. Individual tests requiring strict determinism should
+    # set this explicitly.
     
     yield fixed_seed
     
