@@ -18,7 +18,11 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 
-from mycelium_fractal_net.integration import is_prometheus_available, reset_config
+from mycelium_fractal_net.integration import (
+    get_api_config,
+    is_prometheus_available,
+    reset_config,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -67,30 +71,55 @@ def metrics_disabled_client():
         yield TestClient(app)
 
 
+@pytest.fixture
+def metrics_custom_endpoint_client():
+    """Create test client with a custom metrics endpoint."""
+    with mock.patch.dict(
+        os.environ,
+        {
+            "MFN_ENV": "dev",
+            "MFN_API_KEY_REQUIRED": "false",
+            "MFN_RATE_LIMIT_ENABLED": "false",
+            "MFN_METRICS_ENABLED": "true",
+            "MFN_METRICS_ENDPOINT": "custom-metrics/",
+        },
+        clear=False,
+    ):
+        reset_config()
+        from api import app
+
+        yield TestClient(app)
+
+
+def _metrics_path() -> str:
+    """Get the configured metrics endpoint path."""
+    return get_api_config().metrics.endpoint
+
+
 class TestMetricsEndpoint:
     """Tests for /metrics endpoint."""
 
     def test_metrics_endpoint_returns_200(self, metrics_client: TestClient) -> None:
         """Metrics endpoint should return 200."""
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         assert response.status_code == 200
 
     def test_metrics_endpoint_returns_404_when_disabled(
         self, metrics_disabled_client: TestClient
     ) -> None:
         """Metrics endpoint should not expose data when disabled."""
-        response = metrics_disabled_client.get("/metrics")
+        response = metrics_disabled_client.get(_metrics_path())
         assert response.status_code == 404
 
     def test_metrics_content_type(self, metrics_client: TestClient) -> None:
         """Metrics endpoint should return text/plain content type."""
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content_type = response.headers.get("content-type", "")
         assert "text/plain" in content_type
 
     def test_metrics_format(self, metrics_client: TestClient) -> None:
         """Metrics should be in Prometheus format."""
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         # Prometheus format includes TYPE and HELP comments
@@ -108,7 +137,7 @@ class TestMetricsEndpoint:
         metrics_client.get("/health")
         metrics_client.get("/health")
 
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         if is_prometheus_available():
@@ -120,7 +149,7 @@ class TestMetricsEndpoint:
         # Make a request first
         metrics_client.get("/health")
 
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         if is_prometheus_available():
@@ -140,7 +169,7 @@ class TestMetricsEndpoint:
             },
         )
 
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         if is_prometheus_available():
@@ -157,7 +186,7 @@ class TestMetricsCollection:
         metrics_client.get("/health")
 
         # Get metrics
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         # Metrics should have changed (new request recorded)
@@ -180,7 +209,7 @@ class TestMetricsCollection:
             },
         )
 
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         if is_prometheus_available():
@@ -200,7 +229,7 @@ class TestMetricsCollection:
             },
         )
 
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         if is_prometheus_available():
@@ -215,7 +244,7 @@ class TestMetricsCollection:
         # Make request that returns 400 (bad input)
         metrics_client.post("/federated/aggregate", json={"gradients": []})
 
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         if is_prometheus_available():
@@ -265,6 +294,17 @@ class TestMetricsConfig:
         assert "/metrics" not in config.auth.public_endpoints
         assert "/secure-metrics" not in config.auth.public_endpoints
 
+    def test_metrics_endpoint_is_normalized(self) -> None:
+        """Metrics endpoint should normalize slashes."""
+        from mycelium_fractal_net.integration.api_config import (
+            Environment,
+            MetricsConfig,
+        )
+
+        with mock.patch.dict(os.environ, {"MFN_METRICS_ENDPOINT": "metrics/"}):
+            config = MetricsConfig.from_env(Environment.PROD)
+            assert config.endpoint == "/metrics"
+
     def test_prometheus_availability_check(self) -> None:
         """Should be able to check if prometheus is available."""
         # This should not raise
@@ -290,13 +330,31 @@ class TestMetricsMiddleware:
         assert response.status_code in (400, 401)
 
         # Metrics should still be available
-        metrics_response = metrics_client.get("/metrics")
+        metrics_response = metrics_client.get(_metrics_path())
         assert metrics_response.status_code == 200
 
     def test_in_progress_requests_gauge(self, metrics_client: TestClient) -> None:
         """In-progress requests gauge should be tracked."""
-        response = metrics_client.get("/metrics")
+        response = metrics_client.get(_metrics_path())
         content = response.text
 
         if is_prometheus_available():
             assert "mfn_http_requests_in_progress" in content
+
+
+class TestMetricsCustomEndpoint:
+    """Tests for custom metrics endpoint configuration."""
+
+    def test_custom_metrics_endpoint_served(
+        self, metrics_custom_endpoint_client: TestClient
+    ) -> None:
+        """Custom metrics endpoint should return 200 and normalize path."""
+        response = metrics_custom_endpoint_client.get(_metrics_path())
+        assert response.status_code == 200
+
+    def test_default_metrics_path_not_available(
+        self, metrics_custom_endpoint_client: TestClient
+    ) -> None:
+        """Default /metrics path should return 404 when customized."""
+        response = metrics_custom_endpoint_client.get("/metrics")
+        assert response.status_code == 404

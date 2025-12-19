@@ -164,6 +164,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         Returns:
             str: Normalized endpoint path.
         """
+        metrics_path = get_api_config().metrics.endpoint
         # Keep known endpoints as-is
         known_endpoints = [
             "/health",
@@ -171,13 +172,13 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             "/simulate",
             "/nernst",
             "/federated/aggregate",
-            "/metrics",
+            metrics_path,
+            "/metrics" if metrics_path != "/metrics" else None,
             "/docs",
             "/redoc",
             "/openapi.json",
         ]
-
-        for endpoint in known_endpoints:
+        for endpoint in [path for path in known_endpoints if path]:
             if path == endpoint or path.startswith(endpoint + "/"):
                 return endpoint
 

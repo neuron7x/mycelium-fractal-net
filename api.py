@@ -211,16 +211,39 @@ async def health_check() -> HealthResponse:
 
 
 @app.get("/metrics")
-async def get_metrics(request: Request) -> Response:
+async def get_metrics_default(request: Request) -> Response:
     """
-    Prometheus metrics endpoint (public, no auth required).
+    Default Prometheus metrics endpoint (public, no auth required).
 
     Returns metrics in Prometheus text format including:
     - mfn_http_requests_total: Total HTTP requests
     - mfn_http_request_duration_seconds: Request latency histogram
     - mfn_http_requests_in_progress: Currently processing requests
     """
-    return await metrics_endpoint(request)
+    current_config = get_api_config()
+    if current_config.metrics.endpoint == "/metrics":
+        return await metrics_endpoint(request)
+    raise HTTPException(status_code=404, detail="Not Found")
+
+
+@app.api_route("/{path:path}", methods=["GET"], include_in_schema=False)
+async def metrics_fallback(path: str, request: Request) -> Response:
+    """
+    Catch-all GET handler to serve metrics when configured dynamically.
+
+    This keeps metrics routing in sync with runtime configuration while
+    returning 404 for unrelated paths.
+    """
+    current_config = get_api_config()
+    normalized_path = f"/{path}" if not path.startswith("/") else path
+
+    if normalized_path == current_config.metrics.endpoint:
+        return await metrics_endpoint(request)
+
+    if normalized_path == "/metrics" and current_config.metrics.endpoint != "/metrics":
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    raise HTTPException(status_code=404, detail="Not Found")
 
 
 @app.post("/validate", response_model=ValidateResponse)

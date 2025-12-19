@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 from mycelium_fractal_net.integration import (
     API_KEY_HEADER,
     AuthConfig,
+    get_api_config,
     reset_config,
 )
 
@@ -90,7 +91,7 @@ class TestAuthenticationMiddleware:
 
     def test_metrics_endpoint_is_public(self, auth_enabled_client: TestClient) -> None:
         """Metrics endpoint should work without API key."""
-        response = auth_enabled_client.get("/metrics")
+        response = auth_enabled_client.get(get_api_config().metrics.endpoint)
         # Metrics is public - should return 200
         assert response.status_code == 200
         assert "text/plain" in response.headers.get("content-type", "")
