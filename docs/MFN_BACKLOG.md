@@ -65,7 +65,7 @@ This backlog consolidates all identified gaps from the following source document
 | MFN-OBS-002 | Add simulation-specific metrics (fractal_dimension, growth_events) | P1 | monitoring_metrics | mfn-monitoring | feature | |
 | MFN-DOC-001 | Export OpenAPI spec and configure Swagger UI | P1 | docs | mfn-api-rest | docs | |
 | MFN-DOC-002 | Create detailed usage tutorials | P2 | docs | null | docs | |
-| MFN-DOC-003 | Create troubleshooting guide | P2 | docs | null | docs | |
+| MFN-DOC-003 | Create troubleshooting guide | P2 | docs | null | docs | ✅ DONE |
 | MFN-DEMO-001 | Create Jupyter notebooks for MFN visualization | P2 | docs | null | docs | |
 | MFN-DEMO-002 | Add interactive field evolution visualizations | P2 | docs | null | feature | |
 | MFN-BENCH-001 | Integrate benchmarks into CI for regression testing | P2 | tests | mfn-ci-cd | infra | |
@@ -642,6 +642,7 @@ These issues improve quality and developer experience.
 **Layer ID:** `null`  
 **Type:** `docs`  
 **Depends on:** None  
+**Status:** ✅ DONE  
 
 **Summary**  
 Create step-by-step tutorials for common MFN use cases: basic simulation, feature extraction, federated learning setup, and API integration.
