@@ -115,3 +115,6 @@ examples/*.png
 examples/*.gif
 notebooks/*.png
 notebooks/*.gif
+
+# Cleanup logs
+cleanup_logs/
