@@ -34,7 +34,7 @@
 | **Benchmarks** | ✅ 8/8 | All targets exceeded by 5-200x |
 | **Linting** | ✅ passed | ruff + mypy |
 
-📊 [Latest Test Health Report](docs/reports/MFN_TEST_HEALTH_2025-11-30.md) | 📈 [Performance Baselines](docs/MFN_PERFORMANCE_BASELINES.md) | 📋 [Technical Audit](docs/TECHNICAL_AUDIT.md)
+📊 [Latest Test Health Report](docs/reports/MFN_TEST_HEALTH_2025-11-30.md) | 📈 [Performance Baselines](docs/MFN_PERFORMANCE_BASELINES.md) | 📋 [Technical Audit](docs/TECHNICAL_AUDIT.md) | 📜 [Environment Charter](docs/ENVIRONMENT_CHARTER.md)
 
 ---
 
@@ -147,6 +147,11 @@ D = estimate_fractal_dimension(binary)
 git clone https://github.com/neuron7x/mycelium-fractal-net.git
 cd mycelium-fractal-net
 pip install -e ".[dev]"
+
+# Deterministic, pinned environment
+pip install -r requirements.lock
+# After dependency updates, regenerate the lock:
+python scripts/generate_lock.py
 ```
 
 ## CLI

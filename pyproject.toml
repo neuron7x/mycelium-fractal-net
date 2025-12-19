@@ -5,38 +5,38 @@ version = "4.1.0"
 description = "Neuro-fractal mycelium dynamics engine with Nernst potentials, diffusion field, and fractal analysis."
 authors = [{ name = "Yaroslav Vasylenko", email = "example@example.com" }]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 license = { text = "MIT" }
 keywords = ["neuroscience", "fractal", "mycelium", "simulation", "nernst", "LLM-tools"]
 
 dependencies = [
-  "numpy>=1.24",
-  "sympy>=1.12",
-  "torch>=2.0.0",
-  "pydantic>=2.0",
-  "fastapi>=0.100.0",
-  "pandas>=1.5.3,<3.0.0",
-  "pyarrow>=10.0.0",
-  "prometheus_client>=0.17.0",
-  "cryptography>=44.0.0",
-  "websockets>=12.0",
-  "httpx>=0.24.0",
+  "numpy==2.3.5",
+  "sympy==1.14.0",
+  "torch==2.9.1",
+  "pydantic==2.12.5",
+  "fastapi==0.125.0",
+  "pandas==2.3.3",
+  "pyarrow==22.0.0",
+  "prometheus_client==0.23.1",
+  "cryptography==46.0.3",
+  "websockets==15.0.1",
+  "httpx==0.28.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=7.0",
-  "pytest-cov>=4.0",
-  "pytest-asyncio>=0.21.0",
-  "ruff>=0.5.0",
-  "mypy>=1.8.0",
-  "black>=24.0.0",
-  "isort>=5.12.0",
-  "types-setuptools",
-  "httpx>=0.24.0",
-  "hypothesis>=6.0.0",
-  "uvicorn>=0.20.0",
-  "locust>=2.20.0",
+  "pytest==9.0.2",
+  "pytest-cov==7.0.0",
+  "pytest-asyncio==1.3.0",
+  "ruff==0.14.10",
+  "mypy==1.19.1",
+  "packaging==24.0",
+  "black==25.12.0",
+  "isort==7.0.0",
+  "types-setuptools==80.9.0.20250822",
+  "hypothesis==6.148.7",
+  "uvicorn[standard]==0.38.0",
+  "locust==2.42.6",
 ]
 
 [build-system]
