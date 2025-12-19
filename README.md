@@ -259,6 +259,7 @@ pip-audit --strict
 ```
 
 📋 [Full Security Documentation](docs/MFN_SECURITY.md)
+🛡️ **Operational control & quality gates**: see [STRATEGIC_EXECUTION_ORDER.md](docs/STRATEGIC_EXECUTION_ORDER.md) for the enforced CI gates, security defaults, and iteration close-out checklist.
 
 ---
 
