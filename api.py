@@ -212,17 +212,38 @@ async def health_check() -> HealthResponse:
     return HealthResponse()
 
 
-@app.get(metrics_path)
-async def get_metrics(request: Request) -> Response:
+@app.get("/metrics")
+async def get_metrics_default(request: Request) -> Response:
     """
-    Prometheus metrics endpoint (public, no auth required).
+    Default Prometheus metrics endpoint (public, no auth required).
 
     Returns metrics in Prometheus text format including:
     - mfn_http_requests_total: Total HTTP requests
     - mfn_http_request_duration_seconds: Request latency histogram
     - mfn_http_requests_in_progress: Currently processing requests
     """
-    return await metrics_endpoint(request)
+    current_config = get_api_config()
+    if current_config.metrics.endpoint == "/metrics":
+        return await metrics_endpoint(request)
+    raise HTTPException(status_code=404, detail="Not Found")
+
+
+if metrics_path != "/metrics":
+
+    @app.get(metrics_path)
+    async def get_metrics_custom(request: Request) -> Response:
+        """
+        Custom Prometheus metrics endpoint (public, no auth required).
+
+        Returns metrics in Prometheus text format including:
+        - mfn_http_requests_total: Total HTTP requests
+        - mfn_http_request_duration_seconds: Request latency histogram
+        - mfn_http_requests_in_progress: Currently processing requests
+        """
+        current_config = get_api_config()
+        if current_config.metrics.endpoint == metrics_path:
+            return await metrics_endpoint(request)
+        raise HTTPException(status_code=404, detail="Not Found")
 
 
 @app.post("/validate", response_model=ValidateResponse)
