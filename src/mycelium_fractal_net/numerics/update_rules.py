@@ -51,6 +51,8 @@ from mycelium_fractal_net.core.exceptions import (
 
 from .grid_ops import BoundaryCondition, compute_laplacian, validate_field_stability
 
+FloatArray = NDArray[np.floating[Any]]
+
 # === Model Parameters (from MFN_MATH_MODEL.md Section 2.3) ===
 DEFAULT_D_ACTIVATOR: float = 0.1    # Activator diffusion (grid²/step)
 DEFAULT_D_INHIBITOR: float = 0.05   # Inhibitor diffusion (grid²/step)
@@ -159,11 +161,11 @@ class UpdateParameters:
 
 
 def diffusion_update(
-    field: NDArray[np.floating],
+    field: FloatArray,
     diffusion_coeff: float,
     boundary: BoundaryCondition = BoundaryCondition.PERIODIC,
     check_stability: bool = True,
-) -> NDArray[np.floating]:
+) -> FloatArray:
     """
     Apply one explicit Euler diffusion step.
     
@@ -180,7 +182,7 @@ def diffusion_update(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Current field state V^n of shape (N, M).
     diffusion_coeff : float
         Diffusion coefficient D. Must be ≤ 0.25 for stability.
@@ -191,7 +193,7 @@ def diffusion_update(
     
     Returns
     -------
-    NDArray[np.floating]
+    FloatArray
         Updated field V^{n+1} of shape (N, M).
     
     Raises
@@ -219,15 +221,15 @@ def diffusion_update(
     if check_stability:
         validate_field_stability(updated, field_name="diffusion_update")
     
-    return cast(NDArray[np.floating[Any]], updated)
+    return cast(FloatArray, updated)
 
 
 def activator_inhibitor_update(
-    activator: NDArray[np.floating],
-    inhibitor: NDArray[np.floating],
+    activator: FloatArray,
+    inhibitor: FloatArray,
     params: UpdateParameters | None = None,
     check_stability: bool = True,
-) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
+) -> tuple[FloatArray, FloatArray]:
     """
     Apply one Turing reaction-diffusion update step.
     
@@ -246,9 +248,9 @@ def activator_inhibitor_update(
     
     Parameters
     ----------
-    activator : NDArray[np.floating]
+    activator : FloatArray
         Current activator field a^n of shape (N, M).
-    inhibitor : NDArray[np.floating]
+    inhibitor : FloatArray
         Current inhibitor field i^n of shape (N, M).
     params : UpdateParameters | None
         Update parameters. Uses defaults if None.
@@ -280,8 +282,8 @@ def activator_inhibitor_update(
     di = params.d_inhibitor * i_lap + params.r_inhibitor * (activator - inhibitor)
     
     # Explicit Euler step
-    activator_new = activator + da
-    inhibitor_new = inhibitor + di
+    activator_new: FloatArray = activator + da
+    inhibitor_new: FloatArray = inhibitor + di
     
     # Clamp to [0, 1] (MFN_MATH_MODEL.md Section 4.3)
     activator_new = np.clip(activator_new, 0.0, 1.0)
@@ -291,18 +293,15 @@ def activator_inhibitor_update(
         validate_field_stability(activator_new, field_name="activator")
         validate_field_stability(inhibitor_new, field_name="inhibitor")
     
-    return (
-        cast(NDArray[np.floating[Any]], activator_new),
-        cast(NDArray[np.floating[Any]], inhibitor_new),
-    )
+    return activator_new, inhibitor_new
 
 
 def apply_turing_to_field(
-    field: NDArray[np.floating],
-    activator: NDArray[np.floating],
+    field: FloatArray,
+    activator: FloatArray,
     threshold: float = DEFAULT_TURING_THRESHOLD,
     contribution_v: float = 0.005,
-) -> tuple[NDArray[np.floating], int]:
+) -> tuple[FloatArray, int]:
     """
     Apply Turing pattern modulation to potential field.
     
@@ -311,9 +310,9 @@ def apply_turing_to_field(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Current potential field V of shape (N, M).
-    activator : NDArray[np.floating]
+    activator : FloatArray
         Activator field a of shape (N, M).
     threshold : float
         Turing activation threshold θ. Default 0.75.
@@ -336,12 +335,12 @@ def apply_turing_to_field(
 
 
 def apply_growth_event(
-    field: NDArray[np.floating],
+    field: FloatArray,
     rng: np.random.Generator,
     grid_size: int,
     magnitude_mean_v: float = SPIKE_MAGNITUDE_V,
     magnitude_std_v: float = 0.005,
-) -> tuple[NDArray[np.floating], bool]:
+) -> tuple[FloatArray, bool]:
     """
     Apply single growth event (spike) at random location.
     
@@ -350,7 +349,7 @@ def apply_growth_event(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Current potential field of shape (N, M).
     rng : np.random.Generator
         Random number generator.
@@ -378,10 +377,10 @@ def apply_growth_event(
 
 
 def apply_quantum_jitter(
-    field: NDArray[np.floating],
+    field: FloatArray,
     rng: np.random.Generator,
     variance: float = 0.0005,
-) -> NDArray[np.floating]:
+) -> FloatArray:
     """
     Apply stochastic noise term (quantum jitter).
     
@@ -394,7 +393,7 @@ def apply_quantum_jitter(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Current field of shape (N, M).
     rng : np.random.Generator
         Random number generator.
@@ -403,18 +402,18 @@ def apply_quantum_jitter(
     
     Returns
     -------
-    NDArray[np.floating]
+    FloatArray
         Field with added noise.
     """
     noise = rng.normal(0, np.sqrt(variance), size=field.shape)
-    return cast(NDArray[np.floating[Any]], field + noise)
+    return cast(FloatArray, field + noise)
 
 
 def clamp_potential_field(
-    field: NDArray[np.floating],
+    field: FloatArray,
     v_min: float = FIELD_V_MIN,
     v_max: float = FIELD_V_MAX,
-) -> tuple[NDArray[np.floating], int]:
+) -> tuple[FloatArray, int]:
     """
     Clamp potential field to physiological bounds.
     
@@ -423,7 +422,7 @@ def clamp_potential_field(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Potential field in Volts.
     v_min : float
         Minimum potential. Default -0.095 V (-95 mV).
@@ -438,15 +437,15 @@ def clamp_potential_field(
     needs_clamping = (field < v_min) | (field > v_max)
     clamp_count = int(np.sum(needs_clamping))
     
-    clamped = np.clip(field, v_min, v_max)
+    clamped: FloatArray = np.clip(field, v_min, v_max)
     
-    return cast(NDArray[np.floating[Any]], clamped), clamp_count
+    return clamped, clamp_count
 
 
 def full_simulation_step(
-    field: NDArray[np.floating],
-    activator: NDArray[np.floating],
-    inhibitor: NDArray[np.floating],
+    field: FloatArray,
+    activator: FloatArray,
+    inhibitor: FloatArray,
     rng: np.random.Generator,
     params: UpdateParameters | None = None,
     turing_enabled: bool = True,
@@ -455,9 +454,9 @@ def full_simulation_step(
     spike_probability: float = 0.25,
     check_stability: bool = True,
 ) -> tuple[
-    NDArray[np.floating],
-    NDArray[np.floating],
-    NDArray[np.floating],
+    FloatArray,
+    FloatArray,
+    FloatArray,
     dict[str, Any],
 ]:
     """
@@ -472,11 +471,11 @@ def full_simulation_step(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Current potential field V of shape (N, N).
-    activator : NDArray[np.floating]
+    activator : FloatArray
         Current activator field a of shape (N, N).
-    inhibitor : NDArray[np.floating]
+    inhibitor : FloatArray
         Current inhibitor field i of shape (N, N).
     rng : np.random.Generator
         Random number generator.

@@ -41,6 +41,8 @@ from typing import Any, cast
 import numpy as np
 from numpy.typing import NDArray
 
+FloatArray = NDArray[np.floating[Any]]
+
 from mycelium_fractal_net.core.exceptions import NumericalInstabilityError
 
 
@@ -62,10 +64,10 @@ class BoundaryCondition(Enum):
 
 
 def compute_laplacian(
-    field: NDArray[np.floating],
+    field: FloatArray,
     boundary: BoundaryCondition = BoundaryCondition.PERIODIC,
     check_stability: bool = True,
-) -> NDArray[np.floating]:
+) -> FloatArray:
     """
     Compute discrete 2D Laplacian using 5-point stencil.
     
@@ -81,7 +83,7 @@ def compute_laplacian(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Input field of shape (N, M), typically (N, N) square grid.
     boundary : BoundaryCondition
         Boundary condition type (periodic, neumann, dirichlet).
@@ -90,7 +92,7 @@ def compute_laplacian(
     
     Returns
     -------
-    NDArray[np.floating]
+    FloatArray
         Laplacian of shape (N, M), same as input.
     
     Raises
@@ -165,13 +167,13 @@ def compute_laplacian(
                 inf_count=inf_count,
             )
     
-    return cast(NDArray[np.floating[Any]], laplacian)
+    return cast(FloatArray, laplacian)
 
 
 def compute_gradient(
-    field: NDArray[np.floating],
+    field: FloatArray,
     boundary: BoundaryCondition = BoundaryCondition.PERIODIC,
-) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
+) -> tuple[FloatArray, FloatArray]:
     """
     Compute spatial gradient using central differences.
     
@@ -186,7 +188,7 @@ def compute_gradient(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Input field of shape (N, M).
     boundary : BoundaryCondition
         Boundary condition type.
@@ -197,8 +199,8 @@ def compute_gradient(
         (grad_x, grad_y) gradient components.
     """
     if boundary == BoundaryCondition.PERIODIC:
-        grad_x = (np.roll(field, -1, axis=0) - np.roll(field, 1, axis=0)) / 2.0
-        grad_y = (np.roll(field, -1, axis=1) - np.roll(field, 1, axis=1)) / 2.0
+        grad_x: FloatArray = (np.roll(field, -1, axis=0) - np.roll(field, 1, axis=0)) / 2.0
+        grad_y: FloatArray = (np.roll(field, -1, axis=1) - np.roll(field, 1, axis=1)) / 2.0
     else:
         # Use forward/backward difference at boundaries
         grad_x = np.zeros_like(field)
@@ -214,14 +216,11 @@ def compute_gradient(
         grad_y[:, 0] = field[:, 1] - field[:, 0]
         grad_y[:, -1] = field[:, -1] - field[:, -2]
     
-    return (
-        cast(NDArray[np.floating[Any]], grad_x),
-        cast(NDArray[np.floating[Any]], grad_y),
-    )
+    return grad_x, grad_y
 
 
 def compute_field_statistics(
-    field: NDArray[np.floating],
+    field: FloatArray,
 ) -> dict[str, float]:
     """
     Compute statistical summary of field values.
@@ -231,7 +230,7 @@ def compute_field_statistics(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Input field of shape (N, M).
     
     Returns
@@ -251,7 +250,7 @@ def compute_field_statistics(
 
 
 def validate_field_stability(
-    field: NDArray[np.floating],
+    field: FloatArray,
     field_name: str = "field",
     step: int | None = None,
 ) -> bool:
@@ -262,7 +261,7 @@ def validate_field_stability(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Field to validate.
     field_name : str
         Name for error reporting.
@@ -302,7 +301,7 @@ def validate_field_stability(
 
 
 def validate_field_bounds(
-    field: NDArray[np.floating],
+    field: FloatArray,
     min_value: float,
     max_value: float,
 ) -> bool:
@@ -313,7 +312,7 @@ def validate_field_bounds(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Field to validate.
     min_value : float
         Minimum allowed value.
@@ -329,10 +328,10 @@ def validate_field_bounds(
 
 
 def clamp_field(
-    field: NDArray[np.floating],
+    field: FloatArray,
     min_value: float,
     max_value: float,
-) -> tuple[NDArray[np.floating], int]:
+) -> tuple[FloatArray, int]:
     """
     Clamp field values to specified range and count clamping events.
     
@@ -340,7 +339,7 @@ def clamp_field(
     
     Parameters
     ----------
-    field : NDArray[np.floating]
+    field : FloatArray
         Field to clamp (modified in place).
     min_value : float
         Minimum allowed value.
@@ -355,6 +354,6 @@ def clamp_field(
     needs_clamping = (field < min_value) | (field > max_value)
     clamp_count = int(np.sum(needs_clamping))
     
-    clamped = np.clip(field, min_value, max_value)
+    clamped: FloatArray = np.clip(field, min_value, max_value)
     
-    return cast(NDArray[np.floating[Any]], clamped), clamp_count
+    return clamped, clamp_count

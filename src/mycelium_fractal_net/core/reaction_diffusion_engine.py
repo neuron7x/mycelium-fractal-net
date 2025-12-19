@@ -37,6 +37,8 @@ from numpy.typing import NDArray
 
 from .exceptions import NumericalInstabilityError, StabilityError, ValueOutOfRangeError
 
+FloatArray = NDArray[np.floating[Any]]
+
 # === Default Parameters (from MFN_MATH_MODEL.md Section 2.3) ===
 DEFAULT_D_ACTIVATOR: float = 0.1
 DEFAULT_D_INHIBITOR: float = 0.05
@@ -352,9 +354,9 @@ class ReactionDiffusionEngine:
         self._rng = np.random.default_rng(self.config.random_seed)
 
         # Initialize fields
-        self._field: NDArray[np.floating] | None = None
-        self._activator: NDArray[np.floating] | None = None
-        self._inhibitor: NDArray[np.floating] | None = None
+        self._field: FloatArray | None = None
+        self._activator: FloatArray | None = None
+        self._inhibitor: FloatArray | None = None
 
     @property
     def metrics(self) -> ReactionDiffusionMetrics:
@@ -362,17 +364,17 @@ class ReactionDiffusionEngine:
         return self._metrics
 
     @property
-    def field(self) -> NDArray[np.floating] | None:
+    def field(self) -> FloatArray | None:
         """Get current field state."""
         return self._field
 
     @property
-    def activator(self) -> NDArray[np.floating] | None:
+    def activator(self) -> FloatArray | None:
         """Get current activator state."""
         return self._activator
 
     @property
-    def inhibitor(self) -> NDArray[np.floating] | None:
+    def inhibitor(self) -> FloatArray | None:
         """Get current inhibitor state."""
         return self._inhibitor
 
@@ -388,7 +390,7 @@ class ReactionDiffusionEngine:
         self,
         initial_potential_v: float = INITIAL_POTENTIAL_MEAN,
         initial_std_v: float = INITIAL_POTENTIAL_STD,
-    ) -> NDArray[np.floating]:
+    ) -> FloatArray:
         """
         Initialize potential field with Gaussian distribution.
 
@@ -425,7 +427,7 @@ class ReactionDiffusionEngine:
         steps: int,
         turing_enabled: bool = True,
         return_history: bool = False,
-    ) -> tuple[NDArray[np.floating], ReactionDiffusionMetrics]:
+    ) -> tuple[FloatArray, ReactionDiffusionMetrics]:
         """
         Run reaction-diffusion simulation.
 
@@ -460,7 +462,7 @@ class ReactionDiffusionEngine:
         assert self._activator is not None
         assert self._inhibitor is not None
 
-        history: NDArray[np.floating] | None = None
+        history: FloatArray | None = None
         if return_history:
             history = np.empty(
                 (steps, self.config.grid_size, self.config.grid_size),
@@ -577,8 +579,8 @@ class ReactionDiffusionEngine:
 
     def _compute_laplacian(
         self,
-        field: NDArray[np.floating],
-    ) -> NDArray[np.floating]:
+        field: FloatArray,
+    ) -> FloatArray:
         """
         Compute discrete Laplacian using 5-point stencil.
 
@@ -626,7 +628,7 @@ class ReactionDiffusionEngine:
             left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant")
             right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant")
 
-        return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
+        return cast(FloatArray, up + down + left + right - 4.0 * field)
 
     def _check_stability(self, step: int) -> None:
         """Check for NaN/Inf values and raise error if found."""

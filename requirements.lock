@@ -82,6 +82,7 @@ simple-websocket==1.1.0
 sortedcontainers==2.4.0
 starlette==0.50.0
 sympy==1.14.0
+tomli==2.3.0
 torch==2.9.1
 triton==3.5.1
 types-setuptools==80.9.0.20250822

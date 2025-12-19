@@ -37,6 +37,8 @@ from numpy.typing import NDArray
 
 from .exceptions import NumericalInstabilityError, ValueOutOfRangeError
 
+FloatArray = NDArray[np.floating[Any]]
+
 # === Physical Constants (SI) ===
 # Reference: MFN_MATH_MODEL.md Section 1.3
 # These are well-established physical constants (CODATA 2018)
@@ -356,10 +358,10 @@ class MembraneEngine:
     def compute_nernst_potential_array(
         self,
         z_valence: int,
-        concentration_out: NDArray[np.floating],
-        concentration_in: NDArray[np.floating],
+        concentration_out: FloatArray,
+        concentration_in: FloatArray,
         temperature_k: float | None = None,
-    ) -> NDArray[np.floating]:
+    ) -> FloatArray:
         """
         Compute Nernst potential for arrays of concentrations.
 
@@ -424,15 +426,15 @@ class MembraneEngine:
         self._metrics.potential_mean_v = float(np.mean(potential))
         self._metrics.potential_std_v = float(np.std(potential))
 
-        return cast(NDArray[np.floating[Any]], potential)
+        return cast(FloatArray, potential)
 
     def integrate_ode(
         self,
-        v0: float | NDArray[np.floating],
-        derivative_fn: Callable[[float | NDArray[np.floating]], float | NDArray[np.floating]],
+        v0: float | FloatArray,
+        derivative_fn: Callable[[float | FloatArray], float | FloatArray],
         steps: int,
         clamp: bool = True,
-    ) -> tuple[float | NDArray[np.floating], MembraneMetrics]:
+    ) -> tuple[float | FloatArray, MembraneMetrics]:
         """
         Integrate membrane potential ODE using configured scheme.
 
@@ -459,8 +461,8 @@ class MembraneEngine:
 
         # Create a wrapper that ensures the derivative_fn works with NDArray
         def _derivative_wrapper(
-            arr: NDArray[np.floating[Any]],
-        ) -> NDArray[np.floating[Any]]:
+            arr: FloatArray,
+        ) -> FloatArray:
             result = derivative_fn(arr)
             if isinstance(result, np.ndarray):
                 return result
@@ -514,9 +516,9 @@ class MembraneEngine:
 
     def _euler_step(
         self,
-        v: NDArray[np.floating[Any]],
-        derivative_fn: Callable[[NDArray[np.floating[Any]]], NDArray[np.floating[Any]]],
-    ) -> NDArray[np.floating[Any]]:
+        v: FloatArray,
+        derivative_fn: Callable[[FloatArray], FloatArray],
+    ) -> FloatArray:
         """
         Perform one explicit Euler integration step.
 
@@ -526,13 +528,13 @@ class MembraneEngine:
         Stability: Requires dt * |dV/dt| < 1 for stability
         """
         dv_dt = derivative_fn(v)
-        return cast(NDArray[np.floating[Any]], v + self.config.dt * dv_dt)
+        return cast(FloatArray, v + self.config.dt * dv_dt)
 
     def _rk4_step(
         self,
-        v: NDArray[np.floating[Any]],
-        derivative_fn: Callable[[NDArray[np.floating[Any]]], NDArray[np.floating[Any]]],
-    ) -> NDArray[np.floating[Any]]:
+        v: FloatArray,
+        derivative_fn: Callable[[FloatArray], FloatArray],
+    ) -> FloatArray:
         """
         Perform one 4th-order Runge-Kutta integration step.
 
@@ -547,11 +549,11 @@ class MembraneEngine:
         k3 = derivative_fn(v + 0.5 * dt * k2)
         k4 = derivative_fn(v + dt * k3)
 
-        return cast(NDArray[np.floating[Any]], v + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4))
+        return cast(FloatArray, v + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4))
 
     def validate_potential_range(
         self,
-        potential_v: float | NDArray[np.floating],
+        potential_v: float | FloatArray,
         strict_physiological: bool = False,
     ) -> bool:
         """

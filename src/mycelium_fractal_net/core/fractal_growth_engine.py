@@ -28,11 +28,14 @@ Parameters (from MFN_MATH_MODEL.md Section 3.5):
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
 from .exceptions import NumericalInstabilityError, StabilityError, ValueOutOfRangeError
+
+FloatArray = NDArray[np.floating[Any]]
 
 # === Default Parameters (from MFN_MATH_MODEL.md Section 3.5) ===
 DEFAULT_NUM_POINTS: int = 10000
@@ -308,7 +311,7 @@ class FractalGrowthEngine:
         self,
         num_points: int | None = None,
         num_transforms: int | None = None,
-    ) -> tuple[NDArray[np.floating], float]:
+    ) -> tuple[FloatArray, float]:
         """
         Generate fractal pattern using Iterated Function System.
 
@@ -601,7 +604,7 @@ class FractalGrowthEngine:
 
     def compute_lyapunov_from_history(
         self,
-        field_history: NDArray[np.floating],
+        field_history: FloatArray,
         dt: float = 1.0,
     ) -> float:
         """
@@ -613,7 +616,7 @@ class FractalGrowthEngine:
 
         Parameters
         ----------
-        field_history : NDArray
+        field_history : FloatArray
             Array of shape (T, N, N) with field states over time.
         dt : float
             Time step between states.

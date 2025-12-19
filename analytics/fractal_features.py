@@ -20,10 +20,12 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Any, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+
+FloatArray = NDArray[np.floating[Any]]
 
 # === Constants ===
 FEATURE_COUNT: int = 18
@@ -276,7 +278,7 @@ def _box_counting_dimension(
 
 
 def compute_fractal_features(
-    field: NDArray[np.floating],
+        field: FloatArray,
     config: FeatureConfig,
 ) -> Tuple[float, float]:
     """
@@ -307,7 +309,7 @@ def compute_fractal_features(
 
 
 def compute_basic_stats(
-    field: NDArray[np.floating],
+        field: FloatArray,
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Compute basic field statistics.
@@ -345,7 +347,7 @@ def compute_basic_stats(
 
 
 def compute_temporal_features(
-    history: NDArray[np.floating],
+        history: FloatArray,
     config: FeatureConfig,
 ) -> Tuple[float, float, int, float]:
     """
@@ -560,7 +562,7 @@ def _count_clusters_8conn(
 
 
 def compute_structural_features(
-    field: NDArray[np.floating],
+        field: FloatArray,
     config: FeatureConfig,
 ) -> Tuple[float, int, int, int, int, float]:
     """
@@ -612,7 +614,7 @@ def compute_structural_features(
 
 
 def compute_features(
-    field_snapshots: NDArray[np.floating],
+        field_snapshots: FloatArray,
     config: FeatureConfig | None = None,
 ) -> FeatureVector:
     """
