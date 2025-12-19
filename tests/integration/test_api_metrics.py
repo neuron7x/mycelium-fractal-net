@@ -351,3 +351,10 @@ class TestMetricsCustomEndpoint:
         """Custom metrics endpoint should return 200 and normalize path."""
         response = metrics_custom_endpoint_client.get(_metrics_path())
         assert response.status_code == 200
+
+    def test_default_metrics_path_not_available(
+        self, metrics_custom_endpoint_client: TestClient
+    ) -> None:
+        """Default /metrics path should return 404 when customized."""
+        response = metrics_custom_endpoint_client.get("/metrics")
+        assert response.status_code == 404
