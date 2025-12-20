@@ -123,22 +123,27 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
+          pip install -e ".[dev]"
       - name: Start API server
         run: |
-          nohup uvicorn api:app --host 127.0.0.1 --port 8000 > /tmp/uvicorn.log 2>&1 &
+          nohup python -m uvicorn api:app --host 127.0.0.1 --port 8000 > /tmp/uvicorn.log 2>&1 &
       - name: Wait for API readiness
         run: |
-          for i in {1..20}; do
+          for i in {1..30}; do
             if curl -sf http://127.0.0.1:8000/health > /dev/null; then
               echo "API is ready."
               exit 0
             fi
-            sleep 1
+            echo "Attempt ${i}/30: waiting for API..."
+            sleep 2
           done
           echo "API did not become ready in time."
-          echo "Last 100 lines of uvicorn log:"
-          tail -n 100 /tmp/uvicorn.log || true
+          echo "Last 200 lines of uvicorn log:"
+          tail -n 200 /tmp/uvicorn.log || true
+          echo "Process check:"
+          ps aux | grep uvicorn || true
+          echo "Network check:"
+          ss -tulpn | grep 8000 || true
           exit 1
       - name: Run OWASP ZAP baseline scan
         uses: zaproxy/action-baseline@v0.13.0
