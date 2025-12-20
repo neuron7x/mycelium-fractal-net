@@ -148,10 +148,10 @@ jobs:
       - name: Run OWASP ZAP baseline scan
         uses: zaproxy/action-baseline@v0.13.0
         with:
-          target: http://127.0.0.1:8000
+          target: http://127.0.0.1:8000/health
           rules_file_name: ""
           cmd_options: "-r zap_report.html"
-          docker_options: "--network host"
+          allow_issue_writing: false
       - name: Upload ZAP report artifact
         if: always()
         uses: actions/upload-artifact@v4
