@@ -423,13 +423,14 @@ uvicorn api:app --host 127.0.0.1 --port 8000
 # Run the baseline scan (Docker required)
 docker run --rm --network host \
   -t zaproxy/zap-stable zap-baseline.py \
-  -t http://127.0.0.1:8000 -r zap_report.html
+  -t http://127.0.0.1:8000 -l WARN -r zap_report.html
 ```
 
 ### Operational Notes
 
 - For production targets, ensure authenticated endpoints are exercised with valid API keys.
 - Treat any HIGH findings as immediate blockers for release.
+- The baseline scan is calibrated to WARN level to reduce false positives in CI.
 
 ---
 

@@ -150,7 +150,7 @@ jobs:
         with:
           target: http://127.0.0.1:8000/health
           rules_file_name: ""
-          cmd_options: "-r zap_report.html"
+          cmd_options: "-l WARN -r zap_report.html"
           allow_issue_writing: false
       - name: Upload ZAP report artifact
         if: always()
