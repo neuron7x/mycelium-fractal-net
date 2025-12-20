@@ -15,17 +15,20 @@ This document describes the automated delivery pipeline that validates security,
    - Runs `bandit` for Python static analysis.
    - Runs `pip-audit` for dependency vulnerability checks.
 
-4. **Secrets scanning**
+4. **IaC security scanning**
+   - Runs `checkov` against Terraform and Kubernetes manifests to detect misconfigurations early.
+
+5. **Secrets scanning**
    - Runs `gitleaks` to detect credential leaks and high-entropy secrets in the repo history and working tree.
 
-5. **Test matrix**
+6. **Test matrix**
    - Executes pytest across Python 3.10, 3.11, and 3.12.
    - Generates coverage reports for Codecov.
 
-6. **Validation & benchmarks**
+7. **Validation & benchmarks**
    - Executes scientific validation, scalability tests, and performance benchmarks to keep regression risk low.
 
-7. **Packaging sanity checks**
+8. **Packaging sanity checks**
    - Builds wheels/sdists and validates that all runtime packages import correctly in a clean virtual environment.
 
 ## Local execution
@@ -45,6 +48,13 @@ For security checks:
 pip install bandit pip-audit
 bandit -r src/ -ll -ii --exclude tests
 pip-audit -r requirements.txt --strict --desc on
+```
+
+For infrastructure-as-code checks:
+
+```bash
+pip install checkov
+checkov -d infra/terraform -f k8s.yaml
 ```
 
 ## Release hygiene
