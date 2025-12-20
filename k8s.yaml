@@ -88,16 +88,18 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: mycelium-fractal-net
-          image: mycelium-fractal-net:v4.1
-          imagePullPolicy: IfNotPresent
+          # Replace with a real image digest, e.g.:
+          # docker inspect mycelium-fractal-net:v4.1 --format='{{index .RepoDigests 0}}'
+          image: mycelium-fractal-net@sha256:REPLACE_WITH_ACTUAL_DIGEST
+          imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
             readOnlyRootFilesystem: true
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser: 10000
+            runAsGroup: 10000
           ports:
             - containerPort: 8000
               name: http
@@ -114,16 +116,10 @@ spec:
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
-            - name: MFN_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: mfn-secrets
-                  key: api-key
-            - name: MFN_API_KEYS
-              valueFrom:
-                secretKeyRef:
-                  name: mfn-secrets
-                  key: api-keys
+            - name: MFN_API_KEY_FILE
+              value: /etc/secrets/api-key
+            - name: MFN_API_KEYS_FILE
+              value: /etc/secrets/api-keys
           livenessProbe:
             httpGet:
               path: /health
@@ -145,9 +141,15 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: mfn-secrets
+              mountPath: /etc/secrets
+              readOnly: true
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: mfn-secrets
+          secret:
+            secretName: mfn-secrets
 ---
 apiVersion: v1
 kind: Service
