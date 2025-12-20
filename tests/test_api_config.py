@@ -13,6 +13,8 @@ def _clear_env_vars() -> None:
         "MFN_METRICS_ENABLED",
         "MFN_METRICS_INCLUDE_IN_AUTH",
         "MFN_METRICS_ENDPOINT",
+        "MFN_RATE_LIMIT_REQUESTS",
+        "MFN_RATE_LIMIT_WINDOW",
     ]:
         os.environ.pop(var, None)
 
@@ -72,3 +74,33 @@ def test_auth_required_without_keys_raises(monkeypatch) -> None:
         assert "no API keys were provided" in str(exc)
     else:
         raise AssertionError("Expected ValueError when auth is required but no keys set")
+
+
+def test_rate_limit_invalid_requests_raises(monkeypatch) -> None:
+    """Invalid rate limit request values should raise a clear error."""
+
+    _clear_env_vars()
+    monkeypatch.setenv("MFN_RATE_LIMIT_REQUESTS", "not-a-number")
+    reset_config()
+
+    try:
+        APIConfig.from_env()
+    except ValueError as exc:
+        assert "MFN_RATE_LIMIT_REQUESTS must be an integer" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for invalid rate limit request value")
+
+
+def test_rate_limit_invalid_window_raises(monkeypatch) -> None:
+    """Non-positive rate limit windows should raise a clear error."""
+
+    _clear_env_vars()
+    monkeypatch.setenv("MFN_RATE_LIMIT_WINDOW", "0")
+    reset_config()
+
+    try:
+        APIConfig.from_env()
+    except ValueError as exc:
+        assert "MFN_RATE_LIMIT_WINDOW must be a positive integer" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for invalid rate limit window value")

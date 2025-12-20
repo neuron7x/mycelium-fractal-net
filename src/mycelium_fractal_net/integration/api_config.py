@@ -54,6 +54,20 @@ def _normalize_endpoint_path(value: str, default: str) -> str:
     return raw
 
 
+def _parse_positive_int(env_var: str, default: int) -> int:
+    """Parse a positive integer from an environment variable."""
+    raw_value = os.getenv(env_var)
+    if raw_value is None or raw_value == "":
+        return default
+    try:
+        value = int(raw_value)
+    except ValueError as exc:
+        raise ValueError(f"{env_var} must be an integer, got {raw_value!r}.") from exc
+    if value <= 0:
+        raise ValueError(f"{env_var} must be a positive integer, got {value}.")
+    return value
+
+
 @dataclass
 class AuthConfig:
     """
@@ -162,8 +176,8 @@ class RateLimitConfig:
         Returns:
             RateLimitConfig: Configured rate limiting settings.
         """
-        max_requests = int(os.getenv("MFN_RATE_LIMIT_REQUESTS", "100"))
-        window_seconds = int(os.getenv("MFN_RATE_LIMIT_WINDOW", "60"))
+        max_requests = _parse_positive_int("MFN_RATE_LIMIT_REQUESTS", 100)
+        window_seconds = _parse_positive_int("MFN_RATE_LIMIT_WINDOW", 60)
 
         # Disable rate limiting in dev by default unless explicitly enabled
         enabled_env = os.getenv("MFN_RATE_LIMIT_ENABLED", "").lower()
