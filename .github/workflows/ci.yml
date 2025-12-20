@@ -150,25 +150,36 @@ jobs:
         with:
           target: http://127.0.0.1:8000/
           rules_file_name: ""
-          cmd_options: "-l WARN -j -r report_html.html"
+          cmd_options: "-l WARN -J /zap/wrk/zap_report.json -r /zap/wrk/zap_report.html"
           allow_issue_writing: false
           fail_action: false
+          artifact_name: ""
       - name: Check ZAP report files
         if: always()
         run: |
           echo "=== Checking for ZAP report files ==="
-          ls -lah report_* || echo "No report files found"
+          ls -lah zap_report* || echo "No report files found"
           echo "=== Current directory ==="
           pwd
           echo "=== Directory contents ==="
           ls -lah
-      - name: Upload ZAP report artifact
+      - name: Upload ZAP reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-security-report
-          path: report_html.html
+          name: zap-security-reports-${{ github.run_id }}
+          path: |
+            zap_report.json
+            zap_report.html
           retention-days: 30
+          if-no-files-found: warn
+      - name: Upload uvicorn logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uvicorn-logs-${{ github.run_id }}
+          path: /tmp/uvicorn.log
+          retention-days: 7
           if-no-files-found: warn
 
   iac-security:
