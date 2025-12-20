@@ -15,6 +15,7 @@ dependencies = [
   "torch>=2.0.0",
   "pydantic>=2.0",
   "fastapi>=0.100.0",
+  "uvicorn[standard]>=0.20.0",
   "pandas>=1.5.3,<3.0.0",
   "pyarrow>=10.0.0",
   "prometheus_client>=0.17.0",
@@ -35,7 +36,6 @@ dev = [
   "types-setuptools",
   "httpx>=0.24.0",
   "hypothesis>=6.0.0",
-  "uvicorn>=0.20.0",
   "locust>=2.20.0",
 ]
 
