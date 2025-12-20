@@ -210,6 +210,35 @@ async def health_check() -> HealthResponse:
     return HealthResponse()
 
 
+@app.get("/")
+async def root() -> dict:
+    """Root endpoint for API discovery (public, no auth required)."""
+    return {
+        "service": "MyceliumFractalNet API",
+        "version": app.version,
+        "status": "operational",
+        "endpoints": {
+            "health": "/health",
+            "metrics": "/metrics",
+            "validate": "/validate",
+            "simulate": "/simulate",
+            "nernst": "/nernst",
+            "federated": "/federated/aggregate",
+            "crypto": {
+                "encrypt": "/api/encrypt",
+                "decrypt": "/api/decrypt",
+                "sign": "/api/sign",
+                "verify": "/api/verify",
+                "keypair": "/api/keypair",
+            },
+            "websockets": {
+                "features": "/ws/stream_features",
+                "simulation": "/ws/simulation_live",
+            },
+        },
+    }
+
+
 @app.get("/metrics")
 async def get_metrics_default(request: Request) -> Response:
     """
