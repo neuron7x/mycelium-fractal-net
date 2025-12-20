@@ -147,6 +147,12 @@ jobs:
           rules_file_name: ""
           cmd_options: "-r zap_report.html"
           docker_options: "--network host"
+      - name: Upload ZAP report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap_report.html
 
   iac-security:
     runs-on: ubuntu-latest
