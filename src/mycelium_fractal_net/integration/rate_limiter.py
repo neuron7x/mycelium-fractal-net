@@ -115,7 +115,7 @@ class RateLimiter:
             config: Rate limit configuration. If None, uses global config.
         """
         self.config = config or get_api_config().rate_limit
-        self.buckets: Dict[str, TokenBucket] = {}
+        self.buckets: Dict[Tuple[str, str], TokenBucket] = {}
         self._lock = Lock()
 
     def update_config(self, config: RateLimitConfig) -> None:
@@ -134,12 +134,15 @@ class RateLimiter:
 
         with self._lock:
             for key, bucket in self.buckets.items():
-                try:
-                    # Keys are created via _get_bucket_key(client, endpoint)
-                    _, endpoint = key.split(":", 1)
-                except ValueError:
-                    # Malformed key; skip adjustment but keep the bucket
-                    continue
+                if isinstance(key, tuple):
+                    _, endpoint = key
+                else:
+                    try:
+                        # Backward compatibility with legacy string keys.
+                        _, endpoint = str(key).rsplit(":", 1)
+                    except ValueError:
+                        # Malformed key; skip adjustment but keep the bucket
+                        continue
 
                 limit = self._get_limit_for_endpoint(endpoint)
                 window_seconds = self.config.window_seconds
@@ -182,7 +185,7 @@ class RateLimiter:
 
         return "unknown"
 
-    def _get_bucket_key(self, client: str, endpoint: str) -> str:
+    def _get_bucket_key(self, client: str, endpoint: str) -> Tuple[str, str]:
         """
         Create a bucket key from client and endpoint.
 
@@ -193,7 +196,7 @@ class RateLimiter:
         Returns:
             str: Bucket key.
         """
-        return f"{client}:{endpoint}"
+        return (client, endpoint)
 
     def _get_limit_for_endpoint(self, endpoint: str) -> int:
         """
