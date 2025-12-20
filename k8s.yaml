@@ -48,6 +48,34 @@ metadata:
   namespace: mycelium-fractal-net
 automountServiceAccountToken: false
 ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mfn-restricted
+  namespace: mycelium-fractal-net
+spec:
+  podSelector:
+    matchLabels:
+      app: mycelium-fractal-net
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+  egress:
+    - to:
+        - podSelector: {}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -150,6 +178,17 @@ spec:
         - name: mfn-secrets
           secret:
             secretName: mfn-secrets
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mfn-pdb
+  namespace: mycelium-fractal-net
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: mycelium-fractal-net
 ---
 apiVersion: v1
 kind: Service
