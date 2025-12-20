@@ -84,6 +84,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         # Prefix match with path boundary (e.g., /docs/ -> allow, but not /docs-foo)
         for public in self.auth_config.public_endpoints:
+            if public == "/":
+                continue
             boundary_prefix = public.rstrip("/") + "/"
             if path.startswith(boundary_prefix):
                 return True
