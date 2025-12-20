@@ -49,6 +49,7 @@ from typing import List
 
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Import schemas and adapters from integration layer
 from mycelium_fractal_net.integration import (
@@ -162,6 +163,18 @@ if _cors_origins:
         allow_headers=["*", API_KEY_HEADER],
         expose_headers=[REQUEST_ID_HEADER, "X-RateLimit-Limit", "X-RateLimit-Remaining"],
     )
+
+# Add baseline security headers for browsers and scanners.
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        response.headers.setdefault("Cross-Origin-Embedder-Policy", "require-corp")
+        response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Add production middleware (order matters: last added = first executed)
 # Desired execution order: RequestID → RequestLogging → Metrics → RateLimit → APIKey
