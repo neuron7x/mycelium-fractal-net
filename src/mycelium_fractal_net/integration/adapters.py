@@ -195,6 +195,17 @@ def aggregate_gradients_adapter(
     if not request.gradients:
         raise ValueError("No gradients provided")
 
+    expected_len = len(request.gradients[0])
+    if expected_len == 0:
+        raise ValueError("Gradient vectors must be non-empty")
+    for idx, gradient in enumerate(request.gradients[1:], start=1):
+        if len(gradient) != expected_len:
+            raise ValueError(
+                "Inconsistent gradient dimensions: "
+                f"gradient[0] length={expected_len} != "
+                f"gradient[{idx}] length={len(gradient)}"
+            )
+
     # Convert to tensors
     gradients = [torch.tensor(g, dtype=torch.float32) for g in request.gradients]
 

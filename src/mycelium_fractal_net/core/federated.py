@@ -142,6 +142,20 @@ class HierarchicalKrumAggregator:
 
         return min(estimated, max_allowed)
 
+    @staticmethod
+    def _validate_gradient_shapes(gradients: List[torch.Tensor]) -> None:
+        """Ensure all gradients share the same shape."""
+        if not gradients:
+            return
+        reference_shape = gradients[0].shape
+        for idx, grad in enumerate(gradients[1:], start=1):
+            if grad.shape != reference_shape:
+                raise ValueError(
+                    "Inconsistent gradient dimensions: "
+                    f"gradient[0] shape={reference_shape} "
+                    f"!= gradient[{idx}] shape={grad.shape}"
+                )
+
     def krum_select(
         self,
         gradients: List[torch.Tensor],
@@ -167,6 +181,8 @@ class HierarchicalKrumAggregator:
             raise ValueError("No gradients provided")
         if n == 1:
             return gradients[0]
+
+        self._validate_gradient_shapes(gradients)
 
         # Krum requires at least n > 2f + 2 points to compute scores using
         # (n - f - 2) neighbors. Without this, the neighbor set is empty and
@@ -217,6 +233,8 @@ class HierarchicalKrumAggregator:
         """
         if len(client_gradients) == 0:
             raise ValueError("No gradients to aggregate")
+
+        self._validate_gradient_shapes(client_gradients)
 
         if rng is None:
             rng = np.random.default_rng()

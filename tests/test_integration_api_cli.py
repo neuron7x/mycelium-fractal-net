@@ -179,6 +179,18 @@ class TestAPIEndpoints:
         )
         assert response.status_code == 400
 
+    def test_federated_inconsistent_gradient_lengths(self, client: TestClient) -> None:
+        """Test /federated/aggregate rejects inconsistent gradient sizes."""
+        response = client.post(
+            "/federated/aggregate",
+            json={
+                "gradients": [[1.0, 2.0, 3.0], [1.0, 2.0]],
+                "num_clusters": 2,
+                "byzantine_fraction": 0.2,
+            },
+        )
+        assert response.status_code == 400
+
     def test_health_endpoint(self, client: TestClient) -> None:
         """Test /health endpoint returns correct response."""
         response = client.get("/health")
@@ -231,6 +243,18 @@ class TestAdapters:
 
         assert response.num_input_gradients == 3
         assert len(response.aggregated_gradient) == 2
+
+    def test_federated_adapter_rejects_inconsistent_gradients(self) -> None:
+        """Test federated adapter fails on mismatched gradient lengths."""
+        request = FederatedAggregateRequest(
+            gradients=[[1.0, 2.0, 3.0], [1.0, 2.0]],
+            num_clusters=2,
+            byzantine_fraction=0.2,
+        )
+        ctx = ServiceContext(mode=ExecutionMode.API)
+
+        with pytest.raises(ValueError, match="Inconsistent gradient dimensions"):
+            aggregate_gradients_adapter(request, ctx)
 
 
 class TestServiceContext:
