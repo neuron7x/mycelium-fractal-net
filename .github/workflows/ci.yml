@@ -153,6 +153,7 @@ jobs:
           cmd_options: "-l WARN -j -r report_html.html"
           allow_issue_writing: false
           fail_action: false
+          artifact_name: zap_report
       - name: Check ZAP report files
         if: always()
         run: |
@@ -162,13 +163,6 @@ jobs:
           pwd
           echo "=== Directory contents ==="
           ls -lah
-      - name: Upload ZAP report artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap_report
-          path: report_html.html
-          if-no-files-found: warn
 
   iac-security:
     runs-on: ubuntu-latest
