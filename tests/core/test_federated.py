@@ -9,6 +9,7 @@ unsquared distances can pick a different gradient and weaken robustness.
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import torch
 
 from mycelium_fractal_net.core.federated import HierarchicalKrumAggregator
@@ -50,3 +51,15 @@ def test_krum_uses_squared_distances_for_scoring() -> None:
     result = aggregator.aggregate(gradients, rng=np.random.default_rng(0))
 
     assert torch.allclose(result, gradients[expected_index])
+
+
+def test_aggregate_rejects_inconsistent_gradient_shapes() -> None:
+    """Aggregator should fail fast on mismatched gradient shapes."""
+    gradients = [
+        torch.tensor([0.1, 0.2, 0.3]),
+        torch.tensor([0.4, 0.5]),
+    ]
+    aggregator = HierarchicalKrumAggregator(num_clusters=1, byzantine_fraction=0.0)
+
+    with pytest.raises(ValueError, match="Inconsistent gradient dimensions"):
+        aggregator.aggregate(gradients)
