@@ -13,6 +13,16 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from .reaction_diffusion_engine import (
+    ALPHA_MAX,
+    ALPHA_MIN,
+    GRID_SIZE_MAX,
+    GRID_SIZE_MIN,
+    JITTER_VAR_MAX,
+    JITTER_VAR_MIN,
+    TURING_THRESHOLD_MAX,
+    TURING_THRESHOLD_MIN,
+)
 
 @dataclass
 class SimulationConfig:
@@ -57,18 +67,26 @@ class SimulationConfig:
 
     def __post_init__(self) -> None:
         """Validate configuration parameters."""
-        if self.grid_size < 2:
-            raise ValueError("grid_size must be at least 2")
+        if not (GRID_SIZE_MIN <= self.grid_size <= GRID_SIZE_MAX):
+            raise ValueError(
+                f"grid_size must be in [{GRID_SIZE_MIN}, {GRID_SIZE_MAX}]"
+            )
         if self.steps < 1:
             raise ValueError("steps must be at least 1")
-        if not (0.0 < self.alpha <= 0.25):
-            raise ValueError("alpha must be in (0, 0.25] for CFL stability")
+        if not (ALPHA_MIN <= self.alpha <= ALPHA_MAX):
+            raise ValueError(
+                f"alpha must be in [{ALPHA_MIN}, {ALPHA_MAX}] for CFL stability"
+            )
         if not (0.0 <= self.spike_probability <= 1.0):
             raise ValueError("spike_probability must be in [0, 1]")
-        if not (0.0 <= self.turing_threshold <= 1.0):
-            raise ValueError("turing_threshold must be in [0, 1]")
-        if self.jitter_var < 0.0:
-            raise ValueError("jitter_var must be non-negative")
+        if not (TURING_THRESHOLD_MIN <= self.turing_threshold <= TURING_THRESHOLD_MAX):
+            raise ValueError(
+                f"turing_threshold must be in [{TURING_THRESHOLD_MIN}, {TURING_THRESHOLD_MAX}]"
+            )
+        if not (JITTER_VAR_MIN <= self.jitter_var <= JITTER_VAR_MAX):
+            raise ValueError(
+                f"jitter_var must be in [{JITTER_VAR_MIN}, {JITTER_VAR_MAX}]"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         """
