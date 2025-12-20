@@ -47,7 +47,13 @@ Reference:
 """
 
 # === Analytics API ===
-from .analytics import FeatureVector, compute_fractal_features
+from .analytics import (
+    FeatureVector,
+    FractalInsightArchitect,
+    Insight,
+    InsufficientDataError,
+    compute_fractal_features,
+)
 
 # === Centralized Configuration ===
 from .config import (
@@ -188,6 +194,9 @@ __all__ = [
     "MyceliumField",
     # === ANALYTICS API ===
     "FeatureVector",
+    "FractalInsightArchitect",
+    "Insight",
+    "InsufficientDataError",
     "compute_fractal_features",
     # === CORE ENGINE CLASSES ===
     # Nernst
