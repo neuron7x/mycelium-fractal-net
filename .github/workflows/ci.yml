@@ -149,7 +149,7 @@ jobs:
       - name: Run tests with coverage
         run: pytest --cov=mycelium_fractal_net --cov-report=xml -v
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
