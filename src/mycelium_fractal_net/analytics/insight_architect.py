@@ -7,8 +7,6 @@ is intentionally lightweight and deterministic so it can run inside automated
 tests without external dependencies.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -85,8 +83,25 @@ class FractalInsightArchitect:
     protocol from the problem statement.
     """
 
-    def __init__(self, max_clarifications: int = 3):
+    def __init__(
+        self,
+        max_clarifications: int = 3,
+        coverage_target: float = 0.80,
+        variance_reduction_target: float = 0.50,
+        macro_improvement_target: float = 0.15,
+        invariant_stability_pct: float = 0.20,
+        chaos_threshold: float = 0.70,
+        review_cadence: str = "щотижня",
+        time_horizon: str = "1-2 тижнів",
+    ):
         self.max_clarifications = max(1, min(max_clarifications, 3))
+        self.coverage_target = coverage_target
+        self.variance_reduction_target = variance_reduction_target
+        self.macro_improvement_target = macro_improvement_target
+        self.invariant_stability_pct = invariant_stability_pct
+        self.chaos_threshold = chaos_threshold
+        self.review_cadence = review_cadence
+        self.time_horizon = time_horizon
 
     # Public API -----------------------------------------------------------------
     def generate(self, data: Mapping[str, Any] | Sequence[Mapping[str, Any]], *, principle_name: str | None = None) -> Insight:
@@ -136,7 +151,10 @@ class FractalInsightArchitect:
 
         if isinstance(data, Mapping):
             goal = data.get("goal")
-            tensions = list(data.get("tensions", []) or data.get("tension_points", []))
+            tensions_raw = data.get("tensions")
+            if tensions_raw is None:
+                tensions_raw = data.get("tension_points", [])
+            tensions = list(tensions_raw or [])
             for lvl in levels:
                 levels[lvl] = self._normalize_entries(data.get(lvl, []))
         else:
@@ -171,7 +189,8 @@ class FractalInsightArchitect:
                 if metric is None and isinstance(entry.get("value"), (int, float)):
                     metric = float(entry["value"])
                 evidence = entry.get("evidence") or entry.get("example")
-                normalized.append(LevelPattern(name=str(name), metric=self._safe_float(metric), evidence=evidence))
+                evidence_text = str(evidence) if evidence is not None else None
+                normalized.append(LevelPattern(name=str(name), metric=self._safe_float(metric), evidence=evidence_text))
         return normalized
 
     # Builders -------------------------------------------------------------------
@@ -187,56 +206,65 @@ class FractalInsightArchitect:
     def _build_name(self, principle_name: str | None, normalized: _NormalizedData) -> str:
         if principle_name:
             return principle_name.strip().upper()
-        micro = normalized.levels["micro"][0].name
-        macro = normalized.levels["macro"][0].name
+        micro = self._primary_pattern(normalized.levels["micro"]).name
+        macro = self._primary_pattern(normalized.levels["macro"]).name
         return f"{micro} → {macro}".upper()
 
     def _build_summary(self, normalized: _NormalizedData) -> str:
-        macro = normalized.levels["macro"][0].name
+        macro = self._primary_pattern(normalized.levels["macro"]).name
         tension = normalized.tensions[0] if normalized.tensions else "каскадне посилення"
         goal = normalized.goal or "стабілізувати систему"
         return f"{tension} призводить до {macro}; мета — {goal}."
 
     def _describe_level(self, label: str, patterns: list[LevelPattern]) -> str:
+        if not patterns:
+            return f"{label.lower()}-правило — даних недостатньо."
         primary = patterns[0]
-        metric_text = f" (метрика: {primary.metric:.3f})" if primary.metric is not None else ""
+        metric_text = f" (метрика: {self._format_metric(primary.metric)})"
         example = f" (приклад: {primary.evidence})" if primary.evidence else ""
         extra = f"; повторюваність {len(patterns)}x" if len(patterns) > 1 else ""
         return f"{label.lower()}-правило — {primary.name}{metric_text}{example}{extra}."
 
     def _build_invariant(self, threshold: float) -> str:
-        return f"Стійкий при змінах >20%; поріг чутливості {threshold:.3f} для ключових метрик."
+        stability_pct = int(self.invariant_stability_pct * 100)
+        return f"Стійкий при змінах >{stability_pct}%; поріг чутливості {threshold:.3f} для ключових метрик."
 
     def _build_steps(self, normalized: _NormalizedData, threshold: float) -> list[str]:
         micro_metric = self._first_metric(normalized.levels["micro"])
         meso_metric = self._first_metric(normalized.levels["meso"])
         goal = normalized.goal or "результат"
         return [
-            f"1. Зняти базову мікрометріку ({self._format_metric(micro_metric)}), охоплення ≥80%.",
-            f"2. Синхронізувати мезорівень через A/B-тест (ціль: -50% варіації; базово {self._format_metric(meso_metric)}).",
-            f"3. Моніторити макропоказники щотижня; очікуване покращення {goal} на 15% упродовж 1-2 тижнів; реагувати при відхиленні >{threshold:.3f}.",
+            f"1. Зняти базову мікрометріку ({self._format_metric(micro_metric)}), охоплення ≥{int(self.coverage_target * 100)}%.",
+            f"2. Синхронізувати мезорівень через A/B-тест (ціль: -{int(self.variance_reduction_target * 100)}% варіації; базово {self._format_metric(meso_metric)}).",
+            f"3. Моніторити макропоказники {self.review_cadence}; очікуване покращення {goal} на {int(self.macro_improvement_target * 100)}% упродовж {self.time_horizon}; реагувати при відхиленні >{threshold:.3f}.",
         ]
 
     def _build_validation(self) -> str:
         return "A/B-тест + контрольна група; контрприклад: якщо зміни випадкові та не масштабуються, гіпотеза відкидається."
 
     def _build_boundaries(self) -> str:
-        return "Не працює в хаотичних системах із випадковістю >70%; сигнал ризику — відсутність повторюваних патернів."
+        return f"Не працює в хаотичних системах із випадковістю >{int(self.chaos_threshold * 100)}%; сигнал ризику — відсутність повторюваних патернів."
 
     # Utilities ------------------------------------------------------------------
     @staticmethod
     def _safe_float(value: Any) -> float | None:
         try:
-            return float(value) if value is not None else None
+            return float(value)
         except (TypeError, ValueError):
             return None
 
-    @staticmethod
-    def _compute_threshold(metrics: list[float]) -> float:
-        if not metrics:
+    def _compute_threshold(self, metrics: list[float]) -> float:
+        clean_metrics: list[float] = []
+        for raw in metrics:
+            val = self._safe_float(raw)
+            if val is not None:
+                clean_metrics.append(abs(val))
+        if not clean_metrics:
             return 0.1
-        max_metric = max(abs(m) for m in metrics if m is not None) or 1.0
-        return round(max_metric * 0.2, 3)
+        max_metric = max(clean_metrics)
+        if max_metric == 0:
+            return 0.1
+        return round(max_metric * self.invariant_stability_pct, 3)
 
     @staticmethod
     def _first_metric(patterns: list[LevelPattern]) -> float | None:
@@ -244,6 +272,12 @@ class FractalInsightArchitect:
             if p.metric is not None:
                 return p.metric
         return None
+
+    @staticmethod
+    def _primary_pattern(patterns: list[LevelPattern]) -> LevelPattern:
+        if not patterns:
+            raise ValueError("patterns cannot be empty; надайте хоча б один патерн для рівня")
+        return patterns[0]
 
     @staticmethod
     def _format_metric(value: float | None) -> str:
