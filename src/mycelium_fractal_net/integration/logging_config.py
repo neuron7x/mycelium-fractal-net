@@ -223,6 +223,7 @@ def setup_logging(config: Optional[LoggingConfig] = None) -> None:
         logger.handlers.clear()
         logger.addHandler(handler)
         logger.setLevel(level)
+        logger.propagate = False
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
