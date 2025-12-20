@@ -169,8 +169,8 @@ jobs:
         with:
           name: zap-security-reports-${{ github.run_id }}
           path: |
-            zap_report.json
-            zap_report.html
+            *report*.json
+            *report*.html
           retention-days: 30
           if-no-files-found: warn
       - name: Upload uvicorn logs on failure
