@@ -455,13 +455,17 @@ class MembraneEngine:
             Final potential(s) and metrics.
         """
         self.reset_metrics()
+        scalar_input = not isinstance(v0, np.ndarray)
         v = v0 if isinstance(v0, np.ndarray) else np.array([v0])
 
         # Create a wrapper that ensures the derivative_fn works with NDArray
         def _derivative_wrapper(
             arr: NDArray[np.floating[Any]],
         ) -> NDArray[np.floating[Any]]:
-            result = derivative_fn(arr)
+            if scalar_input and arr.size == 1:
+                result = derivative_fn(float(arr[0]))
+            else:
+                result = derivative_fn(arr)
             if isinstance(result, np.ndarray):
                 return result
             return np.array([result])
