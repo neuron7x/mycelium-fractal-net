@@ -409,7 +409,31 @@ pip-audit --strict
 
 ---
 
-## 11. Incident Response
+## 11. Dynamic Application Security Testing (DAST)
+
+### OWASP ZAP Baseline Scan
+
+The CI pipeline runs a ZAP baseline scan against the local FastAPI instance
+to detect common misconfigurations and exposure issues.
+
+```bash
+# Start the API locally
+uvicorn api:app --host 127.0.0.1 --port 8000
+
+# Run the baseline scan (Docker required)
+docker run --rm --network host \
+  -t zaproxy/zap-stable zap-baseline.py \
+  -t http://127.0.0.1:8000 -r zap_report.html
+```
+
+### Operational Notes
+
+- For production targets, ensure authenticated endpoints are exercised with valid API keys.
+- Treat any HIGH findings as immediate blockers for release.
+
+---
+
+## 12. Incident Response
 
 ### Security Event Types
 
@@ -428,7 +452,7 @@ pip-audit --strict
 
 ---
 
-## 12. Version History
+## 13. Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
