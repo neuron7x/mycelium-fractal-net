@@ -103,6 +103,32 @@ jobs:
       - name: Run security tests
         run: pytest tests/security/ -v --tb=short
 
+  iac-security:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-iac-${{ hashFiles('infra/terraform/**/*.tf', 'infra/gitops/*.yaml', 'k8s.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-iac-
+      - name: Install Checkov
+        run: |
+          python -m pip install --upgrade pip
+          pip install checkov
+      - name: Scan Terraform configurations
+        run: checkov -d infra/terraform
+      - name: Scan Kubernetes manifests
+        run: checkov -f k8s.yaml -f infra/gitops/argocd-application.yaml
+
   secrets-scan:
     runs-on: ubuntu-latest
     permissions:
