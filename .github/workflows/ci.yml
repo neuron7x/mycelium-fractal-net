@@ -153,7 +153,6 @@ jobs:
           cmd_options: "-l WARN -j -r report_html.html"
           allow_issue_writing: false
           fail_action: false
-          artifact_name: zap-report
       - name: Check ZAP report files
         if: always()
         run: |
