@@ -67,12 +67,12 @@ def get_request_id() -> Optional[str]:
     return _request_id.get()
 
 
-def set_request_id(request_id: str) -> None:
+def set_request_id(request_id: Optional[str]) -> None:
     """
     Set the request ID in context.
 
     Args:
-        request_id: The request ID to set.
+        request_id: The request ID to set, or None to clear.
     """
     _request_id.set(request_id)
 

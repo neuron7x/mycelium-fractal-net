@@ -131,12 +131,12 @@ class TestRequestIDContext:
         assert get_request_id() == test_id
 
         # Clean up
-        set_request_id(None)  # type: ignore
+        set_request_id(None)
 
     def test_request_id_defaults_to_none(self) -> None:
         """Request ID should default to None outside request."""
         # Clear any existing value
-        set_request_id(None)  # type: ignore
+        set_request_id(None)
         assert get_request_id() is None
 
 
@@ -210,7 +210,7 @@ class TestJSONFormatter:
         assert data.get("request_id") == "test-request-123"
 
         # Clean up
-        set_request_id(None)  # type: ignore
+        set_request_id(None)
 
 
 class TestRequestLoggingMiddleware:
@@ -336,7 +336,7 @@ class TestTextFormatter:
         # Should contain part of request ID (first 8 chars) in brackets
         assert "text-tes" in output  # First 8 chars of request ID
 
-        set_request_id(None)  # type: ignore
+        set_request_id(None)
 
 
 class TestLoggingSetup:
