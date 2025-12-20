@@ -25,6 +25,16 @@ The manifest creates:
 - **PodDisruptionBudget** to keep at least two pods available during node drain/updates
 - **Pod anti-affinity** to spread replicas across nodes
 
+### Terraform bootstrap (IaC)
+
+For reproducible infrastructure bootstrapping, use the Terraform module in `infra/terraform` to create the namespace and service account:
+
+```bash
+cd infra/terraform
+terraform init
+terraform apply -var="kubeconfig_path=~/.kube/config"
+```
+
 ## 2) Configure secrets (mandatory)
 
 Set API keys via Kubernetes Secrets (never bake them into images):
@@ -90,8 +100,25 @@ Health expectations:
 - **Resource governance**: LimitRange and ResourceQuota prevent noisy-neighbor issues and align with the HPA (min 3, max 100) while capping total CPU/memory and ephemeral storage.
 - **Certificates**: Enable TLS via Cert-Manager annotations or supply your own secret (`mfn-tls-secret`).
 
+### Access control and Zero Trust
+
+- Enforce **MFA** for all cluster access via your identity provider and Git hosting.
+- Use **short-lived credentials** (OIDC) for CI/CD to avoid long-lived secrets.
+- Treat the cluster network as untrusted: enforce namespace isolation, least-privilege RBAC, and explicit egress allowlists.
+
 ## 7) Rolling updates and scaling
 
 - **HPA** targets 70% CPU / 80% memory utilization across replicas.
 - **Pod anti-affinity** keeps replicas on different nodes; adjust if your cluster has fewer nodes.
 - For controlled rollouts: `kubectl rollout status deploy/mycelium-fractal-net` and `kubectl rollout undo deploy/mycelium-fractal-net`.
+
+## 8) GitOps deployment (ArgoCD)
+
+An example ArgoCD `Application` manifest is provided in `infra/gitops/argocd-application.yaml`.
+Update `repoURL` and `targetRevision`, then apply it to your ArgoCD namespace:
+
+```bash
+kubectl apply -f infra/gitops/argocd-application.yaml -n argocd
+```
+
+This keeps deployment state aligned with Git, supports automated drift correction, and integrates cleanly with CI/CD.
