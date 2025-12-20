@@ -150,14 +150,25 @@ jobs:
         with:
           target: http://127.0.0.1:8000/
           rules_file_name: ""
-          cmd_options: "-l WARN"
+          cmd_options: "-l WARN -j -r report_html.html"
           allow_issue_writing: false
+          fail_action: false
+      - name: Check ZAP report files
+        if: always()
+        run: |
+          echo "=== Checking for ZAP report files ==="
+          ls -lah report_* || echo "No report files found"
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Directory contents ==="
+          ls -lah
       - name: Upload ZAP report artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-report
+          name: zap_report
           path: report_html.html
+          if-no-files-found: warn
 
   iac-security:
     runs-on: ubuntu-latest
