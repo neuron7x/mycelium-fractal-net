@@ -58,6 +58,7 @@ curl -H "X-API-Key: your-api-key" https://api.example.com/validate
 ### Public Endpoints
 
 The following endpoints do not require authentication:
+- `GET /` - Root discovery
 - `GET /health` - Health check
 - `GET /metrics` - Prometheus metrics
 - `GET /docs` - API documentation (dev only)

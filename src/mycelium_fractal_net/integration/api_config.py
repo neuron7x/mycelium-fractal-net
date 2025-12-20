@@ -82,7 +82,7 @@ class AuthConfig:
     api_key_required: bool = False
     api_keys: List[str] = field(default_factory=list)
     public_endpoints: List[str] = field(
-        default_factory=lambda: ["/health", "/metrics", "/docs", "/redoc", "/openapi.json"]
+        default_factory=lambda: ["/", "/health", "/metrics", "/docs", "/redoc", "/openapi.json"]
     )
 
     @classmethod
@@ -193,6 +193,7 @@ class RateLimitConfig:
 
         # Per-endpoint limits (can be extended via config files)
         per_endpoint_limits = {
+            "/": 1000,  # Root discovery endpoint
             "/health": 1000,  # Health checks can be frequent
             metrics_endpoint: 1000,  # Metrics scraping can be frequent
             "/validate": 50,  # Validation is more expensive

@@ -16,6 +16,7 @@ Usage:
 
 Endpoints:
     GET  /health          - Health check (public)
+    GET  /               - Root discovery (public)
     GET  /metrics         - Prometheus metrics (public)
     POST /validate        - Run validation cycle
     POST /simulate        - Simulate mycelium field
