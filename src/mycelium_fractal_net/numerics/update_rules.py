@@ -274,7 +274,11 @@ def activator_inhibitor_update(
     
     # Reaction-diffusion update
     # ∂a/∂t = D_a·∇²a + r_a·a(1-a) - i
-    da = params.d_activator * a_lap + params.r_activator * (activator * (1 - activator) - inhibitor)
+    da = (
+        params.d_activator * a_lap
+        + params.r_activator * (activator * (1 - activator))
+        - inhibitor
+    )
     
     # ∂i/∂t = D_i·∇²i + r_i·(a - i)
     di = params.d_inhibitor * i_lap + params.r_inhibitor * (activator - inhibitor)
