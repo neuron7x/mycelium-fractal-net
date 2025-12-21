@@ -123,6 +123,9 @@ def run_simulation_adapter(
         alpha=request.alpha,
         spike_probability=request.spike_probability,
         turing_enabled=request.turing_enabled,
+        turing_threshold=request.turing_threshold,
+        quantum_jitter=request.quantum_jitter,
+        jitter_var=request.jitter_var,
     )
 
     # Compute fractal dimension

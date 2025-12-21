@@ -30,6 +30,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 from .api_config import RateLimitConfig, get_api_config
+from .schemas import ErrorCode
 
 
 @dataclass
@@ -364,7 +365,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={
                     "detail": "Rate limit exceeded",
-                    "error_code": "rate_limit_exceeded",
+                    "error_code": ErrorCode.RATE_LIMIT_EXCEEDED,
                     "retry_after": retry_after,
                 },
                 headers={

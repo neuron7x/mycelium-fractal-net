@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # =============================================================================
 # Health Check
@@ -39,7 +39,7 @@ class ValidateRequest(BaseModel):
         seed: Random seed for reproducibility. Range: [0, ∞). Default: 42.
         epochs: Number of training epochs. Range: [1, 100]. Default: 1.
         batch_size: Batch size for training. Range: [1, 64]. Default: 4.
-        grid_size: Size of simulation grid (NxN). Range: [8, 256]. Default: 64.
+        grid_size: Size of simulation grid (NxN). Range: [4, 256]. Default: 64.
         steps: Number of simulation steps. Range: [1, 1000]. Default: 64.
         turing_enabled: Enable Turing morphogenesis. Default: True.
         quantum_jitter: Enable quantum noise jitter. Default: False.
@@ -48,7 +48,7 @@ class ValidateRequest(BaseModel):
     seed: int = Field(default=42, ge=0)
     epochs: int = Field(default=1, ge=1, le=100)
     batch_size: int = Field(default=4, ge=1, le=64)
-    grid_size: int = Field(default=64, ge=8, le=256)
+    grid_size: int = Field(default=64, ge=4, le=256)
     steps: int = Field(default=64, ge=1, le=1000)
     turing_enabled: bool = True
     quantum_jitter: bool = False
@@ -96,21 +96,27 @@ class SimulateRequest(BaseModel):
 
     Attributes:
         seed: Random seed for reproducibility. Range: [0, ∞). Default: 42.
-        grid_size: Size of simulation grid (NxN). Range: [8, 256]. Default: 64.
+        grid_size: Size of simulation grid (NxN). Range: [4, 256]. Default: 64.
         steps: Number of simulation steps. Range: [1, 1000]. Default: 64.
         alpha: Diffusion coefficient (CFL stability requires <= 0.25).
-            Range: [0.0, 1.0]. Default: 0.18.
+            Range: (0.0, 0.25]. Default: 0.18.
         spike_probability: Probability of growth events per step.
             Range: [0.0, 1.0]. Default: 0.25.
         turing_enabled: Enable Turing morphogenesis. Default: True.
+        turing_threshold: Activation threshold for Turing patterns. Default: 0.75.
+        quantum_jitter: Enable quantum noise jitter. Default: False.
+        jitter_var: Variance of quantum jitter. Default: 0.0005.
     """
 
     seed: int = Field(default=42, ge=0)
-    grid_size: int = Field(default=64, ge=8, le=256)
+    grid_size: int = Field(default=64, ge=4, le=256)
     steps: int = Field(default=64, ge=1, le=1000)
-    alpha: float = Field(default=0.18, ge=0.0, le=1.0)
+    alpha: float = Field(default=0.18, gt=0.0, le=0.25)
     spike_probability: float = Field(default=0.25, ge=0.0, le=1.0)
     turing_enabled: bool = True
+    turing_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
+    quantum_jitter: bool = False
+    jitter_var: float = Field(default=0.0005, ge=0.0, le=0.01)
 
 
 class SimulateResponse(BaseModel):
@@ -146,16 +152,23 @@ class NernstRequest(BaseModel):
     Request parameters for Nernst potential computation.
 
     Attributes:
-        z_valence: Ion valence (K+=1, Ca2+=2, Cl-=1). Range: [1, 3]. Default: 1.
+        z_valence: Ion valence (K+=1, Ca2+=2, Cl-=1). Range: [-3, 3] excluding 0. Default: 1.
         concentration_out_molar: Extracellular concentration (mol/L). Must be > 0.
         concentration_in_molar: Intracellular concentration (mol/L). Must be > 0.
         temperature_k: Temperature in Kelvin. Range: [273, 373]. Default: 310 (37°C).
     """
 
-    z_valence: int = Field(default=1, ge=1, le=3)
+    z_valence: int = Field(default=1, ge=-3, le=3)
     concentration_out_molar: float = Field(gt=0)
     concentration_in_molar: float = Field(gt=0)
     temperature_k: float = Field(default=310.0, ge=273.0, le=373.0)
+
+    @field_validator("z_valence")
+    @classmethod
+    def _validate_z_valence(cls, value: int) -> int:
+        if value == 0:
+            raise ValueError("z_valence cannot be zero")
+        return value
 
 
 class NernstResponse(BaseModel):

@@ -26,6 +26,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 from .api_config import AuthConfig, get_api_config
+from .schemas import ErrorCode
 
 # Header name for API key
 API_KEY_HEADER = "X-API-Key"
@@ -138,11 +139,17 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         # Validate API key
         if not self._validate_api_key(api_key):
+            if api_key:
+                error_code = ErrorCode.INVALID_API_KEY
+                detail = "Invalid API key"
+            else:
+                error_code = ErrorCode.AUTHENTICATION_REQUIRED
+                detail = "API key required"
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 content={
-                    "detail": "Invalid or missing API key",
-                    "error_code": "authentication_required",
+                    "detail": detail,
+                    "error_code": error_code,
                 },
                 headers={"WWW-Authenticate": f'API-Key header="{API_KEY_HEADER}"'},
             )
