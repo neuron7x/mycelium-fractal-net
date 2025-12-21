@@ -1,0 +1,479 @@
+name: CI Reusable
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  policy-check:
+    name: Policy / Workflow Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Lint workflows
+        uses: rhysd/actionlint@270b5b27a8d5d63312a47c8b2c720c80a9d6f8d1
+
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Dependency review
+        uses: actions/dependency-review-action@b4fa4d2a0df75d39b08242fb8a9f3b15d67a9c7f
+        with:
+          fail-on-severity: high
+
+  config-lint:
+    name: Config Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install linters
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install yamllint
+      - name: Lint YAML
+        run: yamllint -s .
+      - name: Validate JSON
+        run: |
+          files=$(rg --files -g '*.json')
+          if [[ -n "${files}" ]]; then
+            while IFS= read -r file; do
+              python -m json.tool "${file}" >/dev/null
+            done <<< "${files}"
+          else
+            echo "No JSON files found."
+          fi
+
+  lint:
+    name: Lint / Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Run ruff lint
+        run: ruff check .
+      - name: Run ruff format check
+        run: ruff format --check .
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Run mypy
+        run: mypy src/mycelium_fractal_net
+
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          python -m pip install hypothesis scipy
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=mycelium_fractal_net \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=70 \
+            --junitxml=pytest-junit.xml \
+            -v
+      - name: Upload test reports
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a5f4b2e2a
+        with:
+          name: test-reports-${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            pytest-junit.xml
+
+  security:
+    name: Security Scans
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install security tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install bandit pip-audit
+          python -m pip install -e ".[dev]"
+      - name: Run Bandit
+        run: bandit -r src/ -ll -ii --exclude tests
+      - name: Audit dependencies
+        run: pip-audit -r requirements.txt --strict --desc on
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@0c4e38d6dd9b6d32b07f657a0b96aa4aa5e6811f
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  iac-security:
+    name: IaC Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install Checkov
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install checkov
+      - name: Scan Terraform configurations
+        run: checkov -d infra/terraform
+      - name: Scan Kubernetes manifests
+        run: checkov -f k8s.yaml -f infra/gitops/argocd-application.yaml
+
+  docs-check:
+    name: Documentation Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install doc tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install mdformat
+      - name: Check Markdown formatting
+        run: |
+          files=$(rg --files -g '*.md')
+          if [[ -n "${files}" ]]; then
+            mdformat --check ${files}
+          else
+            echo "No Markdown files found."
+          fi
+
+  validate:
+    name: Runtime Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+      - name: Run validation
+        run: python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
+
+  benchmark:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+      - name: Run benchmarks
+        run: python benchmarks/benchmark_core.py
+      - name: Upload benchmark logs
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a5f4b2e2a
+        with:
+          name: benchmark-logs
+          path: benchmarks
+
+  scientific-validation:
+    name: Scientific Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+      - name: Run scientific validation
+        run: python validation/scientific_validation.py
+
+  scalability-test:
+    name: Scalability / Stress
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Run scalability benchmarks
+        run: python benchmarks/benchmark_scalability.py
+      - name: Run stress tests
+        run: pytest tests/perf/test_stress_scalability.py -v --tb=short --maxfail=1
+
+  packaging:
+    name: Packaging Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip build
+      - name: Build distributions
+        run: python -m build
+      - name: Install wheel in clean environment
+        run: |
+          python -m venv /tmp/test_venv
+          /tmp/test_venv/bin/pip install --quiet dist/*.whl
+      - name: Test recursive import of all subpackages
+        run: |
+          /tmp/test_venv/bin/python -c "
+          import mycelium_fractal_net, pkgutil
+          submodules = [m.name for m in pkgutil.walk_packages(
+              mycelium_fractal_net.__path__,
+              mycelium_fractal_net.__name__ + '.'
+          )]
+          print(f'✓ Discovered {len(submodules)} submodules')
+          for m in submodules:
+              __import__(m)
+          print('✓ All submodules imported successfully')
+          "
+      - name: Verify package structure
+        run: |
+          python -m zipfile -l dist/*.whl | rg "mycelium_fractal_net/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | rg "mycelium_fractal_net/core/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | rg "mycelium_fractal_net/crypto/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | rg "mycelium_fractal_net/integration/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | rg "mycelium_fractal_net/numerics/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | rg "mycelium_fractal_net/pipelines/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | rg "mycelium_fractal_net/security/__init__.py" || exit 1
+          python -m zipfile -l dist/*.whl | rg "mycelium_fractal_net/types/__init__.py" || exit 1
+          echo "✓ All expected subpackages found in wheel"
+      - name: Verify analytics package is included
+        run: |
+          python -m zipfile -l dist/*.whl | rg "analytics/__init__.py" || exit 1
+          echo "✓ Analytics package included in wheel"
+      - name: Verify excluded packages are not in wheel
+        run: |
+          if python -m zipfile -l dist/*.whl | rg -e "^[[:space:]]+[0-9]+[[:space:]]+.*[[:space:]]+(experiments|tests|docs)/__init__.py" | rg -v "mycelium_fractal_net"; then
+            echo "✗ Found excluded runtime packages in wheel"
+            exit 1
+          fi
+          echo "✓ No excluded runtime packages in wheel"
+
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    if: always()
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    needs:
+      - policy-check
+      - dependency-review
+      - config-lint
+      - lint
+      - typecheck
+      - tests
+      - security
+      - secrets-scan
+      - iac-security
+      - docs-check
+      - validate
+      - benchmark
+      - scientific-validation
+      - scalability-test
+      - packaging
+    steps:
+      - name: Write summary
+        run: |
+          {
+            echo "## CI Gate Summary"
+            echo "- Policy / Workflow Lint: ${{ needs.policy-check.result }}"
+            echo "- Dependency Review: ${{ needs.dependency-review.result }}"
+            echo "- Config Validation: ${{ needs.config-lint.result }}"
+            echo "- Lint / Format: ${{ needs.lint.result }}"
+            echo "- Type Check: ${{ needs.typecheck.result }}"
+            echo "- Tests: ${{ needs.tests.result }}"
+            echo "- Security Scans: ${{ needs.security.result }}"
+            echo "- Secrets Scan: ${{ needs.secrets-scan.result }}"
+            echo "- IaC Security: ${{ needs.iac-security.result }}"
+            echo "- Documentation Checks: ${{ needs.docs-check.result }}"
+            echo "- Runtime Validation: ${{ needs.validate.result }}"
+            echo "- Benchmarks: ${{ needs.benchmark.result }}"
+            echo "- Scientific Validation: ${{ needs.scientific-validation.result }}"
+            echo "- Scalability / Stress: ${{ needs.scalability-test.result }}"
+            echo "- Packaging Validation: ${{ needs.packaging.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"
