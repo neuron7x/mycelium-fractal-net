@@ -93,11 +93,12 @@ async def validation_exception_handler(
     details: List[ErrorDetail] = []
     for error in exc.errors():
         field = ".".join(str(loc) for loc in error.get("loc", []))
+        input_value = error.get("input", None)
         details.append(
             ErrorDetail(
                 field=field if field else None,
                 message=error.get("msg", "Validation error"),
-                value=str(error.get("input", ""))[:100] if error.get("input") else None,
+                value=str(input_value)[:100] if input_value is not None else None,
             )
         )
 
