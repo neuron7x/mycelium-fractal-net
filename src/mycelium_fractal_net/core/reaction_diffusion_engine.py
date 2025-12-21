@@ -60,8 +60,8 @@ R_INHIBITOR_MIN: float = 0.001  # 1/step - minimum damping rate
 R_INHIBITOR_MAX: float = 0.1    # 1/step - upper bound for stability
 
 # Turing threshold bounds
-TURING_THRESHOLD_MIN: float = 0.5   # Below this, patterns trigger too easily
-TURING_THRESHOLD_MAX: float = 0.95  # Above this, patterns rarely form
+TURING_THRESHOLD_MIN: float = 0.0   # Inclusive lower bound for activation threshold
+TURING_THRESHOLD_MAX: float = 1.0   # Inclusive upper bound for activation threshold
 
 # Field diffusion coefficient bounds
 ALPHA_MIN: float = 0.05   # Minimum for observable diffusion
@@ -160,7 +160,7 @@ class ReactionDiffusionConfig:
         Valid range: 0.001-0.1.
     turing_threshold : float
         Threshold for pattern activation. Default 0.75.
-        Valid range: 0.5-0.95.
+        Valid range: 0.0-1.0.
     alpha : float
         Field diffusion coefficient. Default 0.18.
         Valid range: 0.05-0.25 (must be ≤ 0.25 for stability).
@@ -238,11 +238,11 @@ class ReactionDiffusionConfig:
                 parameter_name="r_inhibitor",
             )
 
-        # Turing threshold validation with biophysical bounds
+        # Turing threshold validation
         if not (TURING_THRESHOLD_MIN <= self.turing_threshold <= TURING_THRESHOLD_MAX):
             raise ValueOutOfRangeError(
                 f"turing_threshold must be in [{TURING_THRESHOLD_MIN}, {TURING_THRESHOLD_MAX}] "
-                "for meaningful pattern activation",
+                "for pattern activation",
                 value=self.turing_threshold,
                 min_bound=TURING_THRESHOLD_MIN,
                 max_bound=TURING_THRESHOLD_MAX,
