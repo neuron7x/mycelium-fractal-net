@@ -10,17 +10,127 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/v4.1.0-stable-0969da?style=flat-square" alt="v4.1.0" />
+  <a href="https://github.com/neuron7x/mycelium-fractal-net/actions/workflows/ci.yml">
+    <img src="https://github.com/neuron7x/mycelium-fractal-net/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI статус" />
+  </a>
+  <a href="https://codecov.io/gh/neuron7x/mycelium-fractal-net">
+    <img src="https://codecov.io/gh/neuron7x/mycelium-fractal-net/branch/main/graph/badge.svg" alt="Test coverage" />
+  </a>
+  <a href="https://libraries.io/github/neuron7x/mycelium-fractal-net">
+    <img src="https://img.shields.io/librariesio/github/neuron7x/mycelium-fractal-net?style=flat-square" alt="Dependency status" />
+  </a>
+  <a href="https://github.com/neuron7x/mycelium-fractal-net/releases">
+    <img src="https://img.shields.io/github/v/release/neuron7x/mycelium-fractal-net?style=flat-square" alt="Latest release" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/github/license/neuron7x/mycelium-fractal-net?style=flat-square" alt="License" />
+  </a>
   <img src="https://img.shields.io/badge/Python-≥3.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/PyTorch-≥2.0-ee4c2c?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch" />
-  <img src="https://img.shields.io/badge/tests-1031%20passed-2da44e?style=flat-square" alt="Tests" />
-  <img src="https://img.shields.io/badge/coverage-87%25-2da44e?style=flat-square" alt="Coverage" />
-  <img src="https://img.shields.io/badge/license-MIT-97ca00?style=flat-square" alt="MIT" />
+</p>
+
+<p align="center">
+  <a href="#quick-links">Швидкі посилання</a> •
+  <a href="#table-of-contents">Зміст</a> •
+  <a href="#media--demo">Медіа</a> •
+  <a href="#deployment">Deployment</a> •
+  <a href="#releases--changelog">Releases</a>
 </p>
 
 <p align="center">
   <img src="assets/morphogenesis.gif" alt="Turing morphogenesis" width="380" />
 </p>
+
+---
+
+## Quick Links
+
+- 📘 **Документація**: [docs/](docs)
+- 🧭 **Архітектура**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- 🧪 **CI/CD Pipeline**: [docs/CI_CD_PIPELINE.md](docs/CI_CD_PIPELINE.md)
+- 🔐 **Security**: [docs/MFN_SECURITY.md](docs/MFN_SECURITY.md)
+- 🚀 **Deployment**: [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
+- 🗺️ **Roadmap**: [docs/ROADMAP.md](docs/ROADMAP.md)
+- 🧾 **Releases**: [GitHub Releases](https://github.com/neuron7x/mycelium-fractal-net/releases)
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Mission & System Role](#mission--system-role)
+- [Tech Stack](#tech-stack)
+- [Media & Demo](#media--demo)
+- [Test & Validation Status](#test--validation-status)
+- [Architecture](#architecture)
+- [Validated Parameters](#validated-parameters)
+- [Modules](#modules)
+- [Installation](#installation)
+- [Environment Setup & Updates](#environment-setup--updates)
+- [CLI](#cli)
+- [API](#api)
+- [Deployment](#deployment)
+- [Security](#security)
+- [Cryptography](#cryptography)
+- [Docker](#docker)
+- [Project Structure](#project-structure)
+- [Tests](#tests)
+- [Dependencies](#dependencies)
+- [Examples & Use Cases](#examples--use-cases)
+- [Datasets & Scenarios](#datasets--scenarios)
+- [Analytics Module](#analytics-module)
+- [Documentation](#documentation)
+- [Releases & Changelog](#releases--changelog)
+- [Roadmap & Future Plans](#roadmap--future-plans)
+- [Community & Contact](#community--contact)
+- [License](#license)
+
+---
+
+## Overview
+
+MyceliumFractalNet (MFN) — нейрофізична обчислювальна платформа для моделювання морфогенезу, фрактальної динаміки та федеративного навчання. Проєкт поєднує фізичні моделі (Nernst-Planck, Turing), фрактальну аналітику та production-grade інфраструктуру (API, безпека, CI/CD).
+
+---
+
+## Mission & System Role
+
+**Мета проєкту:** забезпечити відтворювану симуляцію морфогенезу та екстракцію структурованих ознак для ML/наукових сценаріїв, з гарантією безпеки та валідації.
+
+**Що MFN робить:**
+- Генерація 2D полів потенціалів з Turing morphogenesis
+- Витягування 18 стандартизованих фрактальних ознак
+- Byzantine-robust федеративне агрегування (Hierarchical Krum)
+- Обчислення Nernst потенціалів, фрактальної розмірності, Lyapunov експонент
+
+**Що MFN НЕ робить:**
+- Виконання ордерів та торгівля
+- Управління портфелем та ризиками
+- Збереження даних (окрім parquet export)
+- UI/візуалізація
+
+Деталі: [docs/MFN_SYSTEM_ROLE.md](docs/MFN_SYSTEM_ROLE.md)
+
+---
+
+## Tech Stack
+
+- **Core:** Python 3.10+, NumPy, SciPy, PyTorch
+- **API:** FastAPI + Prometheus metrics
+- **CI/CD:** GitHub Actions, Codecov, security scanners
+- **Infra:** Docker, Kubernetes, GitOps/ArgoCD manifests
+
+---
+
+## Media & Demo
+
+<p align="center">
+  <img src="assets/node_dynamics.png" alt="Node dynamics" width="520" />
+  <img src="assets/fractal_topology.png" alt="Fractal topology" width="380" />
+</p>
+
+- 🎞️ **GIF Demo:** `assets/morphogenesis.gif`
+- 🎥 **Video demo:** (додайте посилання на YouTube/MP4 у `docs/TUTORIALS.md` або у Releases, коли буде доступне)
 
 ---
 
@@ -34,11 +144,11 @@
 | **Benchmarks** | ✅ 8/8 | All targets exceeded by 5-200x |
 | **Linting** | ✅ passed | ruff + mypy |
 
-📊 [Latest Test Health Report](docs/reports/MFN_TEST_HEALTH_2025-11-30.md) | 📈 [Performance Baselines](docs/MFN_PERFORMANCE_BASELINES.md) | 📋 [Technical Audit](docs/TECHNICAL_AUDIT.md)
+📊 [Latest Test Health Report](docs/reports/MFN_TEST_HEALTH_2025-11-30.md) • 📈 [Performance Baselines](docs/MFN_PERFORMANCE_BASELINES.md) • 📋 [Technical Audit](docs/TECHNICAL_AUDIT.md)
 
 ---
 
-## Архітектура
+## Architecture
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -54,7 +164,7 @@
 
 ---
 
-## Валідовані параметри
+## Validated Parameters
 
 | Модуль | Параметр | Значення | Одиниці |
 |:-------|:---------|:---------|:--------|
@@ -74,7 +184,7 @@
 
 ---
 
-## Модулі
+## Modules
 
 ### Nernst-Planck
 
@@ -93,10 +203,6 @@ E_K = compute_nernst_potential(
 )
 # E_K = -0.08901 V ≈ -89 mV
 ```
-
-<p align="center">
-  <img src="assets/node_dynamics.png" alt="Node dynamics" width="550" />
-</p>
 
 ### Turing Morphogenesis
 
@@ -127,10 +233,6 @@ Box-counting розмірність:
 
 $$D = \lim_{\epsilon \to 0} \frac{\ln N(\epsilon)}{\ln(1/\epsilon)}$$
 
-<p align="center">
-  <img src="assets/fractal_topology.png" alt="Fractal topology" width="380" />
-</p>
-
 ```python
 from mycelium_fractal_net import estimate_fractal_dimension
 
@@ -141,13 +243,30 @@ D = estimate_fractal_dimension(binary)
 
 ---
 
-## Встановлення
+## Installation
 
 ```bash
 git clone https://github.com/neuron7x/mycelium-fractal-net.git
 cd mycelium-fractal-net
 pip install -e ".[dev]"
 ```
+
+## Environment Setup & Updates
+
+```bash
+# Create and activate venv
+python -m venv .venv
+source .venv/bin/activate
+
+# Install with dev extras
+pip install -e ".[dev]"
+
+# Update to latest
+git pull --rebase
+pip install -e ".[dev]"
+```
+
+---
 
 ## CLI
 
@@ -166,11 +285,16 @@ lyapunov_exponent       : -2.121279
 nernst_symbolic_mV      : -89.010669
 ```
 
+---
+
 ## API
 
 ```bash
 uvicorn api:app --host 0.0.0.0 --port 8000
 ```
+
+- **OpenAPI spec:** [docs/openapi.json](docs/openapi.json)
+- **Swagger UI:** `http://localhost:8000/docs`
 
 | Endpoint | Method | Input | Output |
 |:---------|:-------|:------|:-------|
@@ -210,6 +334,8 @@ curl -H "X-API-Key: your-secret-key" http://localhost:8000/validate
 | `MFN_API_KEY` | Primary API key | — |
 | `MFN_RATE_LIMIT_ENABLED` | Enable rate limiting | false (dev), true (prod) |
 | `MFN_LOG_FORMAT` | Log format (json/text) | text (dev), json (prod) |
+
+---
 
 ## Deployment
 
@@ -322,7 +448,7 @@ pip install torch --index-url https://download.pytorch.org/whl/cu118
 
 ---
 
-## Структура
+## Project Structure
 
 ```
 mycelium-fractal-net/
@@ -358,7 +484,7 @@ mycelium-fractal-net/
 
 ---
 
-## Тести
+## Tests
 
 ```bash
 pytest -q
@@ -368,7 +494,7 @@ Coverage: Nernst • Turing • STDP • Fractal • Federated • Determinism
 
 ---
 
-## Залежності
+## Dependencies
 
 | Package | Version | Purpose |
 |:--------|:--------|:--------|
@@ -376,26 +502,6 @@ Coverage: Nernst • Turing • STDP • Fractal • Federated • Determinism
 | numpy | ≥1.24 | Numerical computing |
 | sympy | ≥1.12 | Symbolic verification |
 | fastapi | ≥0.109.0 | REST API |
-
----
-
-## System Role
-
-MyceliumFractalNet (MFN) — це **фрактальний морфогенетичний енжин фіч**, який трансформує параметри симуляції у структуровані вектори ознак для машинного навчання та аналізу.
-
-**Що MFN робить:**
-- Генерація 2D полів потенціалів з Turing morphogenesis
-- Витягування 18 стандартизованих фрактальних ознак
-- Byzantine-robust федеративне агрегування (Hierarchical Krum)
-- Обчислення Nernst потенціалів, фрактальної розмірності, Lyapunov експонент
-
-**Що MFN НЕ робить:**
-- Виконання ордерів та торгівля
-- Управління портфелем та ризиками
-- Збереження даних (окрім parquet export)
-- UI/візуалізація
-
-[Деталі див. docs/MFN_SYSTEM_ROLE.md](docs/MFN_SYSTEM_ROLE.md)
 
 ---
 
@@ -443,23 +549,6 @@ features = compute_fractal_features(result)
 print(f"Fractal dimension: {features['D_box']:.3f}")
 print(f"Active fraction: {features['f_active']:.3f}")
 ```
-
----
-
-## Документація
-
-| Документ | Опис |
-|:---------|:-----|
-| [MFN_SYSTEM_ROLE.md](docs/MFN_SYSTEM_ROLE.md) | Системна роль та зовнішній контракт |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архітектура системи |
-| [MFN_CODE_STRUCTURE.md](docs/MFN_CODE_STRUCTURE.md) | Структура коду та публічний API |
-| [MFN_DATA_MODEL.md](docs/MFN_DATA_MODEL.md) | Канонічна модель даних |
-| [MFN_MATH_MODEL.md](docs/MFN_MATH_MODEL.md) | Математична формалізація |
-| [NUMERICAL_CORE.md](docs/NUMERICAL_CORE.md) | Чисельне ядро |
-| [MFN_FEATURE_SCHEMA.md](docs/MFN_FEATURE_SCHEMA.md) | Схема фрактальних ознак |
-| [MFN_DATA_PIPELINES.md](docs/MFN_DATA_PIPELINES.md) | Data pipelines та сценарії |
-| [MFN_USE_CASES.md](docs/MFN_USE_CASES.md) | Use cases та демо-приклади |
-| [ROADMAP.md](docs/ROADMAP.md) | План розвитку | |
 
 ---
 
@@ -542,6 +631,49 @@ python -m experiments.inspect_features --input data/mycelium_dataset.parquet
 ```
 
 ---
+
+## Documentation
+
+| Документ | Опис |
+|:---------|:-----|
+| [MFN_SYSTEM_ROLE.md](docs/MFN_SYSTEM_ROLE.md) | Системна роль та зовнішній контракт |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архітектура системи |
+| [MFN_CODE_STRUCTURE.md](docs/MFN_CODE_STRUCTURE.md) | Структура коду та публічний API |
+| [MFN_DATA_MODEL.md](docs/MFN_DATA_MODEL.md) | Канонічна модель даних |
+| [MFN_MATH_MODEL.md](docs/MFN_MATH_MODEL.md) | Математична формалізація |
+| [NUMERICAL_CORE.md](docs/NUMERICAL_CORE.md) | Чисельне ядро |
+| [MFN_FEATURE_SCHEMA.md](docs/MFN_FEATURE_SCHEMA.md) | Схема фрактальних ознак |
+| [MFN_DATA_PIPELINES.md](docs/MFN_DATA_PIPELINES.md) | Data pipelines та сценарії |
+| [MFN_USE_CASES.md](docs/MFN_USE_CASES.md) | Use cases та демо-приклади |
+| [ROADMAP.md](docs/ROADMAP.md) | План розвитку |
+
+---
+
+## Releases & Changelog
+
+- 🧾 **Latest releases:** [GitHub Releases](https://github.com/neuron7x/mycelium-fractal-net/releases)
+- 🗂️ **Enhancements summary:** [docs/ENHANCEMENTS_SUMMARY.md](docs/ENHANCEMENTS_SUMMARY.md)
+- 🧪 **Validation report:** [docs/MFN_VALIDATION_REPORT.md](docs/MFN_VALIDATION_REPORT.md)
+
+---
+
+## Roadmap & Future Plans
+
+Поточний план розвитку ведеться у [docs/ROADMAP.md](docs/ROADMAP.md). Для детального беклогу див. [docs/MFN_BACKLOG.md](docs/MFN_BACKLOG.md).
+
+---
+
+## Community & Contact
+
+- 💬 **Issues:** https://github.com/neuron7x/mycelium-fractal-net/issues
+- 🔔 **Pull Requests:** https://github.com/neuron7x/mycelium-fractal-net/pulls
+- 👤 **Author:** [@neuron7x](https://github.com/neuron7x)
+
+---
+
+## License
+
+MIT License © Yaroslav Vasylenko. See [LICENSE](LICENSE).
 
 <p align="center">
   <strong>MIT License</strong> · Yaroslav Vasylenko · <a href="https://github.com/neuron7x">@neuron7x</a>
