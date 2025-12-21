@@ -1,0 +1,13 @@
+extends: default
+
+rules:
+  line-length: disable
+  truthy:
+    check-keys: false
+
+ignore: |
+  .git/
+  .venv/
+  dist/
+  build/
+  node_modules/
