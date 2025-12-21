@@ -200,19 +200,27 @@ def compute_gradient(
         grad_x = (np.roll(field, -1, axis=0) - np.roll(field, 1, axis=0)) / 2.0
         grad_y = (np.roll(field, -1, axis=1) - np.roll(field, 1, axis=1)) / 2.0
     else:
-        # Use forward/backward difference at boundaries
+        # Use forward/backward difference at boundaries by default.
+        # For Neumann boundaries, override edges to enforce zero-flux.
         grad_x = np.zeros_like(field)
         grad_y = np.zeros_like(field)
-        
+
         # Interior: central difference
         grad_x[1:-1, :] = (field[2:, :] - field[:-2, :]) / 2.0
         grad_y[:, 1:-1] = (field[:, 2:] - field[:, :-2]) / 2.0
-        
-        # Boundaries: forward/backward difference
-        grad_x[0, :] = field[1, :] - field[0, :]
-        grad_x[-1, :] = field[-1, :] - field[-2, :]
-        grad_y[:, 0] = field[:, 1] - field[:, 0]
-        grad_y[:, -1] = field[:, -1] - field[:, -2]
+
+        if boundary == BoundaryCondition.NEUMANN:
+            # Zero-gradient at boundaries
+            grad_x[0, :] = 0.0
+            grad_x[-1, :] = 0.0
+            grad_y[:, 0] = 0.0
+            grad_y[:, -1] = 0.0
+        else:
+            # Dirichlet: forward/backward difference at boundaries
+            grad_x[0, :] = field[1, :] - field[0, :]
+            grad_x[-1, :] = field[-1, :] - field[-2, :]
+            grad_y[:, 0] = field[:, 1] - field[:, 0]
+            grad_y[:, -1] = field[:, -1] - field[:, -2]
     
     return (
         cast(NDArray[np.floating[Any]], grad_x),
