@@ -142,6 +142,23 @@ history, metrics = engine.simulate(steps=100, return_history=True)
 print(f"History shape: {history.shape}")  # (100, 64, 64)
 ```
 
+### Phase Machine & Numerical Tolerances
+
+The reaction-diffusion pipeline uses an explicit phase machine to keep
+neural-like state evolution deterministic and auditable. Each step follows:
+
+```
+reset → initialized → growth → diffusion → turing → jitter → clamp → stability_check
+```
+
+**Phase invariant:** transitions must follow the exact order above; illegal
+transitions raise `StabilityError`.
+
+**Numerical tolerance:** clamping uses ε = 1e-12 V when detecting out-of-bounds
+values (i.e., values must exceed `FIELD_V_MAX + ε` or `FIELD_V_MIN - ε` to count
+as clamp events), preserving stability while avoiding false positives from
+floating-point noise.
+
 ### CFL Stability
 
 The diffusion coefficients must satisfy:

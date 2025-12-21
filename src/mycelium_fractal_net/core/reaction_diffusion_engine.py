@@ -82,6 +82,7 @@ MAX_STABLE_DIFFUSION: float = 0.25
 # === Field Bounds (MFN_MATH_MODEL.md Section 4.3) ===
 FIELD_V_MIN: float = -0.095  # -95 mV - hyperpolarization limit
 FIELD_V_MAX: float = 0.040   # +40 mV - action potential peak
+FIELD_CLAMP_EPS_V: float = 1e-12  # Numerical tolerance for clamp detection
 INITIAL_POTENTIAL_MEAN: float = -0.070  # -70 mV (resting potential)
 INITIAL_POTENTIAL_STD: float = 0.005    # 5 mV initial variance
 
@@ -92,6 +93,20 @@ class BoundaryCondition(Enum):
     PERIODIC = "periodic"  # Wrap around (np.roll)
     NEUMANN = "neumann"  # Zero-flux (mirror at boundary)
     DIRICHLET = "dirichlet"  # Fixed value at boundary
+
+
+class SimulationPhase(Enum):
+    """Explicit simulation phases for deterministic step ordering."""
+
+    RESET = "reset"
+    INITIALIZED = "initialized"
+    GROWTH = "growth"
+    DIFFUSION = "diffusion"
+    TURING = "turing"
+    JITTER = "jitter"
+    CLAMP = "clamp"
+    STABILITY_CHECK = "stability_check"
+    COMPLETE = "complete"
 
 
 def _validate_diffusion_coefficient(
@@ -350,6 +365,7 @@ class ReactionDiffusionEngine:
         self.config = config or ReactionDiffusionConfig()
         self._metrics = ReactionDiffusionMetrics()
         self._rng = np.random.default_rng(self.config.random_seed)
+        self._phase = SimulationPhase.RESET
 
         # Initialize fields
         self._field: NDArray[np.floating] | None = None
@@ -360,6 +376,11 @@ class ReactionDiffusionEngine:
     def metrics(self) -> ReactionDiffusionMetrics:
         """Get current metrics."""
         return self._metrics
+
+    @property
+    def phase(self) -> SimulationPhase:
+        """Return current simulation phase."""
+        return self._phase
 
     @property
     def field(self) -> NDArray[np.floating] | None:
@@ -376,6 +397,26 @@ class ReactionDiffusionEngine:
         """Get current inhibitor state."""
         return self._inhibitor
 
+    def _transition_phase(self, next_phase: SimulationPhase) -> None:
+        """Enforce allowed simulation phase transitions."""
+        allowed: dict[SimulationPhase, set[SimulationPhase]] = {
+            SimulationPhase.RESET: {SimulationPhase.INITIALIZED},
+            SimulationPhase.INITIALIZED: {SimulationPhase.GROWTH, SimulationPhase.COMPLETE},
+            SimulationPhase.GROWTH: {SimulationPhase.DIFFUSION},
+            SimulationPhase.DIFFUSION: {SimulationPhase.TURING},
+            SimulationPhase.TURING: {SimulationPhase.JITTER},
+            SimulationPhase.JITTER: {SimulationPhase.CLAMP},
+            SimulationPhase.CLAMP: {SimulationPhase.STABILITY_CHECK},
+            SimulationPhase.STABILITY_CHECK: {SimulationPhase.GROWTH, SimulationPhase.COMPLETE},
+            SimulationPhase.COMPLETE: {SimulationPhase.INITIALIZED},
+        }
+
+        if next_phase not in allowed[self._phase]:
+            raise StabilityError(
+                f"Illegal phase transition: {self._phase.value} -> {next_phase.value}"
+            )
+        self._phase = next_phase
+
     def reset(self) -> None:
         """Reset engine state and metrics."""
         self._metrics = ReactionDiffusionMetrics()
@@ -383,6 +424,7 @@ class ReactionDiffusionEngine:
         self._activator = None
         self._inhibitor = None
         self._rng = np.random.default_rng(self.config.random_seed)
+        self._phase = SimulationPhase.RESET
 
     def initialize_field(
         self,
@@ -417,6 +459,7 @@ class ReactionDiffusionEngine:
         # Initialize activator-inhibitor system
         self._activator = self._rng.uniform(0, 0.1, size=(n, n)).astype(np.float64)
         self._inhibitor = self._rng.uniform(0, 0.1, size=(n, n)).astype(np.float64)
+        self._transition_phase(SimulationPhase.INITIALIZED)
 
         return self._field
 
@@ -478,6 +521,7 @@ class ReactionDiffusionEngine:
 
         # Final metrics
         self._update_field_metrics()
+        self._transition_phase(SimulationPhase.COMPLETE)
 
         if return_history:
             assert history is not None
@@ -502,6 +546,7 @@ class ReactionDiffusionEngine:
         assert self._inhibitor is not None
 
         # Growth events (spikes)
+        self._transition_phase(SimulationPhase.GROWTH)
         if self._rng.random() < self.config.spike_probability:
             i = self._rng.integers(0, self.config.grid_size)
             j = self._rng.integers(0, self.config.grid_size)
@@ -510,14 +555,17 @@ class ReactionDiffusionEngine:
             self._metrics.growth_events += 1
 
         # Field diffusion with Laplacian
+        self._transition_phase(SimulationPhase.DIFFUSION)
         laplacian = self._compute_laplacian(self._field)
         self._field = self._field + self.config.alpha * laplacian
 
         # Turing morphogenesis
+        self._transition_phase(SimulationPhase.TURING)
         if turing_enabled:
             self._turing_step()
 
         # Quantum jitter
+        self._transition_phase(SimulationPhase.JITTER)
         if self.config.quantum_jitter:
             jitter = self._rng.normal(
                 0,
@@ -527,13 +575,17 @@ class ReactionDiffusionEngine:
             self._field = self._field + jitter
 
         # Clamping to physiological bounds
-        clamped_mask = (self._field > FIELD_V_MAX) | (self._field < FIELD_V_MIN)
+        self._transition_phase(SimulationPhase.CLAMP)
+        clamped_mask = (self._field > FIELD_V_MAX + FIELD_CLAMP_EPS_V) | (
+            self._field < FIELD_V_MIN - FIELD_CLAMP_EPS_V
+        )
         clamped = int(np.count_nonzero(clamped_mask))
         if clamped:
             np.clip(self._field, FIELD_V_MIN, FIELD_V_MAX, out=self._field)
         self._metrics.clamping_events += clamped
 
         # Stability check
+        self._transition_phase(SimulationPhase.STABILITY_CHECK)
         if self.config.check_stability:
             self._check_stability(step)
 

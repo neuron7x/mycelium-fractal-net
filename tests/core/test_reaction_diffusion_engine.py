@@ -15,6 +15,10 @@ import time
 import numpy as np
 import pytest
 
+pytest.importorskip("hypothesis")
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
 from mycelium_fractal_net.core import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
@@ -31,6 +35,7 @@ from mycelium_fractal_net.core.reaction_diffusion_engine import (
     DEFAULT_TURING_THRESHOLD,
     FIELD_V_MAX,
     FIELD_V_MIN,
+    SimulationPhase,
     GRID_SIZE_MIN,
     JITTER_VAR_MAX,
     MAX_STABLE_DIFFUSION,
@@ -323,6 +328,38 @@ class TestDeterminism:
         field2, _ = engine2.simulate(steps=100)
         
         assert not np.allclose(field1, field2)
+
+
+class TestPhaseTransitions:
+    """Test explicit phase transitions and deterministic ordering."""
+
+    @settings(max_examples=10, deadline=None)
+    @given(
+        steps=st.integers(min_value=1, max_value=5),
+        turing_enabled=st.booleans(),
+        quantum_jitter=st.booleans(),
+        seed=st.integers(min_value=0, max_value=1000),
+    )
+    def test_phase_machine_completes(
+        self,
+        steps: int,
+        turing_enabled: bool,
+        quantum_jitter: bool,
+        seed: int,
+    ) -> None:
+        """Simulation should complete in the expected terminal phase."""
+        config = ReactionDiffusionConfig(
+            grid_size=8,
+            random_seed=seed,
+            quantum_jitter=quantum_jitter,
+        )
+        engine = ReactionDiffusionEngine(config)
+
+        field, metrics = engine.simulate(steps=steps, turing_enabled=turing_enabled)
+
+        assert np.isfinite(field).all()
+        assert metrics.steps_computed == steps
+        assert engine.phase is SimulationPhase.COMPLETE
 
 
 class TestStabilitySmoke:
