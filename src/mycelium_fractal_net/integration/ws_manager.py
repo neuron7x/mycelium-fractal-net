@@ -587,7 +587,7 @@ class WSConnectionManager:
             try:
                 await self._heartbeat_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Heartbeat monitor task cancelled")
             self._heartbeat_task = None
             logger.info("Heartbeat monitor stopped")
 

@@ -62,8 +62,6 @@ from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 class SymmetricEncryptionError(Exception):
     """Raised when symmetric encryption operation fails."""
 
-    pass
-
 
 # Constants
 AES_KEY_SIZE = 32  # 256 bits

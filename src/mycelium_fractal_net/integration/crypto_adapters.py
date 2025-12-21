@@ -46,8 +46,6 @@ logger = get_logger("crypto_api")
 class CryptoAPIError(Exception):
     """Base exception for crypto API operations."""
 
-    pass
-
 
 def _generate_key_id() -> str:
     """Generate a unique key identifier."""

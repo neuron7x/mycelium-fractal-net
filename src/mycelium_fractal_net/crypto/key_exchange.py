@@ -74,8 +74,6 @@ _CURVE25519_A24 = 121666  # (A + 2) / 4 where A = 486662
 class KeyExchangeError(Exception):
     """Raised when key exchange operation fails."""
 
-    pass
-
 
 def _clamp_scalar(k: bytes) -> int:
     """

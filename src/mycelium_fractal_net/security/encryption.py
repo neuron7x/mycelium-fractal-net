@@ -45,8 +45,6 @@ from mycelium_fractal_net.crypto import (
 class EncryptionError(Exception):
     """Raised when encryption or decryption fails."""
 
-    pass
-
 
 def generate_key(length: int = AES_KEY_SIZE) -> bytes:
     """

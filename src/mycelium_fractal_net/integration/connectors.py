@@ -146,12 +146,12 @@ class BaseConnector(ABC):
     @abstractmethod
     async def connect(self) -> None:
         """Establish connection to the data source."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def disconnect(self) -> None:
         """Close connection to the data source."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def fetch(self, **kwargs: Any) -> Any:
@@ -164,7 +164,7 @@ class BaseConnector(ABC):
         Returns:
             Fetched data.
         """
-        pass
+        raise NotImplementedError
 
     def _calculate_retry_delay(self, attempt: int) -> float:
         """

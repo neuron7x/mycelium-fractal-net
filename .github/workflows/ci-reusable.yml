@@ -161,6 +161,9 @@ jobs:
             --cov-fail-under=70 \
             --junitxml=pytest-junit.xml \
             -v
+          coverage report \
+            --include "*/mycelium_fractal_net/integration/crypto_adapters.py" \
+            --fail-under=80
       - name: Upload test reports
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a5f4b2e2a
         with:

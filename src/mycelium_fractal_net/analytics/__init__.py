@@ -11,8 +11,6 @@ Main API:
 Reference: docs/MFN_FEATURE_SCHEMA.md
 """
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 from numpy.typing import NDArray
 
@@ -23,9 +21,6 @@ from .fractal_features import (
     compute_fractal_features,
 )
 from .insight_architect import FractalInsightArchitect, Insight, InsufficientDataError
-
-if TYPE_CHECKING:
-    pass
 
 
 # Legacy type alias for compatibility

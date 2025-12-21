@@ -92,8 +92,6 @@ _ED25519_GY = (
 class SignatureError(Exception):
     """Raised when signature operation fails."""
 
-    pass
-
 
 def _sha512(data: bytes) -> bytes:
     """Compute SHA-512 hash."""
