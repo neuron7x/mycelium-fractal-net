@@ -104,7 +104,12 @@ class FractalInsightArchitect:
         self.time_horizon = time_horizon
 
     # Public API -----------------------------------------------------------------
-    def generate(self, data: Mapping[str, Any] | Sequence[Mapping[str, Any]], *, principle_name: str | None = None) -> Insight:
+    def generate(
+        self,
+        data: Mapping[str, Any] | Sequence[Mapping[str, Any]],
+        *,
+        principle_name: str | None = None,
+    ) -> Insight:
         """
         Generate an insight. Expects either a mapping with keys ``micro``,
         ``meso``, ``macro`` or a list of mappings each containing ``level``.
@@ -114,7 +119,12 @@ class FractalInsightArchitect:
         if missing_levels:
             raise InsufficientDataError(self._build_clarifications(missing_levels))
 
-        metrics = [p.metric for items in normalized.levels.values() for p in items if p.metric is not None]
+        metrics = [
+            p.metric
+            for items in normalized.levels.values()
+            for p in items
+            if p.metric is not None
+        ]
         invariant_threshold = self._compute_threshold(metrics)
 
         name = self._build_name(principle_name, normalized)
@@ -139,13 +149,18 @@ class FractalInsightArchitect:
             boundaries=boundaries,
         )
 
-    def format_insight(self, data: Mapping[str, Any] | Sequence[Mapping[str, Any]], *, principle_name: str | None = None) -> str:
+    def format_insight(
+        self,
+        data: Mapping[str, Any] | Sequence[Mapping[str, Any]],
+        *,
+        principle_name: str | None = None,
+    ) -> str:
         """Generate and return a formatted string insight."""
         return self.generate(data, principle_name=principle_name).format()
 
     # Normalization --------------------------------------------------------------
     def _normalize(self, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> _NormalizedData:
-        levels = {"micro": [], "meso": [], "macro": []}
+        levels: dict[str, list[LevelPattern]] = {"micro": [], "meso": [], "macro": []}
         tensions: list[str] = []
         goal = None
 
@@ -190,7 +205,13 @@ class FractalInsightArchitect:
                     metric = float(entry["value"])
                 evidence = entry.get("evidence") or entry.get("example")
                 evidence_text = str(evidence) if evidence is not None else None
-                normalized.append(LevelPattern(name=str(name), metric=self._safe_float(metric), evidence=evidence_text))
+                normalized.append(
+                    LevelPattern(
+                        name=str(name),
+                        metric=self._safe_float(metric),
+                        evidence=evidence_text,
+                    )
+                )
         return normalized
 
     # Builders -------------------------------------------------------------------
@@ -227,23 +248,45 @@ class FractalInsightArchitect:
 
     def _build_invariant(self, threshold: float) -> str:
         stability_pct = int(self.invariant_stability_pct * 100)
-        return f"Стійкий при змінах >{stability_pct}%; поріг чутливості {threshold:.3f} для ключових метрик."
+        return (
+            f"Стійкий при змінах >{stability_pct}%; поріг чутливості "
+            f"{threshold:.3f} для ключових метрик."
+        )
 
     def _build_steps(self, normalized: _NormalizedData, threshold: float) -> list[str]:
         micro_metric = self._first_metric(normalized.levels["micro"])
         meso_metric = self._first_metric(normalized.levels["meso"])
         goal = normalized.goal or "результат"
         return [
-            f"1. Зняти базову мікрометріку ({self._format_metric(micro_metric)}), охоплення ≥{int(self.coverage_target * 100)}%.",
-            f"2. Синхронізувати мезорівень через A/B-тест (ціль: -{int(self.variance_reduction_target * 100)}% варіації; базово {self._format_metric(meso_metric)}).",
-            f"3. Моніторити макропоказники {self.review_cadence}; очікуване покращення {goal} на {int(self.macro_improvement_target * 100)}% упродовж {self.time_horizon}; реагувати при відхиленні >{threshold:.3f}.",
+            (
+                "1. Зняти базову мікрометріку "
+                f"({self._format_metric(micro_metric)}), охоплення "
+                f"≥{int(self.coverage_target * 100)}%."
+            ),
+            (
+                "2. Синхронізувати мезорівень через A/B-тест (ціль: -"
+                f"{int(self.variance_reduction_target * 100)}% варіації; "
+                f"базово {self._format_metric(meso_metric)})."
+            ),
+            (
+                f"3. Моніторити макропоказники {self.review_cadence}; очікуване "
+                f"покращення {goal} на {int(self.macro_improvement_target * 100)}% "
+                f"упродовж {self.time_horizon}; реагувати при відхиленні >{threshold:.3f}."
+            ),
         ]
 
     def _build_validation(self) -> str:
-        return "A/B-тест + контрольна група; контрприклад: якщо зміни випадкові та не масштабуються, гіпотеза відкидається."
+        return (
+            "A/B-тест + контрольна група; контрприклад: якщо зміни випадкові та "
+            "не масштабуються, гіпотеза відкидається."
+        )
 
     def _build_boundaries(self) -> str:
-        return f"Не працює в хаотичних системах із випадковістю >{int(self.chaos_threshold * 100)}%; сигнал ризику — відсутність повторюваних патернів."
+        return (
+            "Не працює в хаотичних системах із випадковістю "
+            f">{int(self.chaos_threshold * 100)}%; сигнал ризику — відсутність "
+            "повторюваних патернів."
+        )
 
     # Utilities ------------------------------------------------------------------
     @staticmethod
