@@ -22,6 +22,7 @@ from .fractal_features import (
     compute_box_counting_dimension,
     compute_fractal_features,
 )
+from .insight_architect import FractalInsightArchitect, Insight, InsufficientDataError
 
 if TYPE_CHECKING:
     pass
@@ -37,4 +38,7 @@ __all__ = [
     "compute_fractal_features",
     "compute_box_counting_dimension",
     "compute_basic_stats",
+    "FractalInsightArchitect",
+    "Insight",
+    "InsufficientDataError",
 ]
