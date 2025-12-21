@@ -208,9 +208,12 @@ class RateLimiter:
         Returns:
             int: Requests per window for this endpoint.
         """
-        # Check for specific endpoint limit
+        # Check for specific endpoint limit (match full path or path boundary)
         for path, limit in self.config.per_endpoint_limits.items():
-            if endpoint.startswith(path):
+            normalized = path.rstrip("/") or "/"
+            if endpoint == normalized:
+                return limit
+            if normalized != "/" and endpoint.startswith(f"{normalized}/"):
                 return limit
 
         # Fall back to default
