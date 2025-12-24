@@ -38,38 +38,16 @@ All P0 (critical) issues have been resolved:
 ### 1. Optional Dependencies Management
 
 **Category**: Infrastructure  
-**Status**: 🟡 Partial  
+**Status**: ✅ Resolved (extras added)  
 **Impact**: Medium
 
 #### Description
-Several integration components require optional dependencies (aiohttp, kafka-python) that are not installed by default. This means some connector/publisher features may not be available unless explicitly installed.
+Optional dependency groups are now declared in `pyproject.toml` to unlock connector/publisher features without bloating the base install.
 
-#### Affected Components
-- `RESTConnector` - requires `aiohttp`
-- `WebhookPublisher` - requires `aiohttp`
-- `KafkaConnectorAdapter` - requires `kafka-python`
-- `KafkaPublisherAdapter` - requires `kafka-python`
-
-#### Current Workaround
+#### Usage
 ```bash
-# Install optional dependencies as needed
-pip install aiohttp          # For REST/Webhook
-pip install kafka-python     # For Kafka integration
-```
-
-#### Recommendation
-Add optional dependency groups to `pyproject.toml`:
-```toml
-[project.optional-dependencies]
-http = ["aiohttp>=3.9.0"]
-kafka = ["kafka-python>=2.0.0"]
-full = ["aiohttp>=3.9.0", "kafka-python>=2.0.0"]
-```
-
-Then users can install with:
-```bash
-pip install mycelium-fractal-net[http]    # HTTP connectors/publishers
-pip install mycelium-fractal-net[kafka]   # Kafka connectors/publishers
+pip install mycelium-fractal-net[http]    # HTTP connectors/publishers (aiohttp)
+pip install mycelium-fractal-net[kafka]   # Kafka connectors/publishers (kafka-python)
 pip install mycelium-fractal-net[full]    # All optional features
 ```
 

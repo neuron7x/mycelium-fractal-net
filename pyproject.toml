@@ -38,6 +38,16 @@ dev = [
   "uvicorn>=0.20.0",
   "locust>=2.20.0",
 ]
+http = [
+  "aiohttp>=3.9.4",
+]
+kafka = [
+  "kafka-python>=2.0.0",
+]
+full = [
+  "aiohttp>=3.9.4",
+  "kafka-python>=2.0.0",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
