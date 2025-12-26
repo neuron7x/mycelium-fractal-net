@@ -319,17 +319,18 @@ def run_finance_demo(
     if verbose:
         print("\n2. Converting to mycelium field representation...")
     selected_preset = cfde_preset or ("markets" if denoise else None)
+    use_cfde = denoise or selected_preset is not None
     before_mean, before_std = float(np.mean(returns)), float(np.std(returns))
     field, processed_returns = map_returns_to_field(
         returns,
         grid_size=32,
-        denoise=denoise or selected_preset is not None,
+        denoise=use_cfde,
         cfde_preset=selected_preset,
         return_processed=True,
     )
     returns = processed_returns
 
-    if verbose and (denoise or selected_preset is not None):
+    if verbose and use_cfde:
         after_mean = float(np.mean(returns))
         after_std = float(np.std(returns))
         print("\n1b. Applying fractal denoiser to returns (CFDE)...")
