@@ -198,6 +198,22 @@ class TestReactionDiffusionSimulation:
         
         assert metrics.growth_events == 0
 
+    def test_small_grid_deterministic_and_finite(self) -> None:
+        """Small grids should remain finite and deterministic with fixed seed."""
+        config = ReactionDiffusionConfig(
+            grid_size=8,
+            random_seed=123,
+        )
+        engine = ReactionDiffusionEngine(config)
+
+        field1, _ = engine.simulate(steps=5)
+        assert field1.shape == (8, 8)
+        assert np.isfinite(field1).all()
+
+        engine2 = ReactionDiffusionEngine(config)
+        field2, _ = engine2.simulate(steps=5)
+        assert np.allclose(field1, field2)
+
 
 class TestBoundaryConditions:
     """Test different boundary conditions."""
