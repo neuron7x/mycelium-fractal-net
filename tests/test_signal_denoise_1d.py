@@ -13,7 +13,8 @@ def _mse(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def test_denoiser_preserves_shape_cpu() -> None:
-    torch.manual_seed(0)
+    torch.manual_seed(42)
+    np.random.seed(42)
     model = OptimizedFractalDenoise1D()
     data = torch.randn(1, 1, 1024)
 
@@ -25,8 +26,9 @@ def test_denoiser_preserves_shape_cpu() -> None:
 
 
 def test_denoiser_do_no_harm_random_walk() -> None:
-    rng = np.random.default_rng(1)
-    torch.manual_seed(1)
+    torch.manual_seed(42)
+    np.random.seed(42)
+    rng = np.random.default_rng(42)
 
     steps = rng.normal(0.0, 0.01, size=1024)
     base = np.cumsum(steps)
@@ -45,8 +47,9 @@ def test_denoiser_do_no_harm_random_walk() -> None:
 
 
 def test_denoiser_improves_spike_noise_simple() -> None:
-    rng = np.random.default_rng(2)
-    torch.manual_seed(2)
+    torch.manual_seed(42)
+    np.random.seed(42)
+    rng = np.random.default_rng(42)
 
     length = 512
     base = np.zeros(length, dtype=np.float64)
