@@ -12,7 +12,7 @@ keywords = ["neuroscience", "fractal", "mycelium", "simulation", "nernst", "LLM-
 dependencies = [
   "numpy>=1.24",
   "sympy>=1.12",
-  "torch>=2.0.0",
+  "torch>=2.0.0,<3.0.0",
   "pydantic>=2.0",
   "fastapi>=0.100.0",
   "pandas>=1.5.3,<3.0.0",
@@ -28,6 +28,7 @@ dev = [
   "pytest>=7.0",
   "pytest-cov>=4.0",
   "pytest-asyncio>=0.21.0",
+  "pytest-timeout>=2.0.0",
   "ruff>=0.5.0",
   "mypy>=1.8.0",
   "black>=24.0.0",
@@ -37,6 +38,8 @@ dev = [
   "hypothesis>=6.0.0",
   "uvicorn>=0.20.0",
   "locust>=2.20.0",
+  "tomli>=2.0.0; python_version < '3.11'",
+  "packaging>=21.0",
 ]
 http = [
   "aiohttp>=3.9.4",
@@ -62,7 +65,7 @@ include = ["mycelium_fractal_net*", "analytics"]
 exclude = ["tests*", "docs*", "examples*", "experiments*"]
 
 [tool.pytest.ini_options]
-addopts = "-q --disable-warnings"
+addopts = "-q --disable-warnings --timeout=300"
 testpaths = ["tests"]
 pythonpath = [".", "src"]
 
@@ -81,9 +84,18 @@ ignore_missing_imports = true
 namespace_packages = true
 pretty = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = true
+
 [tool.coverage.run]
-source = ["mycelium_fractal_net"]
+source = ["mycelium_fractal_net", "analytics"]
 branch = true
+omit = [
+  "*/tests/*",
+  "*/experiments/*",
+  "*/load_tests/*",
+]
 
 [tool.coverage.report]
 show_missing = true
