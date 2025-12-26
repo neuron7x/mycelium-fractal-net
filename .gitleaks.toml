@@ -18,9 +18,12 @@ regexes = [
   '''concentration_(in|out)_molar''',  # Nernst equation parameters
   '''test_.*_key''',                   # Test fixture keys
   '''EXAMPLE_TOKEN''',                 # Documentation examples
+  '''password\s*=\s*["\']mypassword["\']''',  # Test password literals
+  '''password\s*=\s*["\']test.*["\']''',      # Test password patterns
 ]
 paths = [
   '''examples/.*''',                   # Example code with dummy credentials
-  '''tests/fixtures/.*''',             # Test data
+  '''tests/.*''',                      # All test files and fixtures
   '''docs/.*\.md''',                   # Documentation
+  '''README\.md''',                    # README with example outputs
 ]
