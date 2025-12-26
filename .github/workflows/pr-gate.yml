@@ -115,6 +115,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0  # Required for gitleaks commit range scanning
       - name: Set up Python
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
@@ -129,8 +131,6 @@ jobs:
       - name: Bandit
         run: bandit -r src -ll
       - name: Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          args: detect --no-git -v
+        uses: gitleaks/gitleaks-action@0c4e38d6dd9b6d32b07f657a0b96aa4aa5e6811f
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
