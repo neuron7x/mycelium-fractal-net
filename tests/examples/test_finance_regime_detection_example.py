@@ -115,6 +115,20 @@ class TestFinanceRegimeDetectionExample:
         assert "lyapunov" in result_dict
         assert "confidence" in result_dict
 
+    def test_run_finance_demo_with_denoise_flag(self) -> None:
+        """Test denoised run returns analysis with expected ranges."""
+        analysis = self.module.run_finance_demo(
+            verbose=False,
+            num_points=200,
+            seed=42,
+            return_analysis=True,
+            denoise=True,
+        )
+
+        assert analysis is not None
+        assert 0.0 <= analysis.fractal_dim <= 2.5
+        assert not np.isnan(analysis.v_std)
+
 
 class TestFinanceDataGeneration:
     """Tests for synthetic market data generation."""
