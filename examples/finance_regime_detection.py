@@ -260,19 +260,19 @@ def run_finance_demo(
 
     if denoise:
         preprocessor = Fractal1DPreprocessor(preset="markets")
-        signal = torch.tensor(returns, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+        returns_tensor = torch.tensor(returns, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
         with torch.no_grad():
-            processed = preprocessor(signal)
+            processed = preprocessor(returns_tensor)
         returns = processed.squeeze(0).squeeze(0).cpu().numpy().astype(np.float64)
 
         if verbose:
             print("\n1b. Applying fractal denoiser to returns...")
             print(
-                f"   Denoise enabled: mean {signal.mean().item():.6f}"
+                f"   Denoise enabled: mean {returns_tensor.mean().item():.6f}"
                 f" → {processed.mean().item():.6f}"
             )
             print(
-                f"   Std: {signal.std().item():.6f}"
+                f"   Std: {returns_tensor.std().item():.6f}"
                 f" → {processed.std().item():.6f}"
             )
 

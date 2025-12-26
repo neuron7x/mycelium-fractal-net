@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, cast
 
 import torch
 import torch.nn as nn
@@ -35,7 +35,7 @@ def _canonicalize_1d(
 
 def _normalized_kernel(window: int) -> torch.Tensor:
     if window < 3 or window % 2 == 0:
-        raise ValueError("window must be odd and at least 3")
+        raise ValueError("window must be an odd number >= 3")
     kernel = torch.ones(1, 1, window, dtype=torch.float32)
     return kernel / float(window)
 
@@ -60,8 +60,6 @@ class OptimizedFractalDenoise1D(nn.Module):
         self.spike_damping = spike_damping
         self.iterations = iterations
         self._eps = 1e-6
-        self.detail_kernel: torch.Tensor
-        self.trend_kernel: torch.Tensor
         self.register_buffer("detail_kernel", _normalized_kernel(base_window))
         self.register_buffer("trend_kernel", _normalized_kernel(base_window * 2 + 1))
 
@@ -82,8 +80,10 @@ class OptimizedFractalDenoise1D(nn.Module):
         current = canonical.to(torch.float32)
 
         for _ in range(self.iterations):
-            trend = self._smooth(current, self.trend_kernel)
-            local = self._smooth(current, self.detail_kernel)
+            trend_kernel = cast(torch.Tensor, self.trend_kernel)
+            detail_kernel = cast(torch.Tensor, self.detail_kernel)
+            trend = self._smooth(current, trend_kernel)
+            local = self._smooth(current, detail_kernel)
             residual = current - local
 
             scale = residual.std(dim=-1, keepdim=True).clamp_min(self._eps)
