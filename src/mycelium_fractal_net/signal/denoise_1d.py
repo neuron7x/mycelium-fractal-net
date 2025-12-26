@@ -75,6 +75,8 @@ class OptimizedFractalDenoise1D(nn.Module):
         if population_size < 1:
             raise ValueError("population_size must be positive")
         self.population_size = population_size
+        if smooth_kernel < 3 or smooth_kernel % 2 == 0:
+            raise ValueError("smooth_kernel must be an odd integer >= 3")
         self.s_threshold = s_threshold
         self.s_max = s_max
         self.overlap = overlap
@@ -175,12 +177,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         r = self.range_size
         if r <= 0:
             raise ValueError("range_size must be positive")
+        if self.domain_scale <= 0:
+            raise ValueError("domain_scale must be positive")
         d = r * self.domain_scale
-        if d <= 0 or d % r != 0:
-            raise ValueError(
-                f"domain length (domain_scale * range_size) must be divisible by range_size; "
-                f"range_size={r}, domain_scale={self.domain_scale}"
-            )
         stride = r // 2 if self.overlap else r
         if stride <= 0:
             raise ValueError("Invalid stride derived from range_size")
