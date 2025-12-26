@@ -176,6 +176,24 @@ def map_returns_to_field(
     return field
 
 
+def apply_cfde_preprocessing(
+    returns: NDArray[np.float64],
+    *,
+    preset: str = "markets",
+    device: str | torch.device | None = None,
+) -> NDArray[np.float64]:
+    """
+    Canonical CFDE hook for returns preprocessing.
+
+    Applies Fractal1DPreprocessor and returns numpy array matching input dtype.
+    """
+    preprocessor = Fractal1DPreprocessor(preset=preset)
+    tensor = torch.tensor(returns, dtype=torch.float32, device=device).unsqueeze(0).unsqueeze(0)
+    with torch.no_grad():
+        processed = preprocessor(tensor)
+    return processed.squeeze(0).squeeze(0).cpu().numpy().astype(np.float64)
+
+
 def classify_regime(
     fractal_dim: float,
     v_std: float,
@@ -232,6 +250,7 @@ def run_finance_demo(
     seed: int = 42,
     return_analysis: bool = False,
     denoise: bool = False,
+    cfde_preset: str | None = None,
 ) -> RegimeAnalysis | None:
     """
     Run the finance regime detection demo.
@@ -259,20 +278,18 @@ def run_finance_demo(
         print("\n1. Generating synthetic market data...")
     returns, regime_labels = generate_synthetic_market_data(rng, num_points=num_points)
 
-    if denoise:
-        preprocessor = Fractal1DPreprocessor(preset="markets")
+    selected_preset = cfde_preset or ("markets" if denoise else None)
+    if selected_preset is not None:
         returns_tensor = torch.tensor(returns, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
-        with torch.no_grad():
-            processed = preprocessor(returns_tensor)
-        returns = processed.squeeze(0).squeeze(0).cpu().numpy().astype(np.float64)
+        before_mean, before_std = returns_tensor.mean().item(), returns_tensor.std().item()
+        returns = apply_cfde_preprocessing(returns, preset=selected_preset)
 
         if verbose:
-            print("\n1b. Applying fractal denoiser to returns...")
-            print(
-                f"   Denoise enabled: mean {returns_tensor.mean().item():.6f}"
-                f" → {processed.mean().item():.6f}"
-            )
-            print(f"   Std: {returns_tensor.std().item():.6f} → {processed.std().item():.6f}")
+            print("\n1b. Applying fractal denoiser to returns (CFDE)...")
+            after_mean = float(returns.mean())
+            after_std = float(returns.std())
+            print(f"   Denoise enabled: mean {before_mean:.6f} → {after_mean:.6f}")
+            print(f"   Std: {before_std:.6f} → {after_std:.6f}")
 
     if verbose:
         print(f"   Generated {len(returns)} daily returns")
