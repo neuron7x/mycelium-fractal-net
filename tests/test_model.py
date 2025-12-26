@@ -1,4 +1,5 @@
 """Tests for MyceliumFractalNet neural network model."""
+
 import torch
 
 from mycelium_fractal_net.model import MyceliumFractalNet

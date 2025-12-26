@@ -144,9 +144,7 @@ class ConfigSampler:
             steps = int(rng.integers(self.steps_range[0], self.steps_range[1] + 1))
             alpha = float(rng.uniform(self.alpha_range[0], self.alpha_range[1]))
             turing_enabled = bool(rng.choice(self.turing_values))
-            spike_prob = float(
-                rng.uniform(self.spike_prob_range[0], self.spike_prob_range[1])
-            )
+            spike_prob = float(rng.uniform(self.spike_prob_range[0], self.spike_prob_range[1]))
             turing_threshold = float(
                 rng.uniform(self.turing_threshold_range[0], self.turing_threshold_range[1])
             )

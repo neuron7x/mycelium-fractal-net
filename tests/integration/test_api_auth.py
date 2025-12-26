@@ -149,9 +149,7 @@ class TestAuthenticationMiddleware:
         data = response.json()
         assert "potential_mV" in data
 
-    def test_all_protected_endpoints_require_auth(
-        self, auth_enabled_client: TestClient
-    ) -> None:
+    def test_all_protected_endpoints_require_auth(self, auth_enabled_client: TestClient) -> None:
         """All non-public endpoints should require authentication."""
         protected_endpoints = [
             ("POST", "/validate", {"seed": 42, "epochs": 1, "grid_size": 32, "steps": 32}),
@@ -180,22 +178,20 @@ class TestAuthenticationMiddleware:
 
             assert response.status_code == 401, f"Endpoint {path} should require auth"
 
-    def test_dev_mode_allows_requests_without_key(
-        self, auth_disabled_client: TestClient
-    ) -> None:
+    def test_dev_mode_allows_requests_without_key(self, auth_disabled_client: TestClient) -> None:
         """Test that dev mode auth config is correctly set up.
-        
+
         Note: Due to middleware being configured at app import time,
         this test verifies the auth configuration behavior rather than
         the actual middleware (which would require app restart).
         """
         from mycelium_fractal_net.integration.api_config import AuthConfig, Environment
-        
+
         # Verify dev mode config is set up correctly
         config = AuthConfig.from_env(Environment.DEV)
         assert config.api_key_required is False
         assert "dev-key-for-testing" in config.api_keys
-        
+
         # Health endpoint should always work (it's public)
         response = auth_disabled_client.get("/health")
         assert response.status_code == 200

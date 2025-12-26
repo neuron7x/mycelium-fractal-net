@@ -20,13 +20,13 @@ import pytest
 # Infrastructure packages that should NOT be imported in core/
 INFRASTRUCTURE_PACKAGES = {
     "fastapi",
-    "uvicorn", 
+    "uvicorn",
     "starlette",
     "flask",
     "django",
     "requests",  # HTTP client
-    "httpx",     # HTTP client
-    "aiohttp",   # Async HTTP
+    "httpx",  # HTTP client
+    "aiohttp",  # Async HTTP
     "kafka",
     "redis",
     "sqlalchemy",
@@ -61,7 +61,7 @@ class TestCoreLayerBoundaries:
                 tree = ast.parse(f.read())
         except SyntaxError:
             return set()
-        
+
         imports = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -70,16 +70,16 @@ class TestCoreLayerBoundaries:
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
                     imports.add(node.module.split(".")[0])
-        
+
         return imports
 
     def test_core_does_not_import_fastapi(self) -> None:
         """Verify core/ modules do not import FastAPI."""
         core_path = Path("src/mycelium_fractal_net/core")
-        
+
         for py_file in core_path.glob("*.py"):
             imports = self._get_imports_from_file(py_file)
-            
+
             for infra_pkg in ["fastapi", "starlette", "uvicorn"]:
                 assert infra_pkg not in imports, (
                     f"{py_file.name} imports {infra_pkg}, violating layer boundary. "
@@ -89,10 +89,10 @@ class TestCoreLayerBoundaries:
     def test_core_does_not_import_http_clients(self) -> None:
         """Verify core/ modules do not import HTTP clients."""
         core_path = Path("src/mycelium_fractal_net/core")
-        
+
         for py_file in core_path.glob("*.py"):
             imports = self._get_imports_from_file(py_file)
-            
+
             for http_pkg in ["requests", "httpx", "aiohttp"]:
                 assert http_pkg not in imports, (
                     f"{py_file.name} imports {http_pkg}, violating layer boundary. "
@@ -102,10 +102,10 @@ class TestCoreLayerBoundaries:
     def test_core_does_not_import_message_queues(self) -> None:
         """Verify core/ modules do not import message queue packages."""
         core_path = Path("src/mycelium_fractal_net/core")
-        
+
         for py_file in core_path.glob("*.py"):
             imports = self._get_imports_from_file(py_file)
-            
+
             for mq_pkg in ["kafka", "redis", "celery", "pika"]:
                 assert mq_pkg not in imports, (
                     f"{py_file.name} imports {mq_pkg}, violating layer boundary. "
@@ -126,7 +126,7 @@ class TestCoreLayerBoundaries:
             "mycelium_fractal_net.core.reaction_diffusion_engine",
             "mycelium_fractal_net.core.fractal_growth_engine",
         ]
-        
+
         for module_name in core_modules:
             try:
                 module = importlib.import_module(module_name)
@@ -143,7 +143,7 @@ class TestIntegrationLayerBoundaries:
         from mycelium_fractal_net.integration import (
             ValidateRequest,
         )
-        
+
         # All should be pydantic models or dataclasses
         has_fields = hasattr(ValidateRequest, "__fields__")
         has_dataclass_fields = hasattr(ValidateRequest, "__dataclass_fields__")
@@ -157,7 +157,7 @@ class TestIntegrationLayerBoundaries:
             run_simulation_adapter,
             run_validation_adapter,
         )
-        
+
         assert callable(run_validation_adapter)
         assert callable(run_simulation_adapter)
         assert callable(compute_nernst_adapter)
@@ -170,7 +170,7 @@ class TestIntegrationLayerBoundaries:
             ServiceContext,
             create_context_from_request,
         )
-        
+
         assert isinstance(ServiceContext, type)
         assert hasattr(ExecutionMode, "API")
         assert callable(create_context_from_request)
@@ -185,7 +185,7 @@ class TestNoCircularImports:
         modules_to_clear = [m for m in sys.modules if m.startswith("mycelium_fractal_net")]
         for m in modules_to_clear:
             del sys.modules[m]
-        
+
         # Re-import main package
         try:
             import mycelium_fractal_net  # noqa: F401
@@ -226,7 +226,7 @@ class TestLayerDependencyDirection:
                 tree = ast.parse(content)
         except (SyntaxError, FileNotFoundError):
             return set()
-        
+
         imports = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -235,16 +235,16 @@ class TestLayerDependencyDirection:
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
                     imports.add(node.module)
-        
+
         return imports
 
     def test_core_does_not_depend_on_integration(self) -> None:
         """Verify core/ does not import from integration/."""
         core_path = Path("src/mycelium_fractal_net/core")
-        
+
         for py_file in core_path.glob("*.py"):
             imports = self._get_imports_from_file(py_file)
-            
+
             integration_imports = [i for i in imports if "integration" in i]
             assert len(integration_imports) == 0, (
                 f"{py_file.name} imports from integration: {integration_imports}. "
@@ -255,7 +255,7 @@ class TestLayerDependencyDirection:
         """Verify api.py uses integration layer for request/response handling."""
         api_path = Path("api.py")
         imports = self._get_imports_from_file(api_path)
-        
+
         # API should import from integration
         integration_imports = [i for i in imports if "integration" in i]
         assert len(integration_imports) > 0, (
@@ -269,11 +269,11 @@ class TestModuleExportsConsistency:
     def test_core_init_exports_all_items(self) -> None:
         """Verify core/__init__.py exports all declared items."""
         from mycelium_fractal_net import core
-        
+
         # Get declared __all__
         if hasattr(core, "__all__"):
             declared = set(core.__all__)
-            
+
             # Check each declared export actually exists
             for name in declared:
                 assert hasattr(core, name), (
@@ -283,10 +283,10 @@ class TestModuleExportsConsistency:
     def test_package_init_exports_all_items(self) -> None:
         """Verify mycelium_fractal_net/__init__.py exports all declared items."""
         import mycelium_fractal_net
-        
+
         if hasattr(mycelium_fractal_net, "__all__"):
             declared = set(mycelium_fractal_net.__all__)
-            
+
             for name in declared:
                 assert hasattr(mycelium_fractal_net, name), (
                     f"Package declares {name} in __all__ but it doesn't exist"

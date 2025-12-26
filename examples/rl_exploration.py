@@ -23,6 +23,7 @@ Usage:
 Note: This is a lightweight demonstration without external RL libraries.
 MFN serves as a feature engine for state-space analysis, not as a policy.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -141,7 +142,7 @@ class GridWorld:
 
     def get_coverage(self) -> float:
         """Return fraction of states visited."""
-        total_free = self.config.size ** 2 - len(self.obstacles)
+        total_free = self.config.size**2 - len(self.obstacles)
         return len(self.visited) / max(1, total_free)
 
     def get_visit_map(self) -> NDArray[np.bool_]:
@@ -388,8 +389,9 @@ def run_rl_demo(
         episode_lengths.append(t)
 
         if verbose and (episode + 1) % 10 == 0:
-            print(f"   Episode {episode + 1}: reward={episode_reward:.2f}, "
-                  f"steps={t}, ε={epsilon:.3f}")
+            print(
+                f"   Episode {episode + 1}: reward={episode_reward:.2f}, steps={t}, ε={epsilon:.3f}"
+            )
 
     # Analysis
     if verbose:
@@ -421,8 +423,9 @@ def run_rl_demo(
 
     if verbose:
         print(f"   Growth events: {result.growth_events}")
-        print(f"   Field range: [{result.field.min()*1000:.2f}, "
-              f"{result.field.max()*1000:.2f}] mV")
+        print(
+            f"   Field range: [{result.field.min() * 1000:.2f}, {result.field.max() * 1000:.2f}] mV"
+        )
 
     # Create stats
     stats = ExplorationStats(

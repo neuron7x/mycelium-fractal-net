@@ -13,11 +13,11 @@ Reference:
 Mathematical Model:
     Lyapunov exponent:
         λ = lim_{n→∞} (1/n) Σ_{k=1}^{n} ln|det(J_k)|
-    
+
     Interpretation:
         λ < 0: Stable (contractive) dynamics
         λ > 0: Unstable (expansive) dynamics
-    
+
     Expected value for MFN IFS: λ ≈ -2.1 (stable)
 
 Example:
@@ -109,7 +109,7 @@ def compute_stability_metrics(
         raise ValueError("dt must be positive for stability metrics")
 
     lyapunov = compute_lyapunov_exponent(field_history, dt)
-    
+
     # Compute change rates
     if len(field_history) >= 2:
         changes = np.abs(np.diff(field_history, axis=0))
@@ -118,7 +118,7 @@ def compute_stability_metrics(
     else:
         mean_change = 0.0
         max_change = 0.0
-    
+
     # Final state statistics
     final_std = float(np.std(field_history[-1])) if len(field_history) > 0 else 0.0
 

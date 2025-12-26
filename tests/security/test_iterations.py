@@ -130,8 +130,7 @@ class TestSecurityIterationConfig:
         """Should return correct iterations for quantum resistant level."""
         config = SecurityIterationConfig()
         assert (
-            config.get_iterations(SecurityLevel.QUANTUM_RESISTANT)
-            == QUANTUM_RESISTANT_ITERATIONS
+            config.get_iterations(SecurityLevel.QUANTUM_RESISTANT) == QUANTUM_RESISTANT_ITERATIONS
         )
 
     def test_get_iterations_adaptive(self) -> None:
@@ -228,10 +227,7 @@ class TestGetIterationCount:
         assert get_iteration_count(SecurityLevel.ENHANCED) == ENHANCED_ITERATIONS
         assert get_iteration_count(SecurityLevel.HIGH) == HIGH_SECURITY_ITERATIONS
         assert get_iteration_count(SecurityLevel.MAXIMUM) == MAXIMUM_ITERATIONS
-        assert (
-            get_iteration_count(SecurityLevel.QUANTUM_RESISTANT)
-            == QUANTUM_RESISTANT_ITERATIONS
-        )
+        assert get_iteration_count(SecurityLevel.QUANTUM_RESISTANT) == QUANTUM_RESISTANT_ITERATIONS
 
     def test_adaptive_level_respects_sensitivity(self) -> None:
         """Global helper should forward sensitivity to adaptive calculations."""

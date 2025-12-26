@@ -82,7 +82,7 @@ class TestReactionDiffusionConfig:
         """Threshold outside [0, 1] should raise."""
         with pytest.raises(ValueOutOfRangeError, match="threshold"):
             ReactionDiffusionConfig(turing_threshold=1.5)
-        
+
         with pytest.raises(ValueOutOfRangeError, match="threshold"):
             ReactionDiffusionConfig(turing_threshold=-0.1)
 
@@ -113,20 +113,18 @@ class TestReactionDiffusionSimulation:
 
     def test_basic_simulation(self) -> None:
         """Basic simulation should complete without errors."""
-        config = ReactionDiffusionConfig(
-            grid_size=32, random_seed=42
-        )
+        config = ReactionDiffusionConfig(grid_size=32, random_seed=42)
         engine = ReactionDiffusionEngine(config)
-        
+
         field, metrics = engine.simulate(steps=100)
-        
+
         assert field.shape == (32, 32)
         assert np.isfinite(field).all()
         assert metrics.steps_computed == 100
 
     def test_field_bounds_enforced(self) -> None:
         """Field should stay within [-95, 40] mV bounds.
-        
+
         Reference: MFN_MATH_MODEL.md Section 4.3
         """
         config = ReactionDiffusionConfig(
@@ -135,37 +133,37 @@ class TestReactionDiffusionSimulation:
             random_seed=42,
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         field, metrics = engine.simulate(steps=500)
-        
+
         field_mv = field * 1000.0
         assert field_mv.min() >= -95.0 - 0.5, f"Min {field_mv.min():.2f} mV < -95"
         assert field_mv.max() <= 40.0 + 0.5, f"Max {field_mv.max():.2f} mV > 40"
 
     def test_turing_affects_field(self) -> None:
         """Turing morphogenesis should modulate field dynamics.
-        
+
         With Turing enabled, the activator/inhibitor system evolves and
         can modulate the field. We verify the dynamics run by checking
         that turing_activations is tracked (even if 0 for this regime).
         """
         config = ReactionDiffusionConfig(
-            grid_size=32, 
+            grid_size=32,
             random_seed=42,
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         field, metrics = engine.simulate(steps=100, turing_enabled=True)
-        
+
         # Verify simulation ran successfully
         assert np.isfinite(field).all()
         assert metrics.steps_computed == 100
-        
+
         # Activator/inhibitor should have been computed
         # (even if activator never exceeded threshold)
         assert engine.activator is not None
         assert engine.inhibitor is not None
-        
+
         # The metrics should track activator/inhibitor means
         # These are updated in _update_field_metrics at the end
         assert metrics.activator_mean >= 0
@@ -179,9 +177,9 @@ class TestReactionDiffusionSimulation:
             random_seed=42,
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         _, metrics = engine.simulate(steps=100)
-        
+
         # With 50% probability, expect ~50 events in 100 steps
         assert 10 <= metrics.growth_events <= 90
 
@@ -193,9 +191,9 @@ class TestReactionDiffusionSimulation:
             random_seed=42,
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         _, metrics = engine.simulate(steps=100)
-        
+
         assert metrics.growth_events == 0
 
     def test_small_grid_deterministic_and_finite(self) -> None:
@@ -227,7 +225,7 @@ class TestBoundaryConditions:
         )
         engine = ReactionDiffusionEngine(config)
         field, _ = engine.simulate(steps=50)
-        
+
         assert np.isfinite(field).all()
 
     def test_neumann_boundary(self) -> None:
@@ -239,7 +237,7 @@ class TestBoundaryConditions:
         )
         engine = ReactionDiffusionEngine(config)
         field, _ = engine.simulate(steps=50)
-        
+
         assert np.isfinite(field).all()
 
     def test_dirichlet_boundary(self) -> None:
@@ -251,7 +249,7 @@ class TestBoundaryConditions:
         )
         engine = ReactionDiffusionEngine(config)
         field, _ = engine.simulate(steps=50)
-        
+
         assert np.isfinite(field).all()
 
     def test_dirichlet_laplacian_respects_zero_boundary(self) -> None:
@@ -299,13 +297,13 @@ class TestQuantumJitter:
             jitter_var=0.0005,
             random_seed=42,
         )
-        
+
         engine1 = ReactionDiffusionEngine(config_no_jitter)
         engine2 = ReactionDiffusionEngine(config_with_jitter)
-        
+
         field1, _ = engine1.simulate(steps=50)
         field2, _ = engine2.simulate(steps=50)
-        
+
         diff = np.abs(field1 - field2)
         assert diff.max() > 1e-6, "Jitter should produce different results"
 
@@ -317,13 +315,13 @@ class TestDeterminism:
         """Same seed should produce identical results."""
         config1 = ReactionDiffusionConfig(grid_size=32, random_seed=42)
         config2 = ReactionDiffusionConfig(grid_size=32, random_seed=42)
-        
+
         engine1 = ReactionDiffusionEngine(config1)
         engine2 = ReactionDiffusionEngine(config2)
-        
+
         field1, metrics1 = engine1.simulate(steps=100)
         field2, metrics2 = engine2.simulate(steps=100)
-        
+
         assert np.allclose(field1, field2)
         assert metrics1.growth_events == metrics2.growth_events
 
@@ -331,13 +329,13 @@ class TestDeterminism:
         """Different seeds should produce different results."""
         config1 = ReactionDiffusionConfig(grid_size=32, random_seed=42)
         config2 = ReactionDiffusionConfig(grid_size=32, random_seed=123)
-        
+
         engine1 = ReactionDiffusionEngine(config1)
         engine2 = ReactionDiffusionEngine(config2)
-        
+
         field1, _ = engine1.simulate(steps=100)
         field2, _ = engine2.simulate(steps=100)
-        
+
         assert not np.allclose(field1, field2)
 
 
@@ -346,7 +344,7 @@ class TestStabilitySmoke:
 
     def test_smoke_1000_steps(self) -> None:
         """Run 1000 steps without NaN/Inf.
-        
+
         Reference: MFN_MATH_MODEL.md Section 2.9 - Stability: No NaN/Inf after 1000+ steps
         """
         config = ReactionDiffusionConfig(
@@ -355,9 +353,9 @@ class TestStabilitySmoke:
             quantum_jitter=True,
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         field, metrics = engine.simulate(steps=1000)
-        
+
         assert np.isfinite(field).all()
         assert metrics.nan_detected is False
         assert metrics.inf_detected is False
@@ -371,11 +369,11 @@ class TestStabilitySmoke:
             ReactionDiffusionConfig(grid_size=64, alpha=0.20, random_seed=42),
             ReactionDiffusionConfig(grid_size=32, alpha=0.24, random_seed=42),  # Near limit
         ]
-        
+
         for config in configs:
             engine = ReactionDiffusionEngine(config)
             field, metrics = engine.simulate(steps=200)
-            
+
             assert np.isfinite(field).all(), f"Unstable with alpha={config.alpha}"
             assert metrics.nan_detected is False
 
@@ -387,18 +385,18 @@ class TestHistoryCollection:
         """History should have shape (steps, N, N)."""
         config = ReactionDiffusionConfig(grid_size=16, random_seed=42)
         engine = ReactionDiffusionEngine(config)
-        
+
         history, metrics = engine.simulate(steps=50, return_history=True)
-        
+
         assert history.shape == (50, 16, 16)
 
     def test_history_finite(self) -> None:
         """All history frames should be finite."""
         config = ReactionDiffusionConfig(grid_size=16, random_seed=42)
         engine = ReactionDiffusionEngine(config)
-        
+
         history, _ = engine.simulate(steps=50, return_history=True)
-        
+
         assert np.isfinite(history).all()
 
 
@@ -413,7 +411,7 @@ class TestCFLValidation:
             alpha=0.18,
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         assert engine.validate_cfl_condition()
 
     def test_validate_cfl_condition_edge(self) -> None:
@@ -422,7 +420,7 @@ class TestCFLValidation:
             alpha=0.24,  # Near 0.25 limit
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         assert engine.validate_cfl_condition()
 
 
@@ -436,11 +434,11 @@ class TestPerformance:
             random_seed=42,
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         start = time.time()
         engine.simulate(steps=100)
         elapsed = time.time() - start
-        
+
         # Should complete in < 5 seconds on any reasonable hardware
         assert elapsed < 5.0, f"Took {elapsed:.2f}s, expected < 5s"
 
@@ -451,20 +449,20 @@ class TestPerformance:
             random_seed=42,
         )
         engine = ReactionDiffusionEngine(config)
-        
+
         start = time.time()
         engine.simulate(steps=100)
         elapsed = time.time() - start
-        
+
         # Should complete in < 10 seconds
         assert elapsed < 10.0, f"Took {elapsed:.2f}s, expected < 10s"
 
 
 class TestBiophysicalCalibration:
     """Test biophysical parameter calibration and invariants.
-    
+
     Reference: MFN_MATH_MODEL.md Section 2 - Reaction-Diffusion Processes
-    
+
     These tests verify that:
     1. Parameters outside biophysical ranges trigger hard failures
     2. Normal parameters produce stable dynamics without NaN/Inf
@@ -472,7 +470,7 @@ class TestBiophysicalCalibration:
 
     def test_diffusion_below_minimum_raises(self) -> None:
         """Diffusion coefficients below minimum should raise.
-        
+
         Biophysical constraint: D_a >= 0.01 and D_i >= 0.01 are minimum
         for observable diffusion effects on the grid scale.
         """
@@ -487,7 +485,7 @@ class TestBiophysicalCalibration:
 
     def test_reaction_rate_outside_bounds_raises(self) -> None:
         """Reaction rates outside [0.001, 0.1] should raise.
-        
+
         Biophysical constraint: Reaction rates outside this range
         lead to either imperceptible dynamics or numerical instability.
         """
@@ -507,7 +505,7 @@ class TestBiophysicalCalibration:
 
     def test_turing_threshold_outside_bounds_raises(self) -> None:
         """Turing threshold outside [0.5, 0.95] should raise.
-        
+
         Biophysical constraint: Threshold < 0.5 triggers patterns too easily;
         threshold > 0.95 makes pattern formation nearly impossible.
         """
@@ -519,7 +517,7 @@ class TestBiophysicalCalibration:
 
     def test_jitter_variance_above_maximum_raises(self) -> None:
         """Jitter variance above maximum should raise.
-        
+
         Biophysical constraint: Excessive jitter destabilizes dynamics.
         """
         with pytest.raises(ValueOutOfRangeError, match="jitter_var"):
@@ -527,7 +525,7 @@ class TestBiophysicalCalibration:
 
     def test_grid_size_outside_bounds_raises(self) -> None:
         """Grid size outside [4, 1024] should raise.
-        
+
         Biophysical constraint: Grid < 4 cannot form meaningful patterns;
         grid > 1024 is computationally prohibitive.
         """
@@ -563,7 +561,7 @@ class TestInvariantsVerification:
 
     def test_field_bounds_invariant(self) -> None:
         """Field values should stay within [-95, +40] mV.
-        
+
         Invariant: V ∈ [-0.095, 0.040] V (enforced by clamping)
         Reference: MFN_MATH_MODEL.md Section 2.9
         """
@@ -575,17 +573,19 @@ class TestInvariantsVerification:
         )
         engine = ReactionDiffusionEngine(config)
         field, metrics = engine.simulate(steps=500)
-        
+
         # Convert to mV for comparison
         field_mv = field * 1000.0
-        assert field_mv.min() >= FIELD_V_MIN * 1000 - 0.5, \
+        assert field_mv.min() >= FIELD_V_MIN * 1000 - 0.5, (
             f"Min {field_mv.min():.2f} mV < {FIELD_V_MIN * 1000:.0f} mV"
-        assert field_mv.max() <= FIELD_V_MAX * 1000 + 0.5, \
+        )
+        assert field_mv.max() <= FIELD_V_MAX * 1000 + 0.5, (
             f"Max {field_mv.max():.2f} mV > {FIELD_V_MAX * 1000:.0f} mV"
+        )
 
     def test_no_nan_inf_invariant(self) -> None:
         """No NaN/Inf after 1000+ steps.
-        
+
         Invariant: Stability - No NaN/Inf after 1000+ steps
         Reference: MFN_MATH_MODEL.md Section 2.9
         """
@@ -596,7 +596,7 @@ class TestInvariantsVerification:
         )
         engine = ReactionDiffusionEngine(config)
         field, metrics = engine.simulate(steps=1000)
-        
+
         assert np.isfinite(field).all(), "Field contains NaN/Inf"
         assert metrics.nan_detected is False
         assert metrics.inf_detected is False
@@ -604,7 +604,7 @@ class TestInvariantsVerification:
 
     def test_activator_inhibitor_bounds_invariant(self) -> None:
         """Activator and inhibitor fields should stay in [0, 1].
-        
+
         Invariant: a, i ∈ [0, 1] (enforced by clamping)
         Reference: MFN_MATH_MODEL.md Section 4.3
         """
@@ -614,10 +614,10 @@ class TestInvariantsVerification:
         )
         engine = ReactionDiffusionEngine(config)
         engine.simulate(steps=500, turing_enabled=True)
-        
+
         assert engine.activator is not None
         assert engine.inhibitor is not None
-        
+
         assert engine.activator.min() >= 0.0, "Activator below 0"
         assert engine.activator.max() <= 1.0, "Activator above 1"
         assert engine.inhibitor.min() >= 0.0, "Inhibitor below 0"
@@ -625,13 +625,13 @@ class TestInvariantsVerification:
 
     def test_cfl_stability_invariant(self) -> None:
         """CFL condition: D < 0.25 for stable explicit Euler.
-        
+
         Invariant: dt * D * 4/dx² ≤ 1 (with dt=dx=1 → D ≤ 0.25)
         Reference: MFN_MATH_MODEL.md Section 2.5
         """
         config = ReactionDiffusionConfig()
         engine = ReactionDiffusionEngine(config)
-        
+
         assert engine.validate_cfl_condition()
         assert config.d_activator < MAX_STABLE_DIFFUSION
         assert config.d_inhibitor < MAX_STABLE_DIFFUSION
@@ -639,7 +639,7 @@ class TestInvariantsVerification:
 
     def test_growth_events_expected_rate(self) -> None:
         """Growth events should occur at expected rate.
-        
+
         Invariant: With p=0.25, expect ~25 events per 100 steps
         Reference: MFN_MATH_MODEL.md Section 2.9
         """
@@ -650,7 +650,8 @@ class TestInvariantsVerification:
         )
         engine = ReactionDiffusionEngine(config)
         _, metrics = engine.simulate(steps=100)
-        
+
         # Expect ~25 events, allow 10-40 range for randomness
-        assert 10 <= metrics.growth_events <= 40, \
+        assert 10 <= metrics.growth_events <= 40, (
             f"Expected ~25 events, got {metrics.growth_events}"
+        )

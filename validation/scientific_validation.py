@@ -433,10 +433,7 @@ class ScientificValidation:
         self.results.append(result)
 
         status = "✓" if passed else "✗"
-        print(
-            f"{status} Pattern difference: {max_diff:.6f} V "
-            f"(threshold: >{threshold} V)"
-        )
+        print(f"{status} Pattern difference: {max_diff:.6f} V (threshold: >{threshold} V)")
 
         return result
 

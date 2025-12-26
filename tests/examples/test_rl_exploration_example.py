@@ -3,6 +3,7 @@ Tests for rl_exploration.py example.
 
 Verifies the RL use case: GridWorld + MFN-guided exploration → coverage analysis.
 """
+
 from __future__ import annotations
 
 import importlib.util

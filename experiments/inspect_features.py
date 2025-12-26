@@ -168,8 +168,7 @@ def print_summary(
 
     for fname, s in stats.items():
         print(
-            f"{fname:<20} {s['min']:>10.3f} {s['max']:>10.3f} "
-            f"{s['mean']:>10.3f} {s['std']:>10.3f}"
+            f"{fname:<20} {s['min']:>10.3f} {s['max']:>10.3f} {s['mean']:>10.3f} {s['std']:>10.3f}"
         )
 
     # Top correlations
@@ -193,9 +192,7 @@ def print_summary(
 
 def main() -> None:
     """Main entry point for feature inspection."""
-    parser = argparse.ArgumentParser(
-        description="Inspect MyceliumFractalNet dataset features"
-    )
+    parser = argparse.ArgumentParser(description="Inspect MyceliumFractalNet dataset features")
     parser.add_argument(
         "--input",
         "-i",

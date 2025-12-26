@@ -38,8 +38,8 @@ from mycelium_fractal_net import (
 # === Test Constants (from MFN_MATH_MODEL.md) ===
 
 # Physiological Ca2+ concentrations (mol/L)
-CA_OUT_PHYSIOLOGICAL_MOLAR: float = 2e-3      # ~2 mM extracellular
-CA_IN_PHYSIOLOGICAL_MOLAR: float = 100e-9    # ~100 nM intracellular
+CA_OUT_PHYSIOLOGICAL_MOLAR: float = 2e-3  # ~2 mM extracellular
+CA_IN_PHYSIOLOGICAL_MOLAR: float = 100e-9  # ~100 nM intracellular
 
 # Expected Lyapunov exponent range for contractive IFS
 LYAPUNOV_MIN_EXPECTED: float = -4.0  # More contractive
@@ -55,7 +55,7 @@ class TestNernstMathematicalProperties:
 
     def test_nernst_factor_at_body_temperature(self) -> None:
         """Verify RT/zF at 37°C equals ~26.73 mV for z=1.
-        
+
         From MFN_MATH_MODEL.md:
         - RT/zF at 37°C, z=1 = 26.73 mV
         """
@@ -65,7 +65,7 @@ class TestNernstMathematicalProperties:
 
     def test_potassium_equilibrium_potential(self) -> None:
         """Verify E_K ≈ -89 mV for standard K+ concentrations.
-        
+
         From MFN_MATH_MODEL.md parameter table:
         - [K]_in = 140 mM, [K]_out = 5 mM → E_K ≈ -89 mV
         """
@@ -79,7 +79,7 @@ class TestNernstMathematicalProperties:
 
     def test_sodium_equilibrium_potential(self) -> None:
         """Verify E_Na ≈ +65 mV for standard Na+ concentrations.
-        
+
         From MFN_MATH_MODEL.md parameter table:
         - [Na]_in = 12 mM, [Na]_out = 145 mM → E_Na ≈ +65 mV
         """
@@ -93,7 +93,7 @@ class TestNernstMathematicalProperties:
 
     def test_calcium_equilibrium_potential(self) -> None:
         """Verify E_Ca for Ca2+ (z=2).
-        
+
         From MFN_MATH_MODEL.md parameter table:
         - [Ca]_in = 0.0001 mM, [Ca]_out = 2 mM, z=2 → E_Ca ≈ +129 mV
         """
@@ -107,20 +107,20 @@ class TestNernstMathematicalProperties:
 
     def test_physical_bounds(self) -> None:
         """Verify potentials stay within physical bounds for physiological concentrations.
-        
+
         From MFN_MATH_MODEL.md validation invariants:
         - Physical bounds: -150 mV ≤ E_X ≤ +150 mV for typical physiological conditions
-        
+
         Note: Extreme concentration ratios can produce larger potentials, but
         typical physiological values stay within reasonable bounds.
         """
         # Typical physiological concentration ranges
         test_cases = [
             # (z, c_out, c_in, expected_range_mv)
-            (1, 5e-3, 140e-3, (-100, -80)),     # K+ typical
-            (1, 145e-3, 12e-3, (+55, +75)),     # Na+ typical
-            (-1, 120e-3, 4e-3, (-100, -80)),    # Cl- typical
-            (2, 2e-3, 0.0001e-3, (+100, +150)), # Ca2+ typical
+            (1, 5e-3, 140e-3, (-100, -80)),  # K+ typical
+            (1, 145e-3, 12e-3, (+55, +75)),  # Na+ typical
+            (-1, 120e-3, 4e-3, (-100, -80)),  # Cl- typical
+            (2, 2e-3, 0.0001e-3, (+100, +150)),  # Ca2+ typical
         ]
         for z, c_out, c_in, (e_min, e_max) in test_cases:
             e = compute_nernst_potential(z, c_out, c_in)
@@ -129,7 +129,7 @@ class TestNernstMathematicalProperties:
 
     def test_sign_consistency(self) -> None:
         """Verify sign consistency: [X]_out > [X]_in and z > 0 → E > 0.
-        
+
         From MFN_MATH_MODEL.md validation invariants.
         """
         # Cation with higher outside concentration → positive potential
@@ -137,7 +137,7 @@ class TestNernstMathematicalProperties:
             z_valence=1, concentration_out_molar=100e-3, concentration_in_molar=10e-3
         )
         assert e > 0, "E should be positive when [X]_out > [X]_in for z > 0"
-        
+
         # Cation with lower outside concentration → negative potential
         e = compute_nernst_potential(
             z_valence=1, concentration_out_molar=10e-3, concentration_in_molar=100e-3
@@ -157,7 +157,7 @@ class TestNernstMathematicalProperties:
 
     def test_ion_clamping_prevents_log_zero(self) -> None:
         """Verify clamping prevents log(0) errors.
-        
+
         From MFN_MATH_MODEL.md: Ion concentrations clamped to min = 1e-6 mol/L
         """
         # Near-zero concentration should be clamped
@@ -178,7 +178,7 @@ class TestReactionDiffusionMathematicalProperties:
 
     def test_diffusion_coefficient_stability(self) -> None:
         """Verify alpha = 0.18 is below stability limit 0.25.
-        
+
         From MFN_MATH_MODEL.md stability criterion:
         - Maximum stable diffusion coefficient: D_max = 0.25
         - Our choice alpha = 0.18 is safely below this limit
@@ -189,7 +189,7 @@ class TestReactionDiffusionMathematicalProperties:
 
     def test_field_potential_bounds(self) -> None:
         """Verify field stays in [-95, 40] mV range.
-        
+
         From MFN_MATH_MODEL.md: Clamping: V ∈ [-95, 40] mV
         """
         rng = np.random.default_rng(42)
@@ -197,13 +197,13 @@ class TestReactionDiffusionMathematicalProperties:
             rng, grid_size=64, steps=200, turing_enabled=True, quantum_jitter=True
         )
         field_mv = field * 1000.0
-        
+
         assert field_mv.min() >= -95.0 - 0.1, f"Min {field_mv.min():.2f} mV below -95"
         assert field_mv.max() <= 40.0 + 0.1, f"Max {field_mv.max():.2f} mV above 40"
 
     def test_stability_no_nan_after_many_steps(self) -> None:
         """Verify no NaN/Inf after 1000+ steps.
-        
+
         From MFN_MATH_MODEL.md validation invariants: Stability: No NaN/Inf after 1000+ steps
         """
         rng = np.random.default_rng(42)
@@ -214,26 +214,24 @@ class TestReactionDiffusionMathematicalProperties:
 
     def test_turing_pattern_formation(self) -> None:
         """Verify Turing-enabled runs show measurably different statistics.
-        
-        From MFN_MATH_MODEL.md: Pattern formation: Turing-enabled runs show measurably 
+
+        From MFN_MATH_MODEL.md: Pattern formation: Turing-enabled runs show measurably
         different statistics
         """
         rng1 = np.random.default_rng(42)
         rng2 = np.random.default_rng(42)
-        
-        field_with, _ = simulate_mycelium_field(
-            rng1, grid_size=64, steps=100, turing_enabled=True
-        )
+
+        field_with, _ = simulate_mycelium_field(rng1, grid_size=64, steps=100, turing_enabled=True)
         field_without, _ = simulate_mycelium_field(
             rng2, grid_size=64, steps=100, turing_enabled=False
         )
-        
+
         diff = np.abs(field_with - field_without)
         assert diff.max() > 1e-6, "Turing should produce different results"
 
     def test_growth_events_probability(self) -> None:
         """Verify growth events scale with probability.
-        
+
         From MFN_MATH_MODEL.md: With p = 0.25, expect ~25 events per 100 steps
         """
         rng = np.random.default_rng(42)
@@ -267,7 +265,7 @@ class TestFractalMathematicalProperties:
 
     def test_ifs_contraction_stability(self) -> None:
         """Verify IFS produces stable (negative Lyapunov) dynamics.
-        
+
         From MFN_MATH_MODEL.md: λ < 0: Stable (contractive) dynamics
         Expected value for MFN IFS: λ ≈ -2.1 (stable)
         """
@@ -277,7 +275,7 @@ class TestFractalMathematicalProperties:
 
     def test_ifs_lyapunov_range(self) -> None:
         """Verify Lyapunov exponent is in expected range.
-        
+
         From MFN_MATH_MODEL.md: Expected λ ≈ -2.1 for contractive IFS
         """
         lyapunov_values = []
@@ -285,7 +283,7 @@ class TestFractalMathematicalProperties:
             rng = np.random.default_rng(seed)
             _, lyap = generate_fractal_ifs(rng, num_points=5000, num_transforms=4)
             lyapunov_values.append(lyap)
-        
+
         mean_lyap = np.mean(lyapunov_values)
         # Should be negative and in reasonable range
         assert LYAPUNOV_MIN_EXPECTED < mean_lyap < LYAPUNOV_MAX_EXPECTED, (
@@ -295,33 +293,31 @@ class TestFractalMathematicalProperties:
 
     def test_fractal_dimension_bounds(self) -> None:
         """Verify fractal dimension is in valid range 0 < D < 2.
-        
+
         From MFN_MATH_MODEL.md: Dimension bounds: 0 < D < 2 for 2D binary fields
         """
         rng = np.random.default_rng(42)
         field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100)
         binary = field > np.percentile(field, 50)
-        
+
         d = estimate_fractal_dimension(binary)
         assert 0 < d < 2.5, f"D = {d:.3f} outside valid range"
 
     def test_fractal_dimension_biological_range(self) -> None:
         """Verify fractal dimension converges to biological range [1.4, 1.9].
-        
+
         From MFN_MATH_MODEL.md: MFN simulation: 1.4–1.9 (Validated)
         """
         dimensions = []
         for seed in range(10):
             rng = np.random.default_rng(seed + 100)
-            field, _ = simulate_mycelium_field(
-                rng, grid_size=64, steps=100, turing_enabled=True
-            )
+            field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
             binary = field > np.percentile(field, 50)
             if binary.sum() > 100:
                 d = estimate_fractal_dimension(binary)
                 if 0.5 < d < 2.5:
                     dimensions.append(d)
-        
+
         if len(dimensions) >= 5:
             mean_d = np.mean(dimensions)
             # Allow wider range for stochastic simulation
@@ -332,21 +328,21 @@ class TestFractalMathematicalProperties:
 
     def test_reproducibility_same_seed(self) -> None:
         """Verify same seed produces identical fractal dimension.
-        
+
         From MFN_MATH_MODEL.md: Reproducibility: Same seed → identical D
         """
         rng1 = np.random.default_rng(42)
         rng2 = np.random.default_rng(42)
-        
+
         field1, _ = simulate_mycelium_field(rng1, grid_size=64, steps=100)
         field2, _ = simulate_mycelium_field(rng2, grid_size=64, steps=100)
-        
+
         binary1 = field1 > np.percentile(field1, 50)
         binary2 = field2 > np.percentile(field2, 50)
-        
+
         d1 = estimate_fractal_dimension(binary1)
         d2 = estimate_fractal_dimension(binary2)
-        
+
         assert abs(d1 - d2) < 1e-10, f"D1={d1}, D2={d2} differ for same seed"
 
     @given(
@@ -358,7 +354,7 @@ class TestFractalMathematicalProperties:
         """Property: IFS always produces finite points and Lyapunov."""
         rng = np.random.default_rng(seed)
         points, lyapunov = generate_fractal_ifs(rng, num_points=num_points)
-        
+
         assert np.isfinite(points).all(), f"NaN in points for seed={seed}"
         assert math.isfinite(lyapunov), f"NaN Lyapunov for seed={seed}"
 
@@ -369,12 +365,12 @@ class TestLyapunovAnalysis:
     def test_lyapunov_from_field_history(self) -> None:
         """Verify Lyapunov exponent can be computed from field history."""
         rng = np.random.default_rng(42)
-        
+
         # Collect field history
         field_history = []
         field = rng.normal(loc=-0.07, scale=0.005, size=(32, 32))
         field_history.append(field.copy())
-        
+
         for _ in range(20):
             # Simple diffusion update
             up = np.roll(field, 1, axis=0)
@@ -385,20 +381,20 @@ class TestLyapunovAnalysis:
             field = field + 0.18 * laplacian
             field = np.clip(field, -0.095, 0.040)
             field_history.append(field.copy())
-        
+
         field_arr = np.stack(field_history)
         lyap = compute_lyapunov_exponent(field_arr)
-        
+
         assert math.isfinite(lyap), "Lyapunov should be finite"
 
     def test_lyapunov_negative_for_stable_system(self) -> None:
         """Verify diffusive system produces negative/small Lyapunov exponent."""
         rng = np.random.default_rng(42)
-        
+
         field_history = []
         field = rng.normal(loc=-0.07, scale=0.01, size=(32, 32))
         field_history.append(field.copy())
-        
+
         for _ in range(50):
             up = np.roll(field, 1, axis=0)
             down = np.roll(field, -1, axis=0)
@@ -408,10 +404,10 @@ class TestLyapunovAnalysis:
             field = field + 0.15 * laplacian  # Strong diffusion smooths field
             field = np.clip(field, -0.095, 0.040)
             field_history.append(field.copy())
-        
+
         field_arr = np.stack(field_history)
         lyap = compute_lyapunov_exponent(field_arr)
-        
+
         # Diffusive system should converge (decreasing differences)
         assert lyap < 5.0, f"Lyapunov = {lyap:.2f} unexpectedly large for stable system"
 
@@ -422,7 +418,7 @@ class TestNumericalStability:
     @pytest.mark.parametrize("alpha", [0.05, 0.10, 0.15, 0.18, 0.20, 0.24])
     def test_diffusion_coefficient_range(self, alpha: float) -> None:
         """Verify simulation stable across valid alpha range.
-        
+
         From MFN_MATH_MODEL.md: Field diffusion alpha valid range 0.05–0.24
         """
         rng = np.random.default_rng(42)
@@ -458,7 +454,7 @@ class TestNumericalStability:
             turing_enabled=True,
             quantum_jitter=True,
         )
-        
+
         assert np.isfinite(field).all(), "Stress test produced NaN/Inf"
         field_mv = field * 1000.0
         assert field_mv.min() >= -95.0 - 0.1
@@ -475,7 +471,7 @@ class TestClampingAndBounds:
     def test_membrane_potential_clamping(self) -> None:
         """Verify field clamped to [-0.095, 0.040] V = [-95, 40] mV."""
         rng = np.random.default_rng(42)
-        
+
         # Run with parameters that would push bounds
         field, _ = simulate_mycelium_field(
             rng,
@@ -484,20 +480,18 @@ class TestClampingAndBounds:
             spike_probability=0.8,  # Many spikes
             quantum_jitter=True,
         )
-        
-        assert field.min() >= -0.095, f"Min {field.min()*1000:.2f} mV below clamp"
-        assert field.max() <= 0.040, f"Max {field.max()*1000:.2f} mV above clamp"
+
+        assert field.min() >= -0.095, f"Min {field.min() * 1000:.2f} mV below clamp"
+        assert field.max() <= 0.040, f"Max {field.max() * 1000:.2f} mV above clamp"
 
     def test_activator_inhibitor_clamping(self) -> None:
         """Verify activator/inhibitor stay in [0, 1] range.
-        
+
         This is implicitly tested by field stability, as unbounded
         activator/inhibitor would cause instability.
         """
         rng = np.random.default_rng(42)
-        field, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=500, turing_enabled=True
-        )
+        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=500, turing_enabled=True)
         # If clamping failed, field would diverge
         assert np.isfinite(field).all()
         assert field.std() < 0.1  # Reasonable variance
@@ -507,7 +501,7 @@ class TestClampingAndBounds:
         for seed in range(10):
             rng = np.random.default_rng(seed)
             points, lyap = generate_fractal_ifs(rng, num_points=1000)
-            
+
             # All points should be bounded (contraction means finite attractor)
             assert np.abs(points).max() < 100, f"Unbounded IFS at seed={seed}"
             assert lyap < 0, f"Non-contractive IFS at seed={seed}"

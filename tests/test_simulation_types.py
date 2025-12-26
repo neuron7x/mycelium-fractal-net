@@ -33,13 +33,13 @@ class TestSimulationConfigCoreValidation:
         assert config.seed is None
 
     def test_grid_size_minimum_boundary(self) -> None:
-        """Test grid_size at minimum boundary (2)."""
-        config = SimulationConfig(grid_size=2)
-        assert config.grid_size == 2
+        """Test grid_size at minimum boundary (4)."""
+        config = SimulationConfig(grid_size=4)
+        assert config.grid_size == 4
 
     def test_grid_size_below_minimum(self) -> None:
         """Test grid_size below minimum raises ValueError."""
-        with pytest.raises(ValueError, match="grid_size must be at least 2"):
+        with pytest.raises(ValueError, match="grid_size must be in \\[4, 512\\]"):
             SimulationConfig(grid_size=1)
 
     def test_steps_minimum_boundary(self) -> None:
@@ -116,7 +116,7 @@ class TestSimulationConfigCoreValidation:
 
     def test_jitter_var_negative(self) -> None:
         """Test negative jitter_var raises ValueError."""
-        with pytest.raises(ValueError, match="jitter_var must be non-negative"):
+        with pytest.raises(ValueError, match="jitter_var must be in \\[0, 0.01\\]"):
             SimulationConfig(jitter_var=-0.001)
 
     def test_seed_none(self) -> None:
@@ -237,7 +237,7 @@ class TestSimulationResultEdgeCases:
 
     def test_field_with_nan_rejected(self) -> None:
         """Test that NaN values in field are rejected.
-        
+
         Per MFN_DATA_MODEL.md, field data must not contain NaN or Inf values.
         SimulationResult validates this on construction.
         """
@@ -248,7 +248,7 @@ class TestSimulationResultEdgeCases:
 
     def test_field_with_inf_rejected(self) -> None:
         """Test that Inf values in field are rejected.
-        
+
         Per MFN_DATA_MODEL.md, field data must not contain NaN or Inf values.
         SimulationResult validates this on construction.
         """

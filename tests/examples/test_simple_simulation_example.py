@@ -3,6 +3,7 @@ Tests for simple_simulation.py example.
 
 Verifies the canonical E2E pipeline: Config → Simulation → Features → Validation.
 """
+
 from __future__ import annotations
 
 import importlib.util

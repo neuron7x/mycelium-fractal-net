@@ -159,9 +159,7 @@ class BenchmarkSuite:
         num_iterations = 10
         for _ in range(num_iterations):
             rng = np.random.default_rng(42)
-            _, _ = simulate_mycelium_field(
-                rng, grid_size=64, steps=100, turing_enabled=True
-            )
+            _, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
         end = time.perf_counter()
 
         avg_latency_ms = (end - start) / num_iterations * 1000
@@ -419,8 +417,10 @@ class BenchmarkSuite:
             print("\nFailed benchmarks:")
             for r in self.results:
                 if not r.passed:
-                    print(f"  - {r.name}: {r.metric_value:.2f} {r.metric_unit} "
-                          f"(target: {r.target_value} {r.metric_unit})")
+                    print(
+                        f"  - {r.name}: {r.metric_value:.2f} {r.metric_unit} "
+                        f"(target: {r.target_value} {r.metric_unit})"
+                    )
 
         return self.results
 

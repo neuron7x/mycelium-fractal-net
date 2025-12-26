@@ -100,6 +100,7 @@ class SimulationConfig:
         Returns:
             New SimulationConfig instance.
         """
+
         def _parse_bool(value: Any, default: bool) -> bool:
             """Parse booleans from common serialized formats.
 
@@ -150,9 +151,7 @@ class SimulationConfig:
             try:
                 return int(value)
             except (TypeError, ValueError) as exc:
-                raise ValueError(
-                    f"seed must be an integer when provided, got {value!r}"
-                ) from exc
+                raise ValueError(f"seed must be an integer when provided, got {value!r}") from exc
 
         return cls(
             grid_size=int(data.get("grid_size", 64)),

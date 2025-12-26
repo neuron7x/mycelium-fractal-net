@@ -281,7 +281,7 @@ class TestRateLimiter:
 
 class TestRateLimitMiddleware:
     """Integration tests for rate limit middleware.
-    
+
     Note: Since middleware is configured at app import time and the app
     is initialized with default dev settings (rate limiting disabled),
     these tests verify the middleware behavior through unit tests and
@@ -291,7 +291,7 @@ class TestRateLimitMiddleware:
     def test_rate_limit_headers_present_when_enabled(self) -> None:
         """Rate limit headers should be present when rate limiting is enabled."""
         from mycelium_fractal_net.integration.api_config import RateLimitConfig
-        
+
         # Test with rate limiting enabled
         config = RateLimitConfig(max_requests=100, window_seconds=60, enabled=True)
         assert config.enabled is True
@@ -303,7 +303,7 @@ class TestRateLimitMiddleware:
             Environment,
             RateLimitConfig,
         )
-        
+
         # Clear the global override to test default behavior
         with mock.patch.dict(os.environ, {}, clear=False):
             if "MFN_RATE_LIMIT_ENABLED" in os.environ:
@@ -315,25 +315,25 @@ class TestRateLimitMiddleware:
         """Test rate limiter behavior when limit is exceeded."""
         from mycelium_fractal_net.integration.api_config import RateLimitConfig
         from mycelium_fractal_net.integration.rate_limiter import RateLimiter
-        
+
         # Create a very restrictive rate limiter
         config = RateLimitConfig(max_requests=2, window_seconds=60, enabled=True)
         limiter = RateLimiter(config)
-        
+
         class MockRequest:
             def __init__(self):
                 self.url = type("obj", (object,), {"path": "/test"})()
                 self.headers = {}
                 self.client = type("obj", (object,), {"host": "127.0.0.1"})()
-        
+
         request = MockRequest()
-        
+
         # First two requests should pass
         allowed1, _, _, _ = limiter.check_rate_limit(request)
         allowed2, _, _, _ = limiter.check_rate_limit(request)
         assert allowed1 is True
         assert allowed2 is True
-        
+
         # Third request should be blocked
         allowed3, _, _, retry_after = limiter.check_rate_limit(request)
         assert allowed3 is False
@@ -344,21 +344,21 @@ class TestRateLimitMiddleware:
         """429 response should include Retry-After information."""
         from mycelium_fractal_net.integration.api_config import RateLimitConfig
         from mycelium_fractal_net.integration.rate_limiter import RateLimiter
-        
+
         config = RateLimitConfig(max_requests=1, window_seconds=60, enabled=True)
         limiter = RateLimiter(config)
-        
+
         class MockRequest:
             def __init__(self):
                 self.url = type("obj", (object,), {"path": "/test"})()
                 self.headers = {}
                 self.client = type("obj", (object,), {"host": "127.0.0.1"})()
-        
+
         request = MockRequest()
-        
+
         # Use up the limit
         limiter.check_rate_limit(request)
-        
+
         # Next request should be blocked with retry_after
         allowed, limit, remaining, retry_after = limiter.check_rate_limit(request)
         assert allowed is False
@@ -375,9 +375,7 @@ class TestRateLimitMiddleware:
         # - retry_after: seconds to wait
         pass  # Format validation is done in rate_limit_exceeded_behavior test
 
-    def test_middleware_refreshes_dynamic_config(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_middleware_refreshes_dynamic_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Middleware should adopt updated rate limit config at runtime."""
         from mycelium_fractal_net.integration.api_config import RateLimitConfig
         from mycelium_fractal_net.integration.rate_limiter import RateLimitMiddleware

@@ -11,7 +11,7 @@ rate limiting.
 
 Usage:
     from mycelium_fractal_net.integration.rate_limiter import RateLimitMiddleware
-    
+
     middleware = RateLimitMiddleware(app, config)
 
 Reference: docs/MFN_BACKLOG.md#MFN-API-002
@@ -219,9 +219,7 @@ class RateLimiter:
         # Fall back to default
         return self.config.max_requests
 
-    def check_rate_limit(
-        self, request: Request
-    ) -> Tuple[bool, int, int, Optional[int]]:
+    def check_rate_limit(self, request: Request) -> Tuple[bool, int, int, Optional[int]]:
         """
         Check if request is within rate limit.
 
@@ -346,9 +344,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         return self._limiter
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Process request and apply rate limiting.
 

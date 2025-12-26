@@ -13,7 +13,7 @@ Reference:
 Mathematical Model:
     Δw = A_+ exp(-Δt/τ_+)  if Δt > 0 (LTP - Long-Term Potentiation)
     Δw = -A_- exp(Δt/τ_-)  if Δt < 0 (LTD - Long-Term Depression)
-    
+
     where Δt = t_post - t_pre
 
 Parameters (from Bi & Poo, 1998):
@@ -130,9 +130,7 @@ class STDPPlasticity(nn.Module):
     def _validate_amplitude(self, a: float, name: str) -> None:
         """Validate amplitude is within stable range."""
         if not (self.A_MIN <= a <= self.A_MAX):
-            raise ValueError(
-                f"{name}={a} outside stable range [{self.A_MIN}, {self.A_MAX}]"
-            )
+            raise ValueError(f"{name}={a} outside stable range [{self.A_MIN}, {self.A_MAX}]")
 
     def compute_weight_update(
         self,

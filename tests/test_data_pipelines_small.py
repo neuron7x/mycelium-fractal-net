@@ -165,6 +165,7 @@ class TestRunScenarioSmall:
 
         # Load dataset
         import pandas as pd
+
         df = pd.read_parquet(meta.output_path)
 
         # Check all features present
@@ -192,6 +193,7 @@ class TestRunScenarioSmall:
         meta = run_scenario(config, data_root=temp_data_dir)
 
         import pandas as pd
+
         df = pd.read_parquet(meta.output_path)
 
         # Check fractal dimension range
@@ -229,6 +231,7 @@ class TestRunScenarioSmall:
         meta = run_scenario(config, data_root=temp_data_dir)
 
         import pandas as pd
+
         df = pd.read_parquet(meta.output_path)
 
         # Check no NaN in feature columns
@@ -253,6 +256,7 @@ class TestRunScenarioSmall:
         meta = run_scenario(config, data_root=temp_data_dir)
 
         import pandas as pd
+
         df = pd.read_parquet(meta.output_path)
 
         # Check parameter columns
@@ -299,6 +303,7 @@ class TestRunScenarioSmall:
         meta2 = run_scenario(config2, data_root=temp_data_dir)
 
         import pandas as pd
+
         df1 = pd.read_parquet(meta1.output_path)
         df2 = pd.read_parquet(meta2.output_path)
 
@@ -339,6 +344,7 @@ class TestRunPresetSmall:
 
         # Load and validate
         import pandas as pd
+
         df = pd.read_parquet(meta.output_path)
 
         # All 18 features present

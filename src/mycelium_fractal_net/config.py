@@ -154,29 +154,19 @@ class FeatureConfig:
             max_box_size=int(max_box_value) if max_box_value is not None else None,
             num_scales=int(num_scales_value) if num_scales_value is not None else 5,
             threshold_low_mv=(
-                float(threshold_low_value)
-                if threshold_low_value is not None
-                else -60.0
+                float(threshold_low_value) if threshold_low_value is not None else -60.0
             ),
             threshold_med_mv=(
-                float(threshold_med_value)
-                if threshold_med_value is not None
-                else -50.0
+                float(threshold_med_value) if threshold_med_value is not None else -50.0
             ),
             threshold_high_mv=(
-                float(threshold_high_value)
-                if threshold_high_value is not None
-                else -40.0
+                float(threshold_high_value) if threshold_high_value is not None else -40.0
             ),
             stability_threshold_mv=(
-                float(stability_threshold_value)
-                if stability_threshold_value is not None
-                else 0.001
+                float(stability_threshold_value) if stability_threshold_value is not None else 0.001
             ),
             stability_window=(
-                int(stability_window_value)
-                if stability_window_value is not None
-                else 10
+                int(stability_window_value) if stability_window_value is not None else 10
             ),
             connectivity=int(connectivity_value) if connectivity_value is not None else 4,
         )
@@ -246,16 +236,12 @@ class DatasetConfig:
         Returns:
             New DatasetConfig instance.
         """
-        steps_range_raw = (
-            data["steps_range"] if data.get("steps_range") is not None else (50, 200)
-        )
+        steps_range_raw = data["steps_range"] if data.get("steps_range") is not None else (50, 200)
         alpha_range_raw = (
             data["alpha_range"] if data.get("alpha_range") is not None else (0.10, 0.20)
         )
         spike_prob_range_raw = (
-            data["spike_prob_range"]
-            if data.get("spike_prob_range") is not None
-            else (0.15, 0.35)
+            data["spike_prob_range"] if data.get("spike_prob_range") is not None else (0.15, 0.35)
         )
         turing_threshold_range_raw = (
             data["turing_threshold_range"]
@@ -274,19 +260,13 @@ class DatasetConfig:
 
         spike_prob_range_list = list(spike_prob_range_raw)
         if len(spike_prob_range_list) != 2:
-            raise ValueError(
-                "spike_prob_range must contain exactly two values (min, max)"
-            )
+            raise ValueError("spike_prob_range must contain exactly two values (min, max)")
 
         turing_threshold_range_list = list(turing_threshold_range_raw)
         if len(turing_threshold_range_list) != 2:
-            raise ValueError(
-                "turing_threshold_range must contain exactly two values (min, max)"
-            )
+            raise ValueError("turing_threshold_range must contain exactly two values (min, max)")
 
-        grid_sizes_raw = (
-            data["grid_sizes"] if data.get("grid_sizes") is not None else [32, 64]
-        )
+        grid_sizes_raw = data["grid_sizes"] if data.get("grid_sizes") is not None else [32, 64]
         turing_values_raw = (
             data["turing_values"] if data.get("turing_values") is not None else [True, False]
         )
@@ -383,9 +363,7 @@ def validate_simulation_config(config: SimulationConfig) -> None:
 
     # turing_enabled
     if not isinstance(config.turing_enabled, bool):
-        raise ValueError(
-            f"turing_enabled must be bool, got {type(config.turing_enabled).__name__}"
-        )
+        raise ValueError(f"turing_enabled must be bool, got {type(config.turing_enabled).__name__}")
 
     # turing_threshold
     if not isinstance(config.turing_threshold, (int, float)):
@@ -400,9 +378,7 @@ def validate_simulation_config(config: SimulationConfig) -> None:
 
     # quantum_jitter
     if not isinstance(config.quantum_jitter, bool):
-        raise ValueError(
-            f"quantum_jitter must be bool, got {type(config.quantum_jitter).__name__}"
-        )
+        raise ValueError(f"quantum_jitter must be bool, got {type(config.quantum_jitter).__name__}")
 
     # jitter_var
     if not isinstance(config.jitter_var, (int, float)):
@@ -442,9 +418,7 @@ def validate_feature_config(config: FeatureConfig) -> None:
 
     # min_box_size
     if not isinstance(config.min_box_size, int):
-        raise ValueError(
-            f"min_box_size must be int, got {type(config.min_box_size).__name__}"
-        )
+        raise ValueError(f"min_box_size must be int, got {type(config.min_box_size).__name__}")
     if config.min_box_size < BOX_SIZE_MIN:
         raise ValueError(f"min_box_size must be >= {BOX_SIZE_MIN}, got {config.min_box_size}")
 
@@ -511,9 +485,7 @@ def validate_feature_config(config: FeatureConfig) -> None:
 
     # connectivity
     if not isinstance(config.connectivity, int):
-        raise ValueError(
-            f"connectivity must be int, got {type(config.connectivity).__name__}"
-        )
+        raise ValueError(f"connectivity must be int, got {type(config.connectivity).__name__}")
     if config.connectivity not in CONNECTIVITY_VALUES:
         raise ValueError(
             f"connectivity must be one of {CONNECTIVITY_VALUES}, got {config.connectivity}"
@@ -545,9 +517,7 @@ def validate_dataset_config(config: DatasetConfig) -> None:
 
     # num_samples
     if not isinstance(config.num_samples, int):
-        raise ValueError(
-            f"num_samples must be int, got {type(config.num_samples).__name__}"
-        )
+        raise ValueError(f"num_samples must be int, got {type(config.num_samples).__name__}")
     if not (NUM_SAMPLES_MIN <= config.num_samples <= NUM_SAMPLES_MAX):
         raise ValueError(
             f"num_samples must be in [{NUM_SAMPLES_MIN}, {NUM_SAMPLES_MAX}], "
@@ -556,9 +526,7 @@ def validate_dataset_config(config: DatasetConfig) -> None:
 
     # grid_sizes
     if not isinstance(config.grid_sizes, list):
-        raise ValueError(
-            f"grid_sizes must be list, got {type(config.grid_sizes).__name__}"
-        )
+        raise ValueError(f"grid_sizes must be list, got {type(config.grid_sizes).__name__}")
     if len(config.grid_sizes) == 0:
         raise ValueError("grid_sizes must not be empty")
     for i, gs in enumerate(config.grid_sizes):
@@ -589,15 +557,11 @@ def validate_dataset_config(config: DatasetConfig) -> None:
     if amin >= amax:
         raise ValueError(f"alpha_range min ({amin}) must be < max ({amax})")
     if not (ALPHA_MIN < amin and amax <= ALPHA_MAX):
-        raise ValueError(
-            f"alpha_range must be in ({ALPHA_MIN}, {ALPHA_MAX}] for CFL stability"
-        )
+        raise ValueError(f"alpha_range must be in ({ALPHA_MIN}, {ALPHA_MAX}] for CFL stability")
 
     # turing_values
     if not isinstance(config.turing_values, list):
-        raise ValueError(
-            f"turing_values must be list, got {type(config.turing_values).__name__}"
-        )
+        raise ValueError(f"turing_values must be list, got {type(config.turing_values).__name__}")
     if len(config.turing_values) == 0:
         raise ValueError("turing_values must not be empty")
     for i, tv in enumerate(config.turing_values):
@@ -613,8 +577,7 @@ def validate_dataset_config(config: DatasetConfig) -> None:
     if spmin > spmax:
         raise ValueError(f"spike_prob_range min ({spmin}) must be <= max ({spmax})")
     if not (
-        PROBABILITY_MIN <= spmin <= PROBABILITY_MAX
-        and PROBABILITY_MIN <= spmax <= PROBABILITY_MAX
+        PROBABILITY_MIN <= spmin <= PROBABILITY_MAX and PROBABILITY_MIN <= spmax <= PROBABILITY_MAX
     ):
         raise ValueError(f"spike_prob_range must be in [{PROBABILITY_MIN}, {PROBABILITY_MAX}]")
 
@@ -643,9 +606,7 @@ def validate_dataset_config(config: DatasetConfig) -> None:
 
     # output_path
     if not isinstance(config.output_path, Path):
-        raise ValueError(
-            f"output_path must be Path, got {type(config.output_path).__name__}"
-        )
+        raise ValueError(f"output_path must be Path, got {type(config.output_path).__name__}")
 
 
 # ============================================================================

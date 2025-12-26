@@ -151,7 +151,7 @@ class TestWebSocketStreamFeatures:
                     features = payload["features"]
                     assert "pot_mean_mV" in features
                     assert "fractal_dimension" in features
-                    
+
                     # Received one update, that's enough - unsubscribe now
                     break
 
@@ -164,7 +164,7 @@ class TestWebSocketStreamFeatures:
                     "payload": {"stream_id": stream_id},
                 }
             )
-            
+
             # Step 6: Close connection
             websocket.send_json({"type": WSMessageType.CLOSE.value})
 
@@ -414,7 +414,7 @@ class TestWebSocketErrorHandling:
 
             response = websocket.receive_json()
             assert response["type"] == WSMessageType.AUTH_SUCCESS.value
-            
+
             # Close properly
             websocket.send_json({"type": WSMessageType.CLOSE.value})
 
@@ -588,7 +588,6 @@ class TestWebSocketConnectionManager:
             invalid_timestamp = "not-a-number"
 
             assert (
-                manager.authenticate(connection_id, "test-ws-key-12345", invalid_timestamp)
-                is False
+                manager.authenticate(connection_id, "test-ws-key-12345", invalid_timestamp) is False
             )
             assert manager.connections[connection_id].authenticated is False

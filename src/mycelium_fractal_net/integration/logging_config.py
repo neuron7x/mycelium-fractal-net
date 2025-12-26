@@ -23,7 +23,7 @@ Usage:
         RequestIDMiddleware,
         get_request_id,
     )
-    
+
     setup_logging()
     app.add_middleware(RequestIDMiddleware)
 
@@ -233,9 +233,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     Adds the request ID to response headers and logging context.
     """
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Process request and manage request ID.
 
@@ -303,9 +301,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         self.config = config or get_api_config().logging
         self.logger = logging.getLogger("mfn.api")
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Process request and log details.
 

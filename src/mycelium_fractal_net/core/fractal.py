@@ -2,7 +2,7 @@
 Fractal Analysis Module.
 
 This module provides the public API for fractal dimension estimation and
-IFS fractal generation, re-exporting validated implementations for 
+IFS fractal generation, re-exporting validated implementations for
 backward compatibility, plus the new FractalGrowthEngine for advanced use.
 
 Conceptual domain: Fractal geometry, box-counting dimension
@@ -15,10 +15,10 @@ Reference:
 Mathematical Model:
     Box-counting dimension:
         D = lim(ε→0) ln(N(ε)) / ln(1/ε)
-    
+
     IFS transformation:
         [x', y'] = [[a,b],[c,d]] * [x,y] + [e,f]
-    
+
     Contraction requirement: |ad - bc| < 1
 
 Expected ranges:

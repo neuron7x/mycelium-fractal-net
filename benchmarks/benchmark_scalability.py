@@ -108,8 +108,10 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Large grid (128x128, 200 steps): {elapsed:.2f}s, {peak_mb:.2f}MB "
-              f"(target: <{target_s}s)")
+        print(
+            f"Large grid (128x128, 200 steps): {elapsed:.2f}s, {peak_mb:.2f}MB "
+            f"(target: <{target_s}s)"
+        )
 
         self.results.append(bench_result)
         return bench_result
@@ -149,8 +151,10 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Large grid (256x256, 100 steps): {elapsed:.2f}s, {peak_mb:.2f}MB "
-              f"(target: <{target_s}s)")
+        print(
+            f"Large grid (256x256, 100 steps): {elapsed:.2f}s, {peak_mb:.2f}MB "
+            f"(target: <{target_s}s)"
+        )
 
         self.results.append(bench_result)
         return bench_result
@@ -190,8 +194,10 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Long simulation (64x64, 1000 steps): {elapsed:.2f}s, {peak_mb:.2f}MB "
-              f"(target: <{target_s}s)")
+        print(
+            f"Long simulation (64x64, 1000 steps): {elapsed:.2f}s, {peak_mb:.2f}MB "
+            f"(target: <{target_s}s)"
+        )
 
         self.results.append(bench_result)
         return bench_result
@@ -203,10 +209,7 @@ class ScalabilityBenchmarkSuite:
         """
         num_workers = 4
         num_tasks = 16
-        params_list = [
-            {"seed": i * 100, "grid_size": 32, "steps": 50}
-            for i in range(num_tasks)
-        ]
+        params_list = [{"seed": i * 100, "grid_size": 32, "steps": 50} for i in range(num_tasks)]
 
         gc.collect()
         tracemalloc.start()
@@ -233,8 +236,10 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Concurrent throughput ({num_workers} workers): {throughput:.2f} sim/s, "
-              f"{peak_mb:.2f}MB (target: >{target_throughput} sim/s)")
+        print(
+            f"Concurrent throughput ({num_workers} workers): {throughput:.2f} sim/s, "
+            f"{peak_mb:.2f}MB (target: >{target_throughput} sim/s)"
+        )
 
         self.results.append(bench_result)
         return bench_result
@@ -306,8 +311,7 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Fractal dimension (256x256): {elapsed:.3f}s, dim={dim:.3f} "
-              f"(target: <{target_s}s)")
+        print(f"Fractal dimension (256x256): {elapsed:.3f}s, dim={dim:.3f} (target: <{target_s}s)")
 
         self.results.append(bench_result)
         return bench_result
@@ -343,8 +347,7 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Lyapunov (500x64x64): {elapsed:.3f}s, λ={lyap:.3f} "
-              f"(target: <{target_s}s)")
+        print(f"Lyapunov (500x64x64): {elapsed:.3f}s, λ={lyap:.3f} (target: <{target_s}s)")
 
         self.results.append(bench_result)
         return bench_result
@@ -377,8 +380,10 @@ class ScalabilityBenchmarkSuite:
             print("\nFailed benchmarks:")
             for r in self.results:
                 if not r.passed:
-                    print(f"  - {r.name}: {r.metric_value:.2f} {r.metric_unit} "
-                          f"(target: {r.target_value} {r.metric_unit})")
+                    print(
+                        f"  - {r.name}: {r.metric_value:.2f} {r.metric_unit} "
+                        f"(target: {r.target_value} {r.metric_unit})"
+                    )
 
         return self.results
 

@@ -20,6 +20,7 @@ import pytest
 # Check if pandas is available
 try:
     import pandas as pd  # noqa: F401
+
     HAS_PANDAS = True
 except ImportError:
     HAS_PANDAS = False
@@ -27,6 +28,7 @@ except ImportError:
 # Check if fastapi is available
 try:
     import fastapi  # noqa: F401
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -204,18 +206,36 @@ class TestPipeline3DatasetGeneration:
 
                 # Required config columns per DATASET_SPEC.md
                 config_cols = [
-                    "sim_id", "random_seed", "grid_size",
-                    "steps", "alpha", "turing_enabled",
+                    "sim_id",
+                    "random_seed",
+                    "grid_size",
+                    "steps",
+                    "alpha",
+                    "turing_enabled",
                 ]
                 for col in config_cols:
                     assert col in df.columns, f"Missing config column: {col}"
 
                 # Required feature columns (18 features)
                 feature_cols = [
-                    "D_box", "D_r2", "V_min", "V_max", "V_mean", "V_std",
-                    "V_skew", "V_kurt", "dV_mean", "dV_max", "T_stable", "E_trend",
-                    "f_active", "N_clusters_low", "N_clusters_med", "N_clusters_high",
-                    "max_cluster_size", "cluster_size_std",
+                    "D_box",
+                    "D_r2",
+                    "V_min",
+                    "V_max",
+                    "V_mean",
+                    "V_std",
+                    "V_skew",
+                    "V_kurt",
+                    "dV_mean",
+                    "dV_max",
+                    "T_stable",
+                    "E_trend",
+                    "f_active",
+                    "N_clusters_low",
+                    "N_clusters_med",
+                    "N_clusters_high",
+                    "max_cluster_size",
+                    "cluster_size_std",
                 ]
                 for col in feature_cols:
                     assert col in df.columns, f"Missing feature column: {col}"
@@ -380,6 +400,7 @@ class TestCLIWorkflow:
 
         # CLI uses run_validation_cli from main package
         from mycelium_fractal_net import run_validation_cli
+
         assert callable(run_validation_cli)
 
     def test_validation_config_from_args(self) -> None:

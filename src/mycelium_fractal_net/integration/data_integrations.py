@@ -313,9 +313,7 @@ class DataIntegrationConfig:
         Returns:
             List of integrations in the category.
         """
-        return [
-            intg for intg in self._integrations.values() if intg.category == category
-        ]
+        return [intg for intg in self._integrations.values() if intg.category == category]
 
     def get_enabled_integrations(self) -> List[DataIntegration]:
         """Get all enabled integrations."""
@@ -377,9 +375,7 @@ class DataIntegrationConfig:
             "version": self.version,
             "total_integrations": INTEGRATION_COUNT,
             "enabled_count": self.count_enabled(),
-            "integrations": {
-                i: intg.to_dict() for i, intg in self._integrations.items()
-            },
+            "integrations": {i: intg.to_dict() for i, intg in self._integrations.items()},
         }
 
     def get_optimization_summary(self) -> Dict[str, Any]:

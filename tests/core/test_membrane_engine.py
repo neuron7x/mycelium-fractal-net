@@ -68,7 +68,7 @@ class TestNernstPotential:
 
     def test_potassium_standard(self) -> None:
         """Test K+ potential at standard conditions: E_K ≈ -89 mV.
-        
+
         Reference: MFN_MATH_MODEL.md Section 1.4
         [K]_in = 140 mM, [K]_out = 5 mM → E_K ≈ -89 mV
         """
@@ -83,7 +83,7 @@ class TestNernstPotential:
 
     def test_sodium_standard(self) -> None:
         """Test Na+ potential at standard conditions: E_Na ≈ +65 mV.
-        
+
         Reference: MFN_MATH_MODEL.md Section 1.4
         [Na]_in = 12 mM, [Na]_out = 145 mM → E_Na ≈ +65 mV
         """
@@ -98,7 +98,7 @@ class TestNernstPotential:
 
     def test_calcium_standard(self) -> None:
         """Test Ca2+ potential at standard conditions: E_Ca ≈ +129 mV.
-        
+
         Reference: MFN_MATH_MODEL.md Section 1.4
         [Ca]_in = 0.0001 mM, [Ca]_out = 2 mM, z=2 → E_Ca ≈ +129 mV
         """
@@ -113,7 +113,7 @@ class TestNernstPotential:
 
     def test_chloride_standard(self) -> None:
         """Test Cl- potential at standard conditions.
-        
+
         Reference: MFN_MATH_MODEL.md Section 1.4
         [Cl]_in = 4 mM, [Cl]_out = 120 mM, z=-1 → E_Cl ≈ -89 mV
         """
@@ -155,12 +155,12 @@ class TestNernstPotential:
             concentration_out_molar=100e-3,
             concentration_in_molar=100e-3,
         )
-        assert abs(e) < 1e-10, f"E = {e*1000:.6f} mV, expected 0"
+        assert abs(e) < 1e-10, f"E = {e * 1000:.6f} mV, expected 0"
 
     def test_sign_consistency(self) -> None:
         """Verify sign consistency: [X]_out > [X]_in and z > 0 → E > 0."""
         engine = MembraneEngine()
-        
+
         # Higher outside → positive potential (for cations)
         e_pos = engine.compute_nernst_potential(
             z_valence=1,
@@ -168,7 +168,7 @@ class TestNernstPotential:
             concentration_in_molar=10e-3,
         )
         assert e_pos > 0
-        
+
         # Lower outside → negative potential (for cations)
         e_neg = engine.compute_nernst_potential(
             z_valence=1,
@@ -187,12 +187,12 @@ class TestNernstPotentialArray:
         c_out = np.array([5e-3, 145e-3, 2e-3])
         c_in = np.array([140e-3, 12e-3, 0.1e-3])
         z = 1
-        
+
         e = engine.compute_nernst_potential_array(z, c_out, c_in)
-        
+
         assert e.shape == (3,)
         assert np.all(np.isfinite(e))
-        
+
         # Check metrics updated
         assert engine.metrics.potential_min_v == pytest.approx(float(np.min(e)), abs=1e-10)
         assert engine.metrics.potential_max_v == pytest.approx(float(np.max(e)), abs=1e-10)
@@ -208,14 +208,14 @@ class TestODEIntegration:
             dt=1e-4,
         )
         engine = MembraneEngine(config)
-        
+
         # Simple decay ODE: dV/dt = -V (stable)
         def decay(v: np.ndarray) -> np.ndarray:
             return -v
-        
+
         v0 = np.array([0.01])  # 10 mV
         v_final, metrics = engine.integrate_ode(v0, decay, steps=100)
-        
+
         assert np.isfinite(v_final).all()
         assert metrics.nan_detected is False
         assert metrics.inf_detected is False
@@ -228,13 +228,13 @@ class TestODEIntegration:
             dt=1e-4,
         )
         engine = MembraneEngine(config)
-        
+
         def decay(v: np.ndarray) -> np.ndarray:
             return -v
-        
+
         v0 = np.array([0.01])
         v_final, metrics = engine.integrate_ode(v0, decay, steps=100)
-        
+
         assert np.isfinite(v_final).all()
         assert metrics.steps_computed == 100
 
@@ -242,14 +242,14 @@ class TestODEIntegration:
         """Test potential clamping during integration."""
         config = MembraneConfig(dt=1e-3)
         engine = MembraneEngine(config)
-        
+
         # Growth ODE that would exceed bounds
         def growth(v: np.ndarray) -> np.ndarray:
             return np.ones_like(v) * 100  # Strong positive growth
-        
+
         v0 = np.array([0.0])
         v_final, metrics = engine.integrate_ode(v0, growth, steps=100, clamp=True)
-        
+
         # Should be clamped to max
         assert float(v_final[0]) <= config.potential_max_v
         assert metrics.clamping_events > 0
@@ -262,14 +262,14 @@ class TestDeterminism:
         """Same seed should produce identical results."""
         config1 = MembraneConfig(random_seed=42)
         config2 = MembraneConfig(random_seed=42)
-        
+
         engine1 = MembraneEngine(config1)
         engine2 = MembraneEngine(config2)
-        
+
         # Both should compute identical potentials
         e1 = engine1.compute_nernst_potential(1, 5e-3, 140e-3)
         e2 = engine2.compute_nernst_potential(1, 5e-3, 140e-3)
-        
+
         assert e1 == e2
 
 
@@ -280,12 +280,12 @@ class TestStabilitySmoke:
         """Run 1000 Nernst calculations without NaN/Inf."""
         engine = MembraneEngine()
         rng = np.random.default_rng(42)
-        
+
         for _ in range(1000):
             z = int(rng.choice([1, 2, -1, -2]))
             c_out = float(rng.uniform(1e-5, 1.0))
             c_in = float(rng.uniform(1e-5, 1.0))
-            
+
             e = engine.compute_nernst_potential(z, c_out, c_in)
             assert math.isfinite(e), f"NaN/Inf for z={z}, c_out={c_out}, c_in={c_in}"
 
@@ -293,14 +293,14 @@ class TestStabilitySmoke:
         """Run ODE integration for 1000 steps without NaN/Inf."""
         config = MembraneConfig(dt=1e-4)
         engine = MembraneEngine(config)
-        
+
         def oscillator(v: np.ndarray) -> np.ndarray:
             # Simple damped oscillator
             return -0.1 * v + 0.01 * np.sin(v * 100)
-        
+
         v0 = np.array([-0.07])  # -70 mV
         v_final, metrics = engine.integrate_ode(v0, oscillator, steps=1000)
-        
+
         assert np.isfinite(v_final).all()
         assert metrics.nan_detected is False
         assert metrics.inf_detected is False
@@ -312,12 +312,12 @@ class TestValidation:
     def test_validate_potential_range_physiological(self) -> None:
         """Test physiological range validation."""
         engine = MembraneEngine()
-        
+
         # Within physiological range
         assert engine.validate_potential_range(-0.070, strict_physiological=True)
         assert engine.validate_potential_range(-0.090, strict_physiological=True)
         assert engine.validate_potential_range(0.030, strict_physiological=True)
-        
+
         # Outside physiological range
         assert not engine.validate_potential_range(-0.120, strict_physiological=True)
         assert not engine.validate_potential_range(0.100, strict_physiological=True)
@@ -325,20 +325,20 @@ class TestValidation:
     def test_validate_potential_range_physical(self) -> None:
         """Test physical (wider) range validation."""
         engine = MembraneEngine()
-        
+
         # Within physical range
         assert engine.validate_potential_range(-0.120, strict_physiological=False)
         assert engine.validate_potential_range(0.100, strict_physiological=False)
-        
+
         # Outside physical range
         assert not engine.validate_potential_range(-0.200, strict_physiological=False)
 
 
 class TestBiophysicalCalibration:
     """Test biophysical parameter calibration and invariants.
-    
+
     Reference: MFN_MATH_MODEL.md Section 1 - Membrane Potentials
-    
+
     These tests verify that:
     1. Parameters outside biophysical ranges trigger hard failures
     2. Normal parameters produce stable dynamics without NaN/Inf
@@ -346,7 +346,7 @@ class TestBiophysicalCalibration:
 
     def test_temperature_below_hypothermic_raises(self) -> None:
         """Temperature below 273K (0°C) should raise.
-        
+
         Biophysical constraint: Mammalian physiology does not function
         below freezing point; ion channels denature.
         """
@@ -355,7 +355,7 @@ class TestBiophysicalCalibration:
 
     def test_temperature_above_hyperthermic_raises(self) -> None:
         """Temperature above 320K (47°C) should raise.
-        
+
         Biophysical constraint: Proteins denature above ~45°C,
         making membrane function non-physiological.
         """
@@ -371,7 +371,7 @@ class TestBiophysicalCalibration:
 
     def test_time_step_too_small_raises(self) -> None:
         """Time step below minimum should raise.
-        
+
         dt < 0.1 μs is computationally wasteful and not biologically relevant.
         """
         with pytest.raises(ValueOutOfRangeError, match="Time step"):
@@ -379,7 +379,7 @@ class TestBiophysicalCalibration:
 
     def test_time_step_too_large_raises(self) -> None:
         """Time step above maximum should raise.
-        
+
         dt > 10 ms risks numerical instability in neuronal dynamics.
         """
         with pytest.raises(ValueOutOfRangeError, match="Time step"):
@@ -394,7 +394,7 @@ class TestBiophysicalCalibration:
 
     def test_potential_bounds_exceed_physical_raises(self) -> None:
         """Potential bounds beyond physical limits should raise.
-        
+
         Membrane potentials beyond ±150 mV are electrochemically impossible.
         """
         with pytest.raises(ValueOutOfRangeError, match="potential"):
@@ -405,27 +405,29 @@ class TestBiophysicalCalibration:
 
     def test_invalid_ion_valence_raises(self) -> None:
         """Ion valence not in {-2, -1, 1, 2} should raise.
-        
+
         Biological ions have valences ±1 or ±2:
         K⁺=+1, Na⁺=+1, Cl⁻=-1, Ca²⁺=+2, Mg²⁺=+2
         """
         engine = MembraneEngine()
-        
-        with pytest.raises(ValueOutOfRangeError, match="valence"):
-            engine.compute_nernst_potential(z_valence=3, concentration_out_molar=5e-3,
-                                            concentration_in_molar=140e-3)
 
         with pytest.raises(ValueOutOfRangeError, match="valence"):
-            engine.compute_nernst_potential(z_valence=-3, concentration_out_molar=5e-3,
-                                            concentration_in_molar=140e-3)
+            engine.compute_nernst_potential(
+                z_valence=3, concentration_out_molar=5e-3, concentration_in_molar=140e-3
+            )
+
+        with pytest.raises(ValueOutOfRangeError, match="valence"):
+            engine.compute_nernst_potential(
+                z_valence=-3, concentration_out_molar=5e-3, concentration_in_molar=140e-3
+            )
 
     def test_all_valid_valences_work(self) -> None:
         """All biologically valid valences should work.
-        
+
         Tests: K⁺=+1, Cl⁻=-1, Ca²⁺=+2, (Sulfate²⁻=-2 rare but valid)
         """
         engine = MembraneEngine()
-        
+
         for z in ION_VALENCE_ALLOWED:
             e = engine.compute_nernst_potential(
                 z_valence=z,
@@ -440,75 +442,75 @@ class TestInvariantsVerification:
 
     def test_nernst_potential_within_bounds(self) -> None:
         """Nernst potential should stay within [-150, +150] mV for physiological inputs.
-        
+
         Invariant: For physiological ion concentrations (ratio <= 100x),
         E_X ∈ [-150, +150] mV
-        
+
         Note: Extreme concentration ratios (>100x) can exceed these bounds
         electrochemically, but such ratios are non-physiological.
         """
         engine = MembraneEngine()
-        
+
         # Test physiologically realistic concentration ratios (1:100 max)
         test_cases = [
-            (1, 5e-3, 140e-3),     # K+ typical: E ≈ -89 mV
-            (1, 145e-3, 12e-3),    # Na+ typical: E ≈ +65 mV
-            (-1, 120e-3, 4e-3),    # Cl- typical: E ≈ -89 mV
-            (2, 2e-3, 0.1e-3),     # Ca2+ typical: E ≈ +65 mV
+            (1, 5e-3, 140e-3),  # K+ typical: E ≈ -89 mV
+            (1, 145e-3, 12e-3),  # Na+ typical: E ≈ +65 mV
+            (-1, 120e-3, 4e-3),  # Cl- typical: E ≈ -89 mV
+            (2, 2e-3, 0.1e-3),  # Ca2+ typical: E ≈ +65 mV
         ]
-        
+
         for z, c_out, c_in in test_cases:
             e_v = engine.compute_nernst_potential(z, c_out, c_in)
             e_mv = e_v * 1000.0
-            assert POTENTIAL_MIN_V * 1000 <= e_mv <= POTENTIAL_MAX_V * 1000, \
-                f"E = {e_mv:.1f} mV outside bounds for z={z}, ratio={c_out/c_in:.1f}"
+            assert POTENTIAL_MIN_V * 1000 <= e_mv <= POTENTIAL_MAX_V * 1000, (
+                f"E = {e_mv:.1f} mV outside bounds for z={z}, ratio={c_out / c_in:.1f}"
+            )
 
     def test_sign_consistency_invariant(self) -> None:
         """Sign consistency: [X]_out > [X]_in and z > 0 → E > 0.
-        
+
         This is a fundamental electrochemical invariant.
         """
         engine = MembraneEngine()
-        
+
         # Cation with higher outside → positive potential
         e_pos = engine.compute_nernst_potential(1, 100e-3, 10e-3)
         assert e_pos > 0, "E should be positive for [X]_out > [X]_in, z > 0"
-        
+
         # Cation with lower outside → negative potential
         e_neg = engine.compute_nernst_potential(1, 10e-3, 100e-3)
         assert e_neg < 0, "E should be negative for [X]_out < [X]_in, z > 0"
-        
+
         # Anion with higher outside → negative potential (opposite sign)
         e_anion = engine.compute_nernst_potential(-1, 100e-3, 10e-3)
         assert e_anion < 0, "E should be negative for anion with [X]_out > [X]_in"
 
     def test_no_nan_inf_invariant(self) -> None:
         """No NaN/Inf for any valid input combinations.
-        
+
         Ion clamping ensures log(0) never occurs.
         """
         engine = MembraneEngine()
         rng = np.random.default_rng(42)
-        
+
         # Test 1000 random valid combinations
         for _ in range(1000):
             z = int(rng.choice(list(ION_VALENCE_ALLOWED)))
             c_out = float(rng.uniform(ION_CLAMP_MIN, 1.0))
             c_in = float(rng.uniform(ION_CLAMP_MIN, 1.0))
-            
+
             e = engine.compute_nernst_potential(z, c_out, c_in)
             assert math.isfinite(e), f"NaN/Inf for z={z}, c_out={c_out}, c_in={c_in}"
 
     def test_reference_potassium_verification(self) -> None:
         """K⁺ at standard conditions: E_K ≈ -89 ± 2 mV.
-        
+
         Reference: MFN_MATH_MODEL.md Section 1.4
         [K]_in = 140 mM, [K]_out = 5 mM → E_K ≈ -89 mV
         """
         engine = MembraneEngine()
         e_k = engine.compute_nernst_potential(1, 5e-3, 140e-3)
         e_k_mv = e_k * 1000.0
-        
+
         # Tolerance of ±2 mV as specified in MFN_MATH_MODEL.md
-        assert -91.0 <= e_k_mv <= -87.0, \
-            f"E_K = {e_k_mv:.2f} mV, expected -89 ± 2 mV"
+        assert -91.0 <= e_k_mv <= -87.0, f"E_K = {e_k_mv:.2f} mV, expected -89 ± 2 mV"

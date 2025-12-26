@@ -1,4 +1,5 @@
 """Tests for Turing morphogenesis and physics verification."""
+
 import numpy as np
 import sympy as sp
 
@@ -150,9 +151,7 @@ def test_growth_events_occur() -> None:
     """Test that growth events occur during simulation."""
     rng = np.random.default_rng(42)
 
-    _, growth_events = simulate_mycelium_field(
-        rng, grid_size=64, steps=100, spike_probability=0.25
-    )
+    _, growth_events = simulate_mycelium_field(rng, grid_size=64, steps=100, spike_probability=0.25)
 
     # With 25% probability per step, expect ~25 events in 100 steps
     assert growth_events >= 1

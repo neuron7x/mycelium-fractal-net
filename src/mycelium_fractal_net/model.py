@@ -1,4 +1,3 @@
-
 """
 Core implementation of MyceliumFractalNet v4.1.
 
@@ -545,9 +544,7 @@ class STDPPlasticity(nn.Module):
     def _validate_amplitude(self, a: float, name: str) -> None:
         """Validate amplitude is within stable range."""
         if not (self.A_MIN <= a <= self.A_MAX):
-            raise ValueError(
-                f"{name}={a} outside stable range [{self.A_MIN}, {self.A_MAX}]"
-            )
+            raise ValueError(f"{name}={a} outside stable range [{self.A_MIN}, {self.A_MAX}]")
 
     def compute_weight_update(
         self,
@@ -879,9 +876,7 @@ class HierarchicalKrumAggregator:
         # longer provides its Byzantine-robust guarantee. Guard early to avoid
         # silently running an invalid configuration.
         if n <= 2 * num_byzantine + 2:
-            raise ValueError(
-                "Insufficient gradients for Krum: need more than 2f + 2 points"
-            )
+            raise ValueError("Insufficient gradients for Krum: need more than 2f + 2 points")
 
         # Stack gradients for distance computation
         flat_grads = torch.stack([g.flatten() for g in gradients])
@@ -1157,9 +1152,9 @@ def _build_dataset(cfg: ValidationConfig) -> Tuple[TensorDataset, Dict[str, floa
     stats_arr[:, 1:] *= 10.0
 
     # Target: linear combination of statistics
-    target_arr = (
-        0.5 * stats_arr[:, 0] + 0.2 * stats_arr[:, 1] - 0.1 * stats_arr[:, 2]
-    ).reshape(-1, 1)
+    target_arr = (0.5 * stats_arr[:, 0] + 0.2 * stats_arr[:, 1] - 0.1 * stats_arr[:, 2]).reshape(
+        -1, 1
+    )
 
     x_tensor = torch.from_numpy(stats_arr)
     y_tensor = torch.from_numpy(target_arr.astype(np.float32))

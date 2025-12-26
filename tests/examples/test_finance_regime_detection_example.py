@@ -3,6 +3,7 @@ Tests for finance_regime_detection.py example.
 
 Verifies the finance use case: synthetic data → MFN features → regime classification.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -50,9 +51,7 @@ class TestFinanceRegimeDetectionExample:
     def test_run_finance_demo_no_exceptions(self) -> None:
         """Test that run_finance_demo completes without exceptions."""
         # Should not raise any exceptions with small dataset
-        self.module.run_finance_demo(
-            verbose=False, num_points=100, seed=42, return_analysis=False
-        )
+        self.module.run_finance_demo(verbose=False, num_points=100, seed=42, return_analysis=False)
 
     def test_regime_classification_valid(self) -> None:
         """Test that detected regime is one of the valid options."""
@@ -84,9 +83,7 @@ class TestFinanceRegimeDetectionExample:
         assert analysis is not None
 
         # Fractal dimension should be reasonable
-        assert (
-            0.0 <= analysis.fractal_dim <= 2.5
-        ), f"Invalid fractal_dim: {analysis.fractal_dim}"
+        assert 0.0 <= analysis.fractal_dim <= 2.5, f"Invalid fractal_dim: {analysis.fractal_dim}"
 
         # Volatility should be non-negative
         assert analysis.volatility >= 0.0, f"Invalid volatility: {analysis.volatility}"
@@ -141,9 +138,7 @@ class TestFinanceDataGeneration:
     def test_generate_synthetic_market_data(self) -> None:
         """Test synthetic market data generation."""
         rng = np.random.default_rng(42)
-        returns, labels = self.module.generate_synthetic_market_data(
-            rng, num_points=300
-        )
+        returns, labels = self.module.generate_synthetic_market_data(rng, num_points=300)
 
         assert len(returns) == 300
         assert len(labels) == 3  # Three regime segments

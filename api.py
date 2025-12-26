@@ -561,9 +561,7 @@ async def stream_features(websocket: WebSocket):
                         # Start streaming task
                         ctx = ServiceContext(mode=ExecutionMode.API)
                         stream_task = asyncio.create_task(
-                            _stream_features_task(
-                                connection_id, stream_id, params, ctx, ws_manager
-                            )
+                            _stream_features_task(connection_id, stream_id, params, ctx, ws_manager)
                         )
                     else:
                         await websocket.send_json(

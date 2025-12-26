@@ -12,7 +12,7 @@ Reference:
 
 Mathematical Model:
     E = (RT/zF) * ln([ion]_out / [ion]_in)
-    
+
     At 37°C (310K): RT/zF = 26.73 mV for z=1
     For K⁺: [K]_in = 140 mM, [K]_out = 5 mM → E_K ≈ -89 mV
 

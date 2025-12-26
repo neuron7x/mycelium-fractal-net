@@ -257,12 +257,12 @@ class MembraneEngine:
 
     def _validate_ion_valence(self, z_valence: int) -> None:
         """Validate ion valence against biophysical constraints.
-        
+
         Parameters
         ----------
         z_valence : int
             Ion valence to validate.
-            
+
         Raises
         ------
         ValueOutOfRangeError
@@ -389,9 +389,7 @@ class MembraneEngine:
         c_out = np.maximum(concentration_out, self.config.ion_clamp_min)
         c_in = np.maximum(concentration_in, self.config.ion_clamp_min)
 
-        clamped_count = int(
-            np.sum(c_out != concentration_out) + np.sum(c_in != concentration_in)
-        )
+        clamped_count = int(np.sum(c_out != concentration_out) + np.sum(c_in != concentration_in))
         self._metrics.clamping_events += clamped_count
 
         # Vectorized Nernst equation

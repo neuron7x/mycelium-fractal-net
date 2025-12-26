@@ -20,6 +20,7 @@ Features demonstrated:
     - Fractal feature extraction (compute_fractal_features)
     - Configuration management (make_simulation_config_demo)
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -60,9 +61,9 @@ def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureV
         print("\n1. Computing Nernst potential for K⁺...")
     e_k = compute_nernst_potential(
         z_valence=1,
-        concentration_out_molar=5e-3,   # 5 mM extracellular [K⁺]
+        concentration_out_molar=5e-3,  # 5 mM extracellular [K⁺]
         concentration_in_molar=140e-3,  # 140 mM intracellular [K⁺]
-        temperature_k=310.0,            # 37°C body temperature
+        temperature_k=310.0,  # 37°C body temperature
     )
     e_k_mv = e_k * 1000.0  # Convert to mV for display
     if verbose:
@@ -87,7 +88,9 @@ def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureV
 
     if verbose:
         print(f"   Growth events: {result.growth_events}")
-        print(f"   Field range: [{result.field.min()*1000:.2f}, {result.field.max()*1000:.2f}] mV")
+        print(
+            f"   Field range: [{result.field.min() * 1000:.2f}, {result.field.max() * 1000:.2f}] mV"
+        )
         if result.has_history and result.history is not None:
             print(f"   History shape: {result.history.shape} (T, N, N)")
 
@@ -178,10 +181,12 @@ def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureV
         print("SUMMARY")
         print("=" * 60)
         print(f"Nernst E_K:         {e_k_mv:.2f} mV (reference K⁺ equilibrium)")
-        print(f"Simulation:         {sim_config.grid_size}x{sim_config.grid_size} grid, "
-              f"{sim_config.steps} steps")
+        print(
+            f"Simulation:         {sim_config.grid_size}x{sim_config.grid_size} grid, "
+            f"{sim_config.steps} steps"
+        )
         print(f"Fractal dimension:  {features['D_box']:.4f} (biological range: 1.4-1.9)")
-        print(f"Active cells:       {features['f_active']*100:.1f}%")
+        print(f"Active cells:       {features['f_active'] * 100:.1f}%")
         print(f"Mean potential:     {features['V_mean']:.2f} mV")
         print(f"Growth events:      {result.growth_events}")
         print("\nPipeline: Config → Simulation → Features → Record ✓")

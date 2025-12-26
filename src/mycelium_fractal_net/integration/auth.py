@@ -6,7 +6,7 @@ Supports configurable public endpoints and multiple valid API keys.
 
 Usage:
     from mycelium_fractal_net.integration.auth import APIKeyMiddleware
-    
+
     middleware = APIKeyMiddleware(app, config)
 
 Authentication Header:
@@ -37,7 +37,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
     Validates API key from request headers against configured valid keys.
     Public endpoints bypass authentication.
-    
+
     Note: Config is checked at request time to allow dynamic configuration
     changes during testing.
 
@@ -55,7 +55,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         Args:
             app: The ASGI application.
-            auth_config: Static authentication configuration. If None, uses 
+            auth_config: Static authentication configuration. If None, uses
                         global config at request time (dynamic).
         """
         super().__init__(app)
@@ -112,9 +112,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         return False
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Process the request and validate authentication.
 
@@ -158,7 +156,7 @@ def require_api_key(
     Dependency for FastAPI routes requiring API key authentication.
 
     Use as a dependency in route definitions for fine-grained control:
-    
+
         @app.get("/protected")
         async def protected_route(api_key: str = Depends(require_api_key)):
             return {"status": "authenticated"}

@@ -48,32 +48,32 @@ DEFAULT_QUANTUM_JITTER_VAR: float = 0.0005
 
 # === Biophysical Parameter Bounds (from MFN_MATH_MODEL.md Section 2.3) ===
 # Diffusion coefficient bounds
-D_ACTIVATOR_MIN: float = 0.01   # grid²/step - short-range diffusion lower bound
-D_ACTIVATOR_MAX: float = 0.5    # grid²/step - should not exceed 2x CFL limit
-D_INHIBITOR_MIN: float = 0.01   # grid²/step - long-range diffusion lower bound
-D_INHIBITOR_MAX: float = 0.3    # grid²/step - should be bounded below activator typical max
+D_ACTIVATOR_MIN: float = 0.01  # grid²/step - short-range diffusion lower bound
+D_ACTIVATOR_MAX: float = 0.5  # grid²/step - should not exceed 2x CFL limit
+D_INHIBITOR_MIN: float = 0.01  # grid²/step - long-range diffusion lower bound
+D_INHIBITOR_MAX: float = 0.3  # grid²/step - should be bounded below activator typical max
 
 # Reaction rate bounds
 R_ACTIVATOR_MIN: float = 0.001  # 1/step - minimum meaningful growth rate
-R_ACTIVATOR_MAX: float = 0.1    # 1/step - upper bound for stability
+R_ACTIVATOR_MAX: float = 0.1  # 1/step - upper bound for stability
 R_INHIBITOR_MIN: float = 0.001  # 1/step - minimum damping rate
-R_INHIBITOR_MAX: float = 0.1    # 1/step - upper bound for stability
+R_INHIBITOR_MAX: float = 0.1  # 1/step - upper bound for stability
 
 # Turing threshold bounds
-TURING_THRESHOLD_MIN: float = 0.0   # Inclusive lower bound for activation threshold
-TURING_THRESHOLD_MAX: float = 1.0   # Inclusive upper bound for activation threshold
+TURING_THRESHOLD_MIN: float = 0.0  # Inclusive lower bound for activation threshold
+TURING_THRESHOLD_MAX: float = 1.0  # Inclusive upper bound for activation threshold
 
 # Field diffusion coefficient bounds
-ALPHA_MIN: float = 0.05   # Minimum for observable diffusion
-ALPHA_MAX: float = 0.25   # CFL limit (dt=dx=1)
+ALPHA_MIN: float = 0.05  # Minimum for observable diffusion
+ALPHA_MAX: float = 0.25  # CFL limit (dt=dx=1)
 
 # Jitter variance bounds
-JITTER_VAR_MIN: float = 0.0       # No jitter
-JITTER_VAR_MAX: float = 0.01      # Upper limit for stability
+JITTER_VAR_MIN: float = 0.0  # No jitter
+JITTER_VAR_MAX: float = 0.01  # Upper limit for stability
 
 # Grid size bounds
-GRID_SIZE_MIN: int = 4    # Minimum for meaningful patterns
-GRID_SIZE_MAX: int = 1024 # Upper limit for computational feasibility
+GRID_SIZE_MIN: int = 4  # Minimum for meaningful patterns
+GRID_SIZE_MAX: int = 1024  # Upper limit for computational feasibility
 
 # === Stability Limits ===
 # CFL condition: D * dt * 4/dx² ≤ 1 → D ≤ 0.25 for dt=dx=1
@@ -81,9 +81,9 @@ MAX_STABLE_DIFFUSION: float = 0.25
 
 # === Field Bounds (MFN_MATH_MODEL.md Section 4.3) ===
 FIELD_V_MIN: float = -0.095  # -95 mV - hyperpolarization limit
-FIELD_V_MAX: float = 0.040   # +40 mV - action potential peak
+FIELD_V_MAX: float = 0.040  # +40 mV - action potential peak
 INITIAL_POTENTIAL_MEAN: float = -0.070  # -70 mV (resting potential)
-INITIAL_POTENTIAL_STD: float = 0.005    # 5 mV initial variance
+INITIAL_POTENTIAL_STD: float = 0.005  # 5 mV initial variance
 
 
 class BoundaryCondition(Enum):
@@ -101,7 +101,7 @@ def _validate_diffusion_coefficient(
     cfl_limit: float = MAX_STABLE_DIFFUSION,
 ) -> None:
     """Validate diffusion coefficient against biophysical and CFL bounds.
-    
+
     Parameters
     ----------
     name : str
@@ -112,7 +112,7 @@ def _validate_diffusion_coefficient(
         Minimum allowed value.
     cfl_limit : float
         CFL stability limit (default 0.25).
-        
+
     Raises
     ------
     StabilityError
@@ -230,8 +230,7 @@ class ReactionDiffusionConfig:
 
         if not (R_INHIBITOR_MIN <= self.r_inhibitor <= R_INHIBITOR_MAX):
             raise ValueOutOfRangeError(
-                f"r_inhibitor must be in [{R_INHIBITOR_MIN}, {R_INHIBITOR_MAX}] "
-                "for stable damping",
+                f"r_inhibitor must be in [{R_INHIBITOR_MIN}, {R_INHIBITOR_MAX}] for stable damping",
                 value=self.r_inhibitor,
                 min_bound=R_INHIBITOR_MIN,
                 max_bound=R_INHIBITOR_MAX,
@@ -607,15 +606,15 @@ class ReactionDiffusionEngine:
             up = np.empty_like(field)
             up[1:, :] = field[:-1, :]
             up[0, :] = field[0, :]  # First row copies itself (zero gradient)
-            
+
             down = np.empty_like(field)
             down[:-1, :] = field[1:, :]
             down[-1, :] = field[-1, :]  # Last row copies itself
-            
+
             left = np.empty_like(field)
             left[:, 1:] = field[:, :-1]
             left[:, 0] = field[:, 0]  # First column copies itself
-            
+
             right = np.empty_like(field)
             right[:, :-1] = field[:, 1:]
             right[:, -1] = field[:, -1]  # Last column copies itself
