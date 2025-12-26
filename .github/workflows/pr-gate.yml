@@ -131,6 +131,6 @@ jobs:
       - name: Bandit
         run: bandit -r src -ll
       - name: Gitleaks
-        uses: gitleaks/gitleaks-action@0c4e38d6dd9b6d32b07f657a0b96aa4aa5e6811f
+        uses: gitleaks/gitleaks-action@v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
