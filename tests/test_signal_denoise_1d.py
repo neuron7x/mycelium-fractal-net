@@ -90,8 +90,8 @@ def test_denoiser_multichannel_shape_and_finite() -> None:
     length=st.integers(min_value=32, max_value=96),
 )
 def test_denoiser_property_same_shape_and_finite(batch: int, channels: int, length: int) -> None:
-    torch.manual_seed(123)
-    np.random.seed(123)
+    torch.manual_seed(42)
+    np.random.seed(42)
     data = torch.randn(batch, channels, length)
     model = OptimizedFractalDenoise1D()
     with torch.no_grad():
