@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import numpy as np
 import pytest
 import torch
@@ -160,3 +161,34 @@ def test_denoiser_property_same_shape_and_finite(
         out = model(data)
     assert out.shape == data.shape
     assert torch.isfinite(out).all()
+
+
+def test_basal_ganglia_inhibits_high_complexity() -> None:
+    torch.manual_seed(1234)
+    data = torch.randn(1, 1, 128)
+    model = OptimizedFractalDenoise1D(
+        mode="fractal",
+        population_size=16,
+        range_size=8,
+        iterations_fractal=1,
+        fractal_dim_threshold=-0.5,  # force inhibition for typical signals
+    )
+    with torch.no_grad():
+        out = model(data)
+    assert torch.allclose(out, data, atol=0.0, rtol=0.0)
+
+
+def test_mutual_information_is_tracked() -> None:
+    torch.manual_seed(5)
+    data = torch.randn(1, 1, 96)
+    model = OptimizedFractalDenoise1D(
+        mode="fractal",
+        population_size=16,
+        range_size=8,
+        iterations_fractal=1,
+    )
+    with torch.no_grad():
+        _ = model(data)
+    assert model.last_mutual_information is not None
+    assert math.isfinite(model.last_mutual_information)
+    assert model.last_mutual_information >= 0.0

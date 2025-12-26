@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Callable, Literal, cast
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+logger = logging.getLogger(__name__)
 
 
 def _canonicalize_1d(
@@ -42,7 +46,7 @@ def _canonicalize_1d(
 def _normalized_kernel(window: int) -> torch.Tensor:
     if window < 3 or window % 2 == 0:
         raise ValueError("window must be an odd number >= 3")
-    kernel = torch.ones(1, 1, window, dtype=torch.float32)
+    kernel = torch.ones(1, 1, window, dtype=torch.float64)
     return kernel / float(window)
 
 
@@ -71,6 +75,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         harm_ratio: float = 0.95,
         ridge_lambda: float = 1e-4,
         max_population_ci: int = 256,
+        fractal_dim_threshold: float = 1.85,
+        log_mutual_information: bool = True,
+        inhibition_epsilon: float | None = None,
     ) -> None:
         super().__init__()
         self.trend_scaling = trend_scaling
@@ -95,11 +102,20 @@ class OptimizedFractalDenoise1D(nn.Module):
         self.overlap = overlap
         self.smooth_kernel = smooth_kernel
         self.do_no_harm = do_no_harm
-        self.harm_ratio = harm_ratio
+        if inhibition_epsilon is None:
+            self.inhibition_epsilon = 1.0 - harm_ratio
+            self.harm_ratio = harm_ratio
+        else:
+            self.inhibition_epsilon = inhibition_epsilon
+            self.harm_ratio = 1.0 - inhibition_epsilon
         self.ridge_lambda = ridge_lambda
+        self.fractal_dim_threshold = fractal_dim_threshold
+        self.log_mutual_information = log_mutual_information
+        self.last_mutual_information: float | None = None
         self.stride = max(1, base_window // 2)
         self.r = base_window
-        self._eps = 1e-6
+        self.acceptor_iterations = max(iterations_fractal, 7)
+        self._eps = torch.finfo(torch.float64).eps
         self.register_buffer("detail_kernel", _normalized_kernel(base_window))
         self.register_buffer("trend_kernel", _normalized_kernel(base_window * 2 + 1))
         self.register_buffer("fractal_kernel", _normalized_kernel(smooth_kernel))
@@ -123,7 +139,7 @@ class OptimizedFractalDenoise1D(nn.Module):
                 return out
         else:
             canonical_signal, reshape, original_dtype = _canonicalize_1d(x)
-        x_working = canonical_signal.to(torch.float32)
+        x_working = canonical_signal.to(torch.float64)
         B, C, L = x_working.shape
         device = x_working.device
 
@@ -177,18 +193,35 @@ class OptimizedFractalDenoise1D(nn.Module):
         Supports shapes [L], [B, L], [B, C, L] and preserves the original shape.
         """
         canonical, reshape, original_dtype = _canonicalize_1d(x)
-        current = canonical.to(torch.float32)
+        input_fp64 = canonical.to(torch.float64)
+        current = input_fp64
+        inhibit_mask: torch.Tensor | None = None
 
         if self.mode == "multiscale":
             for _ in range(self.iterations):
                 current = self._denoise_signal(current, canonical=True)
         elif self.mode == "fractal":
-            for _ in range(self.iterations_fractal):
-                current = self._denoise_fractal(current, canonical=True)
+            fd = self._estimate_fractal_dimension(input_fp64)
+            inhibit_mask = fd > self.fractal_dim_threshold
+            effective_acceptor_iterations = (
+                self.acceptor_iterations if not self.do_no_harm else max(1, self.iterations_fractal)
+            )
+            if not inhibit_mask.all():
+                for _ in range(effective_acceptor_iterations):
+                    current = self._denoise_fractal(current, canonical=True)
+                if inhibit_mask.any():
+                    current = torch.where(inhibit_mask.unsqueeze(-1), input_fp64, current)
+            else:
+                current = input_fp64
         else:
             raise ValueError(
                 f"Unsupported mode '{self.mode}'. Supported modes are: 'multiscale', 'fractal'"
             )
+
+        if self.log_mutual_information:
+            mi = self._mutual_information(input_fp64, current)
+            self.last_mutual_information = float(mi.item())
+            logger.info("Mutual information (input→output): %.6f", self.last_mutual_information)
 
         return reshape(current).to(original_dtype)
 
@@ -213,6 +246,65 @@ class OptimizedFractalDenoise1D(nn.Module):
         factor = d // r
         return r, d, stride, factor
 
+    def _estimate_fractal_dimension(self, x: torch.Tensor) -> torch.Tensor:
+        """Approximate 1D fractal dimension using a Higuchi-style estimator."""
+        B, C, L = x.shape
+        ks = (1, 2, 4, 8)
+        lengths = []
+        ks_used = []
+        for k in ks:
+            if k >= L:
+                break
+            diff = x[..., k:] - x[..., :-k]
+            if diff.numel() == 0:
+                continue
+            norm = (L - 1) / (diff.shape[-1] * k)
+            lengths.append(diff.abs().sum(dim=-1) * norm)
+            ks_used.append(k)
+
+        if len(lengths) < 2:
+            return torch.zeros(B, C, device=x.device, dtype=x.dtype)
+
+        Lks = torch.stack(lengths, dim=-1)
+        log_L = torch.log(Lks.clamp_min(self._eps))
+        k_tensor = torch.tensor(ks_used, device=x.device, dtype=x.dtype)
+        log_k_inv = torch.log(1.0 / k_tensor)
+        log_k_centered = log_k_inv - log_k_inv.mean()
+        denominator = (log_k_centered**2).sum().clamp_min(self._eps)
+        slope = (log_L * log_k_centered).sum(dim=-1) / denominator
+        return slope
+
+    def _mutual_information(self, x: torch.Tensor, y: torch.Tensor, bins: int = 32) -> torch.Tensor:
+        """Estimate mutual information between flattened tensors."""
+        x_flat = x.reshape(-1)
+        y_flat = y.reshape(-1)
+        eps = self._eps
+
+        x_min, x_max = x_flat.min(), x_flat.max()
+        y_min, y_max = y_flat.min(), y_flat.max()
+
+        x_bins = (
+            ((x_flat - x_min) / (x_max - x_min + eps) * (bins - 1))
+            .long()
+            .clamp(0, bins - 1)
+        )
+        y_bins = (
+            ((y_flat - y_min) / (y_max - y_min + eps) * (bins - 1))
+            .long()
+            .clamp(0, bins - 1)
+        )
+
+        joint_idx = x_bins * bins + y_bins
+        joint_hist = torch.bincount(joint_idx, minlength=bins * bins).to(
+            dtype=x.dtype, device=x.device
+        )
+        joint_prob = joint_hist / joint_hist.sum().clamp_min(1.0)
+        joint_prob_2d = joint_prob.view(bins, bins)
+        p_x = joint_prob_2d.sum(dim=1)
+        p_y = joint_prob_2d.sum(dim=0)
+        denom = (p_x.unsqueeze(1) * p_y.unsqueeze(0)).clamp_min(eps)
+        return (joint_prob_2d * torch.log((joint_prob_2d + eps) / denom)).sum()
+
     def _denoise_fractal(self, x: torch.Tensor, *, canonical: bool = False) -> torch.Tensor:
         reshape: Callable[[torch.Tensor], torch.Tensor]
         if canonical:
@@ -224,7 +316,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         else:
             canonical_signal, reshape, original_dtype = _canonicalize_1d(x)
 
-        x_working = canonical_signal.to(torch.float32)
+        x_working = canonical_signal.to(torch.float64)
         B, C, L = x_working.shape
         device = x_working.device
 
@@ -234,7 +326,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         pad_align = (stride - ((pad_base - r) % stride)) % stride
         L_pad = pad_base + pad_align
         pad_right = max(0, L_pad - L)
-        pad_mode = "reflect" if pad_right < L else "replicate"
+        pad_mode = "reflect" if L > 1 else "replicate"
 
         if pad_right > 0:
             x_padded = F.pad(x_working, (0, pad_right), mode=pad_mode)
@@ -306,8 +398,9 @@ class OptimizedFractalDenoise1D(nn.Module):
             best_idx.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, -1, -1, r),
         ).squeeze(3)
 
+        gate_ratio = 1.0 - self.inhibition_epsilon
         if self.do_no_harm:
-            apply_fractal = mse_best < baseline_mse * self.harm_ratio
+            apply_fractal = mse_best < baseline_mse * gate_ratio
         else:
             apply_fractal = torch.ones_like(mse_best, dtype=torch.bool)
         blended = 0.5 * (recon_best + ranges)
