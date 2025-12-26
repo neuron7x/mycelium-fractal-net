@@ -56,7 +56,9 @@ DEFAULT_MULTISCALE_RANGES: tuple[int, ...] = (4, 8, 16)
 MAX_MULTISCALE_BRANCHES = 3
 MIN_MULTISCALE_POPULATION = 64
 MIN_SOFTMAX_STD = 1e-8
-SMOOTHNESS_PENALTY_WEIGHT = 0.01
+SMOOTHNESS_PENALTY_WEIGHT = (
+    0.01  # downranks oscillatory branches so selection favors smoother ranges
+)
 DEBUG_MAGNITUDE_MULTIPLIER = 5.0
 DEBUG_MIN_BOUND = 1.0
 
@@ -416,8 +418,10 @@ class OptimizedFractalDenoise1D(nn.Module):
             outputs.append(out_tensor)
             stats_list.append(stats_out)
             proxy_val = float(((out_tensor - input_fp64) ** 2).mean().item())
-            smoothness_penalty = float(torch.diff(out_tensor, dim=-1).std().item())
-            proxy_val += SMOOTHNESS_PENALTY_WEIGHT * smoothness_penalty
+            # Max three branches; smoothness penalty cost is negligible.
+            diff_tensor = torch.diff(out_tensor, dim=-1)
+            penalty_value = torch.nan_to_num(diff_tensor.std(), nan=0.0).item()
+            proxy_val += SMOOTHNESS_PENALTY_WEIGHT * penalty_value
             fallback_proxy = stats_out.get("baseline_mse", stats_out["reconstruction_mse"])
             # In rare cases proxy_val may be non-finite; fall back to per-scale error stats.
             proxy_errors.append(proxy_val if math.isfinite(proxy_val) else fallback_proxy)
