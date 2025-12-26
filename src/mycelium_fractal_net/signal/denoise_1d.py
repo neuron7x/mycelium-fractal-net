@@ -49,6 +49,9 @@ def _normalized_kernel(window: int) -> torch.Tensor:
     return kernel / float(window)
 
 
+ScaleMode = Literal["single", "multiscale"]
+
+
 class OptimizedFractalDenoise1D(nn.Module):
     """Multi-scale denoiser that preserves structure while suppressing spikes."""
 
@@ -62,6 +65,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         spike_damping: float = 0.35,
         iterations: int = 2,
         mode: Literal["multiscale", "fractal"] = "multiscale",
+        cfde_mode: ScaleMode = "single",
         range_size: int = 8,
         domain_scale: int = 4,
         population_size: int = 128,
@@ -78,6 +82,8 @@ class OptimizedFractalDenoise1D(nn.Module):
         log_mutual_information: bool = True,
         inhibition_epsilon: float | None = None,
         acceptor_iterations: int | None = None,
+        multiscale_range_sizes: tuple[int, ...] | None = None,
+        debug_checks: bool = False,
     ) -> None:
         super().__init__()
         self.trend_scaling = trend_scaling
@@ -87,6 +93,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         self.iterations = iterations
         self.iterations_fractal = iterations_fractal
         self.mode = mode
+        self.cfde_mode: ScaleMode = cfde_mode
+        if self.cfde_mode not in ("single", "multiscale"):
+            raise ValueError("cfde_mode must be either 'single' or 'multiscale'")
         self.range_size = range_size
         self.domain_scale = domain_scale
         if population_size < 1:
@@ -118,6 +127,11 @@ class OptimizedFractalDenoise1D(nn.Module):
         # Minimum of 7 iterations matches CFDE fixed-point stabilization requirement
         self.acceptor_iterations = max(requested_acceptor_iters, 7)
         self._eps = torch.finfo(torch.float64).eps
+        if multiscale_range_sizes is None:
+            multiscale_range_sizes = (4, 8, 16)
+        filtered_ranges = tuple(r for r in multiscale_range_sizes if r > 1)
+        self.multiscale_range_sizes = filtered_ranges or (self.range_size,)
+        self.debug_checks = debug_checks
         self.register_buffer("detail_kernel", _normalized_kernel(base_window))
         self.register_buffer("trend_kernel", _normalized_kernel(base_window * 2 + 1))
         self.register_buffer("fractal_kernel", _normalized_kernel(smooth_kernel))
@@ -188,7 +202,13 @@ class OptimizedFractalDenoise1D(nn.Module):
         output = output.view(B, C, L_pad)
         return reshape(output[:, :, :L]).to(original_dtype)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        *,
+        return_stats: bool = False,
+        debug: bool | None = None,
+    ) -> torch.Tensor | tuple[torch.Tensor, dict[str, float]]:
         """
         Apply denoising.
 
@@ -198,10 +218,14 @@ class OptimizedFractalDenoise1D(nn.Module):
         input_fp64 = canonical.to(torch.float64)
         current = input_fp64
         inhibit_mask: torch.Tensor | None = None
+        stats: dict[str, float] | None = None
+        debug_flag = self.debug_checks if debug is None else debug
 
         if self.mode == "multiscale":
             for _ in range(self.iterations):
                 current = self._denoise_signal(current, canonical=True)
+            if return_stats:
+                stats = self._empty_stats(effective_iterations=float(self.iterations))
         elif self.mode == "fractal":
             fd = self._estimate_fractal_dimension(input_fp64)
             inhibit_mask = fd > self.fractal_dim_threshold
@@ -209,12 +233,23 @@ class OptimizedFractalDenoise1D(nn.Module):
                 self.acceptor_iterations if not self.do_no_harm else max(1, self.iterations_fractal)
             )
             if not inhibit_mask.all():
-                for _ in range(effective_acceptor_iterations):
-                    current = self._denoise_fractal(current, canonical=True)
-                if inhibit_mask.any():
-                    current = torch.where(inhibit_mask.unsqueeze(-1), input_fp64, current)
+                if self.cfde_mode == "multiscale":
+                    current, stats = self._multiscale_fractal(
+                        input_fp64,
+                        inhibit_mask,
+                        return_stats=return_stats or debug_flag,
+                    )
+                else:
+                    current, stats = self._run_fractal_iterations(
+                        input_fp64,
+                        inhibit_mask,
+                        effective_acceptor_iterations,
+                        return_stats=return_stats or debug_flag,
+                    )
             else:
                 current = input_fp64
+                if return_stats or debug_flag:
+                    stats = self._empty_stats(inhibition_rate=1.0, effective_iterations=0.0)
         else:
             raise ValueError(
                 f"Unsupported mode '{self.mode}'. Supported modes are: 'multiscale', 'fractal'"
@@ -225,19 +260,164 @@ class OptimizedFractalDenoise1D(nn.Module):
             self.last_mutual_information = float(mi.item())
             logger.info("Mutual information (input→output): %.6f", self.last_mutual_information)
 
-        return reshape(current).to(original_dtype)
+        if stats is not None and inhibit_mask is not None:
+            mask_rate = float(inhibit_mask.float().mean().item())
+            stats = {**stats, "inhibition_rate": max(stats.get("inhibition_rate", 0.0), mask_rate)}
 
-    def _fractal_params(self) -> tuple[int, int, int, int]:
-        r = self.range_size
+        if debug_flag:
+            self._run_debug_checks(current, input_fp64)
+
+        output = reshape(current).to(original_dtype)
+        if return_stats:
+            return output, stats or self._empty_stats()
+        return output
+
+    def _empty_stats(
+        self,
+        *,
+        inhibition_rate: float = 0.0,
+        reconstruction_mse: float = 0.0,
+        baseline_mse: float = 0.0,
+        effective_iterations: float = 0.0,
+        range_size: float | None = None,
+        selected_range_size: float | None = None,
+    ) -> dict[str, float]:
+        stats = {
+            "inhibition_rate": inhibition_rate,
+            "reconstruction_mse": reconstruction_mse,
+            "baseline_mse": baseline_mse,
+            "effective_iterations": effective_iterations,
+        }
+        if range_size is not None:
+            stats["range_size"] = range_size
+        if selected_range_size is not None:
+            stats["selected_range_size"] = selected_range_size
+        return stats
+
+    def _select_multiscale_ranges(self, length: int) -> list[int]:
+        ranges: list[int] = []
+        for candidate in self.multiscale_range_sizes + (self.range_size,):
+            if candidate <= 1 or candidate in ranges:
+                continue
+            # Avoid pathological padding on extremely short signals
+            if candidate > length * 2:
+                continue
+            ranges.append(candidate)
+            if len(ranges) >= 3:
+                break
+        if not ranges:
+            ranges.append(max(2, self.range_size))
+        return ranges
+
+    def _run_fractal_iterations(
+        self,
+        input_fp64: torch.Tensor,
+        inhibit_mask: torch.Tensor,
+        effective_acceptor_iterations: int,
+        *,
+        return_stats: bool,
+    ) -> tuple[torch.Tensor, dict[str, float]]:
+        current = input_fp64
+        stats_accum: list[dict[str, float]] = []
+        for _ in range(effective_acceptor_iterations):
+            result = self._denoise_fractal(current, canonical=True, return_stats=return_stats)
+            if isinstance(result, tuple):
+                current, iter_stats = result
+                if return_stats:
+                    stats_accum.append(iter_stats)
+            else:
+                current = result
+        if inhibit_mask.any():
+            current = torch.where(inhibit_mask.unsqueeze(-1), input_fp64, current)
+        if return_stats and stats_accum:
+            stats = {
+                "inhibition_rate": (
+                    sum(s["inhibition_rate"] for s in stats_accum) / len(stats_accum)
+                ),
+                "reconstruction_mse": sum(s["reconstruction_mse"] for s in stats_accum)
+                / len(stats_accum),
+                "baseline_mse": sum(s["baseline_mse"] for s in stats_accum) / len(stats_accum),
+                "effective_iterations": float(len(stats_accum)),
+                "range_size": stats_accum[-1].get("range_size", float(self.range_size)),
+            }
+        else:
+            stats = self._empty_stats(effective_iterations=float(effective_acceptor_iterations))
+        return current, stats
+
+    def _multiscale_fractal(
+        self,
+        input_fp64: torch.Tensor,
+        inhibit_mask: torch.Tensor,
+        *,
+        return_stats: bool,
+    ) -> tuple[torch.Tensor, dict[str, float]]:
+        scales = self._select_multiscale_ranges(input_fp64.shape[-1])
+        outputs: list[torch.Tensor] = []
+        stats_list: list[dict[str, float]] = []
+
+        for scale in scales:
+            result = self._denoise_fractal(
+                input_fp64,
+                canonical=True,
+                range_size=scale,
+                domain_scale=self.domain_scale,
+                return_stats=True,
+            )
+            if isinstance(result, tuple):
+                out_tensor, st = result
+                outputs.append(out_tensor)
+                stats_list.append(st)
+            else:
+                outputs.append(result)
+                stats_list.append(self._empty_stats(range_size=float(scale)))
+
+        if stats_list:
+            mse_values = [s["reconstruction_mse"] for s in stats_list]
+            best_idx = int(torch.tensor(mse_values).argmin().item())
+        else:
+            best_idx = 0
+
+        current = outputs[best_idx]
+        if inhibit_mask.any():
+            current = torch.where(inhibit_mask.unsqueeze(-1), input_fp64, current)
+
+        base_stats = stats_list[best_idx] if stats_list else self._empty_stats()
+        avg_inhibition = sum(s["inhibition_rate"] for s in stats_list) / max(len(stats_list), 1)
+        stats = {
+            "inhibition_rate": max(base_stats.get("inhibition_rate", 0.0), avg_inhibition),
+            "reconstruction_mse": base_stats.get("reconstruction_mse", 0.0),
+            "baseline_mse": base_stats.get("baseline_mse", 0.0),
+            "effective_iterations": float(len(scales)),
+            "range_size": base_stats.get("range_size", float(scales[best_idx] if scales else 0.0)),
+            "selected_range_size": float(scales[best_idx] if scales else 0.0),
+        }
+        return current, stats
+
+    def _run_debug_checks(self, output: torch.Tensor, reference: torch.Tensor) -> None:
+        if not torch.isfinite(output).all():
+            raise AssertionError("CFDE produced non-finite values")
+        ref_max = float(reference.abs().max().item())
+        bound = max(ref_max * 5.0, 1.0)
+        if float(output.abs().max().item()) > bound:
+            raise AssertionError(
+                f"CFDE output magnitude exceeded bound ({bound:.3f}); "
+                f"max={float(output.abs().max().item()):.3f}"
+            )
+
+    def _fractal_params(
+        self, *, range_size: int | None = None, domain_scale: int | None = None
+    ) -> tuple[int, int, int, int]:
+        r = range_size if range_size is not None else self.range_size
         if r <= 0:
             raise ValueError("range_size must be positive")
-        if self.domain_scale <= 0:
+        d_scale = domain_scale if domain_scale is not None else self.domain_scale
+        if d_scale <= 0:
             raise ValueError("domain_scale must be positive")
-        d = r * self.domain_scale
+        d = r * d_scale
         if d % r != 0:
             raise ValueError(
                 f"domain length (domain_scale * range_size) must be divisible by range_size; "
-                f"range_size={r}, domain_scale={self.domain_scale}"
+                f"range_size={r}, domain_scale={d_scale}"
             )
         stride = r // 2 if self.overlap else r
         if stride <= 0:
@@ -302,7 +482,15 @@ class OptimizedFractalDenoise1D(nn.Module):
         denom = (p_x.unsqueeze(1) * p_y.unsqueeze(0)).clamp_min(eps)
         return (joint_prob_2d * torch.log((joint_prob_2d + eps) / denom)).sum()
 
-    def _denoise_fractal(self, x: torch.Tensor, *, canonical: bool = False) -> torch.Tensor:
+    def _denoise_fractal(
+        self,
+        x: torch.Tensor,
+        *,
+        canonical: bool = False,
+        range_size: int | None = None,
+        domain_scale: int | None = None,
+        return_stats: bool = False,
+    ) -> torch.Tensor | tuple[torch.Tensor, dict[str, float]]:
         reshape: Callable[[torch.Tensor], torch.Tensor]
         if canonical:
             canonical_signal = x
@@ -317,7 +505,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         B, C, L = x_working.shape
         device = x_working.device
 
-        r, d, stride, factor = self._fractal_params()
+        r, d, stride, factor = self._fractal_params(
+            range_size=range_size, domain_scale=domain_scale
+        )
 
         pad_base = max(L, d, r)
         pad_align = (stride - ((pad_base - r) % stride)) % stride
@@ -350,13 +540,23 @@ class OptimizedFractalDenoise1D(nn.Module):
 
         num_domains = domain_pool.shape[2]
         if num_domains == 0:
-            return reshape(x_padded[:, :, :L]).to(original_dtype)
+            restored = reshape(x_padded[:, :, :L]).to(original_dtype)
+            if return_stats:
+                return restored, self._empty_stats(
+                    inhibition_rate=1.0, effective_iterations=0.0, range_size=float(r)
+                )
+            return restored
 
         candidate_pool = min(num_domains, min(self.population_size * 2, self.max_population_ci))
         top_k = candidate_pool
         pop_size = min(self.population_size, top_k)
         if top_k == 0 or pop_size == 0:
-            return reshape(x_padded[:, :, :L]).to(original_dtype)
+            restored = reshape(x_padded[:, :, :L]).to(original_dtype)
+            if return_stats:
+                return restored, self._empty_stats(
+                    inhibition_rate=1.0, effective_iterations=0.0, range_size=float(r)
+                )
+            return restored
         var_pool = domain_pool.var(dim=-1, unbiased=False)
         _, top_idx = torch.topk(var_pool, k=top_k, dim=2, largest=False)
         top_domains = torch.gather(
@@ -423,4 +623,15 @@ class OptimizedFractalDenoise1D(nn.Module):
 
         output = output / count.clamp(min=1.0)
         output = output.view(B, C, L_pad)
-        return reshape(output[:, :, :L]).to(original_dtype)
+        restored = reshape(output[:, :, :L]).to(original_dtype)
+        if not return_stats:
+            return restored
+
+        stats = {
+            "inhibition_rate": float((~apply_fractal).float().mean().item()),
+            "reconstruction_mse": float(mse_best.mean().item()),
+            "baseline_mse": float(baseline_mse.mean().item()),
+            "effective_iterations": 1.0,
+            "range_size": float(r),
+        }
+        return restored, stats

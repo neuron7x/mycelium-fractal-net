@@ -10,7 +10,7 @@ import torch
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from mycelium_fractal_net.signal import OptimizedFractalDenoise1D
+from mycelium_fractal_net.signal import Fractal1DPreprocessor, OptimizedFractalDenoise1D
 
 MODE_CONFIGS = [
     {},
@@ -267,3 +267,61 @@ def test_cfde_recursive_monotonic_energy() -> None:
     tolerance = 1e-4
     assert energy(recursive) <= energy(first_pass) + tolerance
     assert torch.max(torch.abs(recursive)) <= torch.max(torch.abs(signal)) * 2.0
+
+
+def test_cfde_return_stats_multiscale_mode() -> None:
+    torch.manual_seed(2)
+    np.random.seed(2)
+    data = torch.randn(1, 1, 80)
+    model = OptimizedFractalDenoise1D(
+        mode="fractal",
+        cfde_mode="multiscale",
+        population_size=32,
+        range_size=8,
+        iterations_fractal=1,
+        log_mutual_information=False,
+    )
+    with torch.no_grad():
+        out, stats = model(data, return_stats=True)  # type: ignore[misc]
+    assert out.shape == data.shape
+    assert set(
+        ["inhibition_rate", "reconstruction_mse", "baseline_mse", "effective_iterations"]
+    ).issubset(stats.keys())
+    assert 0.0 <= stats["inhibition_rate"] <= 1.0
+    assert stats["effective_iterations"] >= 1.0
+    assert math.isfinite(stats["reconstruction_mse"])
+    assert math.isfinite(stats["baseline_mse"])
+
+
+def test_fractal_bounded_oscillation_across_iterations() -> None:
+    torch.manual_seed(33)
+    np.random.seed(33)
+    data = torch.randn(1, 1, 96, dtype=torch.float64)
+    model = OptimizedFractalDenoise1D(
+        mode="fractal",
+        population_size=24,
+        range_size=8,
+        iterations_fractal=1,
+        log_mutual_information=False,
+    )
+    with torch.no_grad():
+        iter1 = model._denoise_fractal(data, canonical=False)
+        iter2 = model._denoise_fractal(iter1, canonical=False)
+        iter3 = model._denoise_fractal(iter2, canonical=False)
+
+    def diff_energy(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+        return torch.mean((a - b) ** 2)
+
+    assert diff_energy(iter2, iter1) <= diff_energy(iter1, data) * 1.05
+    assert diff_energy(iter3, iter2) <= diff_energy(iter2, iter1) * 1.05
+
+
+def test_preprocessor_can_return_stats() -> None:
+    torch.manual_seed(14)
+    np.random.seed(14)
+    series = torch.randn(128, dtype=torch.float32)
+    preprocessor = Fractal1DPreprocessor(preset="generic")
+    with torch.no_grad():
+        out, stats = preprocessor(series, return_stats=True)  # type: ignore[misc]
+    assert out.shape == series.shape
+    assert "effective_iterations" in stats
