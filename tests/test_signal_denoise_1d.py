@@ -228,3 +228,42 @@ def test_recursive_energy_stability() -> None:
     tolerance = 5e-5
     assert energy(recursive) <= energy(first_pass) + tolerance
     assert torch.max(torch.abs(recursive)) <= torch.max(torch.abs(signal)) * 2.0
+
+
+def test_cfde_recursive_monotonic_energy() -> None:
+    torch.manual_seed(21)
+    np.random.seed(21)
+
+    length = 256
+    ramp = torch.linspace(-0.4, 0.2, steps=length // 2, dtype=torch.float64)
+    slope = torch.linspace(0.2, 0.5, steps=length - length // 2, dtype=torch.float64)
+    base = torch.cat([ramp, slope]).unsqueeze(0).unsqueeze(0)
+    noise = 0.02 * torch.randn_like(base)
+    signal = base + noise
+
+    kernel = torch.ones((1, 1, 5), dtype=torch.float64) / 5.0
+    baseline = torch.nn.functional.conv1d(signal, kernel, padding=2)
+
+    model = OptimizedFractalDenoise1D(
+        mode="fractal",
+        population_size=16,
+        range_size=8,
+        iterations_fractal=1,
+        s_max=0.8,
+        s_threshold=0.01,
+        overlap=True,
+        log_mutual_information=False,
+    )
+
+    with torch.no_grad():
+        first_pass = model._denoise_fractal(signal, canonical=False)
+        recursive = signal
+        for _ in range(3):
+            recursive = model._denoise_fractal(recursive, canonical=False)
+
+    def energy(t: torch.Tensor) -> torch.Tensor:
+        return torch.mean((t - baseline) ** 2)
+
+    tolerance = 1e-4
+    assert energy(recursive) <= energy(first_pass) + tolerance
+    assert torch.max(torch.abs(recursive)) <= torch.max(torch.abs(signal)) * 2.0
