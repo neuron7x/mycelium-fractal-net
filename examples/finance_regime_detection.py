@@ -29,6 +29,7 @@ from enum import Enum
 from typing import Tuple
 
 import numpy as np
+import torch
 from numpy.typing import NDArray
 
 from mycelium_fractal_net import (
@@ -38,6 +39,7 @@ from mycelium_fractal_net import (
     make_simulation_config_demo,
     run_mycelium_simulation_with_history,
 )
+from mycelium_fractal_net.signal import Fractal1DPreprocessor
 
 
 class MarketRegime(Enum):
@@ -228,6 +230,7 @@ def run_finance_demo(
     num_points: int = 500,
     seed: int = 42,
     return_analysis: bool = False,
+    denoise: bool = False,
 ) -> RegimeAnalysis | None:
     """
     Run the finance regime detection demo.
@@ -237,6 +240,7 @@ def run_finance_demo(
         num_points: Number of market data points to generate.
         seed: Random seed for reproducibility.
         return_analysis: If True, return the RegimeAnalysis object.
+        denoise: If True, apply 1D fractal denoising to the returns before mapping.
 
     Returns:
         RegimeAnalysis if return_analysis is True, else None.
@@ -253,6 +257,24 @@ def run_finance_demo(
     if verbose:
         print("\n1. Generating synthetic market data...")
     returns, regime_labels = generate_synthetic_market_data(rng, num_points=num_points)
+
+    if denoise:
+        preprocessor = Fractal1DPreprocessor(preset="markets")
+        returns_tensor = torch.tensor(returns, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+        with torch.no_grad():
+            processed = preprocessor(returns_tensor)
+        returns = processed.squeeze(0).squeeze(0).cpu().numpy().astype(np.float64)
+
+        if verbose:
+            print("\n1b. Applying fractal denoiser to returns...")
+            print(
+                f"   Denoise enabled: mean {returns_tensor.mean().item():.6f}"
+                f" → {processed.mean().item():.6f}"
+            )
+            print(
+                f"   Std: {returns_tensor.std().item():.6f}"
+                f" → {processed.std().item():.6f}"
+            )
 
     if verbose:
         print(f"   Generated {len(returns)} daily returns")
