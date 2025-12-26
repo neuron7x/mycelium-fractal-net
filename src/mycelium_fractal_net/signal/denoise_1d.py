@@ -230,7 +230,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         if num_domains == 0:
             return reshape(x_padded[:, :, :L]).to(original_dtype)
 
-        candidate_pool = min(num_domains, max(self.population_size, self.population_size * 2))
+        candidate_pool = min(num_domains, self.population_size * 2)
         top_k = candidate_pool
         pop_size = min(self.population_size, top_k)
         if top_k == 0 or pop_size == 0:
