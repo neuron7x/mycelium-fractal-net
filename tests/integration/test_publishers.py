@@ -63,7 +63,7 @@ class TestFilePublisher:
         """Test that connect creates directory if it doesn't exist."""
         with tempfile.TemporaryDirectory() as tmpdir:
             new_dir = Path(tmpdir) / "output"
-            
+
             config = PublisherConfig()
             publisher = FilePublisher(
                 directory=new_dir,
@@ -95,7 +95,7 @@ class TestFilePublisher:
             # Check file was created
             files = list(Path(tmpdir).glob("output_*.json"))
             assert len(files) == 1
-            
+
             # Verify content
             with open(files[0], "r") as f:
                 content = json.load(f)
@@ -116,7 +116,7 @@ class TestFilePublisher:
             )
 
             await publisher.connect()
-            
+
             # Publish 3 files
             for i in range(3):
                 await publisher.publish({"id": i})
@@ -142,7 +142,7 @@ class TestFilePublisher:
             )
 
             await publisher.connect()
-            
+
             # Publish multiple entries
             await publisher.publish({"entry": 1})
             await publisher.publish({"entry": 2})
@@ -153,7 +153,7 @@ class TestFilePublisher:
             # Check file content (should have all entries)
             log_file = Path(tmpdir) / "log.json"
             assert log_file.exists()
-            
+
             content = log_file.read_text()
             # In append mode, each JSON object is written with indent, followed by newline
             # So we count occurrences of '"entry":'
@@ -190,7 +190,7 @@ class TestPublisherMetrics:
             )
 
             await publisher.connect()
-            
+
             # Publish multiple times
             for i in range(5):
                 await publisher.publish({"id": i})
@@ -220,7 +220,7 @@ class TestPublisherMetrics:
             await publisher.disconnect()
 
             metrics_dict = publisher.metrics.to_dict()
-            
+
             assert "total_publishes" in metrics_dict
             assert "successful_publishes" in metrics_dict
             assert "failed_publishes" in metrics_dict

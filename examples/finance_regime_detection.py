@@ -22,6 +22,7 @@ Usage:
 Note: This is a synthetic demonstration. MFN is a feature engine, not a
 trading system. See docs/MFN_SYSTEM_ROLE.md for system boundaries.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -112,7 +113,7 @@ def generate_synthetic_market_data(
     regime_labels.append("low_volatility")
 
     # Segment 2: Normal volatility regime
-    returns[segment_length: 2 * segment_length] = rng.normal(
+    returns[segment_length : 2 * segment_length] = rng.normal(
         loc=0.0001,  # Minimal drift
         scale=base_volatility * 1.0,
         size=segment_length,
@@ -120,7 +121,7 @@ def generate_synthetic_market_data(
     regime_labels.append("normal")
 
     # Segment 3: High volatility regime (crisis/stressed market)
-    returns[2 * segment_length:] = rng.normal(
+    returns[2 * segment_length :] = rng.normal(
         loc=-0.0002,  # Slight negative drift (stressed market)
         scale=base_volatility * 2.5,
         size=num_points - 2 * segment_length,
@@ -271,10 +272,7 @@ def run_finance_demo(
                 f"   Denoise enabled: mean {returns_tensor.mean().item():.6f}"
                 f" → {processed.mean().item():.6f}"
             )
-            print(
-                f"   Std: {returns_tensor.std().item():.6f}"
-                f" → {processed.std().item():.6f}"
-            )
+            print(f"   Std: {returns_tensor.std().item():.6f} → {processed.std().item():.6f}")
 
     if verbose:
         print(f"   Generated {len(returns)} daily returns")
@@ -285,7 +283,7 @@ def run_finance_demo(
         # Per-segment statistics
         seg_len = len(returns) // 3
         for i, label in enumerate(regime_labels):
-            seg = returns[i * seg_len: (i + 1) * seg_len]
+            seg = returns[i * seg_len : (i + 1) * seg_len]
             print(f"   Segment '{label}': mean={seg.mean():.6f}, std={seg.std():.6f}")
 
     # Step 2: Map returns to MFN field representation

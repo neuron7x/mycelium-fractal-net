@@ -260,9 +260,7 @@ class ErrorResponse(BaseModel):
     details: Optional[List[ErrorDetail]] = Field(
         default=None, description="List of detailed errors (for validation errors)"
     )
-    request_id: Optional[str] = Field(
-        default=None, description="Request correlation ID"
-    )
+    request_id: Optional[str] = Field(default=None, description="Request correlation ID")
     timestamp: Optional[str] = Field(default=None, description="ISO 8601 timestamp")
 
 
@@ -475,9 +473,7 @@ class VerifyResponse(BaseModel):
     """
 
     valid: bool = Field(description="True if signature is valid")
-    key_id: Optional[str] = Field(
-        default=None, description="Key identifier used for verification"
-    )
+    key_id: Optional[str] = Field(default=None, description="Key identifier used for verification")
     algorithm: str = Field(default="Ed25519", description="Signature algorithm")
 
 

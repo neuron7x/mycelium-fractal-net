@@ -163,14 +163,10 @@ def encrypt_data_adapter(request: EncryptRequest) -> EncryptResponse:
     except CryptoAPIError:
         raise
     except SymmetricEncryptionError as e:
-        _log_crypto_operation(
-            "encrypt", key_id or "unknown", config.cipher_suite, False, str(e)
-        )
+        _log_crypto_operation("encrypt", key_id or "unknown", config.cipher_suite, False, str(e))
         raise CryptoAPIError(f"Encryption failed: {e}") from e
     except Exception as e:
-        _log_crypto_operation(
-            "encrypt", key_id or "unknown", config.cipher_suite, False, str(e)
-        )
+        _log_crypto_operation("encrypt", key_id or "unknown", config.cipher_suite, False, str(e))
         raise CryptoAPIError(f"Encryption failed: {e}") from e
 
 
@@ -237,14 +233,10 @@ def decrypt_data_adapter(request: DecryptRequest) -> DecryptResponse:
     except CryptoAPIError:
         raise
     except SymmetricEncryptionError as e:
-        _log_crypto_operation(
-            "decrypt", key_id or "unknown", config.cipher_suite, False, str(e)
-        )
+        _log_crypto_operation("decrypt", key_id or "unknown", config.cipher_suite, False, str(e))
         raise CryptoAPIError(f"Decryption failed: {e}") from e
     except Exception as e:
-        _log_crypto_operation(
-            "decrypt", key_id or "unknown", config.cipher_suite, False, str(e)
-        )
+        _log_crypto_operation("decrypt", key_id or "unknown", config.cipher_suite, False, str(e))
         raise CryptoAPIError(f"Decryption failed: {e}") from e
 
 
@@ -374,17 +366,13 @@ def verify_signature_adapter(request: VerifyRequest) -> VerifyResponse:
             key_id = key_store.default_signature_key_id
             _, public_key = key_store.signature_keys[key_id]
         else:
-            raise CryptoAPIError(
-                "No public key provided and no key_id matches stored keys"
-            )
+            raise CryptoAPIError("No public key provided and no key_id matches stored keys")
 
         # Verify
         verifier = EdDSASignature()
         valid = verifier.verify(message, signature, public_key)
 
-        _log_crypto_operation(
-            "verify", key_id or "external", config.signature_algorithm, True
-        )
+        _log_crypto_operation("verify", key_id or "external", config.signature_algorithm, True)
 
         return VerifyResponse(
             valid=valid,
@@ -466,14 +454,10 @@ def generate_keypair_adapter(request: KeypairRequest) -> KeypairResponse:
     except CryptoAPIError:
         raise
     except (KeyExchangeError, SignatureError) as e:
-        _log_crypto_operation(
-            "keypair", key_id, request.algorithm, False, str(e)
-        )
+        _log_crypto_operation("keypair", key_id, request.algorithm, False, str(e))
         raise CryptoAPIError(f"Key generation failed: {e}") from e
     except Exception as e:
-        _log_crypto_operation(
-            "keypair", key_id, request.algorithm, False, str(e)
-        )
+        _log_crypto_operation("keypair", key_id, request.algorithm, False, str(e))
         raise CryptoAPIError(f"Key generation failed: {e}") from e
 
 

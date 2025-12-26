@@ -226,9 +226,7 @@ class WebSocketStreamUser(User):
                 },
                 name="/ws/stream_features [auth]",
             )
-            auth_response = self.ws_client.receive_json(
-                "/ws/stream_features [auth response]"
-            )
+            auth_response = self.ws_client.receive_json("/ws/stream_features [auth response]")
 
             if auth_response.get("type") != "auth_success":
                 # Auth failed, close and retry
@@ -375,9 +373,7 @@ class WebSocketSimulationUser(User):
                 },
                 name="/ws/simulation_live [auth]",
             )
-            auth_response = self.ws_client.receive_json(
-                "/ws/simulation_live [auth response]"
-            )
+            auth_response = self.ws_client.receive_json("/ws/simulation_live [auth response]")
 
             if auth_response.get("type") != "auth_success":
                 self.ws_client.close()
@@ -512,9 +508,7 @@ class WebSocketMixedUser(User):
             start = time.time()
             while (time.time() - start) < 5.0:
                 try:
-                    ws_client.receive_json(
-                        "/ws/stream_features [quick update]", timeout=1.0
-                    )
+                    ws_client.receive_json("/ws/stream_features [quick update]", timeout=1.0)
                 except (OSError, TimeoutError):
                     pass
 

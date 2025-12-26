@@ -80,9 +80,7 @@ class TestComputeStabilityMetrics:
         metrics = compute_stability_metrics(history)
 
         # Should detect stable dynamics
-        assert metrics["lyapunov_exponent"] < 0 or np.isfinite(
-            metrics["lyapunov_exponent"]
-        )
+        assert metrics["lyapunov_exponent"] < 0 or np.isfinite(metrics["lyapunov_exponent"])
         assert metrics["final_std"] < history[0].std()  # Final state more stable
 
     def test_compute_stability_metrics_change_rates(self) -> None:

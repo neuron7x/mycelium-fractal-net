@@ -170,18 +170,14 @@ class TestComputeFractalFeaturesIntegration:
         arr = features.to_array()
         assert not np.any(np.isinf(arr)), f"Inf found in features: {arr}"
 
-    def test_dimension_in_expected_range(
-        self, simple_simulation_result: SimulationResult
-    ) -> None:
+    def test_dimension_in_expected_range(self, simple_simulation_result: SimulationResult) -> None:
         """D_box should be in valid range [0, 2.5]."""
         features = compute_fractal_features(simple_simulation_result)
 
         D_box = features.values["D_box"]
         assert 0.0 <= D_box <= 2.5, f"D_box={D_box:.3f} outside [0, 2.5]"
 
-    def test_r2_in_valid_range(
-        self, simple_simulation_result: SimulationResult
-    ) -> None:
+    def test_r2_in_valid_range(self, simple_simulation_result: SimulationResult) -> None:
         """D_r2 should be in [0, 1]."""
         features = compute_fractal_features(simple_simulation_result)
 
@@ -209,9 +205,7 @@ class TestComputeFractalFeaturesIntegration:
         assert "T_stable" in features.values
         assert "E_trend" in features.values
 
-    def test_does_not_modify_input(
-        self, simple_simulation_result: SimulationResult
-    ) -> None:
+    def test_does_not_modify_input(self, simple_simulation_result: SimulationResult) -> None:
         """compute_fractal_features should not modify the input result."""
         original_field = simple_simulation_result.field.copy()
 

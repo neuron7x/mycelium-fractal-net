@@ -120,10 +120,7 @@ class FractalInsightArchitect:
             raise InsufficientDataError(self._build_clarifications(missing_levels))
 
         metrics = [
-            p.metric
-            for items in normalized.levels.values()
-            for p in items
-            if p.metric is not None
+            p.metric for items in normalized.levels.values() for p in items if p.metric is not None
         ]
         invariant_threshold = self._compute_threshold(metrics)
 

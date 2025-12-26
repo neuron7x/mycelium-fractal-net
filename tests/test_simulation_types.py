@@ -237,7 +237,7 @@ class TestSimulationResultEdgeCases:
 
     def test_field_with_nan_rejected(self) -> None:
         """Test that NaN values in field are rejected.
-        
+
         Per MFN_DATA_MODEL.md, field data must not contain NaN or Inf values.
         SimulationResult validates this on construction.
         """
@@ -248,7 +248,7 @@ class TestSimulationResultEdgeCases:
 
     def test_field_with_inf_rejected(self) -> None:
         """Test that Inf values in field are rejected.
-        
+
         Per MFN_DATA_MODEL.md, field data must not contain NaN or Inf values.
         SimulationResult validates this on construction.
         """

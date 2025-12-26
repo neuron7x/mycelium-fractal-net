@@ -62,8 +62,7 @@ def test_create_error_response_includes_core_fields():
 
 def test_register_error_handlers_registers_expected_handlers(app_with_handlers: FastAPI):
     assert (
-        app_with_handlers.exception_handlers[RequestValidationError]
-        is validation_exception_handler
+        app_with_handlers.exception_handlers[RequestValidationError] is validation_exception_handler
     )
     assert (
         app_with_handlers.exception_handlers[ValidationError]
@@ -73,16 +72,19 @@ def test_register_error_handlers_registers_expected_handlers(app_with_handlers: 
     assert app_with_handlers.exception_handlers[Exception] is internal_error_handler
 
 
-@pytest.mark.parametrize("endpoint,status,code,message", [
-    ("/items", 422, ErrorCode.VALIDATION_ERROR, "Validation failed: 1 error(s)"),
-    ("/value-error", 400, ErrorCode.INVALID_REQUEST, "invalid state"),
-    (
-        "/runtime-error",
-        500,
-        ErrorCode.INTERNAL_ERROR,
-        "An internal error occurred. Please try again later.",
-    ),
-])
+@pytest.mark.parametrize(
+    "endpoint,status,code,message",
+    [
+        ("/items", 422, ErrorCode.VALIDATION_ERROR, "Validation failed: 1 error(s)"),
+        ("/value-error", 400, ErrorCode.INVALID_REQUEST, "invalid state"),
+        (
+            "/runtime-error",
+            500,
+            ErrorCode.INTERNAL_ERROR,
+            "An internal error occurred. Please try again later.",
+        ),
+    ],
+)
 def test_error_handlers_apply_standard_error_schema(
     app_with_handlers: FastAPI, endpoint: str, status: int, code: str, message: str
 ):

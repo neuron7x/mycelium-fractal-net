@@ -5,6 +5,7 @@ CLI entrypoint for MyceliumFractalNet v4.1.
 Забезпечує сумісність зі специфікацією "один файл-ентрі":
 python mycelium_fractal_net_v4_1.py --mode validate
 """
+
 from __future__ import annotations
 
 import sys

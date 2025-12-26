@@ -1,4 +1,3 @@
-
 """
 MyceliumFractalNet v4.1 package.
 

@@ -12,14 +12,14 @@ Reference:
 
 Mathematical Model:
     Krum(g_1, ..., g_n) = g_i where i = argmin_j s(g_j)
-    
+
     s(g_j) = Σ_{k ∈ N_j} ||g_j - g_k||²
-    
+
     N_j = set of (n - f - 2) nearest neighbors of g_j
 
 Byzantine Tolerance:
     f < (n - 2) / 2
-    
+
     With f_frac = 0.2 (20%), tolerates up to 20% adversarial clients.
 
 Hierarchical Extension:
@@ -190,9 +190,7 @@ class HierarchicalKrumAggregator:
         # layer enforces this; the core implementation should mirror that
         # contract instead of silently proceeding with an invalid configuration.
         if n <= 2 * num_byzantine + 2:
-            raise ValueError(
-                "Insufficient gradients for Krum: need more than 2f + 2 points"
-            )
+            raise ValueError("Insufficient gradients for Krum: need more than 2f + 2 points")
 
         flat_grads = torch.stack([g.flatten() for g in gradients])
         # Krum scoring uses squared Euclidean distances. Compute the squared

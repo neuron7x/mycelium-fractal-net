@@ -175,9 +175,9 @@ class TestPipelineWithDifferentConfigs:
         features2 = compute_fractal_features(result)
 
         for name in features1.values:
-            assert features1.values[name] == pytest.approx(
-                features2.values[name], rel=1e-10
-            ), f"Feature {name} not deterministic"
+            assert features1.values[name] == pytest.approx(features2.values[name], rel=1e-10), (
+                f"Feature {name} not deterministic"
+            )
 
 
 class TestConfigValidation:

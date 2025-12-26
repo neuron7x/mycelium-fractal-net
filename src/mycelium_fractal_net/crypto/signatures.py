@@ -76,17 +76,13 @@ from dataclasses import dataclass
 from typing import Optional, Tuple, Union
 
 # Ed25519 curve parameters
-_ED25519_D = (
-    -121665 * pow(121666, 2**255 - 19 - 2, 2**255 - 19)
-) % (2**255 - 19)
+_ED25519_D = (-121665 * pow(121666, 2**255 - 19 - 2, 2**255 - 19)) % (2**255 - 19)
 _ED25519_P = 2**255 - 19
 _ED25519_L = (1 << 252) + 27742317777372353535851937790883648493
 _ED25519_I = pow(2, (_ED25519_P - 1) // 4, _ED25519_P)  # sqrt(-1)
 
 # Base point (in extended coordinates)
-_ED25519_GY = (
-    4 * pow(5, 2**255 - 19 - 2, 2**255 - 19)
-) % (2**255 - 19)
+_ED25519_GY = (4 * pow(5, 2**255 - 19 - 2, 2**255 - 19)) % (2**255 - 19)
 
 
 class SignatureError(Exception):

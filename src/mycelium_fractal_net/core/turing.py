@@ -2,7 +2,7 @@
 Turing Morphogenesis Module.
 
 This module provides the public API for Turing reaction-diffusion pattern
-formation, re-exporting validated implementations from model.py for 
+formation, re-exporting validated implementations from model.py for
 backward compatibility, plus the new ReactionDiffusionEngine for advanced use.
 
 Conceptual domain: Reaction-diffusion dynamics, pattern formation
@@ -17,7 +17,7 @@ Mathematical Model:
 
 Parameters:
     D_a = 0.1 grid²/step    - Activator diffusion
-    D_i = 0.05 grid²/step   - Inhibitor diffusion  
+    D_i = 0.05 grid²/step   - Inhibitor diffusion
     r_a = 0.01              - Activator reaction rate
     r_i = 0.02              - Inhibitor reaction rate
     θ = 0.75                - Turing activation threshold

@@ -32,8 +32,7 @@ try:
     import pandas as pd
 except ModuleNotFoundError:
     raise RuntimeError(
-        "pandas is required for dataset generation. "
-        "Install with: pip install -r requirements.txt"
+        "pandas is required for dataset generation. Install with: pip install -r requirements.txt"
     )
 
 from mycelium_fractal_net.core import ReactionDiffusionConfig, ReactionDiffusionEngine
@@ -104,16 +103,12 @@ class ScenarioConfig:
         if self.num_samples < 1:
             raise ValueError(f"num_samples must be >= 1, got {self.num_samples}")
         if self.seeds_per_config < 1:
-            raise ValueError(
-                f"seeds_per_config must be >= 1, got {self.seeds_per_config}"
-            )
+            raise ValueError(f"seeds_per_config must be >= 1, got {self.seeds_per_config}")
         if not self.alpha_values:
             raise ValueError("alpha_values must contain at least one value")
         for alpha in self.alpha_values:
             if alpha <= 0 or alpha >= 0.25:
-                raise ValueError(
-                    f"alpha must be in (0, 0.25) for CFL stability, got {alpha}"
-                )
+                raise ValueError(f"alpha must be in (0, 0.25) for CFL stability, got {alpha}")
 
 
 @dataclass
@@ -475,9 +470,7 @@ def run_scenario(
         try:
             features = compute_features(history, feature_config)
         except Exception as e:
-            logger.warning(
-                f"Feature extraction failed for sim_id={params['sim_id']}: {e}"
-            )
+            logger.warning(f"Feature extraction failed for sim_id={params['sim_id']}: {e}")
             n_failed += 1
             continue
 
@@ -506,8 +499,7 @@ def run_scenario(
     feature_names = FeatureVector.feature_names()
 
     logger.info(
-        f"Scenario '{config.name}' complete: "
-        f"{n_success}/{n_configs} successful ({elapsed:.1f}s)"
+        f"Scenario '{config.name}' complete: {n_success}/{n_configs} successful ({elapsed:.1f}s)"
     )
 
     return DatasetMeta(

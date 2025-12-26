@@ -301,10 +301,7 @@ class TestConcurrentProcessing:
         """Simulations should be thread-safe with different seeds."""
         num_workers = 4
         num_tasks = 8
-        params_list = [
-            {"seed": i * 100, "grid_size": 32, "steps": 32}
-            for i in range(num_tasks)
-        ]
+        params_list = [{"seed": i * 100, "grid_size": 32, "steps": 32} for i in range(num_tasks)]
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             results = list(executor.map(run_simulation_task, params_list))
@@ -320,10 +317,7 @@ class TestConcurrentProcessing:
         """Concurrent simulations should maintain reasonable throughput."""
         num_workers = 2
         num_tasks = 10
-        params_list = [
-            {"seed": i * 50, "grid_size": 32, "steps": 50}
-            for i in range(num_tasks)
-        ]
+        params_list = [{"seed": i * 50, "grid_size": 32, "steps": 50} for i in range(num_tasks)]
 
         start = time.perf_counter()
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
@@ -524,9 +518,7 @@ class TestMembraneEngineScalability:
                 )
         elapsed = time.perf_counter() - start
 
-        assert elapsed < 1.0, (
-            f"40k Nernst calculations took {elapsed:.3f}s, exceeds 1s"
-        )
+        assert elapsed < 1.0, f"40k Nernst calculations took {elapsed:.3f}s, exceeds 1s"
 
 
 # ============================================================================
@@ -546,15 +538,14 @@ class TestScalabilityBenchmarks:
         for gs in grid_sizes:
             config = SimulationConfig(grid_size=gs, steps=100, seed=42)
             metrics = measure_memory_and_time(run_mycelium_simulation, config)
-            results.append({
-                "grid_size": gs,
-                "time_s": metrics["elapsed_s"],
-                "memory_mb": metrics["peak_memory_mb"],
-            })
-            print(
-                f"Grid {gs}x{gs}: {metrics['elapsed_s']:.3f}s, "
-                f"{metrics['peak_memory_mb']:.2f}MB"
+            results.append(
+                {
+                    "grid_size": gs,
+                    "time_s": metrics["elapsed_s"],
+                    "memory_mb": metrics["peak_memory_mb"],
+                }
             )
+            print(f"Grid {gs}x{gs}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB")
 
         # Print scaling ratios
         for i in range(1, len(results)):
@@ -573,12 +564,11 @@ class TestScalabilityBenchmarks:
         for steps in step_counts:
             config = SimulationConfig(grid_size=64, steps=steps, seed=42)
             metrics = measure_memory_and_time(run_mycelium_simulation, config)
-            results.append({
-                "steps": steps,
-                "time_s": metrics["elapsed_s"],
-                "memory_mb": metrics["peak_memory_mb"],
-            })
-            print(
-                f"Steps {steps}: {metrics['elapsed_s']:.3f}s, "
-                f"{metrics['peak_memory_mb']:.2f}MB"
+            results.append(
+                {
+                    "steps": steps,
+                    "time_s": metrics["elapsed_s"],
+                    "memory_mb": metrics["peak_memory_mb"],
+                }
             )
+            print(f"Steps {steps}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB")

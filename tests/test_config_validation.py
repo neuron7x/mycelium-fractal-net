@@ -58,7 +58,7 @@ class TestSimulationConfigValidation:
 
     def test_grid_size_below_minimum(self) -> None:
         """Test that grid_size below minimum raises error.
-        
+
         Note: GRID_SIZE_MIN is 4 from config module, but SimulationConfig allows grid_size=2.
         The validate_simulation_config function applies stricter validation.
         """
@@ -205,16 +205,12 @@ class TestFeatureConfigValidation:
     def test_threshold_order_invalid_low_med(self) -> None:
         """Test low >= med raises error."""
         with pytest.raises(ValueError, match="threshold_low_mv.*threshold_med_mv"):
-            FeatureConfig(
-                threshold_low_mv=-50.0, threshold_med_mv=-50.0, threshold_high_mv=-40.0
-            )
+            FeatureConfig(threshold_low_mv=-50.0, threshold_med_mv=-50.0, threshold_high_mv=-40.0)
 
     def test_threshold_order_invalid_med_high(self) -> None:
         """Test med >= high raises error."""
         with pytest.raises(ValueError, match="threshold_med_mv.*threshold_high_mv"):
-            FeatureConfig(
-                threshold_low_mv=-70.0, threshold_med_mv=-40.0, threshold_high_mv=-40.0
-            )
+            FeatureConfig(threshold_low_mv=-70.0, threshold_med_mv=-40.0, threshold_high_mv=-40.0)
 
     def test_from_dict_preserves_invalid_values_for_validation(self) -> None:
         """Ensure falsy user values do not get replaced with defaults."""
@@ -357,9 +353,7 @@ class TestDatasetConfigValidation:
     def test_turing_threshold_range_from_dict_requires_two_values(self) -> None:
         """from_dict should guard turing_threshold_range length."""
 
-        with pytest.raises(
-            ValueError, match="turing_threshold_range must contain exactly two"
-        ):
+        with pytest.raises(ValueError, match="turing_threshold_range must contain exactly two"):
             DatasetConfig.from_dict({"turing_threshold_range": [0.1]})
 
     def test_turing_threshold_range_invalid(self) -> None:

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Controlled cleanup of temporary and build artifacts with logging."""
+
 from __future__ import annotations
 
 import csv

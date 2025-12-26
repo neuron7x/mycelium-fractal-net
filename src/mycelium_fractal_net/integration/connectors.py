@@ -117,9 +117,7 @@ class ConnectorMetrics:
             "last_error": self.last_error,
             "last_error_timestamp": self.last_error_timestamp,
             "success_rate": (
-                self.successful_requests / self.total_requests
-                if self.total_requests > 0
-                else 0.0
+                self.successful_requests / self.total_requests if self.total_requests > 0 else 0.0
             ),
         }
 
@@ -578,9 +576,7 @@ class KafkaConnectorAdapter(BaseConnector):
 
         self._connection_timestamp = time.time()
         self.status = ConnectorStatus.CONNECTED
-        logger.info(
-            f"Kafka connector connected to {self.bootstrap_servers}, topics: {self.topics}"
-        )
+        logger.info(f"Kafka connector connected to {self.bootstrap_servers}, topics: {self.topics}")
 
     async def disconnect(self) -> None:
         """Close Kafka consumer connection."""

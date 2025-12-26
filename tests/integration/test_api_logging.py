@@ -87,9 +87,7 @@ class TestRequestID:
     def test_provided_request_id_is_preserved(self, logging_client: TestClient) -> None:
         """Client-provided request ID should be preserved."""
         custom_id = "custom-request-id-12345"
-        response = logging_client.get(
-            "/health", headers={REQUEST_ID_HEADER: custom_id}
-        )
+        response = logging_client.get("/health", headers={REQUEST_ID_HEADER: custom_id})
         assert response.headers.get(REQUEST_ID_HEADER) == custom_id
 
     def test_request_context_cleared_on_exception(self) -> None:
@@ -348,9 +346,7 @@ class TestLoggingSetup:
 
         config = LoggingConfig(level="INFO", format="json")
 
-        with mock.patch.dict(
-            os.environ, {"MFN_ENV": "prod", "MFN_LOG_FORMAT": "json"}
-        ):
+        with mock.patch.dict(os.environ, {"MFN_ENV": "prod", "MFN_LOG_FORMAT": "json"}):
             reset_config()
             setup_logging(config)
 
@@ -366,9 +362,7 @@ class TestLoggingSetup:
 
         config = LoggingConfig(level="DEBUG", format="text")
 
-        with mock.patch.dict(
-            os.environ, {"MFN_ENV": "dev", "MFN_LOG_FORMAT": "text"}
-        ):
+        with mock.patch.dict(os.environ, {"MFN_ENV": "dev", "MFN_LOG_FORMAT": "text"}):
             reset_config()
             setup_logging(config)
 

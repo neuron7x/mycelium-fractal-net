@@ -27,7 +27,7 @@ class TestPublicAPIExistence:
             generate_fractal_ifs,
             simulate_mycelium_field,
         )
-        
+
         # Verify they are callable
         assert callable(compute_nernst_potential)
         assert callable(simulate_mycelium_field)
@@ -41,7 +41,7 @@ class TestPublicAPIExistence:
             HierarchicalKrumAggregator,
             aggregate_gradients_krum,
         )
-        
+
         assert callable(aggregate_gradients_krum)
         assert isinstance(HierarchicalKrumAggregator, type)
 
@@ -52,7 +52,7 @@ class TestPublicAPIExistence:
             SparseAttention,
             STDPPlasticity,
         )
-        
+
         assert isinstance(MyceliumFractalNet, type)
         assert isinstance(STDPPlasticity, type)
         assert isinstance(SparseAttention, type)
@@ -64,7 +64,7 @@ class TestPublicAPIExistence:
             run_validation,
             run_validation_cli,
         )
-        
+
         assert callable(run_validation)
         assert callable(run_validation_cli)
         assert isinstance(ValidationConfig, type)
@@ -76,7 +76,7 @@ class TestPublicAPIExistence:
             StabilityError,
             ValueOutOfRangeError,
         )
-        
+
         assert issubclass(StabilityError, Exception)
         assert issubclass(ValueOutOfRangeError, Exception)
         assert issubclass(NumericalInstabilityError, Exception)
@@ -89,7 +89,7 @@ class TestPublicAPIExistence:
             R_GAS_CONSTANT,
             TURING_THRESHOLD,
         )
-        
+
         # Verify approximate values
         assert abs(R_GAS_CONSTANT - 8.314) < 0.01
         assert abs(FARADAY_CONSTANT - 96485.33) < 1.0
@@ -107,7 +107,7 @@ class TestDomainModuleImports:
             MembraneEngine,
             compute_nernst_potential,
         )
-        
+
         assert callable(compute_nernst_potential)
         assert isinstance(MembraneConfig, type)
         assert isinstance(MembraneEngine, type)
@@ -120,7 +120,7 @@ class TestDomainModuleImports:
             ReactionDiffusionEngine,
             simulate_mycelium_field,
         )
-        
+
         assert callable(simulate_mycelium_field)
         assert isinstance(ReactionDiffusionConfig, type)
         assert isinstance(ReactionDiffusionEngine, type)
@@ -134,7 +134,7 @@ class TestDomainModuleImports:
             estimate_fractal_dimension,
             generate_fractal_ifs,
         )
-        
+
         assert callable(estimate_fractal_dimension)
         assert callable(generate_fractal_ifs)
         assert isinstance(FractalConfig, type)
@@ -149,7 +149,7 @@ class TestDomainModuleImports:
             STDP_TAU_PLUS,
             STDPPlasticity,
         )
-        
+
         assert isinstance(STDPPlasticity, type)
         assert abs(STDP_TAU_PLUS - 0.020) < 0.001
         assert abs(STDP_TAU_MINUS - 0.020) < 0.001
@@ -164,7 +164,7 @@ class TestDomainModuleImports:
             HierarchicalKrumAggregator,
             aggregate_gradients_krum,
         )
-        
+
         assert isinstance(HierarchicalKrumAggregator, type)
         assert callable(aggregate_gradients_krum)
         assert NUM_CLUSTERS_DEFAULT == 100
@@ -177,7 +177,7 @@ class TestDomainModuleImports:
             compute_stability_metrics,
             is_stable,
         )
-        
+
         assert callable(compute_lyapunov_exponent)
         assert callable(compute_stability_metrics)
         assert callable(is_stable)
@@ -189,10 +189,10 @@ class TestAPISignatures:
     def test_compute_nernst_potential_signature(self) -> None:
         """Test compute_nernst_potential has expected parameters."""
         from mycelium_fractal_net import compute_nernst_potential
-        
+
         sig = inspect.signature(compute_nernst_potential)
         params = list(sig.parameters.keys())
-        
+
         assert "z_valence" in params
         assert "concentration_out_molar" in params
         assert "concentration_in_molar" in params
@@ -201,10 +201,10 @@ class TestAPISignatures:
     def test_simulate_mycelium_field_signature(self) -> None:
         """Test simulate_mycelium_field has expected parameters."""
         from mycelium_fractal_net import simulate_mycelium_field
-        
+
         sig = inspect.signature(simulate_mycelium_field)
         params = list(sig.parameters.keys())
-        
+
         assert "rng" in params
         assert "grid_size" in params
         assert "steps" in params
@@ -213,19 +213,19 @@ class TestAPISignatures:
     def test_estimate_fractal_dimension_signature(self) -> None:
         """Test estimate_fractal_dimension has expected parameters."""
         from mycelium_fractal_net import estimate_fractal_dimension
-        
+
         sig = inspect.signature(estimate_fractal_dimension)
         params = list(sig.parameters.keys())
-        
+
         assert "binary_field" in params
 
     def test_aggregate_gradients_krum_signature(self) -> None:
         """Test aggregate_gradients_krum has expected parameters."""
         from mycelium_fractal_net import aggregate_gradients_krum
-        
+
         sig = inspect.signature(aggregate_gradients_krum)
         params = list(sig.parameters.keys())
-        
+
         assert "gradients" in params
 
 
@@ -235,14 +235,14 @@ class TestREADMEExamples:
     def test_nernst_example(self) -> None:
         """Test Nernst example from README."""
         from mycelium_fractal_net import compute_nernst_potential
-        
+
         E_K = compute_nernst_potential(
             z_valence=1,
-            concentration_out_molar=5e-3,   # [K⁺]out = 5 mM
+            concentration_out_molar=5e-3,  # [K⁺]out = 5 mM
             concentration_in_molar=140e-3,  # [K⁺]in = 140 mM
-            temperature_k=310.0             # 37°C
+            temperature_k=310.0,  # 37°C
         )
-        
+
         # E_K ≈ -0.08901 V ≈ -89 mV
         assert isinstance(E_K, float)
         assert abs(E_K * 1000 + 89) < 2  # Within 2 mV of expected
@@ -250,15 +250,12 @@ class TestREADMEExamples:
     def test_turing_example(self) -> None:
         """Test Turing morphogenesis example from README."""
         from mycelium_fractal_net import simulate_mycelium_field
-        
+
         rng = np.random.default_rng(42)
         field, growth_events = simulate_mycelium_field(
-            rng=rng,
-            grid_size=64,
-            steps=64,
-            turing_enabled=True
+            rng=rng, grid_size=64, steps=64, turing_enabled=True
         )
-        
+
         assert field.shape == (64, 64)
         assert isinstance(growth_events, int)
         # Field should be in physiological range [-95, 40] mV
@@ -268,13 +265,13 @@ class TestREADMEExamples:
     def test_fractal_example(self) -> None:
         """Test fractal dimension example from README."""
         from mycelium_fractal_net import estimate_fractal_dimension, simulate_mycelium_field
-        
+
         rng = np.random.default_rng(42)
         field, _ = simulate_mycelium_field(rng, grid_size=64, steps=64)
-        
+
         binary = field > -0.060  # threshold -60 mV
         D = estimate_fractal_dimension(binary)
-        
+
         assert isinstance(D, float)
         # D should be reasonable (between 0 and 2 for 2D binary field)
         assert 0 <= D <= 2.5
@@ -282,12 +279,12 @@ class TestREADMEExamples:
     def test_federated_example(self) -> None:
         """Test federated learning example."""
         from mycelium_fractal_net import aggregate_gradients_krum
-        
+
         # Create synthetic gradients
         gradients = [torch.randn(100) for _ in range(20)]
-        
+
         aggregated = aggregate_gradients_krum(gradients, num_clusters=5)
-        
+
         assert isinstance(aggregated, torch.Tensor)
         assert aggregated.shape == (100,)
 
@@ -298,7 +295,7 @@ class TestAnalyticsAPI:
     def test_feature_vector_importable(self) -> None:
         """Test FeatureVector is importable and usable."""
         from mycelium_fractal_net import FeatureVector, compute_fractal_features
-        
+
         assert isinstance(FeatureVector, type)
         assert callable(compute_fractal_features)
 
@@ -306,7 +303,7 @@ class TestAnalyticsAPI:
         """Test analytics module is importable."""
         from analytics import FeatureConfig, compute_features
         from mycelium_fractal_net.analytics import compute_fractal_features
-        
+
         assert callable(compute_features)
         assert callable(compute_fractal_features)
         assert isinstance(FeatureConfig, type)

@@ -178,10 +178,7 @@ class SecretManager:
                 ) from exc
 
         # Newline or separator-delimited list
-        candidates = [
-            part.strip()
-            for part in raw_value.replace("\r", "").split("\n")
-        ]
+        candidates = [part.strip() for part in raw_value.replace("\r", "").split("\n")]
         flattened: List[str] = []
         for candidate in candidates:
             if separator in candidate:
@@ -194,9 +191,7 @@ class SecretManager:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _fetch_secret_value(
-        self, *, key: str, file_env_key: Optional[str] = None
-    ) -> Optional[str]:
+    def _fetch_secret_value(self, *, key: str, file_env_key: Optional[str] = None) -> Optional[str]:
         backend = self.config.backend
         if backend == SecretsBackend.ENV:
             return self._from_env(key=key, file_env_key=file_env_key)
@@ -277,9 +272,7 @@ class SecretManager:
                     )
                 return {str(k): str(v) for k, v in data.items()}
             except json.JSONDecodeError as exc:
-                raise SecretRetrievalError(
-                    f"Invalid JSON in secrets file {path}: {exc}" 
-                ) from exc
+                raise SecretRetrievalError(f"Invalid JSON in secrets file {path}: {exc}") from exc
 
         # .env style fallback
         secrets: Dict[str, str] = {}
@@ -288,9 +281,7 @@ class SecretManager:
             if not stripped or stripped.startswith("#"):
                 continue
             if "=" not in stripped:
-                raise SecretRetrievalError(
-                    f"Invalid line in secrets file {path}: '{stripped}'"
-                )
+                raise SecretRetrievalError(f"Invalid line in secrets file {path}: '{stripped}'")
             k, v = stripped.split("=", 1)
             secrets[k.strip()] = v.strip()
         return secrets

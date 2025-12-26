@@ -102,7 +102,7 @@ class ServiceContext:
         Note:
             If seed is None, returns a new unseeded generator each time.
             If seed is set, returns the same generator instance for reproducibility.
-            
+
         Deprecated:
             Use the `rng` property instead.
         """

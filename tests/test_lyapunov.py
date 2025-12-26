@@ -1,4 +1,5 @@
 """Tests for fractal IFS generation and Lyapunov stability."""
+
 import numpy as np
 
 from mycelium_fractal_net.model import (

@@ -44,8 +44,8 @@ def test_fractal_improves_spikes_mse() -> None:
 
     length = 256
     base = np.zeros(length, dtype=np.float64)
-    base[length // 4: length // 2] = 0.8
-    base[length // 2: 3 * length // 4] = -0.3
+    base[length // 4 : length // 2] = 0.8
+    base[length // 2 : 3 * length // 4] = -0.3
 
     noisy = base + rng.normal(0.0, 0.05, size=length)
     spike_indices = rng.choice(length, size=10, replace=False)

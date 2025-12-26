@@ -51,12 +51,8 @@ def test_pandas_version_compatibility() -> None:
     min_v = version.parse(min_version)
     max_v = version.parse(max_version)
 
-    assert (
-        current >= min_v
-    ), f"pandas version {pd.__version__} is too old (minimum: {min_version})"
-    assert (
-        current < max_v
-    ), f"pandas version {pd.__version__} is too new (maximum: <{max_version})"
+    assert current >= min_v, f"pandas version {pd.__version__} is too old (minimum: {min_version})"
+    assert current < max_v, f"pandas version {pd.__version__} is too new (maximum: <{max_version})"
 
 
 def test_numpy_typing_available() -> None:

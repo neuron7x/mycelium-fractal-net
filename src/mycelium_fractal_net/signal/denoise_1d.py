@@ -16,18 +16,24 @@ def _canonicalize_1d(
     original_dtype = tensor.dtype
 
     if tensor.dim() == 1:
+
         def reshaper(out: torch.Tensor) -> torch.Tensor:
             return out.squeeze(0).squeeze(0)
+
         return tensor.unsqueeze(0).unsqueeze(0), reshaper, original_dtype
 
     if tensor.dim() == 2:
+
         def reshaper(out: torch.Tensor) -> torch.Tensor:
             return out.squeeze(1)
+
         return tensor.unsqueeze(1), reshaper, original_dtype
 
     if tensor.dim() == 3:
+
         def reshaper(out: torch.Tensor) -> torch.Tensor:
             return out
+
         return tensor, reshaper, original_dtype
 
     raise ValueError("Expected input shape [L], [B, L], or [B, C, L]")

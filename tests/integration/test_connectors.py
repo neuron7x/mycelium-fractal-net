@@ -25,14 +25,12 @@ from mycelium_fractal_net.integration.connectors import (
 # Check if aiohttp is available
 try:
     import aiohttp  # noqa: F401
+
     AIOHTTP_AVAILABLE = True
 except ImportError:
     AIOHTTP_AVAILABLE = False
 
-skip_if_no_aiohttp = pytest.mark.skipif(
-    not AIOHTTP_AVAILABLE,
-    reason="aiohttp is not installed"
-)
+skip_if_no_aiohttp = pytest.mark.skipif(not AIOHTTP_AVAILABLE, reason="aiohttp is not installed")
 
 
 class TestConnectorConfig:
@@ -105,7 +103,7 @@ class TestRESTConnector:
 
         with patch("aiohttp.ClientSession.request") as mock_request:
             mock_request.return_value.__aenter__.return_value = mock_response
-            
+
             await connector.connect()
             result = await connector.fetch(endpoint="/test")
             await connector.disconnect()
@@ -139,6 +137,7 @@ class TestRESTConnector:
         mock_response_success.raise_for_status = MagicMock()
 
         call_count = 0
+
         async def mock_request_side_effect(*args, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -148,7 +147,7 @@ class TestRESTConnector:
 
         with patch("aiohttp.ClientSession.request") as mock_request:
             mock_request.return_value.__aenter__.side_effect = mock_request_side_effect
-            
+
             await connector.connect()
             result = await connector.fetch(endpoint="/test")
             await connector.disconnect()
@@ -343,7 +342,7 @@ class TestConnectorMetrics:
             )
 
             await connector.connect()
-            
+
             # Fetch all files
             for _ in range(3):
                 await connector.fetch()
@@ -372,9 +371,9 @@ class TestConnectorMetrics:
 
         with patch("aiohttp.ClientSession.request") as mock_request:
             mock_request.return_value.__aenter__.return_value = mock_response
-            
+
             await connector.connect()
-            
+
             with pytest.raises(Exception):
                 await connector.fetch(endpoint="/test")
 

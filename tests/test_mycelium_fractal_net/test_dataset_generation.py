@@ -213,9 +213,7 @@ class TestGenerateDatasetReproducibleWithFixedSeed:
             assert r1["random_seed"] == r2["random_seed"], "random_seed mismatch"
             assert r1["grid_size"] == r2["grid_size"], "grid_size mismatch"
             assert r1["steps"] == r2["steps"], "steps mismatch"
-            assert r1["V_mean"] == pytest.approx(
-                r2["V_mean"], rel=1e-10
-            ), "V_mean mismatch"
+            assert r1["V_mean"] == pytest.approx(r2["V_mean"], rel=1e-10), "V_mean mismatch"
             assert r1["V_std"] == pytest.approx(r2["V_std"], rel=1e-10), "V_std mismatch"
 
     def test_different_seed_produces_different_results(self) -> None:
@@ -250,12 +248,10 @@ class TestGenerateDatasetReproducibleWithFixedSeed:
         if len(stats1["rows"]) > 0 and len(stats2["rows"]) > 0:
             # Check that configuration parameters differ
             steps_differ = any(
-                r1["steps"] != r2["steps"]
-                for r1, r2 in zip(stats1["rows"], stats2["rows"])
+                r1["steps"] != r2["steps"] for r1, r2 in zip(stats1["rows"], stats2["rows"])
             )
             alpha_differ = any(
-                r1["alpha"] != r2["alpha"]
-                for r1, r2 in zip(stats1["rows"], stats2["rows"])
+                r1["alpha"] != r2["alpha"] for r1, r2 in zip(stats1["rows"], stats2["rows"])
             )
             assert steps_differ or alpha_differ, "Configs should differ with different seeds"
 

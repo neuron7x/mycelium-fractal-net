@@ -10,11 +10,11 @@ Reference: MFN_MATH_MODEL.md Section 3 (Fractal Growth and Dimension Analysis)
 
 Equations Implemented:
     IFS transformation: [x', y'] = [[a,b],[c,d]] * [x,y] + [e,f]
-    
+
     Contraction requirement: |ad - bc| < 1
-    
+
     Lyapunov exponent: λ = (1/n) * Σ ln|det(J_k)|
-    
+
     Box-counting dimension: D = lim(ε→0) ln(N(ε)) / ln(1/ε)
 
 Parameters (from MFN_MATH_MODEL.md Section 3.5):
@@ -47,24 +47,24 @@ DEFAULT_NUM_SCALES: int = 5
 
 # === Biophysical Parameter Bounds (from MFN_MATH_MODEL.md Section 3.5) ===
 # IFS point count bounds
-NUM_POINTS_MIN: int = 1000     # Minimum for meaningful fractal structure
-NUM_POINTS_MAX: int = 100000   # Upper limit for computational feasibility
+NUM_POINTS_MIN: int = 1000  # Minimum for meaningful fractal structure
+NUM_POINTS_MAX: int = 100000  # Upper limit for computational feasibility
 
 # Number of transforms bounds
-NUM_TRANSFORMS_MIN: int = 2    # Minimum for interesting patterns
-NUM_TRANSFORMS_MAX: int = 8    # Upper limit for complexity
+NUM_TRANSFORMS_MIN: int = 2  # Minimum for interesting patterns
+NUM_TRANSFORMS_MAX: int = 8  # Upper limit for complexity
 
 # Scale factor bounds (contraction requirement)
-SCALE_MIN_BOUND: float = 0.0   # Must be > 0 (exclusive)
-SCALE_MAX_BOUND: float = 1.0   # Must be < 1 for contraction (exclusive)
+SCALE_MIN_BOUND: float = 0.0  # Must be > 0 (exclusive)
+SCALE_MAX_BOUND: float = 1.0  # Must be < 1 for contraction (exclusive)
 
 # Translation bounds
 TRANSLATION_RANGE_MAX: float = 2.0  # e, f ∈ [-2, 2] per MFN_MATH_MODEL.md
 
 # Box-counting bounds
-MIN_BOX_SIZE_BOUND: int = 1    # Minimum sensible box size
-NUM_SCALES_MIN: int = 3        # Minimum for reliable regression
-NUM_SCALES_MAX: int = 10       # Upper limit for log-regression points
+MIN_BOX_SIZE_BOUND: int = 1  # Minimum sensible box size
+NUM_SCALES_MIN: int = 3  # Minimum for reliable regression
+NUM_SCALES_MAX: int = 10  # Upper limit for log-regression points
 
 # === Expected ranges (from MFN_MATH_MODEL.md) ===
 # Lyapunov should be negative for stable (contractive) IFS
@@ -265,7 +265,7 @@ class FractalGrowthEngine:
     >>> engine = FractalGrowthEngine(config)
     >>> points, lyap = engine.generate_ifs()
     >>> print(f"Lyapunov = {lyap:.3f}")  # Expected: ~-2.1 (stable)
-    
+
     >>> # Estimate fractal dimension from binary field
     >>> binary = np.random.random((64, 64)) > 0.5
     >>> dim = engine.estimate_dimension(binary)
@@ -339,9 +339,7 @@ class FractalGrowthEngine:
         self.reset()
 
         n_points = self.config.num_points if num_points is None else num_points
-        n_transforms = (
-            self.config.num_transforms if num_transforms is None else num_transforms
-        )
+        n_transforms = self.config.num_transforms if num_transforms is None else num_transforms
 
         if not (NUM_POINTS_MIN <= n_points <= NUM_POINTS_MAX):
             raise ValueOutOfRangeError(
@@ -367,9 +365,7 @@ class FractalGrowthEngine:
             )
 
         # Generate random contractive affine transformations
-        scales = self._rng.uniform(
-            self.config.scale_min, self.config.scale_max, size=n_transforms
-        )
+        scales = self._rng.uniform(self.config.scale_min, self.config.scale_max, size=n_transforms)
         angles = self._rng.uniform(0, 2 * np.pi, size=n_transforms)
         translations = self._rng.uniform(
             -self.config.translation_range,
@@ -503,9 +499,7 @@ class FractalGrowthEngine:
         if binary_field.ndim != 2:
             raise ValueError(f"binary_field must be 2D, got {binary_field.ndim}D")
         if binary_field.shape[0] != binary_field.shape[1]:
-            raise ValueError(
-                f"binary_field must be square, got {binary_field.shape}"
-            )
+            raise ValueError(f"binary_field must be square, got {binary_field.shape}")
 
         n = binary_field.shape[0]
 

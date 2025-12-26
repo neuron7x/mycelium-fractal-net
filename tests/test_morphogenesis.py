@@ -182,9 +182,7 @@ class TestFieldConnectivity:
         rng = np.random.default_rng(42)
 
         # Initial mean is around -70 mV
-        field, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         mean_mv = field.mean() * 1000.0
         # Should stay roughly around -70 mV (within 20 mV)
@@ -194,9 +192,7 @@ class TestFieldConnectivity:
         """Test that field has positive spatial correlation (continuity)."""
         rng = np.random.default_rng(42)
 
-        field, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         # Check correlation between adjacent cells
         horizontal_corr = np.corrcoef(field[:, :-1].flatten(), field[:, 1:].flatten())[0, 1]
@@ -210,17 +206,17 @@ class TestFieldConnectivity:
         """Test that periodic boundary conditions don't create obvious artifacts."""
         rng = np.random.default_rng(42)
 
-        field, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         # Compare edge values with interior - should be similar magnitude
-        edge_mean = np.mean([
-            np.abs(field[0, :]).mean(),
-            np.abs(field[-1, :]).mean(),
-            np.abs(field[:, 0]).mean(),
-            np.abs(field[:, -1]).mean(),
-        ])
+        edge_mean = np.mean(
+            [
+                np.abs(field[0, :]).mean(),
+                np.abs(field[-1, :]).mean(),
+                np.abs(field[:, 0]).mean(),
+                np.abs(field[:, -1]).mean(),
+            ]
+        )
         interior_mean = np.abs(field[10:-10, 10:-10]).mean()
 
         # Edge and interior should have similar means (within factor of 3)
@@ -375,15 +371,11 @@ class TestMorphogenesisValidation:
         rng = np.random.default_rng(42)
 
         # Run simulation
-        field1, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field1, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         # Run longer
         rng2 = np.random.default_rng(42)
-        field2, _ = simulate_mycelium_field(
-            rng2, grid_size=64, steps=200, turing_enabled=True
-        )
+        field2, _ = simulate_mycelium_field(rng2, grid_size=64, steps=200, turing_enabled=True)
 
         # Fields should be different but stats similar (quasi-steady state)
         std1 = field1.std()

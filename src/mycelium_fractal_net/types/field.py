@@ -209,9 +209,7 @@ class FieldHistory:
         if self.data.shape[0] < 1:
             raise ValueError(f"time steps must be >= 1, got {self.data.shape[0]}")
         if self.data.shape[1] < 2 or self.data.shape[2] < 2:
-            raise ValueError(
-                f"spatial dimensions must be >= 2, got {self.data.shape[1:]}"
-            )
+            raise ValueError(f"spatial dimensions must be >= 2, got {self.data.shape[1:]}")
         if not np.isfinite(self.data).all():
             raise ValueError("data contains NaN or Inf values")
 

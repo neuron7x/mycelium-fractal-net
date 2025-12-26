@@ -173,9 +173,7 @@ class TestNernstPotential:
         temp=st.floats(min_value=273.0, max_value=323.0),
     )
     @settings(max_examples=50)
-    def test_nernst_equation_properties(
-        self, ion_in: float, ion_out: float, temp: float
-    ) -> None:
+    def test_nernst_equation_properties(self, ion_in: float, ion_out: float, temp: float) -> None:
         """Property-based test: Nernst equation mathematical properties.
 
         Properties tested:
@@ -405,9 +403,7 @@ class TestFractalDimension:
         """Test fractal dimension from simulated field converges to expected range."""
         rng = np.random.default_rng(42)
 
-        field, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         # Use threshold near mean to get reasonable number of active cells
         # Field is initialized around -70mV, so use -70mV as threshold

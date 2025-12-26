@@ -338,9 +338,7 @@ class AESGCMCipher:
         Raises:
             SymmetricEncryptionError: If decryption fails.
         """
-        return decrypt_aes_gcm(
-            ciphertext, self.key, associated_data, return_bytes=return_bytes
-        )
+        return decrypt_aes_gcm(ciphertext, self.key, associated_data, return_bytes=return_bytes)
 
     def encrypt_with_aad(
         self,

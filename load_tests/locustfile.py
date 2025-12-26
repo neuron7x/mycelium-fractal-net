@@ -169,9 +169,7 @@ class MFNAPIUser(HttpUser):
         num_clients = random.randint(3, 10)
         gradient_dim = random.randint(3, 20)
 
-        gradients = [
-            [random.gauss(0, 1) for _ in range(gradient_dim)] for _ in range(num_clients)
-        ]
+        gradients = [[random.gauss(0, 1) for _ in range(gradient_dim)] for _ in range(num_clients)]
 
         payload = {
             "gradients": gradients,
@@ -318,10 +316,7 @@ class MFNStressUser(HttpUser):
         num_clients = 50
         gradient_dim = 100
 
-        gradients = [
-            [random.gauss(0, 1) for _ in range(gradient_dim)]
-            for _ in range(num_clients)
-        ]
+        gradients = [[random.gauss(0, 1) for _ in range(gradient_dim)] for _ in range(num_clients)]
 
         payload = {
             "gradients": gradients,

@@ -275,9 +275,7 @@ class TestModelConfigurations:
         """Test training works without sparse attention."""
         torch.manual_seed(42)
 
-        model = MyceliumFractalNet(
-            input_dim=4, hidden_dim=32, use_sparse_attention=False
-        )
+        model = MyceliumFractalNet(input_dim=4, hidden_dim=32, use_sparse_attention=False)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
@@ -350,9 +348,7 @@ class TestOptimizers:
         "optimizer_class",
         [torch.optim.SGD, torch.optim.Adam, torch.optim.AdamW, torch.optim.RMSprop],
     )
-    def test_various_optimizers(
-        self, optimizer_class: type[torch.optim.Optimizer]
-    ) -> None:
+    def test_various_optimizers(self, optimizer_class: type[torch.optim.Optimizer]) -> None:
         """Test training works with various optimizers."""
         torch.manual_seed(42)
 

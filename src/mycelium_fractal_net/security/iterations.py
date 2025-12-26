@@ -116,21 +116,13 @@ class SecurityIterationConfig:
         if self.base < 10_000:
             raise ValueError(f"Base iterations must be >= 10000, got {self.base}")
         if self.enhanced < self.base:
-            raise ValueError(
-                f"Enhanced iterations ({self.enhanced}) must be >= base ({self.base})"
-            )
+            raise ValueError(f"Enhanced iterations ({self.enhanced}) must be >= base ({self.base})")
         if self.high < self.enhanced:
-            raise ValueError(
-                f"High iterations ({self.high}) must be >= enhanced ({self.enhanced})"
-            )
+            raise ValueError(f"High iterations ({self.high}) must be >= enhanced ({self.enhanced})")
         if self.maximum < self.high:
-            raise ValueError(
-                f"Maximum iterations ({self.maximum}) must be >= high ({self.high})"
-            )
+            raise ValueError(f"Maximum iterations ({self.maximum}) must be >= high ({self.high})")
         if self.adaptive_min < self.base:
-            raise ValueError(
-                f"Adaptive min ({self.adaptive_min}) must be >= base ({self.base})"
-            )
+            raise ValueError(f"Adaptive min ({self.adaptive_min}) must be >= base ({self.base})")
         if self.adaptive_max < self.adaptive_min:
             raise ValueError(
                 f"Adaptive max ({self.adaptive_max}) must be >= adaptive min ({self.adaptive_min})"

@@ -243,9 +243,7 @@ class TestTemporalFeatures:
         # Four frames → three diffs; with jitter this should not meet the threshold window
         rng = np.random.default_rng(7)
         base = rng.normal(-0.070, 0.001, size=(8, 8))
-        history = np.stack(
-            [base + rng.normal(0, 0.0005, size=(8, 8)) * i for i in range(window)]
-        )
+        history = np.stack([base + rng.normal(0, 0.0005, size=(8, 8)) * i for i in range(window)])
 
         config = FeatureConfig(stability_window=window, stability_threshold_mv=0.0001)
 
@@ -262,9 +260,7 @@ class TestStructuralFeatures:
         field = np.full((32, 32), -0.070)  # All below threshold
         field[10:20, 10:20] = -0.040  # One active region
         config = FeatureConfig(threshold_low_mv=-50.0)
-        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
-            field, config
-        )
+        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(field, config)
         assert n_low == 1
         assert max_cs == 100  # 10x10 region
 
@@ -274,18 +270,14 @@ class TestStructuralFeatures:
         field[5:10, 5:10] = -0.040  # Cluster 1
         field[20:25, 20:25] = -0.040  # Cluster 2
         config = FeatureConfig(threshold_low_mv=-50.0)
-        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
-            field, config
-        )
+        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(field, config)
         assert n_low == 2
 
     def test_empty_field(self) -> None:
         """Field below all thresholds should have 0 clusters."""
         field = np.full((32, 32), -0.090)  # All below -60mV
         config = FeatureConfig()
-        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
-            field, config
-        )
+        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(field, config)
         assert n_low == 0
         assert n_med == 0
         assert n_high == 0

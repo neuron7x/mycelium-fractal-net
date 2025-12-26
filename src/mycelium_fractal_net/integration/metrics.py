@@ -11,7 +11,7 @@ Metrics Exposed:
 
 Usage:
     from mycelium_fractal_net.integration.metrics import MetricsMiddleware, metrics_endpoint
-    
+
     app.add_middleware(MetricsMiddleware)
     app.add_route("/metrics", metrics_endpoint)
 
@@ -82,7 +82,7 @@ def _create_metrics() -> None:
             # Counter stores name without "_total" suffix internally
             metric_name = "mfn_http_requests"
             for collector in REGISTRY._names_to_collectors.values():
-                if hasattr(collector, '_name') and collector._name == metric_name:
+                if hasattr(collector, "_name") and collector._name == metric_name:
                     REQUEST_COUNTER = collector
                     break
 
@@ -97,7 +97,7 @@ def _create_metrics() -> None:
             # Already registered
             metric_name = "mfn_http_request_duration_seconds"
             for collector in REGISTRY._names_to_collectors.values():
-                if hasattr(collector, '_name') and collector._name == metric_name:
+                if hasattr(collector, "_name") and collector._name == metric_name:
                     REQUEST_LATENCY = collector
                     break
 
@@ -111,7 +111,7 @@ def _create_metrics() -> None:
             # Already registered
             metric_name = "mfn_http_requests_in_progress"
             for collector in REGISTRY._names_to_collectors.values():
-                if hasattr(collector, '_name') and collector._name == metric_name:
+                if hasattr(collector, "_name") and collector._name == metric_name:
                     REQUESTS_IN_PROGRESS = collector
                     break
     # When prometheus_client is not available, metrics stay as None
@@ -227,9 +227,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
             # Increment request counter
             if REQUEST_COUNTER is not None:
-                REQUEST_COUNTER.labels(
-                    endpoint=endpoint, method=method, status=status_code
-                ).inc()
+                REQUEST_COUNTER.labels(endpoint=endpoint, method=method, status=status_code).inc()
 
         return response
 

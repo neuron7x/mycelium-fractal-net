@@ -247,9 +247,7 @@ class AuditLogger:
             if env in ("prod", "production", "staging"):
                 formatter = logging.Formatter("%(message)s")
             else:
-                formatter = logging.Formatter(
-                    "%(asctime)s AUDIT %(levelname)s: %(message)s"
-                )
+                formatter = logging.Formatter("%(asctime)s AUDIT %(levelname)s: %(message)s")
 
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)

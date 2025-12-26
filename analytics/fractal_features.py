@@ -648,9 +648,7 @@ def compute_features(
         # History (T, N, N)
         history = field_snapshots
         if history.shape[0] == 0:
-            raise ValueError(
-                "field_snapshots history must contain at least one snapshot"
-            )
+            raise ValueError("field_snapshots history must contain at least one snapshot")
         field = history[-1]  # Use final state for static features
     else:
         raise ValueError(
@@ -665,9 +663,7 @@ def compute_features(
     D_box, D_r2 = compute_fractal_features(field, config)
     V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(field)
     dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
-    f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
-        field, config
-    )
+    f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(field, config)
 
     return FeatureVector(
         D_box=D_box,

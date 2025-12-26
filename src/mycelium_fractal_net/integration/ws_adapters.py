@@ -79,9 +79,7 @@ async def stream_features_adapter(
 
                 # Filter features if specified
                 if params.features:
-                    features = {
-                        k: v for k, v in features.items() if k in params.features
-                    }
+                    features = {k: v for k, v in features.items() if k in params.features}
 
                 # Create update message
                 update = WSFeatureUpdate(
