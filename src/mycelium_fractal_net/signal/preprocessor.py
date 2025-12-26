@@ -13,6 +13,8 @@ from .denoise_1d import OptimizedFractalDenoise1D, _canonicalize_1d
 class _PresetConfig(TypedDict):
     mode: Literal["multiscale", "fractal"]
     cfde_mode: Literal["single", "multiscale"]
+    multiscale_range_sizes: tuple[int, ...] | None
+    multiscale_aggregate: Literal["best", "weighted"]
     base_window: int
     trend_scaling: float
     detail_preservation: float
@@ -42,6 +44,8 @@ class Fractal1DPreprocessor(nn.Module):
         "generic": {
             "mode": "multiscale",
             "cfde_mode": "single",
+            "multiscale_range_sizes": None,
+            "multiscale_aggregate": "best",
             "base_window": 5,
             "trend_scaling": 0.55,
             "detail_preservation": 0.88,
@@ -63,6 +67,8 @@ class Fractal1DPreprocessor(nn.Module):
         "markets": {
             "mode": "fractal",
             "cfde_mode": "single",
+            "multiscale_range_sizes": None,
+            "multiscale_aggregate": "best",
             "base_window": 7,
             "trend_scaling": 0.6,
             "detail_preservation": 0.85,
@@ -84,6 +90,8 @@ class Fractal1DPreprocessor(nn.Module):
         "ecg": {
             "mode": "fractal",
             "cfde_mode": "single",
+            "multiscale_range_sizes": None,
+            "multiscale_aggregate": "best",
             "base_window": 5,
             "trend_scaling": 0.5,
             "detail_preservation": 0.9,
@@ -109,6 +117,8 @@ class Fractal1DPreprocessor(nn.Module):
         preset: Literal["generic", "markets", "ecg"] = "generic",
         *,
         cfde_mode: Literal["single", "multiscale"] | None = None,
+        scales: tuple[int, ...] | None = None,
+        aggregate: Literal["best", "weighted"] | None = None,
     ) -> None:
         super().__init__()
         if preset not in self._PRESETS:
@@ -130,6 +140,8 @@ class Fractal1DPreprocessor(nn.Module):
             iterations=cfg["iterations"],
             mode=cfg["mode"],
             cfde_mode=cfde_mode or cfg["cfde_mode"],
+            multiscale_range_sizes=scales or cfg["multiscale_range_sizes"],
+            multiscale_aggregate=aggregate or cfg["multiscale_aggregate"],
             range_size=cfg["range_size"],
             domain_scale=cfg["domain_scale"],
             population_size=cfg["population_size"],
