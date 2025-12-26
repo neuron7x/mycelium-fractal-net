@@ -12,6 +12,8 @@ Reference: docs/FEATURE_SCHEMA.md
 
 import numpy as np
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from analytics import (
     FeatureConfig,
@@ -317,6 +319,19 @@ class TestClusterCounting:
         n, sizes = _count_clusters_4conn(binary)
         assert n == 1
         assert sizes == [5]
+
+
+@settings(max_examples=5, deadline=800)
+@given(
+    side=st.integers(min_value=8, max_value=16),
+    elements=st.floats(-0.2, 0.2, allow_nan=False, allow_infinity=False),
+)
+def test_fractal_features_property_finite(side: int, elements: float) -> None:
+    """Random bounded square fields should yield finite feature vectors."""
+    field = np.full((side, side), elements, dtype=np.float64)
+    config = FeatureConfig()
+    result = compute_fractal_features(field, config)
+    assert np.isfinite(np.asarray(result)).all()
 
 
 class TestComputeFeatures:
