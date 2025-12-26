@@ -50,6 +50,10 @@ def _normalized_kernel(window: int) -> torch.Tensor:
 
 
 ScaleMode = Literal["single", "multiscale"]
+DEFAULT_MULTISCALE_RANGES: tuple[int, ...] = (4, 8, 16)
+MAX_MULTISCALE_BRANCHES = 3
+DEBUG_MAGNITUDE_MULTIPLIER = 5.0
+DEBUG_MIN_BOUND = 1.0
 
 
 class OptimizedFractalDenoise1D(nn.Module):
@@ -128,9 +132,11 @@ class OptimizedFractalDenoise1D(nn.Module):
         self.acceptor_iterations = max(requested_acceptor_iters, 7)
         self._eps = torch.finfo(torch.float64).eps
         if multiscale_range_sizes is None:
-            multiscale_range_sizes = (4, 8, 16)
+            multiscale_range_sizes = DEFAULT_MULTISCALE_RANGES
         filtered_ranges = tuple(r for r in multiscale_range_sizes if r > 1)
         self.multiscale_range_sizes = filtered_ranges or (self.range_size,)
+        base_candidates = self.multiscale_range_sizes + (self.range_size,)
+        self._base_multiscale_ranges = tuple(dict.fromkeys(base_candidates))
         self.debug_checks = debug_checks
         self.register_buffer("detail_kernel", _normalized_kernel(base_window))
         self.register_buffer("trend_kernel", _normalized_kernel(base_window * 2 + 1))
@@ -296,14 +302,16 @@ class OptimizedFractalDenoise1D(nn.Module):
 
     def _select_multiscale_ranges(self, length: int) -> list[int]:
         ranges: list[int] = []
-        for candidate in self.multiscale_range_sizes + (self.range_size,):
-            if candidate <= 1 or candidate in ranges:
+        seen: set[int] = set()
+        for candidate in self._base_multiscale_ranges:
+            if candidate <= 1 or candidate in seen:
                 continue
             # Avoid pathological padding on extremely short signals
             if candidate > length * 2:
                 continue
+            seen.add(candidate)
             ranges.append(candidate)
-            if len(ranges) >= 3:
+            if len(ranges) >= MAX_MULTISCALE_BRANCHES:
                 break
         if not ranges:
             ranges.append(max(2, self.range_size))
@@ -371,9 +379,19 @@ class OptimizedFractalDenoise1D(nn.Module):
                 outputs.append(result)
                 stats_list.append(self._empty_stats(range_size=float(scale)))
 
+        if not outputs:
+            fallback_stats = self._empty_stats(
+                inhibition_rate=float(inhibit_mask.float().mean().item()),
+                effective_iterations=0.0,
+                range_size=float(self.range_size),
+                selected_range_size=float(self.range_size),
+            )
+            return input_fp64, fallback_stats
+
         if stats_list:
-            mse_values = [s["reconstruction_mse"] for s in stats_list]
-            best_idx = int(torch.tensor(mse_values).argmin().item())
+            best_idx = min(
+                range(len(stats_list)), key=lambda idx: stats_list[idx]["reconstruction_mse"]
+            )
         else:
             best_idx = 0
 
@@ -383,13 +401,14 @@ class OptimizedFractalDenoise1D(nn.Module):
 
         base_stats = stats_list[best_idx] if stats_list else self._empty_stats()
         avg_inhibition = sum(s["inhibition_rate"] for s in stats_list) / max(len(stats_list), 1)
+        selected_range = scales[best_idx] if scales and best_idx < len(scales) else self.range_size
         stats = {
             "inhibition_rate": max(base_stats.get("inhibition_rate", 0.0), avg_inhibition),
             "reconstruction_mse": base_stats.get("reconstruction_mse", 0.0),
             "baseline_mse": base_stats.get("baseline_mse", 0.0),
             "effective_iterations": float(len(scales)),
-            "range_size": base_stats.get("range_size", float(scales[best_idx] if scales else 0.0)),
-            "selected_range_size": float(scales[best_idx] if scales else 0.0),
+            "range_size": base_stats.get("range_size", float(selected_range)),
+            "selected_range_size": float(selected_range),
         }
         return current, stats
 
@@ -397,7 +416,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         if not torch.isfinite(output).all():
             raise AssertionError("CFDE produced non-finite values")
         ref_max = float(reference.abs().max().item())
-        bound = max(ref_max * 5.0, 1.0)
+        bound = max(ref_max * DEBUG_MAGNITUDE_MULTIPLIER, DEBUG_MIN_BOUND)
         if float(output.abs().max().item()) > bound:
             raise AssertionError(
                 f"CFDE output magnitude exceeded bound ({bound:.3f}); "

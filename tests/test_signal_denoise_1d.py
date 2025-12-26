@@ -19,6 +19,7 @@ MODE_CONFIGS = [
 
 SPIKE_IMPROVEMENT_RATIO = 0.98  # require at least modest improvement on spikes
 RANDOM_WALK_DRIFT_RATIO = 0.10  # allow at most 10% relative change on random walk
+OSCILLATION_TOLERANCE = 1.05
 
 
 def _mse(a: np.ndarray, b: np.ndarray) -> float:
@@ -312,8 +313,8 @@ def test_fractal_bounded_oscillation_across_iterations() -> None:
     def diff_energy(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return torch.mean((a - b) ** 2)
 
-    assert diff_energy(iter2, iter1) <= diff_energy(iter1, data) * 1.05
-    assert diff_energy(iter3, iter2) <= diff_energy(iter2, iter1) * 1.05
+    assert diff_energy(iter2, iter1) <= diff_energy(iter1, data) * OSCILLATION_TOLERANCE
+    assert diff_energy(iter3, iter2) <= diff_energy(iter2, iter1) * OSCILLATION_TOLERANCE
 
 
 def test_preprocessor_can_return_stats() -> None:

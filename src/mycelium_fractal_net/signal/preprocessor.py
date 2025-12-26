@@ -171,10 +171,6 @@ class Fractal1DPreprocessor(nn.Module):
 
         output = reshape(processed).to(original_dtype)
         if return_stats:
-            return output, stats or {
-                "inhibition_rate": 0.0,
-                "reconstruction_mse": 0.0,
-                "baseline_mse": 0.0,
-                "effective_iterations": 0.0,
-            }
+            default_stats = self.denoiser._empty_stats()
+            return output, stats or default_stats
         return output
