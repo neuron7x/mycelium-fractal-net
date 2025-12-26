@@ -135,7 +135,7 @@ class TestSimulationConfig:
 
     def test_validation_grid_size(self) -> None:
         """Test grid_size validation."""
-        with pytest.raises(ValueError, match="grid_size must be at least 2"):
+        with pytest.raises(ValueError, match="grid_size must be in \\[4, 512\\]"):
             SimulationConfig(grid_size=1)
 
     def test_validation_steps(self) -> None:

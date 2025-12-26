@@ -62,10 +62,8 @@ class TestSimulationConfigValidation:
         Note: GRID_SIZE_MIN is 4 from config module, but SimulationConfig allows grid_size=2.
         The validate_simulation_config function applies stricter validation.
         """
-        # SimulationConfig accepts grid_size=3, but validate_simulation_config rejects it
-        config = SimulationConfig(grid_size=3, steps=32, alpha=0.18)
-        with pytest.raises(ValueError, match="grid_size"):
-            validate_simulation_config(config)
+        with pytest.raises(ValueError, match="grid_size must be in \\[4, 512\\]"):
+            SimulationConfig(grid_size=3, steps=32, alpha=0.18)
 
     def test_grid_size_above_maximum(self) -> None:
         """Test that grid_size above maximum raises error."""
