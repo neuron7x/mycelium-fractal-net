@@ -67,6 +67,10 @@ class OptimizedFractalDenoise1D(nn.Module):
         s_max: float = 1.0,
         overlap: bool = True,
         smooth_kernel: int = 5,
+        do_no_harm: bool = True,
+        harm_ratio: float = 0.95,
+        ridge_lambda: float = 1e-4,
+        max_population_ci: int = 256,
     ) -> None:
         super().__init__()
         self.trend_scaling = trend_scaling
@@ -81,12 +85,18 @@ class OptimizedFractalDenoise1D(nn.Module):
         if population_size < 1:
             raise ValueError("population_size must be a positive integer")
         self.population_size = population_size
+        if max_population_ci < 1:
+            raise ValueError("max_population_ci must be a positive integer")
+        self.max_population_ci = max_population_ci
         if smooth_kernel < 3 or smooth_kernel % 2 == 0:
             raise ValueError("smooth_kernel must be an odd integer >= 3")
         self.s_threshold = s_threshold
         self.s_max = s_max
         self.overlap = overlap
         self.smooth_kernel = smooth_kernel
+        self.do_no_harm = do_no_harm
+        self.harm_ratio = harm_ratio
+        self.ridge_lambda = ridge_lambda
         self.stride = max(1, base_window // 2)
         self.r = base_window
         self._eps = 1e-6
@@ -96,7 +106,8 @@ class OptimizedFractalDenoise1D(nn.Module):
 
     def _smooth(self, x: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
         pad = kernel.shape[-1] // 2
-        padded = F.pad(x, (pad, pad), mode="reflect")
+        pad_mode = "reflect" if x.shape[-1] > pad else "replicate"
+        padded = F.pad(x, (pad, pad), mode=pad_mode)
         channels = padded.shape[1]
         weight = kernel.expand(channels, -1, -1)
         return F.conv1d(padded, weight, groups=channels)
@@ -188,6 +199,11 @@ class OptimizedFractalDenoise1D(nn.Module):
         if self.domain_scale <= 0:
             raise ValueError("domain_scale must be positive")
         d = r * self.domain_scale
+        if d % r != 0:
+            raise ValueError(
+                f"domain length (domain_scale * range_size) must be divisible by range_size; "
+                f"range_size={r}, domain_scale={self.domain_scale}"
+            )
         stride = r // 2 if self.overlap else r
         if stride <= 0:
             raise ValueError(
@@ -247,7 +263,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         if num_domains == 0:
             return reshape(x_padded[:, :, :L]).to(original_dtype)
 
-        candidate_pool = min(num_domains, self.population_size * 2)
+        candidate_pool = min(num_domains, min(self.population_size * 2, self.max_population_ci))
         top_k = candidate_pool
         pop_size = min(self.population_size, top_k)
         if top_k == 0 or pop_size == 0:
@@ -273,7 +289,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         range_mean = baseline_mean.unsqueeze(3)
         domain_mean = candidate_domains.mean(dim=-1, keepdim=True)
         cov = ((ranges_expanded - range_mean) * (candidate_domains - domain_mean)).mean(dim=-1)
-        var_d = candidate_domains.var(dim=-1, unbiased=False)
+        var_d = candidate_domains.var(dim=-1, unbiased=False) + self.ridge_lambda
 
         s = cov / (var_d + self._eps)
         s = s.clamp(min=-self.s_max, max=self.s_max)
@@ -290,7 +306,10 @@ class OptimizedFractalDenoise1D(nn.Module):
             best_idx.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, -1, -1, r),
         ).squeeze(3)
 
-        apply_fractal = mse_best < baseline_mse * 0.95
+        if self.do_no_harm:
+            apply_fractal = mse_best < baseline_mse * self.harm_ratio
+        else:
+            apply_fractal = torch.ones_like(mse_best, dtype=torch.bool)
         blended = 0.5 * (recon_best + ranges)
         selected = torch.where(apply_fractal.unsqueeze(-1), blended, ranges)
 

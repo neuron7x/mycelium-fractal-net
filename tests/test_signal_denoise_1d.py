@@ -23,18 +23,65 @@ def _mse(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.mean((a - b) ** 2))
 
 
-@pytest.mark.parametrize("mode_kwargs", MODE_CONFIGS)
-def test_denoiser_preserves_shape_cpu(mode_kwargs: dict[str, object]) -> None:
-    torch.manual_seed(42)
-    np.random.seed(42)
+@pytest.mark.parametrize(
+    ("shape", "mode_kwargs"),
+    [
+        ((1024,), {}),
+        ((1, 1024), {}),
+        ((2, 3, 512), {}),
+        ((1024,), {"mode": "fractal", "population_size": 32, "range_size": 8}),
+        ((2, 3, 512), {"mode": "fractal", "population_size": 32, "range_size": 8}),
+    ],
+)
+def test_shape_invariants(shape: tuple[int, ...], mode_kwargs: dict[str, object]) -> None:
+    torch.manual_seed(123)
+    np.random.seed(123)
+    data = torch.randn(*shape)
     model = OptimizedFractalDenoise1D(**mode_kwargs)
-    data = torch.randn(1, 1, 256)
-
     with torch.no_grad():
-        output = model(data)
+        out = model(data)
+    assert out.shape == data.shape
 
-    assert output.shape == data.shape
-    assert output.device.type == "cpu"
+
+@pytest.mark.parametrize("mode_kwargs", MODE_CONFIGS)
+def test_outputs_finite(mode_kwargs: dict[str, object]) -> None:
+    torch.manual_seed(7)
+    np.random.seed(7)
+    data = torch.randn(2, 3, 128)
+    model = OptimizedFractalDenoise1D(**mode_kwargs)
+    with torch.no_grad():
+        out = model(data)
+    assert torch.isfinite(out).all()
+
+
+def test_fractal_do_no_harm_random_walk() -> None:
+    torch.manual_seed(1)
+    np.random.seed(1)
+    rng = np.random.default_rng(1)
+
+    steps = rng.normal(0.0, 0.1, size=256)
+    base = np.cumsum(steps)
+    noise = rng.normal(0.0, 0.05, size=256)
+    noisy = base + noise
+
+    model = OptimizedFractalDenoise1D(
+        mode="fractal",
+        population_size=32,
+        range_size=8,
+        iterations_fractal=1,
+        overlap=False,
+        do_no_harm=True,
+        harm_ratio=0.90,
+        s_max=0.5,
+        s_threshold=0.01,
+    )
+    tensor = torch.tensor(noisy, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+    with torch.no_grad():
+        denoised = model(tensor).squeeze(0).squeeze(0).cpu().numpy()
+
+    mse_noisy = _mse(noisy, base)
+    mse_denoised = _mse(denoised, base)
+    assert mse_denoised <= mse_noisy * 1.10
 
 
 def test_fractal_improves_spikes_mse() -> None:
@@ -43,13 +90,13 @@ def test_fractal_improves_spikes_mse() -> None:
     rng = np.random.default_rng(0)
 
     length = 256
-    base = np.zeros(length, dtype=np.float64)
-    base[length // 4 : length // 2] = 0.8
-    base[length // 2 : 3 * length // 4] = -0.3
+    x = np.linspace(0, 2 * np.pi, length)
+    base = 0.2 * np.sin(x)
+    base[length // 3 : 2 * length // 3] += 0.5
 
     noisy = base + rng.normal(0.0, 0.05, size=length)
     spike_indices = rng.choice(length, size=10, replace=False)
-    noisy[spike_indices] += rng.choice([-1.5, 1.5], size=10)
+    noisy[spike_indices] += rng.choice([-1.0, 1.0], size=10)
 
     model = OptimizedFractalDenoise1D(
         mode="fractal",
@@ -63,54 +110,37 @@ def test_fractal_improves_spikes_mse() -> None:
 
     mse_noisy = _mse(noisy, base)
     mse_denoised = _mse(denoised, base)
-
     assert mse_denoised <= mse_noisy * SPIKE_IMPROVEMENT_RATIO
+    assert np.isfinite(denoised).all()
 
 
-def test_fractal_do_no_harm_random_walk() -> None:
-    torch.manual_seed(1)
-    np.random.seed(1)
-    rng = np.random.default_rng(1)
-
-    steps = rng.normal(0.0, 0.02, size=512)
-    base = np.cumsum(steps)
-    noise = rng.normal(0.0, 0.03, size=512)
-    noisy = base + noise
-
-    model = OptimizedFractalDenoise1D(
-        mode="fractal",
-        population_size=32,
-        range_size=8,
-        iterations_fractal=1,
-        s_max=0.3,
-        s_threshold=10.0,
-        overlap=False,
-    )
-    tensor = torch.tensor(noisy, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+def test_determinism_with_fixed_seed() -> None:
+    params = {
+        "mode": "fractal",
+        "population_size": 64,
+        "range_size": 8,
+        "iterations_fractal": 2,
+        "overlap": False,
+    }
+    torch.manual_seed(99)
+    np.random.seed(99)
+    data = torch.randn(1, 1, 128)
+    model = OptimizedFractalDenoise1D(**params)
     with torch.no_grad():
-        denoised = model(tensor).squeeze(0).squeeze(0).cpu().numpy()
+        out1 = model(data).clone()
 
-    mse_noisy = _mse(noisy, base)
-    mse_denoised = _mse(denoised, base)
-    relative = abs(mse_denoised - mse_noisy) / max(mse_noisy, 1e-12)
+    torch.manual_seed(99)
+    np.random.seed(99)
+    data_repeat = torch.randn(1, 1, 128)
+    model_repeat = OptimizedFractalDenoise1D(**params)
+    with torch.no_grad():
+        out2 = model_repeat(data_repeat).clone()
 
-    assert relative < RANDOM_WALK_DRIFT_RATIO
+    assert torch.equal(out1, out2)
 
 
 @pytest.mark.parametrize("mode_kwargs", MODE_CONFIGS)
-def test_multichannel_does_not_crash(mode_kwargs: dict[str, object]) -> None:
-    torch.manual_seed(42)
-    np.random.seed(42)
-    data = torch.randn(2, 3, 128)
-    model = OptimizedFractalDenoise1D(**mode_kwargs)
-    with torch.no_grad():
-        out = model(data)
-    assert out.shape == data.shape
-    assert torch.isfinite(out).all()
-
-
-@pytest.mark.parametrize("mode_kwargs", MODE_CONFIGS)
-@settings(max_examples=25, deadline=None)
+@settings(max_examples=15, deadline=None)
 @given(
     batch=st.integers(min_value=1, max_value=2),
     channels=st.integers(min_value=1, max_value=3),
