@@ -171,6 +171,22 @@ class OptimizedFractalDenoise1D(nn.Module):
 
         return reshape(current).to(original_dtype)
 
+    def _fractal_params(self) -> tuple[int, int, int, int]:
+        r = self.range_size
+        if r <= 0:
+            raise ValueError("range_size must be positive")
+        d = r * self.domain_scale
+        if d <= 0 or d % r != 0:
+            raise ValueError(
+                f"domain length (domain_scale * range_size) must be divisible by range_size; "
+                f"range_size={r}, domain_scale={self.domain_scale}"
+            )
+        stride = r // 2 if self.overlap else r
+        if stride <= 0:
+            raise ValueError("Invalid stride derived from range_size")
+        factor = d // r
+        return r, d, stride, factor
+
     def _denoise_fractal(self, x: torch.Tensor, *, canonical: bool = False) -> torch.Tensor:
         reshape: Callable[[torch.Tensor], torch.Tensor]
         if canonical:
@@ -186,16 +202,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         B, C, L = x_working.shape
         device = x_working.device
 
-        r = self.range_size
-        d = r * self.domain_scale
-        if r <= 0:
-            raise ValueError("range_size must be positive")
-        if d <= 0 or d % r != 0:
-            raise ValueError("domain_scale must produce domain length divisible by range_size")
-        factor = d // r
-        stride = r // 2 if self.overlap else r
-        if stride <= 0:
-            raise ValueError("Invalid stride derived from range_size")
+        r, d, stride, factor = self._fractal_params()
 
         pad_base = max(L, d, r)
         pad_align = (stride - ((pad_base - r) % stride)) % stride
@@ -244,11 +251,8 @@ class OptimizedFractalDenoise1D(nn.Module):
         )
 
         top_domains_expanded = top_domains.unsqueeze(2).expand(-1, -1, N_ranges, -1, -1)
-        sample_idx = torch.randint(
-            top_k,
-            (B, C, N_ranges, pop_size),
-            device=device,
-        )
+        base_idx = torch.arange(N_ranges * pop_size, device=device).view(1, 1, N_ranges, pop_size)
+        sample_idx = torch.remainder(base_idx, top_k).expand(B, C, -1, -1)
         candidate_domains = torch.gather(
             top_domains_expanded,
             3,

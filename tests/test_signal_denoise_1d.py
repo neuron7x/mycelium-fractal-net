@@ -15,6 +15,9 @@ MODE_CONFIGS = [
     {"mode": "fractal", "population_size": 64, "range_size": 8, "iterations_fractal": 1},
 ]
 
+SPIKE_IMPROVEMENT_RATIO = 0.98  # require at least modest improvement on spikes
+RANDOM_WALK_DRIFT_RATIO = 0.10  # allow at most 10% relative change on random walk
+
 
 def _mse(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.mean((a - b) ** 2))
@@ -61,7 +64,7 @@ def test_fractal_improves_spikes_mse() -> None:
     mse_noisy = _mse(noisy, base)
     mse_denoised = _mse(denoised, base)
 
-    assert mse_denoised < mse_noisy * 0.98
+    assert mse_denoised < mse_noisy * SPIKE_IMPROVEMENT_RATIO
 
 
 def test_fractal_do_no_harm_random_walk() -> None:
@@ -91,7 +94,7 @@ def test_fractal_do_no_harm_random_walk() -> None:
     mse_denoised = _mse(denoised, base)
     relative = abs(mse_denoised - mse_noisy) / max(mse_noisy, 1e-12)
 
-    assert relative < 0.10
+    assert relative < RANDOM_WALK_DRIFT_RATIO
 
 
 @pytest.mark.parametrize("mode_kwargs", MODE_CONFIGS)
