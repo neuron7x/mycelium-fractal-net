@@ -288,16 +288,8 @@ class OptimizedFractalDenoise1D(nn.Module):
         if (x_max - x_min).abs() < eps or (y_max - y_min).abs() < eps:
             return torch.tensor(0.0, device=x.device, dtype=x.dtype)
 
-        x_bins = (
-            ((x_flat - x_min) / (x_max - x_min + eps) * (bins - 1))
-            .long()
-            .clamp(0, bins - 1)
-        )
-        y_bins = (
-            ((y_flat - y_min) / (y_max - y_min + eps) * (bins - 1))
-            .long()
-            .clamp(0, bins - 1)
-        )
+        x_bins = ((x_flat - x_min) / (x_max - x_min + eps) * (bins - 1)).long().clamp(0, bins - 1)
+        y_bins = ((y_flat - y_min) / (y_max - y_min + eps) * (bins - 1)).long().clamp(0, bins - 1)
 
         joint_idx = x_bins * bins + y_bins
         joint_hist = torch.bincount(joint_idx, minlength=bins * bins).to(
