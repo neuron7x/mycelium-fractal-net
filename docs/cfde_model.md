@@ -1,29 +1,29 @@
 ## CFDE (Canonical Fractal Denoiser Engine) Model Contract
 
-### Purpose
+### A) Purpose
 - Location: `src/mycelium_fractal_net/signal/denoise_1d.py::OptimizedFractalDenoise1D`.
-- CFDE performs structure-preserving 1D denoising for MFN pipelines (financial returns, biosignals) using fractal domain matching.
-- It must **not** amplify noise or alter signal scale when the gate rejects fractal reconstruction.
+- Role: structure-preserving 1D denoising for MFN pipelines (returns, biosignals) using fractal domain matching and overlap-add smoothing.
+- Non-goal: must **not** amplify noise or rescale signals when the gate rejects reconstruction (identity fallback remains valid).
 
-### Input / Output Contract
-- Accepted shapes: `[L]`, `[B, L]`, `[B, C, L]` (see `_canonicalize_1d` in `denoise_1d.py`).
-- Dtype: inputs preserved; internal ops use `torch.float64`, outputs restored to original dtype in `forward`.
-- Device: CPU/GPU supported; tensors stay on input device (no host/device moves).
+### B) Input / Output Contract
+- Accepted shapes: `[L]`, `[B, L]`, `[B, C, L]` via `_canonicalize_1d` in `signal/denoise_1d.py`.
+- Dtype: inputs preserved; internal ops run in `torch.float64` and outputs are cast back to the original dtype in `OptimizedFractalDenoise1D.forward`.
+- Device: CPU/GPU respected; tensors stay on the caller’s device (no implicit host/device moves).
 
-### Cognitive Loop Mapping
-- **Thalamic Input Filter**: low-variance domain selection via variance-ranked domains (`_denoise_fractal`, `var_pool` + `topk` in `denoise_1d.py`).
-- **Basal Ganglia Gating**: inhibition rule `mse_best < baseline_mse * gate_ratio` (`apply_fractal` in `_denoise_fractal`); gate ratio derives from `harm_ratio` / `inhibition_epsilon`.
-- **Dopamine Gating**: ridge and clamping on scale parameters `s` (`ridge_lambda`, `s_max`, `s_threshold` in `_denoise_fractal`).
-- **Recursion / Acceptor Loop**: minimum 7 recursive passes enforced by `acceptor_iterations` in `OptimizedFractalDenoise1D.forward`.
+### C) Cognitive Loop Mapping (code-tied)
+- **Thalamic Filter** — variance-ranked domain selection: `_denoise_fractal` → `var_pool`/`topk` in `signal/denoise_1d.py`.
+- **Basal Ganglia Gate** — acceptance rule `mse_best < baseline_mse * gate_ratio`: `apply_fractal` mask inside `_denoise_fractal` in `signal/denoise_1d.py`.
+- **Dopamine Gating** — ridge + clamp of scale `s`: `ridge_lambda`, `s_max`, `s_threshold` handling in `_denoise_fractal` in `signal/denoise_1d.py`.
+- **Recursion Loop** — acceptor iterations: enforced minimum via `acceptor_iterations` in `OptimizedFractalDenoise1D.__init__` and applied in `forward` (fractal mode) in `signal/denoise_1d.py`.
 
-### Invariants (testable)
-- **Do No Harm**: When `do_no_harm=True`, segments with `mse_best >= baseline_mse * gate_ratio` bypass reconstruction (baseline retained).
-- **Stability Proxy**: Recursive passes should not increase proxy energy beyond tolerance (validated in `tests/test_signal_denoise_1d.py::test_recursive_energy_stability`).
+### D) Invariants (testable)
+- **Do No Harm gate**: when `do_no_harm=True`, regions with `mse_best >= baseline_mse * gate_ratio` bypass reconstruction, preserving baseline (`_denoise_fractal` in `signal/denoise_1d.py`).
+- **Stability**: recursive passes should not increase proxy energy; validated by `tests/test_signal_denoise_1d.py::test_recursive_energy_stability` and `tests/test_signal_denoise_1d.py::test_cfde_recursive_monotonic_energy`.
 
-### Failure Modes / Limitations
-- Gate may bypass all ranges when `fractal_dim_threshold` inhibits (`forward` in `denoise_1d.py`), yielding identity output.
-- Reflect padding falls back to replicate for very short signals (`_denoise_fractal`), so edge effects may persist on length-1 inputs.
-- Designed for moderate sequence lengths; extremely small `population_size` or `range_size` can reduce effectiveness without raising errors.
+### E) Failure Modes / Limitations
+- Gate-off: if `fractal_dim_threshold` inhibits all ranges, `forward` returns the input unchanged (`signal/denoise_1d.py`).
+- Edge padding: reflect padding falls back to replicate on very short signals in `_denoise_fractal`, so boundary artifacts may persist.
+- Sensitivity: extremely small `population_size`/`range_size` reduce effectiveness; no exception is raised (see `Fractal1DPreprocessor` presets in `signal/preprocessor.py`).
 
 ### Canonical Pipeline Hook
-- Finance pipeline entry: `examples/finance_regime_detection.py::run_finance_demo` uses `apply_cfde_preprocessing` with `cfde_preset` to enable CFDE on returns before field mapping.
+- Finance pipeline hook: `examples/finance_regime_detection.py::map_returns_to_field` (parameter `denoise` + `cfde_preset`) applies `Fractal1DPreprocessor` before mapping returns into the MFN field.

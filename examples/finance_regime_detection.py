@@ -134,7 +134,12 @@ def generate_synthetic_market_data(
 def map_returns_to_field(
     returns: NDArray[np.float64],
     grid_size: int = 32,
-) -> NDArray[np.float64]:
+    *,
+    denoise: bool = False,
+    cfde_preset: str | None = None,
+    cfde_device: str | torch.device | None = None,
+    return_processed: bool = False,
+) -> NDArray[np.float64] | tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
     Map financial returns to 2D membrane potential field.
 
@@ -145,20 +150,38 @@ def map_returns_to_field(
     Args:
         returns: 1D array of financial returns.
         grid_size: Size of the output square grid.
+        denoise: If True, run CFDE via `Fractal1DPreprocessor` before mapping.
+        cfde_preset: Optional CFDE preset; defaults to "markets" when denoise is enabled.
+        cfde_device: Optional device for CFDE execution.
+        return_processed: If True, return both (field, processed_returns).
 
     Returns:
-        2D field array of shape (grid_size, grid_size) in Volts.
+        2D field array of shape (grid_size, grid_size) in Volts, or tuple with processed returns.
 
     Note:
         The mapping preserves statistical properties of the input data
         while conforming to MFN's expected input format.
     """
+    processed_returns = returns
+    if denoise or cfde_preset is not None:
+        preset = cfde_preset or "markets"
+        preprocessor = Fractal1DPreprocessor(preset=preset)
+        tensor = torch.as_tensor(returns, dtype=torch.float32, device=cfde_device)
+        tensor = tensor.unsqueeze(0).unsqueeze(0)
+        with torch.no_grad():
+            processed = preprocessor(tensor)
+        processed_returns = (
+            processed.squeeze(0).squeeze(0).detach().cpu().numpy().astype(returns.dtype, copy=False)
+        )
+
+    returns_for_mapping = processed_returns
+
     # Normalize returns to z-scores
-    mean_r = np.mean(returns)
-    std_r = np.std(returns)
+    mean_r = np.mean(returns_for_mapping)
+    std_r = np.std(returns_for_mapping)
     if std_r < 1e-10:
         std_r = 1.0  # Avoid division by zero
-    z_scores = (returns - mean_r) / std_r
+    z_scores = (returns_for_mapping - mean_r) / std_r
 
     # Clamp extreme values to [-3, 3] range
     z_scores = np.clip(z_scores, -3.0, 3.0)
@@ -173,6 +196,8 @@ def map_returns_to_field(
             # Resting potential: -70 mV, excursions: ±15 mV
             field[i, j] = -0.070 + z_scores[idx] * 0.005
 
+    if return_processed:
+        return field, processed_returns
     return field
 
 
@@ -278,19 +303,6 @@ def run_finance_demo(
         print("\n1. Generating synthetic market data...")
     returns, regime_labels = generate_synthetic_market_data(rng, num_points=num_points)
 
-    selected_preset = cfde_preset or ("markets" if denoise else None)
-    if selected_preset is not None:
-        returns_tensor = torch.tensor(returns, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
-        before_mean, before_std = returns_tensor.mean().item(), returns_tensor.std().item()
-        returns = apply_cfde_preprocessing(returns, preset=selected_preset)
-
-        if verbose:
-            print("\n1b. Applying fractal denoiser to returns (CFDE)...")
-            after_mean = float(returns.mean())
-            after_std = float(returns.std())
-            print(f"   Denoise enabled: mean {before_mean:.6f} → {after_mean:.6f}")
-            print(f"   Std: {before_std:.6f} → {after_std:.6f}")
-
     if verbose:
         print(f"   Generated {len(returns)} daily returns")
         print(f"   Regimes: {regime_labels}")
@@ -306,7 +318,24 @@ def run_finance_demo(
     # Step 2: Map returns to MFN field representation
     if verbose:
         print("\n2. Converting to mycelium field representation...")
-    field = map_returns_to_field(returns, grid_size=32)
+    selected_preset = cfde_preset or ("markets" if denoise else None)
+    use_cfde = denoise or selected_preset is not None
+    before_mean, before_std = float(np.mean(returns)), float(np.std(returns))
+    field, processed_returns = map_returns_to_field(
+        returns,
+        grid_size=32,
+        denoise=use_cfde,
+        cfde_preset=selected_preset,
+        return_processed=True,
+    )
+    returns = processed_returns
+
+    if verbose and use_cfde:
+        after_mean = float(np.mean(returns))
+        after_std = float(np.std(returns))
+        print("\n1b. Applying fractal denoiser to returns (CFDE)...")
+        print(f"   Denoise enabled: mean {before_mean:.6f} → {after_mean:.6f}")
+        print(f"   Std: {before_std:.6f} → {after_std:.6f}")
 
     if verbose:
         print(f"   Field shape: {field.shape}")
