@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, Mapping, TypedDict
+from typing import Literal, Mapping, TypedDict, cast
 
 import torch
 import torch.nn as nn
@@ -12,6 +12,7 @@ from .denoise_1d import OptimizedFractalDenoise1D, _canonicalize_1d
 
 class _PresetConfig(TypedDict):
     mode: Literal["multiscale", "fractal"]
+    cfde_mode: Literal["single", "multiscale"]
     base_window: int
     trend_scaling: float
     detail_preservation: float
@@ -40,6 +41,7 @@ class Fractal1DPreprocessor(nn.Module):
     ] = {
         "generic": {
             "mode": "multiscale",
+            "cfde_mode": "single",
             "base_window": 5,
             "trend_scaling": 0.55,
             "detail_preservation": 0.88,
@@ -60,6 +62,7 @@ class Fractal1DPreprocessor(nn.Module):
         },
         "markets": {
             "mode": "fractal",
+            "cfde_mode": "single",
             "base_window": 7,
             "trend_scaling": 0.6,
             "detail_preservation": 0.85,
@@ -80,6 +83,7 @@ class Fractal1DPreprocessor(nn.Module):
         },
         "ecg": {
             "mode": "fractal",
+            "cfde_mode": "single",
             "base_window": 5,
             "trend_scaling": 0.5,
             "detail_preservation": 0.9,
@@ -100,7 +104,12 @@ class Fractal1DPreprocessor(nn.Module):
         },
     }
 
-    def __init__(self, preset: Literal["generic", "markets", "ecg"] = "generic") -> None:
+    def __init__(
+        self,
+        preset: Literal["generic", "markets", "ecg"] = "generic",
+        *,
+        cfde_mode: Literal["single", "multiscale"] | None = None,
+    ) -> None:
         super().__init__()
         if preset not in self._PRESETS:
             available = ", ".join(self._PRESETS.keys())
@@ -120,6 +129,7 @@ class Fractal1DPreprocessor(nn.Module):
             spike_damping=cfg["spike_damping"],
             iterations=cfg["iterations"],
             mode=cfg["mode"],
+            cfde_mode=cfde_mode or cfg["cfde_mode"],
             range_size=cfg["range_size"],
             domain_scale=cfg["domain_scale"],
             population_size=cfg["population_size"],
@@ -130,7 +140,13 @@ class Fractal1DPreprocessor(nn.Module):
             smooth_kernel=cfg["smooth_kernel"],
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        *,
+        return_stats: bool = False,
+        debug: bool | None = None,
+    ) -> torch.Tensor | tuple[torch.Tensor, dict[str, float]]:
         """Run preset preprocessing pipeline."""
         canonical, reshape, original_dtype = _canonicalize_1d(x)
         processed = canonical.to(torch.float32)
@@ -138,7 +154,12 @@ class Fractal1DPreprocessor(nn.Module):
         if self.center:
             processed = processed - processed.mean(dim=-1, keepdim=True)
 
-        processed = self.denoiser(processed)
+        denoised = self.denoiser(processed, return_stats=return_stats, debug=debug)
+        stats: dict[str, float] | None = None
+        if return_stats:
+            processed, stats = cast(tuple[torch.Tensor, dict[str, float]], denoised)
+        else:
+            processed = cast(torch.Tensor, denoised)
 
         if self.normalize:
             mean = processed.mean(dim=-1, keepdim=True)
@@ -148,4 +169,8 @@ class Fractal1DPreprocessor(nn.Module):
         if self.post_gain != 1.0:
             processed = processed * self.post_gain
 
-        return reshape(processed).to(original_dtype)
+        output = reshape(processed).to(original_dtype)
+        if return_stats:
+            default_stats = self.denoiser._empty_stats()
+            return output, stats or default_stats
+        return output

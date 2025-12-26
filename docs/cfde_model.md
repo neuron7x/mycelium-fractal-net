@@ -19,8 +19,18 @@
 ### D) Invariants (testable)
 - **Do No Harm gate**: when `do_no_harm=True`, regions with `mse_best >= baseline_mse * gate_ratio` bypass reconstruction, preserving baseline (`_denoise_fractal` in `signal/denoise_1d.py`).
 - **Stability**: recursive passes should not increase proxy energy; validated by `tests/test_signal_denoise_1d.py::test_recursive_energy_stability` and `tests/test_signal_denoise_1d.py::test_cfde_recursive_monotonic_energy`.
+- **Bounded outputs (debug mode)**: when `debug_checks=True`, CFDE asserts finite outputs and caps absolute magnitude growth relative to the input baseline.
 
-### E) Failure Modes / Limitations
+### E) Multiscale + Observability (MFN-grade)
+- **Scale modes**: `cfde_mode="single"` (default) keeps the legacy single-scale loop; `cfde_mode="multiscale"` evaluates up to three range sizes (default `[4, 8, 16]` with auto-clamping) and applies a **best-scale-wins** rule using reconstruction MSE as the proxy error. Total passes are hard-limited (max three per call) to avoid recursion explosion.
+- **Stats hook**: calling `forward(..., return_stats=True)` returns `(output, stats)` where `stats` includes:
+  - `inhibition_rate`: percent of segments gated off by the basal ganglia rule
+  - `reconstruction_mse` / `baseline_mse`: averaged per-range errors
+  - `effective_iterations`: passes executed (counts multiscale branches)
+  - `selected_range_size` (multiscale only): winning scale for the run
+- **MFN integration**: `Fractal1DPreprocessor` forwards stats and accepts `cfde_mode` overrides for pipeline-level control.
+
+### F) Failure Modes / Limitations
 - Gate-off: if `fractal_dim_threshold` inhibits all ranges, `forward` returns the input unchanged (`signal/denoise_1d.py`).
 - Edge padding: reflect padding falls back to replicate on very short signals in `_denoise_fractal`, so boundary artifacts may persist.
 - Sensitivity: extremely small `population_size`/`range_size` reduce effectiveness; no exception is raised (see `Fractal1DPreprocessor` presets in `signal/preprocessor.py`).
