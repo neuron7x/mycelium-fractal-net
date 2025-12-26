@@ -73,7 +73,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         self.range_size = range_size
         self.domain_scale = domain_scale
         if population_size < 1:
-            raise ValueError("population_size must be positive")
+            raise ValueError("population_size must be a positive integer")
         self.population_size = population_size
         if smooth_kernel < 3 or smooth_kernel % 2 == 0:
             raise ValueError("smooth_kernel must be an odd integer >= 3")
@@ -169,7 +169,9 @@ class OptimizedFractalDenoise1D(nn.Module):
             for _ in range(self.iterations_fractal):
                 current = self._denoise_fractal(current, canonical=True)
         else:
-            raise ValueError(f"Unsupported mode: {self.mode}")
+            raise ValueError(
+                f"Unsupported mode '{self.mode}'. Supported modes are: 'multiscale', 'fractal'"
+            )
 
         return reshape(current).to(original_dtype)
 
@@ -182,7 +184,10 @@ class OptimizedFractalDenoise1D(nn.Module):
         d = r * self.domain_scale
         stride = r // 2 if self.overlap else r
         if stride <= 0:
-            raise ValueError("Invalid stride derived from range_size")
+            raise ValueError(
+                f"Invalid stride ({stride}) derived from range_size ({r}) and overlap setting. "
+                "Ensure range_size is positive."
+            )
         factor = d // r
         return r, d, stride, factor
 

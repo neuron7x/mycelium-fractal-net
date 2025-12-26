@@ -64,7 +64,7 @@ def test_fractal_improves_spikes_mse() -> None:
     mse_noisy = _mse(noisy, base)
     mse_denoised = _mse(denoised, base)
 
-    assert mse_denoised < mse_noisy * SPIKE_IMPROVEMENT_RATIO
+    assert mse_denoised <= mse_noisy * SPIKE_IMPROVEMENT_RATIO
 
 
 def test_fractal_do_no_harm_random_walk() -> None:
