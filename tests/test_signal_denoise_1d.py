@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+
 import numpy as np
 import pytest
 import torch
@@ -192,3 +193,38 @@ def test_mutual_information_is_tracked() -> None:
     assert model.last_mutual_information is not None
     assert math.isfinite(model.last_mutual_information)
     assert model.last_mutual_information >= 0.0
+
+
+def test_recursive_energy_stability() -> None:
+    torch.manual_seed(11)
+    np.random.seed(11)
+    length = 256
+    base = torch.linspace(-1.0, 1.0, steps=length, dtype=torch.float64).unsqueeze(0).unsqueeze(0)
+    noise = 0.05 * torch.randn_like(base)
+    sinusoid = torch.sin(torch.linspace(0, 4 * np.pi, length, dtype=torch.float64)).view(1, 1, -1)
+    signal = base + noise + 0.2 * sinusoid
+
+    kernel = torch.tensor([[[0.25, 0.5, 0.25]]], dtype=torch.float64)
+    baseline = torch.nn.functional.conv1d(signal, kernel, padding=1)
+
+    model = OptimizedFractalDenoise1D(
+        mode="fractal",
+        population_size=16,
+        range_size=8,
+        iterations_fractal=1,
+        acceptor_iterations=7,
+        do_no_harm=True,
+    )
+
+    with torch.no_grad():
+        first_pass = model._denoise_fractal(signal, canonical=False)
+        recursive = signal
+        for _ in range(4):
+            recursive = model._denoise_fractal(recursive, canonical=False)
+
+    def energy(t: torch.Tensor) -> torch.Tensor:
+        return torch.mean((t - baseline) ** 2)
+
+    tolerance = 5e-5
+    assert energy(recursive) <= energy(first_pass) + tolerance
+    assert torch.max(torch.abs(recursive)) <= torch.max(torch.abs(signal)) * 2.0

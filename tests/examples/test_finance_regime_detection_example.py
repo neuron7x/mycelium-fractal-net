@@ -119,7 +119,7 @@ class TestFinanceRegimeDetectionExample:
             num_points=200,
             seed=42,
             return_analysis=True,
-            denoise=True,
+            cfde_preset="markets",
         )
 
         assert analysis is not None

@@ -9,7 +9,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -78,6 +77,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         fractal_dim_threshold: float = 1.85,
         log_mutual_information: bool = True,
         inhibition_epsilon: float | None = None,
+        acceptor_iterations: int | None = None,
     ) -> None:
         super().__init__()
         self.trend_scaling = trend_scaling
@@ -102,19 +102,21 @@ class OptimizedFractalDenoise1D(nn.Module):
         self.overlap = overlap
         self.smooth_kernel = smooth_kernel
         self.do_no_harm = do_no_harm
-        if inhibition_epsilon is None:
-            self.inhibition_epsilon = 1.0 - harm_ratio
-            self.harm_ratio = harm_ratio
-        else:
-            self.inhibition_epsilon = inhibition_epsilon
-            self.harm_ratio = 1.0 - inhibition_epsilon
+        self.harm_ratio = harm_ratio
+        self.inhibition_epsilon = (
+            inhibition_epsilon if inhibition_epsilon is not None else 1.0 - harm_ratio
+        )
         self.ridge_lambda = ridge_lambda
         self.fractal_dim_threshold = fractal_dim_threshold
         self.log_mutual_information = log_mutual_information
         self.last_mutual_information: float | None = None
         self.stride = max(1, base_window // 2)
         self.r = base_window
-        self.acceptor_iterations = max(iterations_fractal, 7)
+        requested_acceptor_iters = (
+            acceptor_iterations if acceptor_iterations is not None else iterations_fractal
+        )
+        # Minimum of 7 iterations matches CFDE fixed-point stabilization requirement
+        self.acceptor_iterations = max(requested_acceptor_iters, 7)
         self._eps = torch.finfo(torch.float64).eps
         self.register_buffer("detail_kernel", _normalized_kernel(base_window))
         self.register_buffer("trend_kernel", _normalized_kernel(base_window * 2 + 1))
@@ -283,6 +285,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         x_min, x_max = x_flat.min(), x_flat.max()
         y_min, y_max = y_flat.min(), y_flat.max()
 
+        if (x_max - x_min).abs() < eps or (y_max - y_min).abs() < eps:
+            return torch.tensor(0.0, device=x.device, dtype=x.dtype)
+
         x_bins = (
             ((x_flat - x_min) / (x_max - x_min + eps) * (bins - 1))
             .long()
@@ -298,7 +303,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         joint_hist = torch.bincount(joint_idx, minlength=bins * bins).to(
             dtype=x.dtype, device=x.device
         )
-        joint_prob = joint_hist / joint_hist.sum().clamp_min(1.0)
+        joint_prob = joint_hist / joint_hist.sum().clamp_min(eps)
         joint_prob_2d = joint_prob.view(bins, bins)
         p_x = joint_prob_2d.sum(dim=1)
         p_y = joint_prob_2d.sum(dim=0)
@@ -326,7 +331,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         pad_align = (stride - ((pad_base - r) % stride)) % stride
         L_pad = pad_base + pad_align
         pad_right = max(0, L_pad - L)
-        pad_mode = "reflect" if L > 1 else "replicate"
+        pad_mode = "reflect" if (L > 1 and pad_right < L) else "replicate"
 
         if pad_right > 0:
             x_padded = F.pad(x_working, (0, pad_right), mode=pad_mode)
@@ -398,7 +403,11 @@ class OptimizedFractalDenoise1D(nn.Module):
             best_idx.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, -1, -1, r),
         ).squeeze(3)
 
-        gate_ratio = 1.0 - self.inhibition_epsilon
+        gate_ratio = (
+            1.0 - self.inhibition_epsilon
+            if self.inhibition_epsilon is not None
+            else self.harm_ratio
+        )
         if self.do_no_harm:
             apply_fractal = mse_best < baseline_mse * gate_ratio
         else:
