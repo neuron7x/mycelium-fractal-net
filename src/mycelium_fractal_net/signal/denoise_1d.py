@@ -56,6 +56,7 @@ DEFAULT_MULTISCALE_RANGES: tuple[int, ...] = (4, 8, 16)
 MAX_MULTISCALE_BRANCHES = 3
 MIN_MULTISCALE_POPULATION = 64
 MIN_SOFTMAX_STD = 1e-8
+SMOOTHNESS_PENALTY_WEIGHT = 0.01
 DEBUG_MAGNITUDE_MULTIPLIER = 5.0
 DEBUG_MIN_BOUND = 1.0
 
@@ -415,13 +416,11 @@ class OptimizedFractalDenoise1D(nn.Module):
             outputs.append(out_tensor)
             stats_list.append(stats_out)
             proxy_val = float(((out_tensor - input_fp64) ** 2).mean().item())
+            smoothness_penalty = float(torch.diff(out_tensor, dim=-1).std().item())
+            proxy_val += SMOOTHNESS_PENALTY_WEIGHT * smoothness_penalty
             fallback_proxy = stats_out.get("baseline_mse", stats_out["reconstruction_mse"])
             # In rare cases proxy_val may be non-finite; fall back to per-scale error stats.
-            proxy_errors.append(
-                proxy_val
-                if math.isfinite(proxy_val)
-                else fallback_proxy
-            )
+            proxy_errors.append(proxy_val if math.isfinite(proxy_val) else fallback_proxy)
 
         if not outputs:
             single_result = self._denoise_fractal(
@@ -443,13 +442,11 @@ class OptimizedFractalDenoise1D(nn.Module):
             fallback_stats["selected_range_size"] = float(self.range_size)
             return fallback_current, fallback_stats
 
-        proxy_tensor = torch.tensor(
-            proxy_errors, device=input_fp64.device, dtype=input_fp64.dtype
-        )
+        proxy_tensor = torch.tensor(proxy_errors, device=input_fp64.device, dtype=input_fp64.dtype)
         if self.multiscale_aggregate == "best":
             best_idx = int(proxy_tensor.argmin().item())
             current = outputs[best_idx]
-            selected_range = scales[best_idx]
+            selected_range = float(scales[best_idx])
             selected_stats = {
                 **stats_list[best_idx],
                 "selected_range_size": float(selected_range),
