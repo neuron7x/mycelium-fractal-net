@@ -36,6 +36,8 @@ from typing import Any, Dict, Optional
 
 # Audit logger name
 AUDIT_LOGGER_NAME = "mfn.security.audit"
+# Common sensitive keys always redacted regardless of caller-provided list
+DEFAULT_SENSITIVE_FIELDS = {"password", "pass", "pwd", "secret", "token", "api_key"}
 
 
 class AuditSeverity(str, Enum):
@@ -130,7 +132,8 @@ class AuditEvent:
 
         if self.details:
             # Redact sensitive fields in details
-            data["details"] = _redact_dict(self.details, self.sensitive_fields)
+            redact_fields = list(DEFAULT_SENSITIVE_FIELDS.union(set(self.sensitive_fields)))
+            data["details"] = _redact_dict(self.details, redact_fields)
 
         return data
 
