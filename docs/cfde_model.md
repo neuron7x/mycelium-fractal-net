@@ -22,13 +22,13 @@
 - **Bounded outputs (debug mode)**: when `debug_checks=True`, CFDE asserts finite outputs and caps absolute magnitude growth relative to the input baseline.
 
 ### E) Multiscale + Observability (MFN-grade)
-- **Scale modes**: `cfde_mode="single"` (default) keeps the legacy single-scale loop; `cfde_mode="multiscale"` evaluates up to three range sizes (default `[4, 8, 16]` with auto-clamping) and applies a **best-scale-wins** rule using reconstruction MSE as the proxy error. Total passes are hard-limited (max three per call) to avoid recursion explosion.
+- **Scale modes**: `cfde_mode="single"` (default) keeps the legacy single-scale loop; `cfde_mode="multiscale"` evaluates up to three range sizes (derived from `(r, 2r, 4r)` and auto-clamped) and aggregates them with a bounded rule (see Multiscale Mode below).
 - **Stats hook**: calling `forward(..., return_stats=True)` returns `(output, stats)` where `stats` includes:
   - `inhibition_rate`: percent of segments gated off by the basal ganglia rule
   - `reconstruction_mse` / `baseline_mse`: averaged per-range errors
   - `effective_iterations`: passes executed (counts multiscale branches)
-  - `selected_range_size` (multiscale only): winning scale for the run
-- **MFN integration**: `Fractal1DPreprocessor` forwards stats and accepts `cfde_mode` overrides for pipeline-level control.
+  - `selected_range_size` (multiscale only): winning or weighted scale for the run
+- **MFN integration**: `Fractal1DPreprocessor` forwards stats and accepts `cfde_mode` overrides plus multiscale `scales` and `aggregate` overrides for pipeline-level control.
 
 ### F) Failure Modes / Limitations
 - Gate-off: if `fractal_dim_threshold` inhibits all ranges, `forward` returns the input unchanged (`signal/denoise_1d.py`).
@@ -37,3 +37,13 @@
 
 ### Canonical Pipeline Hook
 - Finance pipeline hook: `examples/finance_regime_detection.py::map_returns_to_field` (parameter `denoise` + `cfde_preset`) applies `Fractal1DPreprocessor` before mapping returns into the MFN field.
+
+### Multiscale Mode (optional)
+- **Configuration surface**: `OptimizedFractalDenoise1D(cfde_mode="multiscale", multiscale_range_sizes=<tuple>|None, multiscale_aggregate="best"|"weighted")`; `Fractal1DPreprocessor(scales=..., aggregate=...)` passes these through presets.
+- **Scales**: defaults derive from the base `range_size` as `(r, 2r, 4r)` (deduped, capped to three). Any scale larger than the signal length is skipped; if all are skipped the call falls back to a single-scale pass.
+- **Compute bounds**: population per scale shrinks with scale (`pop_scale = max(64, min(population_size, population_size * r_base // r_scale))`, clamped by `max_population_ci`). At most three branches are evaluated; iterations remain unchanged to keep CI/runtime safe.
+- **Aggregation rule**:
+  - `aggregate="best"` (default): **best-scale-wins** using proxy `baseline_mse` from each scale with deterministic tie-breaking.
+  - `aggregate="weighted"`: softmax over proxy errors blends branch outputs (temperature uses the proxy stddev, clamped > 0).
+  - Inhibition mask from fractal-dimension gating is applied after aggregation to retain MFN safety.
+- **Failure modes**: extremely short sequences may skip larger scales; if proxies are identical, deterministic ordering picks the earliest scale. Weighted aggregation can blur sharp spikes; use `aggregate="best"` when preserving peaks matters most.

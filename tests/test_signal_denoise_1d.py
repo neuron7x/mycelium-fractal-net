@@ -20,6 +20,7 @@ MODE_CONFIGS = [
 SPIKE_IMPROVEMENT_RATIO = 0.98  # require at least modest improvement on spikes
 RANDOM_WALK_DRIFT_RATIO = 0.10  # allow at most 10% relative change on random walk
 OSCILLATION_TOLERANCE = 1.05
+MULTISCALE_SPIKE_TOLERANCE = 1.01
 
 
 def _mse(a: np.ndarray, b: np.ndarray) -> float:
@@ -326,3 +327,85 @@ def test_preprocessor_can_return_stats() -> None:
         out, stats = preprocessor(series, return_stats=True)  # type: ignore[misc]
     assert out.shape == series.shape
     assert "effective_iterations" in stats
+
+
+def _proxy_mse(output: np.ndarray, reference: np.ndarray, window: int = 5) -> float:
+    """Compute proxy MSE against a local-mean baseline."""
+    kernel = np.ones(window) / float(window)
+    baseline = np.convolve(reference, kernel, mode="same")
+    return _mse(output, baseline)
+
+
+def test_multiscale_shape_and_determinism() -> None:
+    torch.manual_seed(2024)
+    np.random.seed(2024)
+    shapes = [(128,), (2, 128), (2, 3, 96)]
+    params = {
+        "mode": "fractal",
+        "cfde_mode": "multiscale",
+        "range_size": 8,
+        "population_size": 120,
+        "iterations_fractal": 2,
+        "multiscale_range_sizes": (8, 16, 32),
+        "multiscale_aggregate": "best",
+        "log_mutual_information": False,
+    }
+
+    for shape in shapes:
+        torch.manual_seed(7)
+        np.random.seed(7)
+        data = torch.randn(*shape)
+        model = OptimizedFractalDenoise1D(**params)
+        with torch.no_grad():
+            first = model(data)
+
+        torch.manual_seed(7)
+        np.random.seed(7)
+        data_repeat = torch.randn(*shape)
+        model_repeat = OptimizedFractalDenoise1D(**params)
+        with torch.no_grad():
+            second = model_repeat(data_repeat)
+
+        assert torch.equal(first, second)
+        assert first.shape == data.shape
+
+
+def test_multiscale_not_worse_than_single_on_spikes() -> None:
+    torch.manual_seed(515)
+    np.random.seed(515)
+    rng = np.random.default_rng(515)
+    length = 512
+    base = np.linspace(-0.2, 0.4, length)
+    base[length // 4 : length // 2] += 0.3
+    base[length // 2 :] -= 0.15
+    noisy = base + rng.normal(0.0, 0.05, size=length)
+    spike_indices = rng.choice(length, size=20, replace=False)
+    noisy[spike_indices] += rng.normal(0.8, 0.1, size=20) * rng.choice([-1.0, 1.0], size=20)
+
+    tensor = torch.tensor(noisy, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+    single = OptimizedFractalDenoise1D(
+        mode="fractal",
+        cfde_mode="single",
+        population_size=120,
+        range_size=8,
+        iterations_fractal=2,
+        log_mutual_information=False,
+    )
+    multiscale = OptimizedFractalDenoise1D(
+        mode="fractal",
+        cfde_mode="multiscale",
+        population_size=120,
+        range_size=8,
+        iterations_fractal=2,
+        multiscale_range_sizes=(8, 16, 32),
+        multiscale_aggregate="best",
+        log_mutual_information=False,
+    )
+
+    with torch.no_grad():
+        out_single = single(tensor).squeeze(0).squeeze(0).cpu().numpy()
+        out_multi = multiscale(tensor).squeeze(0).squeeze(0).cpu().numpy()
+
+    proxy_single = _proxy_mse(out_single, noisy)
+    proxy_multi = _proxy_mse(out_multi, noisy)
+    assert proxy_multi <= proxy_single * MULTISCALE_SPIKE_TOLERANCE

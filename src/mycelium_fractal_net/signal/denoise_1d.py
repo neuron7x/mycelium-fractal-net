@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Callable, Literal, cast
 
 import torch
@@ -50,8 +51,14 @@ def _normalized_kernel(window: int) -> torch.Tensor:
 
 
 ScaleMode = Literal["single", "multiscale"]
+AggregateMode = Literal["best", "weighted"]
 DEFAULT_MULTISCALE_RANGES: tuple[int, ...] = (4, 8, 16)
 MAX_MULTISCALE_BRANCHES = 3
+MIN_MULTISCALE_POPULATION = 64
+MIN_SOFTMAX_STD = 1e-8
+SMOOTHNESS_PENALTY_WEIGHT = (
+    0.01  # downranks oscillatory branches so selection favors smoother ranges
+)
 DEBUG_MAGNITUDE_MULTIPLIER = 5.0
 DEBUG_MIN_BOUND = 1.0
 
@@ -87,6 +94,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         inhibition_epsilon: float | None = None,
         acceptor_iterations: int | None = None,
         multiscale_range_sizes: tuple[int, ...] | None = None,
+        multiscale_aggregate: AggregateMode = "best",
         debug_checks: bool = False,
     ) -> None:
         super().__init__()
@@ -108,6 +116,8 @@ class OptimizedFractalDenoise1D(nn.Module):
         if max_population_ci < 1:
             raise ValueError("max_population_ci must be a positive integer")
         self.max_population_ci = max_population_ci
+        self._base_range_size = max(1, self.range_size)
+        self._base_population_size = max(1, self.population_size)
         if smooth_kernel < 3 or smooth_kernel % 2 == 0:
             raise ValueError("smooth_kernel must be an odd integer >= 3")
         self.s_threshold = s_threshold
@@ -131,12 +141,22 @@ class OptimizedFractalDenoise1D(nn.Module):
         # Minimum of 7 iterations matches CFDE fixed-point stabilization requirement
         self.acceptor_iterations = max(requested_acceptor_iters, 7)
         self._eps = torch.finfo(torch.float64).eps
+        if multiscale_aggregate not in ("best", "weighted"):
+            raise ValueError("multiscale_aggregate must be either 'best' or 'weighted'")
+        base_range_size = max(2, self.range_size)
         if multiscale_range_sizes is None:
-            multiscale_range_sizes = DEFAULT_MULTISCALE_RANGES
+            max_scale = base_range_size * 4
+            multiscale_range_sizes = (
+                base_range_size,
+                min(base_range_size * 2, max_scale),
+                max_scale,
+            )
         filtered_ranges = tuple(r for r in multiscale_range_sizes if r > 1)
         self.multiscale_range_sizes = filtered_ranges or (self.range_size,)
         base_candidates = self.multiscale_range_sizes + (self.range_size,)
         self._base_multiscale_ranges = tuple(dict.fromkeys(base_candidates))
+        self.multiscale_aggregate = multiscale_aggregate
+        self._max_multiscale_branches = MAX_MULTISCALE_BRANCHES
         self.debug_checks = debug_checks
         self.register_buffer("detail_kernel", _normalized_kernel(base_window))
         self.register_buffer("trend_kernel", _normalized_kernel(base_window * 2 + 1))
@@ -306,16 +326,27 @@ class OptimizedFractalDenoise1D(nn.Module):
         for candidate in self._base_multiscale_ranges:
             if candidate <= 1 or candidate in seen:
                 continue
+            if length < candidate:
+                continue
             # Avoid pathological padding on extremely short signals
             if candidate > length * 2:
                 continue
             seen.add(candidate)
             ranges.append(candidate)
-            if len(ranges) >= MAX_MULTISCALE_BRANCHES:
+            if len(ranges) >= self._max_multiscale_branches:
                 break
         if not ranges:
             ranges.append(max(2, self.range_size))
         return ranges
+
+    def _scaled_population_for_range(self, scale: int) -> int:
+        base = self._base_range_size
+        pop_base = self._base_population_size
+        # Downscale population proportionally to the window size to keep CI/runtime bounded.
+        scaled = min(pop_base, max(1, pop_base * base // max(scale, 1)))
+        bounded = max(MIN_MULTISCALE_POPULATION, scaled)
+        bounded = min(bounded, self.max_population_ci)
+        return int(bounded)
 
     def _run_fractal_iterations(
         self,
@@ -362,53 +393,113 @@ class OptimizedFractalDenoise1D(nn.Module):
         scales = self._select_multiscale_ranges(input_fp64.shape[-1])
         outputs: list[torch.Tensor] = []
         stats_list: list[dict[str, float]] = []
+        proxy_errors: list[float] = []
 
         for scale in scales:
-            result = self._denoise_fractal(
+            scaled_population = self._scaled_population_for_range(scale)
+            passes = max(1, self.iterations_fractal)
+            current_scale = input_fp64
+            last_stats: dict[str, float] | None = None
+            for _ in range(passes):
+                result = self._denoise_fractal(
+                    current_scale,
+                    canonical=True,
+                    range_size=scale,
+                    domain_scale=self.domain_scale,
+                    population_size=scaled_population,
+                    return_stats=True,
+                )
+                if isinstance(result, tuple):
+                    current_scale, last_stats = result
+                else:
+                    current_scale = result
+            out_tensor = current_scale
+            stats_out = last_stats or self._empty_stats(range_size=float(scale))
+            outputs.append(out_tensor)
+            stats_list.append(stats_out)
+            proxy_val = float(((out_tensor - input_fp64) ** 2).mean().item())
+            # Max three branches; smoothness penalty cost is negligible.
+            diff_tensor = torch.diff(out_tensor, dim=-1)
+            penalty_value = torch.nan_to_num(diff_tensor.std(), nan=0.0).item()
+            proxy_val += SMOOTHNESS_PENALTY_WEIGHT * penalty_value
+            fallback_proxy = stats_out.get("baseline_mse", stats_out["reconstruction_mse"])
+            # In rare cases proxy_val may be non-finite; fall back to per-scale error stats.
+            proxy_errors.append(proxy_val if math.isfinite(proxy_val) else fallback_proxy)
+
+        if not outputs:
+            single_result = self._denoise_fractal(
                 input_fp64,
                 canonical=True,
-                range_size=scale,
+                range_size=self.range_size,
                 domain_scale=self.domain_scale,
                 return_stats=True,
             )
-            if isinstance(result, tuple):
-                out_tensor, st = result
-                outputs.append(out_tensor)
-                stats_list.append(st)
+            if isinstance(single_result, tuple):
+                fallback_current, fallback_stats = single_result
             else:
-                outputs.append(result)
-                stats_list.append(self._empty_stats(range_size=float(scale)))
+                fallback_current = single_result
+                fallback_stats = self._empty_stats(range_size=float(self.range_size))
+            if inhibit_mask.any():
+                fallback_current = torch.where(
+                    inhibit_mask.unsqueeze(-1), input_fp64, fallback_current
+                )
+            fallback_stats["selected_range_size"] = float(self.range_size)
+            return fallback_current, fallback_stats
 
-        if not outputs:
-            fallback_stats = self._empty_stats(
-                inhibition_rate=float(inhibit_mask.float().mean().item()),
-                effective_iterations=0.0,
-                range_size=float(self.range_size),
-                selected_range_size=float(self.range_size),
-            )
-            return input_fp64, fallback_stats
-
-        if stats_list:
-            best_idx = min(
-                range(len(stats_list)), key=lambda idx: stats_list[idx]["reconstruction_mse"]
-            )
+        proxy_tensor = torch.tensor(proxy_errors, device=input_fp64.device, dtype=input_fp64.dtype)
+        if self.multiscale_aggregate == "best":
+            best_idx = int(proxy_tensor.argmin().item())
+            current = outputs[best_idx]
+            selected_range = float(scales[best_idx])
+            selected_stats = {
+                **stats_list[best_idx],
+                "selected_range_size": float(selected_range),
+            }
         else:
-            best_idx = 0
+            tau = float(proxy_tensor.std().clamp_min(MIN_SOFTMAX_STD).item())
+            weights = torch.softmax(-proxy_tensor / tau, dim=0)
+            weighted_outputs = torch.stack([w * o for w, o in zip(weights, outputs)], dim=0)
+            current = torch.sum(weighted_outputs, dim=0)
+            selected_range = float(
+                sum(float(w.item()) * float(scale) for w, scale in zip(weights, scales))
+            )
+            selected_stats = {
+                "inhibition_rate": float(
+                    sum(
+                        float(w.item()) * s.get("inhibition_rate", 0.0)
+                        for w, s in zip(weights, stats_list)
+                    )
+                ),
+                "reconstruction_mse": float(
+                    sum(
+                        float(w.item()) * s.get("reconstruction_mse", 0.0)
+                        for w, s in zip(weights, stats_list)
+                    )
+                ),
+                "baseline_mse": float(
+                    sum(
+                        float(w.item()) * s.get("baseline_mse", 0.0)
+                        for w, s in zip(weights, stats_list)
+                    )
+                ),
+                "effective_iterations": float(len(scales)),
+                "range_size": float(selected_range),
+                "selected_range_size": float(selected_range),
+            }
 
-        current = outputs[best_idx]
         if inhibit_mask.any():
             current = torch.where(inhibit_mask.unsqueeze(-1), input_fp64, current)
 
-        base_stats = stats_list[best_idx] if stats_list else self._empty_stats()
         avg_inhibition = sum(s["inhibition_rate"] for s in stats_list) / max(len(stats_list), 1)
-        selected_range = scales[best_idx] if scales and best_idx < len(scales) else self.range_size
+        base_stats = selected_stats
+        selected_range_value = float(selected_range)
         stats = {
             "inhibition_rate": max(base_stats.get("inhibition_rate", 0.0), avg_inhibition),
             "reconstruction_mse": base_stats.get("reconstruction_mse", 0.0),
             "baseline_mse": base_stats.get("baseline_mse", 0.0),
             "effective_iterations": float(len(scales)),
-            "range_size": base_stats.get("range_size", float(selected_range)),
-            "selected_range_size": float(selected_range),
+            "range_size": base_stats.get("range_size", selected_range_value),
+            "selected_range_size": base_stats.get("selected_range_size", selected_range_value),
         }
         return current, stats
 
@@ -508,6 +599,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         canonical: bool = False,
         range_size: int | None = None,
         domain_scale: int | None = None,
+        population_size: int | None = None,
         return_stats: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, dict[str, float]]:
         reshape: Callable[[torch.Tensor], torch.Tensor]
@@ -566,9 +658,13 @@ class OptimizedFractalDenoise1D(nn.Module):
                 )
             return restored
 
-        candidate_pool = min(num_domains, min(self.population_size * 2, self.max_population_ci))
+        effective_population = (
+            population_size if population_size is not None else self.population_size
+        )
+        effective_population = max(1, min(effective_population, self.max_population_ci))
+        candidate_pool = min(num_domains, min(effective_population * 2, self.max_population_ci))
         top_k = candidate_pool
-        pop_size = min(self.population_size, top_k)
+        pop_size = min(effective_population, top_k)
         if top_k == 0 or pop_size == 0:
             restored = reshape(x_padded[:, :, :L]).to(original_dtype)
             if return_stats:
