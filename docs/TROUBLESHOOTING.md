@@ -246,7 +246,7 @@ export MFN_RATE_LIMIT_REQUESTS=1000  # requests per minute
 1. Check server logs:
 ```bash
 # If running with uvicorn
-uvicorn api:app --log-level debug
+mfn-api --log-level debug
 ```
 
 2. Enable detailed error responses in development:
@@ -278,7 +278,7 @@ netstat -ano | findstr :8000  # On Windows
 
 2. Use a different port:
 ```bash
-uvicorn api:app --port 8001
+mfn-api --port 8001
 ```
 
 3. Kill the process using the port:
@@ -366,7 +366,7 @@ field_small = zoom(field, 0.5)  # Reduce by 50%
 2. **Extract only needed features**:
 ```python
 # Use specific feature functions instead of computing all 18
-from analytics import compute_fractal_dimension
+from mycelium_fractal_net.analytics import compute_fractal_dimension
 D = compute_fractal_dimension(binary_field)
 ```
 
@@ -588,7 +588,7 @@ If you can't find a solution here:
 4. **Enable debug logging**:
 ```bash
 export MFN_LOG_LEVEL=DEBUG
-python mycelium_fractal_net_v4_1.py --mode validate
+mfn-validate --mode validate
 ```
 
 ---
@@ -598,7 +598,7 @@ python mycelium_fractal_net_v4_1.py --mode validate
 **Q: What is the fastest way to confirm my installation works?**  
 A: Run the validate mode and confirm you get a JSON response without errors:
 ```bash
-python mycelium_fractal_net_v4_1.py --mode validate
+mfn-validate --mode validate
 ```
 
 **Q: Which config should I use for a quick smoke test?**  
@@ -619,7 +619,7 @@ export MFN_RATE_LIMIT_ENABLED="false"
 A: Run the API with debug logging and look for `request_id` fields:
 ```bash
 export MFN_LOG_LEVEL=DEBUG
-uvicorn api:app --log-level debug
+mfn-api --log-level debug
 ```
 
 **Q: What should I include when reporting a bug?**  

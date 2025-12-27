@@ -51,7 +51,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "from mycelium_fractal_net import run_validation; run_validation()" || exit 1
+    CMD python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status == 200 else 1)" || exit 1
 
-# Default command: run validation
-CMD ["python", "mycelium_fractal_net_v4_1.py", "--mode", "validate", "--seed", "42"]
+# Default command: start API server
+CMD ["mfn-api", "--host", "0.0.0.0", "--port", "8000"]

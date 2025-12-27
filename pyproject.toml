@@ -15,6 +15,7 @@ dependencies = [
   "torch>=2.0.0,<3.0.0",
   "pydantic>=2.0",
   "fastapi>=0.100.0",
+  "uvicorn>=0.27.0",
   "pandas>=1.5.3,<3.0.0",
   "pyarrow>=10.0.0",
   "prometheus_client>=0.17.0",
@@ -22,6 +23,10 @@ dependencies = [
   "websockets>=12.0",
   "httpx>=0.24.0",
 ]
+
+[project.scripts]
+mfn-api = "mycelium_fractal_net.api:main"
+mfn-validate = "mycelium_fractal_net.cli:main_validate"
 
 [project.optional-dependencies]
 dev = [
@@ -60,8 +65,8 @@ build-backend = "setuptools.build_meta"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["src", "."]
-include = ["mycelium_fractal_net*", "analytics"]
+where = ["src"]
+include = ["mycelium_fractal_net*"]
 exclude = ["tests*", "docs*", "examples*", "experiments*"]
 
 [tool.pytest.ini_options]
@@ -89,7 +94,7 @@ module = "tests.*"
 disallow_untyped_defs = true
 
 [tool.coverage.run]
-source = ["mycelium_fractal_net", "analytics"]
+source = ["mycelium_fractal_net"]
 branch = true
 omit = [
   "*/tests/*",

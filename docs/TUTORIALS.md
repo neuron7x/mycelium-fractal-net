@@ -56,7 +56,7 @@ The simplest way to run MFN is through the command-line interface:
 
 ```bash
 # Run a validation cycle
-python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
+mfn-validate --mode validate --seed 42 --epochs 1
 
 # Output:
 # === MyceliumFractalNet v4.1 :: validation ===
@@ -215,7 +215,7 @@ MFN provides a FastAPI server for remote access.
 
 ```bash
 # Start server on localhost
-uvicorn api:app --host 0.0.0.0 --port 8000
+mfn-api --host 0.0.0.0 --port 8000
 
 # Server starts at: http://localhost:8000
 # API docs: http://localhost:8000/docs
@@ -258,7 +258,7 @@ export MFN_RATE_LIMIT_REQUESTS=100
 export MFN_LOG_FORMAT=json
 
 # Start server
-uvicorn api:app --host 0.0.0.0 --port 8000
+mfn-api --host 0.0.0.0 --port 8000
 
 # Make authenticated request
 curl -X POST http://localhost:8000/validate \

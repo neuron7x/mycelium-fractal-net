@@ -273,7 +273,7 @@ print(f"Generated {meta.num_rows} samples")
 
 ```python
 import pandas as pd
-from analytics import FeatureVector
+from mycelium_fractal_net.analytics import FeatureVector
 
 df = pd.read_parquet(meta.output_path)
 

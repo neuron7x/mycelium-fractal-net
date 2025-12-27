@@ -71,7 +71,7 @@ MFN operates as a **fractal morphogenetic feature engine** — a computational m
 - **Layer ID**: `mfn-cli`
 - **Files**: `mycelium_fractal_net_v4_1.py`
 - **Description**: Single-file CLI entrypoint supporting `--mode validate`, `--seed`, `--epochs`, etc.
-- **Evidence**: Used by CI pipeline (`python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1`)
+- **Evidence**: Used by CI pipeline (`mfn-validate --mode validate --seed 42 --epochs 1`)
 
 ### [batch_pipeline_adapter] Feature Extraction Pipeline
 - **Layer ID**: `mfn-feature-extraction`

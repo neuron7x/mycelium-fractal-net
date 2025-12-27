@@ -101,7 +101,7 @@ API load testing is performed using Locust. Test scenarios are defined in
 
 ```bash
 # Start the API server
-uvicorn api:app --host 0.0.0.0 --port 8000
+mfn-api --host 0.0.0.0 --port 8000
 
 # Run Locust with web UI (in another terminal)
 locust -f load_tests/locustfile.py --host http://localhost:8000
@@ -308,7 +308,7 @@ For API load testing, use:
 
 ```bash
 # Start the API server
-uvicorn api:app --host 0.0.0.0 --port 8000
+mfn-api --host 0.0.0.0 --port 8000
 
 # Run stress tests (in another terminal)
 locust -f load_tests/locustfile.py --host http://localhost:8000 \

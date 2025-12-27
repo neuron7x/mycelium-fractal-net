@@ -29,7 +29,7 @@ from typing import Any, Dict, Iterator, List, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from analytics import FeatureConfig, FeatureVector, compute_features
+from mycelium_fractal_net.analytics import FeatureConfig, FeatureVector, compute_features
 from mycelium_fractal_net.core import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,

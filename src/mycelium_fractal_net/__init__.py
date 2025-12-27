@@ -51,6 +51,8 @@ from .analytics import (
     FractalInsightArchitect,
     Insight,
     InsufficientDataError,
+    compute_features,
+    compute_features_from_result,
     compute_fractal_features,
 )
 
@@ -196,6 +198,8 @@ __all__ = [
     "FractalInsightArchitect",
     "Insight",
     "InsufficientDataError",
+    "compute_features",
+    "compute_features_from_result",
     "compute_fractal_features",
     # === CORE ENGINE CLASSES ===
     # Nernst

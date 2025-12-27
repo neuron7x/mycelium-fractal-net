@@ -428,7 +428,7 @@ def run_scenario(
         Metadata about the generated dataset.
     """
     # Import here to avoid circular imports
-    from analytics import FeatureConfig, FeatureVector, compute_features
+    from mycelium_fractal_net.analytics import FeatureConfig, FeatureVector, compute_features
 
     # Determine output path
     if data_root is None:

@@ -294,7 +294,7 @@ def estimate_fractal_dimension(
 
 ---
 
-#### `compute_features` (from analytics)
+#### `compute_features` (from mycelium_fractal_net.analytics)
 
 ```python
 def compute_features(
@@ -357,7 +357,7 @@ class HierarchicalKrumAggregator:
 
 ---
 
-#### `FeatureVector` (from analytics)
+#### `FeatureVector` (from mycelium_fractal_net.analytics)
 
 ```python
 @dataclass
@@ -524,7 +524,7 @@ class FeatureVector:
 
 **Technical Result**:
 - API tests for `/health`, `/validate`, `/simulate`, `/nernst`, `/federated/aggregate` endpoints.
-- CLI test: `python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1` passes.
+- CLI test: `mfn-validate --mode validate --seed 42 --epochs 1` passes.
 - Docker build test: `docker build -t mfn:test .` succeeds, container runs validation.
 
 **Acceptance Criteria**: All endpoints return HTTP 200 with valid JSON.
@@ -557,7 +557,7 @@ ruff check .
 mypy src/mycelium_fractal_net
 
 # CLI validation
-python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
+mfn-validate --mode validate --seed 42 --epochs 1
 
 # Benchmarks
 python benchmarks/benchmark_core.py

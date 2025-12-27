@@ -14,7 +14,7 @@
 
 **Головна слабкість:** Відсутність реальних production deployment конфігурацій, мінімальне coverage reporting, відсутність інтеграційних тестів для API під навантаженням.
 
-**Зрозумілість запуску:** Є чітко визначені entrypoints — CLI (`python mycelium_fractal_net_v4_1.py --mode validate`), API (`uvicorn api:app`), Docker (`docker build -t mfn:4.1 .`). Інструкції в README є достатніми для базового запуску.
+**Зрозумілість запуску:** Є чітко визначені entrypoints — CLI (`mfn-validate --mode validate`), API (`mfn-api`), Docker (`docker build -t mfn:4.1 .`). Інструкції в README є достатніми для базового запуску.
 
 ---
 
@@ -189,7 +189,7 @@ mypy src/mycelium_fractal_net
 ### 4.3 CLI Validation
 
 ```bash
-python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
+mfn-validate --mode validate --seed 42 --epochs 1
 # Результат:
 # loss_start: 2.432786
 # loss_final: 1.795847

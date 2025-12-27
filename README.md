@@ -271,7 +271,7 @@ pip install -e ".[dev]"
 ## CLI
 
 ```bash
-python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 5
+mfn-validate --seed 42 --epochs 5
 ```
 
 ```
@@ -290,7 +290,7 @@ nernst_symbolic_mV      : -89.010669
 ## API
 
 ```bash
-uvicorn api:app --host 0.0.0.0 --port 8000
+mfn-api --host 0.0.0.0 --port 8000
 ```
 
 - **OpenAPI spec:** [docs/openapi.json](docs/openapi.json)
@@ -369,7 +369,7 @@ export MFN_API_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(32)
 export MFN_RATE_LIMIT_ENABLED=true
 
 # Start API server
-uvicorn api:app --host 0.0.0.0 --port 8000
+mfn-api --host 0.0.0.0 --port 8000
 ```
 
 ### Security Testing
@@ -458,15 +458,13 @@ mycelium-fractal-net/
 │   ├── core/                # Numerical engines
 │   ├── integration/         # Integration layer (schemas, adapters)
 │   └── security/            # Security module (encryption, validation, audit)
-├── analytics/               # Feature extraction module
-│   ├── __init__.py
-│   └── fractal_features.py  # 18 fractal features
+├── src/mycelium_fractal_net/analytics/  # Feature extraction module
 ├── experiments/             # Dataset generation
 │   ├── generate_dataset.py  # Parameter sweep pipeline
 │   └── inspect_features.py  # Exploratory analysis
 ├── data/                    # Generated datasets
-├── api.py                   # FastAPI server
-├── mycelium_fractal_net_v4_1.py  # CLI
+├── api.py                   # Compatibility shim for FastAPI server
+├── mycelium_fractal_net_v4_1.py  # Legacy CLI shim
 ├── tests/                   # pytest suite
 │   ├── security/            # Security tests
 │   └── ...                  # Other test modules
@@ -600,10 +598,10 @@ print(df[["D_box", "V_mean", "f_active"]].describe())
 
 ## Analytics Module
 
-Модуль `analytics` надає інструменти для витягування фрактальних ознак:
+The canonical analytics namespace lives under ``mycelium_fractal_net.analytics``:
 
 ```python
-from analytics import compute_features, FeatureConfig
+from mycelium_fractal_net.analytics import compute_features, FeatureConfig
 
 # Extract all 18 features from field history
 features = compute_features(field_history, config=FeatureConfig())

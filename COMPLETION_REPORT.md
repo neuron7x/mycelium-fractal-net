@@ -444,7 +444,7 @@ k8s.yaml                            ✅ +158 lines
    ```
 
 4. **Review API**
-   - Start server: `uvicorn api:app`
+   - Start server: `mfn-api`
    - Browse docs: http://localhost:8000/docs
 
 ---

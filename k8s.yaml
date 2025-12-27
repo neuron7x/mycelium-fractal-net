@@ -120,6 +120,12 @@ spec:
           # docker inspect mycelium-fractal-net:v4.1 --format='{{index .RepoDigests 0}}'
           image: mycelium-fractal-net@sha256:REPLACE_WITH_ACTUAL_DIGEST
           imagePullPolicy: Always
+          command:
+            - mfn-api
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8000"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

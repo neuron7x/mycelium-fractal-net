@@ -38,7 +38,7 @@ This report documents the results of the PR-7 "Configuration Center and Performa
 | `README.md` - Analytics module | `compute_features()` | ✅ Implemented | None |
 | `README.md` - Dataset generation | `python -m experiments.generate_dataset` | ✅ Implemented | None |
 | `README.md` - API endpoints | `/health`, `/validate`, `/simulate`, `/nernst`, `/federated/aggregate` | ✅ Implemented | None |
-| `README.md` - CLI | `python mycelium_fractal_net_v4_1.py --mode validate` | ✅ Implemented | None |
+| `README.md` - CLI | `mfn-validate --mode validate` | ✅ Implemented | None |
 | `MFN_INTEGRATION_SPEC.md` - Public API | 35+ symbols in `__all__` | ✅ Implemented | None |
 | `MFN_INTEGRATION_SPEC.md` - Core engines | `MembraneEngine`, `ReactionDiffusionEngine`, `FractalGrowthEngine` | ✅ Implemented | None |
 | `MFN_FEATURE_SCHEMA.md` - 18 features | `FeatureVector` dataclass | ✅ Implemented | None |
@@ -87,7 +87,7 @@ The following items are explicitly marked as future work in `docs/ROADMAP.md` an
 
 ```bash
 # All verified working:
-python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1  # ✅
+mfn-validate --mode validate --seed 42 --epochs 1  # ✅
 python examples/finance_regime_detection.py                               # ✅
 python examples/rl_exploration.py                                         # ✅
 python -m experiments.generate_dataset --sweep minimal                    # ✅
@@ -189,7 +189,7 @@ pytest tests/integration/ -v # Run integration tests only
 pytest tests/core/ -v        # Run core engine tests only
 
 # Validation
-python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
+mfn-validate --mode validate --seed 42 --epochs 1
 python validation/scientific_validation.py
 python benchmarks/benchmark_core.py
 
@@ -202,7 +202,7 @@ python examples/finance_regime_detection.py
 python examples/rl_exploration.py
 
 # API server
-uvicorn api:app --host 0.0.0.0 --port 8000
+mfn-api --host 0.0.0.0 --port 8000
 ```
 
 ---
@@ -314,7 +314,7 @@ mypy src/mycelium_fractal_net
 pytest -q
 
 # Run validation
-python mycelium_fractal_net_v4_1.py --mode validate --seed 42 --epochs 1
+mfn-validate --mode validate --seed 42 --epochs 1
 ```
 
 ---
