@@ -50,7 +50,7 @@ def assemble_validation_config(
         elif isinstance(request, Mapping):
             request_data = dict(request)
         else:
-            request_data = dict(request)
+            raise TypeError(f"Unsupported request type: {type(request)!r}")
         base.update(request_data)
 
     return ValidationConfig(**base)
