@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from typing import Any, Mapping
 
+from pydantic import BaseModel
+
 from mycelium_fractal_net.config_profiles import (
     ConfigProfile,
     ConfigValidationError,
@@ -36,17 +38,19 @@ def assemble_validation_config(
     defaults → profile → env overrides (applied via load_config_profile) → request overrides.
     """
     base_config = ValidationConfig()
-    base = {key: value for key, value in vars(base_config).items()}
+    # ValidationConfig is a simple container; copying vars() is sufficient for defaults.
+    base = vars(base_config).copy()
     profile = _load_profile(profile_name or os.getenv(DEFAULT_PROFILE_ENV, DEFAULT_PROFILE_NAME))
     if profile:
         base.update(profile.to_dict().get("validation", {}))
 
     if request:
-        request_data = (
-            request.model_dump()
-            if callable(getattr(request, "model_dump", None))
-            else dict(request)
-        )
+        if isinstance(request, BaseModel):
+            request_data = request.model_dump()
+        elif isinstance(request, Mapping):
+            request_data = dict(request)
+        else:
+            request_data = dict(request)
         base.update(request_data)
 
     return ValidationConfig(**base)

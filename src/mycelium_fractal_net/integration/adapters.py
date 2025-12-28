@@ -48,7 +48,7 @@ def run_validation_adapter(
     """
     Run validation cycle using the core validation function.
 
-    Adapts ValidateRequest to ValidationConfig, runs validation,
+    Adapts ValidateRequest through shared config assembly, runs validation,
     and converts results to ValidateResponse.
 
     Args:
