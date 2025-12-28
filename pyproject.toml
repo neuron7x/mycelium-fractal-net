@@ -23,6 +23,10 @@ dependencies = [
   "httpx>=0.24.0",
 ]
 
+[project.scripts]
+mfn-api = "mycelium_fractal_net.api:main"
+mfn-validate = "mycelium_fractal_net.model:run_validation_cli"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=7.0",

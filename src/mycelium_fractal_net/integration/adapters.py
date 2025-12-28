@@ -20,7 +20,6 @@ import numpy as np
 import torch
 
 from mycelium_fractal_net import (
-    ValidationConfig,
     compute_nernst_potential,
     estimate_fractal_dimension,
     run_validation,
@@ -39,6 +38,7 @@ from .schemas import (
     ValidateResponse,
 )
 from .service_context import ServiceContext
+from .runtime_config import assemble_validation_config
 
 
 def run_validation_adapter(
@@ -62,16 +62,7 @@ def run_validation_adapter(
         ValueError: If validation parameters are invalid.
         RuntimeError: If validation fails.
     """
-    # Convert request to ValidationConfig
-    cfg = ValidationConfig(
-        seed=request.seed,
-        epochs=request.epochs,
-        batch_size=request.batch_size,
-        grid_size=request.grid_size,
-        steps=request.steps,
-        turing_enabled=request.turing_enabled,
-        quantum_jitter=request.quantum_jitter,
-    )
+    cfg = assemble_validation_config(request)
 
     # Run validation using core function
     metrics: Dict[str, Any] = run_validation(cfg)

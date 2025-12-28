@@ -39,6 +39,7 @@ from numpy.typing import NDArray
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
+
 # === Physical Constants (SI) ===
 R_GAS_CONSTANT: float = 8.314  # J/(mol*K)
 FARADAY_CONSTANT: float = 96485.33212  # C/mol
@@ -1263,6 +1264,8 @@ def run_validation_cli() -> None:
     Provides command-line interface for validation using the same
     schemas as the HTTP API (via integration layer).
     """
+    from mycelium_fractal_net.integration.runtime_config import assemble_validation_config
+    from mycelium_fractal_net.integration.schemas import ValidateRequest
     parser = argparse.ArgumentParser(description="MyceliumFractalNet v4.1 validation CLI")
     parser.add_argument(
         "--mode", type=str, default="validate", choices=["validate"], help="Operation mode"
@@ -1283,7 +1286,7 @@ def run_validation_cli() -> None:
     )
     args = parser.parse_args()
 
-    cfg = ValidationConfig(
+    request = ValidateRequest(
         seed=args.seed,
         epochs=args.epochs,
         batch_size=args.batch_size,
@@ -1292,6 +1295,8 @@ def run_validation_cli() -> None:
         turing_enabled=args.turing_enabled,
         quantum_jitter=args.quantum_jitter,
     )
+
+    cfg = assemble_validation_config(request)
 
     metrics = run_validation(cfg)
 
