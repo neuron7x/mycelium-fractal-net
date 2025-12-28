@@ -2,11 +2,11 @@
 
 ### Commands executed
 - `pip-audit -r requirements.txt --desc on --format json --no-deps --progress-spinner off > audit_report.json`
-- `pip-audit -r requirements.txt --desc on --format json --no-deps --progress-spinner off > audit_dev_report.json`
+- `pip-audit -r requirements.txt --desc on --format json --no-deps --progress-spinner off > audit_dev_report.json` (dev extras live in the same requirements file)
 - `pip-audit --desc on` (environment scan to surface concrete CVEs below)
 
 ### Findings
-The requirements-based audits returned **no vulnerabilities** (exit code `0`). A direct environment scan surfaced the following issues (13 total) with available fixes:
+The requirements-based audits returned **no vulnerabilities** (exit code `0`); the JSON outputs show resolver-selected current versions for reference. A direct environment scan surfaced the following issues (13 total) with available fixes (versions below reflect the runner’s installed packages and therefore differ from the JSON reports):
 
 | Package | Current Ver | CVE ID | Severity | Fixed In | Breaking? |
 | --- | --- | --- | --- | --- | --- |
