@@ -35,14 +35,17 @@ def assemble_validation_config(
     Build ValidationConfig using a deterministic precedence:
     defaults → profile → env overrides (applied via load_config_profile) → request overrides.
     """
-    base = ValidationConfig().__dict__.copy()
+    base_config = ValidationConfig()
+    base = {key: value for key, value in vars(base_config).items()}
     profile = _load_profile(profile_name or os.getenv(DEFAULT_PROFILE_ENV, DEFAULT_PROFILE_NAME))
     if profile:
         base.update(profile.to_dict().get("validation", {}))
 
     if request:
         request_data = (
-            request.model_dump() if hasattr(request, "model_dump") else dict(request)
+            request.model_dump()
+            if callable(getattr(request, "model_dump", None))
+            else dict(request)
         )
         base.update(request_data)
 
