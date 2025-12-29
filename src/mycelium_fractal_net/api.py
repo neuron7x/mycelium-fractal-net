@@ -181,14 +181,14 @@ ws_manager = WSConnectionManager(
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Start background tasks on application startup."""
     await ws_manager.start_heartbeat_monitor()
     logger.info("Application started, heartbeat monitor running")
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     """Clean up resources on application shutdown."""
     await ws_manager.stop_heartbeat_monitor()
     logger.info("Application shutdown, heartbeat monitor stopped")
@@ -432,7 +432,7 @@ async def keypair(request: KeypairRequest) -> KeypairResponse:
 
 
 @app.websocket("/ws/stream_features")
-async def stream_features(websocket: WebSocket):
+async def stream_features(websocket: WebSocket) -> None:
     """
     WebSocket endpoint for real-time fractal features streaming.
 
@@ -624,7 +624,7 @@ async def stream_features(websocket: WebSocket):
 
 
 @app.websocket("/ws/simulation_live")
-async def simulation_live(websocket: WebSocket):
+async def simulation_live(websocket: WebSocket) -> None:
     """
     WebSocket endpoint for live simulation state updates.
 
@@ -821,7 +821,7 @@ async def _stream_features_task(
     params: StreamFeaturesParams,
     ctx: ServiceContext,
     manager: WSConnectionManager,
-):
+) -> None:
     """Background task for streaming features."""
     try:
         async for update in stream_features_adapter(stream_id, params, ctx):
@@ -852,7 +852,7 @@ async def _stream_simulation_task(
     params: SimulationLiveParams,
     ctx: ServiceContext,
     manager: WSConnectionManager,
-):
+) -> None:
     """Background task for streaming simulation."""
     try:
         async for update in stream_simulation_live_adapter(stream_id, params, ctx):
@@ -889,7 +889,7 @@ def main() -> None:
     """Run the FastAPI server with uvicorn."""
     import uvicorn
 
-    host = os.getenv("MFN_HOST", "0.0.0.0")
+    host = os.getenv("MFN_HOST", "0.0.0.0")  # nosec B104: explicit public bind for service
     port = int(os.getenv("MFN_PORT", "8000"))
     uvicorn.run(app, host=host, port=port)
 

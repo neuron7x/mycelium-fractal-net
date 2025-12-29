@@ -27,6 +27,7 @@ from mycelium_fractal_net import (
 )
 from mycelium_fractal_net.model import HierarchicalKrumAggregator
 
+from .runtime_config import assemble_validation_config
 from .schemas import (
     FederatedAggregateRequest,
     FederatedAggregateResponse,
@@ -38,7 +39,6 @@ from .schemas import (
     ValidateResponse,
 )
 from .service_context import ServiceContext
-from .runtime_config import assemble_validation_config
 
 
 def run_validation_adapter(

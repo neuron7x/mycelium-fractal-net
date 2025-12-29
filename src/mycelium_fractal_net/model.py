@@ -39,7 +39,6 @@ from numpy.typing import NDArray
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
-
 # === Physical Constants (SI) ===
 R_GAS_CONSTANT: float = 8.314  # J/(mol*K)
 FARADAY_CONSTANT: float = 96485.33212  # C/mol

@@ -3,7 +3,7 @@
 from warnings import warn
 
 from mycelium_fractal_net.analytics import legacy_features as _impl
-from mycelium_fractal_net.analytics.legacy_features import *  # type: ignore  # noqa: F401,F403
+from mycelium_fractal_net.analytics.legacy_features import *  # noqa: F401,F403
 
 _box_counting_dimension = _impl._box_counting_dimension
 _count_clusters_4conn = _impl._count_clusters_4conn

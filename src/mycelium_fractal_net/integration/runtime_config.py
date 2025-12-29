@@ -12,8 +12,8 @@ from mycelium_fractal_net.config_profiles import (
     ConfigValidationError,
     load_config_profile,
 )
-from mycelium_fractal_net.model import ValidationConfig
 from mycelium_fractal_net.integration.schemas import ValidateRequest
+from mycelium_fractal_net.model import ValidationConfig
 
 DEFAULT_PROFILE_ENV = "MFN_CONFIG_PROFILE"
 DEFAULT_PROFILE_NAME = "dev"

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 from mycelium_fractal_net.integration.runtime_config import assemble_validation_config
 from mycelium_fractal_net.integration.schemas import ValidateRequest
 
