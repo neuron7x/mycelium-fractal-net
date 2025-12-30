@@ -1265,6 +1265,7 @@ def run_validation_cli() -> None:
     """
     from mycelium_fractal_net.integration.runtime_config import assemble_validation_config
     from mycelium_fractal_net.integration.schemas import ValidateRequest
+
     parser = argparse.ArgumentParser(description="MyceliumFractalNet v4.1 validation CLI")
     parser.add_argument(
         "--mode", type=str, default="validate", choices=["validate"], help="Operation mode"
