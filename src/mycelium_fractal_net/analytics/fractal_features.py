@@ -20,18 +20,12 @@ from typing import TYPE_CHECKING, Any, Dict
 import numpy as np
 from numpy.typing import NDArray
 
-# Import the core feature computation from the analytics module
-from analytics.fractal_features import FeatureConfig
-from analytics.fractal_features import FeatureVector as AnalyticsFeatureVector
-from analytics.fractal_features import (
-    compute_basic_stats as _compute_basic_stats,
-)
-from analytics.fractal_features import (
-    compute_features as _compute_features,
-)
-from analytics.fractal_features import (
-    compute_fractal_features as _compute_fractal_dim,
-)
+# Import the core feature computation from the canonical package implementation
+from .legacy_features import FeatureConfig
+from .legacy_features import FeatureVector as AnalyticsFeatureVector
+from .legacy_features import compute_basic_stats as _compute_basic_stats
+from .legacy_features import compute_features as _compute_features
+from .legacy_features import compute_fractal_features as _compute_fractal_dim
 
 if TYPE_CHECKING:
     from mycelium_fractal_net.core.types import SimulationResult

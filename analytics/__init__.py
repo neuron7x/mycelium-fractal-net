@@ -1,14 +1,8 @@
-"""
-Analytics module for MyceliumFractalNet.
+"""Compatibility shim for analytics; canonical code lives under mycelium_fractal_net.analytics."""
 
-Provides feature extraction utilities for fractal analysis:
-- Box-counting fractal dimension
-- Basic field statistics
-- Temporal dynamics features
-- Structural/connectivity features
-"""
+from warnings import warn
 
-from .fractal_features import (
+from mycelium_fractal_net.analytics.legacy_features import (
     FEATURE_COUNT,
     FeatureConfig,
     FeatureVector,
@@ -17,6 +11,12 @@ from .fractal_features import (
     compute_fractal_features,
     compute_structural_features,
     compute_temporal_features,
+)
+
+warn(
+    "Importing 'analytics' is deprecated; use 'mycelium_fractal_net.analytics' instead.",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 __all__ = [

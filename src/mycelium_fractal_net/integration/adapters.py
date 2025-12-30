@@ -20,7 +20,6 @@ import numpy as np
 import torch
 
 from mycelium_fractal_net import (
-    ValidationConfig,
     compute_nernst_potential,
     estimate_fractal_dimension,
     run_validation,
@@ -28,6 +27,7 @@ from mycelium_fractal_net import (
 )
 from mycelium_fractal_net.model import HierarchicalKrumAggregator
 
+from .runtime_config import assemble_validation_config
 from .schemas import (
     FederatedAggregateRequest,
     FederatedAggregateResponse,
@@ -48,7 +48,7 @@ def run_validation_adapter(
     """
     Run validation cycle using the core validation function.
 
-    Adapts ValidateRequest to ValidationConfig, runs validation,
+    Adapts ValidateRequest through shared config assembly, runs validation,
     and converts results to ValidateResponse.
 
     Args:
@@ -62,16 +62,7 @@ def run_validation_adapter(
         ValueError: If validation parameters are invalid.
         RuntimeError: If validation fails.
     """
-    # Convert request to ValidationConfig
-    cfg = ValidationConfig(
-        seed=request.seed,
-        epochs=request.epochs,
-        batch_size=request.batch_size,
-        grid_size=request.grid_size,
-        steps=request.steps,
-        turing_enabled=request.turing_enabled,
-        quantum_jitter=request.quantum_jitter,
-    )
+    cfg = assemble_validation_config(request)
 
     # Run validation using core function
     metrics: Dict[str, Any] = run_validation(cfg)

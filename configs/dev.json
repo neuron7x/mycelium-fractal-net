@@ -49,7 +49,7 @@
   "expected_metrics": {
     "runtime_seconds_max": 60,
     "memory_mb_max": 500,
-    "fractal_dim_range": [0.0, 2.5],
+    "fractal_dim_range": [0.1, 2.5],
     "lyapunov_max": 1.0
   }
 }
