@@ -41,7 +41,9 @@ def assemble_validation_config(
     base_config = ValidationConfig()
     # ValidationConfig is a simple container; copying vars() is sufficient for defaults.
     base = vars(base_config).copy()
-    profile = _load_profile(profile_name or os.getenv(DEFAULT_PROFILE_ENV, DEFAULT_PROFILE_NAME))
+    profile = _load_profile(
+        profile_name or os.getenv(DEFAULT_PROFILE_ENV, DEFAULT_PROFILE_NAME)
+    )
     if profile:
         base.update(profile.to_dict().get("validation", {}))
 

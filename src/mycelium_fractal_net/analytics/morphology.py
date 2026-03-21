@@ -17,7 +17,7 @@ from mycelium_fractal_net.types.analytics import (
 from mycelium_fractal_net.types.features import MorphologyDescriptor
 from mycelium_fractal_net.types.field import FieldSequence
 
-_DESCRIPTOR_VERSION = 'mfn-morphology-v2'
+_DESCRIPTOR_VERSION = "mfn-morphology-v2"
 
 
 def _stability_metrics(sequence: FieldSequence) -> StabilityMetrics:
@@ -37,20 +37,34 @@ def _stability_metrics(sequence: FieldSequence) -> StabilityMetrics:
 
 
 def _complexity_metrics(sequence: FieldSequence) -> ComplexityMetrics:
-    history = sequence.history if sequence.history is not None else sequence.field[None, :, :]
+    history = (
+        sequence.history if sequence.history is not None else sequence.field[None, :, :]
+    )
     mean_series = np.mean(history, axis=(1, 2))
     if len(mean_series) < 2:
         temporal_lzc = 0.0
         temporal_hfd = 0.0
         multiscale_entropy_short = 0.0
     else:
-        bits = ''.join('1' if value > np.mean(mean_series) else '0' for value in mean_series)
-        unique_substrings = {bits[i:j] for i in range(len(bits)) for j in range(i + 1, min(len(bits), i + 5) + 1)}
+        bits = "".join(
+            "1" if value > np.mean(mean_series) else "0" for value in mean_series
+        )
+        unique_substrings = {
+            bits[i:j]
+            for i in range(len(bits))
+            for j in range(i + 1, min(len(bits), i + 5) + 1)
+        }
         temporal_lzc = float(len(unique_substrings) / max(1, len(bits)))
         diffs = np.abs(np.diff(mean_series))
         temporal_hfd = float(np.mean(diffs) / (np.std(mean_series) + 1e-12))
-        coarse = mean_series.reshape(-1, 2).mean(axis=1) if len(mean_series) >= 4 and len(mean_series) % 2 == 0 else mean_series
-        multiscale_entropy_short = float(np.std(coarse) / (abs(np.mean(coarse)) + 1e-12))
+        coarse = (
+            mean_series.reshape(-1, 2).mean(axis=1)
+            if len(mean_series) >= 4 and len(mean_series) % 2 == 0
+            else mean_series
+        )
+        multiscale_entropy_short = float(
+            np.std(coarse) / (abs(np.mean(coarse)) + 1e-12)
+        )
     return ComplexityMetrics(
         temporal_lzc=temporal_lzc,
         temporal_hfd=temporal_hfd,
@@ -69,11 +83,21 @@ def _neuromodulation_metrics(sequence: FieldSequence) -> NeuromodulationFeatures
         obs = ns.observation_noise_gain
     else:
         meta = dict(sequence.metadata or {})
-        state = dict(meta.get('neuromodulation_state') or {})
-        plasticity = float(state.get('plasticity_index', meta.get('plasticity_index_mean', 0.0)))
-        inhibition = float(state.get('effective_inhibition', meta.get('effective_inhibition_mean', 0.0)))
-        gain = float(state.get('effective_gain', meta.get('effective_gain_mean', 0.0)))
-        obs = float(state.get('observation_noise_gain', meta.get('observation_noise_gain_mean', 0.0)))
+        state = dict(meta.get("neuromodulation_state") or {})
+        plasticity = float(
+            state.get("plasticity_index", meta.get("plasticity_index_mean", 0.0))
+        )
+        inhibition = float(
+            state.get(
+                "effective_inhibition", meta.get("effective_inhibition_mean", 0.0)
+            )
+        )
+        gain = float(state.get("effective_gain", meta.get("effective_gain_mean", 0.0)))
+        obs = float(
+            state.get(
+                "observation_noise_gain", meta.get("observation_noise_gain_mean", 0.0)
+            )
+        )
     return NeuromodulationFeatures(
         enabled=1.0 if (spec is not None and spec.enabled) else 0.0,
         plasticity_index=plasticity,
@@ -112,16 +136,22 @@ def compute_morphology_descriptor(sequence: FieldSequence) -> MorphologyDescript
     connectivity = ConnectivityFeatures.from_dict(connectivity_raw)
 
     # Build embedding from dict representations
-    embedding = build_embedding([
-        base, temporal.to_dict(), multiscale,
-        stability.to_dict(), complexity.to_dict(),
-        connectivity.to_dict(), neuromodulation.to_dict(),
-    ])
+    embedding = build_embedding(
+        [
+            base,
+            temporal.to_dict(),
+            multiscale,
+            stability.to_dict(),
+            complexity.to_dict(),
+            connectivity.to_dict(),
+            neuromodulation.to_dict(),
+        ]
+    )
     metadata = {
-        'grid_size': sequence.grid_size,
-        'num_steps': sequence.num_steps,
-        'runtime_hash': sequence.runtime_hash,
-        'descriptor_family': _DESCRIPTOR_VERSION,
+        "grid_size": sequence.grid_size,
+        "num_steps": sequence.num_steps,
+        "runtime_hash": sequence.runtime_hash,
+        "descriptor_family": _DESCRIPTOR_VERSION,
     }
     # Pass typed objects directly — MorphologyDescriptor normalizes to dicts internally
     result = MorphologyDescriptor(

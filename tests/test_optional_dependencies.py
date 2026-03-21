@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 try:
     import tomllib
@@ -12,7 +12,7 @@ except ModuleNotFoundError:
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / 'src'
+SRC = ROOT / "src"
 
 
 def test_optional_dependency_extras_defined() -> None:
@@ -37,15 +37,17 @@ def test_optional_dependency_extras_defined() -> None:
     assert "numba>=0.60.0" in full_set
 
 
-def _run_blocked_torch_script(tmp_path: Path, source: str) -> subprocess.CompletedProcess[str]:
-    script = tmp_path / 'blocked_torch_case.py'
-    script.write_text(source, encoding='utf-8')
+def _run_blocked_torch_script(
+    tmp_path: Path, source: str
+) -> subprocess.CompletedProcess[str]:
+    script = tmp_path / "blocked_torch_case.py"
+    script.write_text(source, encoding="utf-8")
     return subprocess.run(
         [sys.executable, str(script)],
         cwd=ROOT,
         capture_output=True,
         text=True,
-        env={**os.environ, 'PYTHONPATH': str(SRC)},
+        env={**os.environ, "PYTHONPATH": str(SRC)},
     )
 
 
@@ -68,7 +70,7 @@ print('ok')
 """,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert 'ok' in proc.stdout
+    assert "ok" in proc.stdout
 
 
 def test_ml_only_surface_emits_clear_error_without_torch(tmp_path: Path) -> None:
@@ -94,4 +96,4 @@ else:
 """,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert 'optional ML dependency' in proc.stdout
+    assert "optional ML dependency" in proc.stdout

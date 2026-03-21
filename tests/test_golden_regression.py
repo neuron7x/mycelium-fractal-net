@@ -34,10 +34,18 @@ class TestSimulationRegression:
         assert list(self.seq.field.shape) == self.expected["field_shape"]
 
     def test_field_statistics_stable(self) -> None:
-        assert self.seq.field.min() == pytest.approx(self.expected["field_min"], abs=1e-10)
-        assert self.seq.field.max() == pytest.approx(self.expected["field_max"], abs=1e-10)
-        assert self.seq.field.mean() == pytest.approx(self.expected["field_mean"], abs=1e-10)
-        assert self.seq.field.std() == pytest.approx(self.expected["field_std"], abs=1e-10)
+        assert self.seq.field.min() == pytest.approx(
+            self.expected["field_min"], abs=1e-10
+        )
+        assert self.seq.field.max() == pytest.approx(
+            self.expected["field_max"], abs=1e-10
+        )
+        assert self.seq.field.mean() == pytest.approx(
+            self.expected["field_mean"], abs=1e-10
+        )
+        assert self.seq.field.std() == pytest.approx(
+            self.expected["field_std"], abs=1e-10
+        )
 
     def test_field_checksum(self) -> None:
         """Bitwise-deterministic output check."""
@@ -57,7 +65,9 @@ class TestNernstRegression:
         expected = GOLDEN["nernst_k_potential"]
         assert e_k == pytest.approx(expected["e_volts"], abs=1e-12)
         e_mv = e_k * 1000
-        assert expected["expected_range_mv"][0] <= e_mv <= expected["expected_range_mv"][1]
+        assert (
+            expected["expected_range_mv"][0] <= e_mv <= expected["expected_range_mv"][1]
+        )
 
 
 class TestFeatureExtractionRegression:
@@ -73,13 +83,21 @@ class TestFeatureExtractionRegression:
         assert self.descriptor.version == self.expected["version"]
 
     def test_stability_keys(self) -> None:
-        assert sorted(self.descriptor.stability.keys()) == self.expected["stability_keys"]
+        assert (
+            sorted(self.descriptor.stability.keys()) == self.expected["stability_keys"]
+        )
 
     def test_complexity_keys(self) -> None:
-        assert sorted(self.descriptor.complexity.keys()) == self.expected["complexity_keys"]
+        assert (
+            sorted(self.descriptor.complexity.keys())
+            == self.expected["complexity_keys"]
+        )
 
     def test_connectivity_keys(self) -> None:
-        assert sorted(self.descriptor.connectivity.keys()) == self.expected["connectivity_keys"]
+        assert (
+            sorted(self.descriptor.connectivity.keys())
+            == self.expected["connectivity_keys"]
+        )
 
     def test_embedding_length(self) -> None:
         assert len(self.descriptor.embedding) == self.expected["embedding_length"]

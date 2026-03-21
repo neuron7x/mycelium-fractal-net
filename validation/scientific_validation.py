@@ -14,11 +14,9 @@ Run with: python validation/scientific_validation.py
 
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Optional
 
 import numpy as np
-
 
 from mycelium_fractal_net import (
     BODY_TEMPERATURE_K,
@@ -431,7 +429,9 @@ class ScientificValidation:
         self.results.append(result)
 
         status = "✓" if passed else "✗"
-        print(f"{status} Pattern difference: {max_diff:.6f} V (threshold: >{threshold} V)")
+        print(
+            f"{status} Pattern difference: {max_diff:.6f} V (threshold: >{threshold} V)"
+        )
 
         return result
 

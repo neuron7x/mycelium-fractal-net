@@ -20,9 +20,12 @@ from typing import Any
 
 import numpy as np
 import pytest
+
 torch = pytest.importorskip("torch")
 
-from mycelium_fractal_net.core import HierarchicalKrumAggregator as CoreHierarchicalKrumAggregator
+from mycelium_fractal_net.core import (
+    HierarchicalKrumAggregator as CoreHierarchicalKrumAggregator,
+)
 from mycelium_fractal_net.model import HierarchicalKrumAggregator
 
 
@@ -122,7 +125,9 @@ class TestKrumAlgorithmCorrectness:
         should select the gradient at value 2.0.
         """
         agg = HierarchicalKrumAggregator(byzantine_fraction=0.0)
-        grads = [torch.tensor([v], dtype=torch.float32) for v in (0.0, 1.0, 2.0, 4.0, 5.0)]
+        grads = [
+            torch.tensor([v], dtype=torch.float32) for v in (0.0, 1.0, 2.0, 4.0, 5.0)
+        ]
 
         result = agg.krum_select(grads, num_byzantine=0)
 

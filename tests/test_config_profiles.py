@@ -49,7 +49,10 @@ def test_invalid_profile_rejected(tmp_path: Path) -> None:
     ],
 )
 def test_apply_overrides_parses_values(overrides: str, expected: object) -> None:
-    base = {"validation": {"seed": 1, "device": "cpu"}, "simulation": {"turing_threshold": 0.75}}
+    base = {
+        "validation": {"seed": 1, "device": "cpu"},
+        "simulation": {"turing_threshold": 0.75},
+    }
     updated = apply_overrides(base, overrides)
     key_path, _ = overrides.split("=", 1)
     parent, leaf = key_path.split(".")

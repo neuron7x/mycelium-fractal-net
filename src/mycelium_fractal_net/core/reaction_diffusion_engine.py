@@ -20,7 +20,9 @@ from mycelium_fractal_net.neurochem.kinetics import (
     step_neuromodulation_state,
 )
 from mycelium_fractal_net.neurochem.state import NeuromodulationState
-from mycelium_fractal_net.numerics.grid_ops import compute_laplacian as numerics_compute_laplacian
+from mycelium_fractal_net.numerics.grid_ops import (
+    compute_laplacian as numerics_compute_laplacian,
+)
 
 from .exceptions import NumericalInstabilityError
 from .reaction_diffusion_compat import (  # noqa: F401
@@ -89,7 +91,7 @@ def _neuromod_sub(spec: dict[str, Any] | None, key: str) -> dict[str, Any] | Non
         return None
     if isinstance(raw, dict):
         return raw
-    if hasattr(raw, 'to_dict'):
+    if hasattr(raw, "to_dict"):
         return raw.to_dict()
     return None
 
@@ -144,7 +146,9 @@ class ReactionDiffusionEngine:
     ) -> NDArray[np.floating]:
         n = self.config.grid_size
         self._field = self._rng.normal(
-            loc=initial_potential_v, scale=initial_std_v, size=(n, n),
+            loc=initial_potential_v,
+            scale=initial_std_v,
+            size=(n, n),
         ).astype(np.float64)
         self._activator = self._rng.uniform(0, 0.1, size=(n, n)).astype(np.float64)
         self._inhibitor = self._rng.uniform(0, 0.1, size=(n, n)).astype(np.float64)
@@ -220,10 +224,24 @@ class ReactionDiffusionEngine:
         intrinsic_enabled = bool(self.config.quantum_jitter)
         intrinsic_var = float(self.config.jitter_var)
         if self.config.neuromodulation is not None:
-            intrinsic_enabled = bool(_neuromod_get(self.config.neuromodulation, 'intrinsic_field_jitter', intrinsic_enabled))
-            intrinsic_var = float(_neuromod_get(self.config.neuromodulation, 'intrinsic_field_jitter_var', intrinsic_var))
+            intrinsic_enabled = bool(
+                _neuromod_get(
+                    self.config.neuromodulation,
+                    "intrinsic_field_jitter",
+                    intrinsic_enabled,
+                )
+            )
+            intrinsic_var = float(
+                _neuromod_get(
+                    self.config.neuromodulation,
+                    "intrinsic_field_jitter_var",
+                    intrinsic_var,
+                )
+            )
         if intrinsic_enabled:
-            self._field = self._field + self._rng.normal(0, np.sqrt(intrinsic_var), size=self._field.shape)
+            self._field = self._field + self._rng.normal(
+                0, np.sqrt(intrinsic_var), size=self._field.shape
+            )
 
         # Soft-boundary damping + hard clamp
         self._field, pressure = self._apply_soft_boundary_damping(self._field)
@@ -257,14 +275,14 @@ class ReactionDiffusionEngine:
         if self._neuro_state is None:
             self._neuro_state = NeuromodulationState.zeros(self._field.shape)
         spec = self.config.neuromodulation
-        if not bool(_neuromod_get(spec, 'enabled', False)):
+        if not bool(_neuromod_get(spec, "enabled", False)):
             return
-        gabaa = _neuromod_sub(spec, 'gabaa_tonic')
-        serotonergic = _neuromod_sub(spec, 'serotonergic')
-        observation_noise = _neuromod_sub(spec, 'observation_noise')
+        gabaa = _neuromod_sub(spec, "gabaa_tonic")
+        serotonergic = _neuromod_sub(spec, "serotonergic")
+        observation_noise = _neuromod_sub(spec, "observation_noise")
         self._neuro_state = step_neuromodulation_state(
             self._neuro_state,
-            dt_seconds=float(_neuromod_get(spec, 'dt_seconds', 1.0)),
+            dt_seconds=float(_neuromod_get(spec, "dt_seconds", 1.0)),
             activator=self._activator.astype(np.float64),
             field=self._field.astype(np.float64),
             gabaa=gabaa,
@@ -274,36 +292,62 @@ class ReactionDiffusionEngine:
         excitability_offset = compute_excitability_offset_v(
             self._neuro_state,
             activator=self._activator.astype(np.float64),
-            baseline_activation_offset_mv=float(_neuromod_get(spec, 'baseline_activation_offset_mv', 0.0)),
-            rest_offset_mv=float((gabaa or {}).get('rest_offset_mv', 0.0)),
-            plasticity_scale=float((serotonergic or {}).get('plasticity_scale', 1.0)),
+            baseline_activation_offset_mv=float(
+                _neuromod_get(spec, "baseline_activation_offset_mv", 0.0)
+            ),
+            rest_offset_mv=float((gabaa or {}).get("rest_offset_mv", 0.0)),
+            plasticity_scale=float((serotonergic or {}).get("plasticity_scale", 1.0)),
         )
         centered = self._field - INITIAL_POTENTIAL_MEAN
         gain = np.clip(1.0 + self._neuro_state.effective_gain, 0.70, 1.30)
         shunt = np.clip(1.0 - self._neuro_state.effective_inhibition, 0.05, 1.0)
-        self._field = INITIAL_POTENTIAL_MEAN + excitability_offset + centered * gain * shunt
-        self._metrics.plasticity_index_mean = float(np.mean(self._neuro_state.plasticity_index))
-        self._metrics.effective_inhibition_mean = float(np.mean(self._neuro_state.effective_inhibition))
-        self._metrics.effective_gain_mean = float(np.mean(self._neuro_state.effective_gain))
-        self._metrics.observation_noise_gain_mean = float(np.mean(self._neuro_state.observation_noise_gain))
-        self._metrics.occupancy_resting_mean = float(np.mean(self._neuro_state.occupancy_resting))
-        self._metrics.occupancy_active_mean = float(np.mean(self._neuro_state.occupancy_active))
-        self._metrics.occupancy_desensitized_mean = float(np.mean(self._neuro_state.occupancy_desensitized))
-        self._metrics.occupancy_mass_error_max = self._neuro_state.occupancy_mass_error_max()
+        self._field = (
+            INITIAL_POTENTIAL_MEAN + excitability_offset + centered * gain * shunt
+        )
+        self._metrics.plasticity_index_mean = float(
+            np.mean(self._neuro_state.plasticity_index)
+        )
+        self._metrics.effective_inhibition_mean = float(
+            np.mean(self._neuro_state.effective_inhibition)
+        )
+        self._metrics.effective_gain_mean = float(
+            np.mean(self._neuro_state.effective_gain)
+        )
+        self._metrics.observation_noise_gain_mean = float(
+            np.mean(self._neuro_state.observation_noise_gain)
+        )
+        self._metrics.occupancy_resting_mean = float(
+            np.mean(self._neuro_state.occupancy_resting)
+        )
+        self._metrics.occupancy_active_mean = float(
+            np.mean(self._neuro_state.occupancy_active)
+        )
+        self._metrics.occupancy_desensitized_mean = float(
+            np.mean(self._neuro_state.occupancy_desensitized)
+        )
+        self._metrics.occupancy_mass_error_max = (
+            self._neuro_state.occupancy_mass_error_max()
+        )
         self._metrics.excitability_offset_mean_v = float(np.mean(excitability_offset))
 
     def _compute_alpha_guard_substeps(self) -> tuple[int, float]:
         if not self.config.alpha_guard_enabled:
             return 1, 1.0
         threshold = float(np.clip(self.config.alpha_guard_threshold, 1e-6, 1.0))
-        max_coeff = max(float(self.config.alpha), float(self.config.d_activator), float(self.config.d_inhibitor))
+        max_coeff = max(
+            float(self.config.alpha),
+            float(self.config.d_activator),
+            float(self.config.d_inhibitor),
+        )
         allowed = MAX_STABLE_DIFFUSION * threshold
         if max_coeff <= allowed:
             return 1, 1.0
         substeps = int(np.ceil(max_coeff / allowed))
         return max(1, substeps), 1.0 / max(1, substeps)
 
-    def _apply_soft_boundary_damping(self, field: NDArray[np.floating]) -> tuple[NDArray[np.floating], float]:
+    def _apply_soft_boundary_damping(
+        self, field: NDArray[np.floating]
+    ) -> tuple[NDArray[np.floating], float]:
         damping = float(np.clip(self.config.soft_boundary_damping, 0.0, 1.0))
         upper_excess = np.maximum(field - FIELD_V_MAX, 0.0)
         lower_excess = np.maximum(FIELD_V_MIN - field, 0.0)
@@ -319,8 +363,15 @@ class ReactionDiffusionEngine:
         assert self._field is not None
         a_lap = self._compute_laplacian(self._activator)
         i_lap = self._compute_laplacian(self._inhibitor)
-        da = (self.config.d_activator * a_lap + self.config.r_activator * (self._activator * (1 - self._activator) - self._inhibitor)) * float(dt_scale)
-        di = (self.config.d_inhibitor * i_lap + self.config.r_inhibitor * (self._activator - self._inhibitor)) * float(dt_scale)
+        da = (
+            self.config.d_activator * a_lap
+            + self.config.r_activator
+            * (self._activator * (1 - self._activator) - self._inhibitor)
+        ) * float(dt_scale)
+        di = (
+            self.config.d_inhibitor * i_lap
+            + self.config.r_inhibitor * (self._activator - self._inhibitor)
+        ) * float(dt_scale)
         self._activator = self._activator + da
         self._inhibitor = self._inhibitor + di
         turing_mask = self._activator > self.config.turing_threshold
@@ -335,13 +386,19 @@ class ReactionDiffusionEngine:
         return cast(
             NDArray[np.floating[Any]],
             numerics_compute_laplacian(
-                field, boundary=self.config.boundary_condition,
-                check_stability=False, use_accel=self.config.accel_laplacian,
+                field,
+                boundary=self.config.boundary_condition,
+                check_stability=False,
+                use_accel=self.config.accel_laplacian,
             ),
         )
 
     def _check_stability(self, step: int) -> None:
-        for name, arr in [("field", self._field), ("activator", self._activator), ("inhibitor", self._inhibitor)]:
+        for name, arr in [
+            ("field", self._field),
+            ("activator", self._activator),
+            ("inhibitor", self._inhibitor),
+        ]:
             if arr is None:
                 continue
             nan_count = int(np.sum(np.isnan(arr)))
@@ -350,12 +407,22 @@ class ReactionDiffusionEngine:
                 self._metrics.nan_detected = True
                 if self._metrics.steps_to_instability is None:
                     self._metrics.steps_to_instability = step
-                raise NumericalInstabilityError(f"NaN values detected in {name}", step=step, field_name=name, nan_count=nan_count)
+                raise NumericalInstabilityError(
+                    f"NaN values detected in {name}",
+                    step=step,
+                    field_name=name,
+                    nan_count=nan_count,
+                )
             if inf_count > 0:
                 self._metrics.inf_detected = True
                 if self._metrics.steps_to_instability is None:
                     self._metrics.steps_to_instability = step
-                raise NumericalInstabilityError(f"Inf values detected in {name}", step=step, field_name=name, inf_count=inf_count)
+                raise NumericalInstabilityError(
+                    f"Inf values detected in {name}",
+                    step=step,
+                    field_name=name,
+                    inf_count=inf_count,
+                )
 
     def _update_field_metrics(self) -> None:
         if self._field is not None:
@@ -368,14 +435,30 @@ class ReactionDiffusionEngine:
         if self._inhibitor is not None:
             self._metrics.inhibitor_mean = float(np.mean(self._inhibitor))
         if self._neuro_state is not None:
-            self._metrics.plasticity_index_mean = float(np.mean(self._neuro_state.plasticity_index))
-            self._metrics.effective_inhibition_mean = float(np.mean(self._neuro_state.effective_inhibition))
-            self._metrics.effective_gain_mean = float(np.mean(self._neuro_state.effective_gain))
-            self._metrics.observation_noise_gain_mean = float(np.mean(self._neuro_state.observation_noise_gain))
-            self._metrics.occupancy_resting_mean = float(np.mean(self._neuro_state.occupancy_resting))
-            self._metrics.occupancy_active_mean = float(np.mean(self._neuro_state.occupancy_active))
-            self._metrics.occupancy_desensitized_mean = float(np.mean(self._neuro_state.occupancy_desensitized))
-            self._metrics.occupancy_mass_error_max = self._neuro_state.occupancy_mass_error_max()
+            self._metrics.plasticity_index_mean = float(
+                np.mean(self._neuro_state.plasticity_index)
+            )
+            self._metrics.effective_inhibition_mean = float(
+                np.mean(self._neuro_state.effective_inhibition)
+            )
+            self._metrics.effective_gain_mean = float(
+                np.mean(self._neuro_state.effective_gain)
+            )
+            self._metrics.observation_noise_gain_mean = float(
+                np.mean(self._neuro_state.observation_noise_gain)
+            )
+            self._metrics.occupancy_resting_mean = float(
+                np.mean(self._neuro_state.occupancy_resting)
+            )
+            self._metrics.occupancy_active_mean = float(
+                np.mean(self._neuro_state.occupancy_active)
+            )
+            self._metrics.occupancy_desensitized_mean = float(
+                np.mean(self._neuro_state.occupancy_desensitized)
+            )
+            self._metrics.occupancy_mass_error_max = (
+                self._neuro_state.occupancy_mass_error_max()
+            )
 
     def validate_cfl_condition(self) -> bool:
         max_d = max(self.config.d_activator, self.config.d_inhibitor, self.config.alpha)

@@ -43,27 +43,38 @@ def _dump_json(payload: dict[str, Any], output: str | None) -> int:
 def _load_npy(path: str) -> FieldSequence:
     arr = np.load(Path(path))
     if arr.ndim == 3:
-        return FieldSequence(field=arr[-1].astype(np.float64), history=arr.astype(np.float64), metadata={"source": str(path)})
+        return FieldSequence(
+            field=arr[-1].astype(np.float64),
+            history=arr.astype(np.float64),
+            metadata={"source": str(path)},
+        )
     if arr.ndim == 2:
-        return FieldSequence(field=arr.astype(np.float64), history=None, metadata={"source": str(path)})
+        return FieldSequence(
+            field=arr.astype(np.float64), history=None, metadata={"source": str(path)}
+        )
     raise ValueError(f"expected 2D or 3D array, got ndim={arr.ndim}")
 
 
 def _neuromod_from_args(args: argparse.Namespace) -> NeuromodulationSpec | None:
-    profile = getattr(args, 'neuromod_profile', None)
-    obs_profile = getattr(args, 'observation_noise_profile', None)
-    agonist = getattr(args, 'agonist_concentration_um', None)
-    rest_offset_mv = getattr(args, 'rest_offset_mv', None)
-    gain_fluidity = getattr(args, 'gain_fluidity_coeff', None)
-    dt_seconds = float(getattr(args, 'dt_seconds', 1.0))
-    if not any(v is not None for v in [profile, obs_profile, agonist, rest_offset_mv, gain_fluidity]):
+    profile = getattr(args, "neuromod_profile", None)
+    obs_profile = getattr(args, "observation_noise_profile", None)
+    agonist = getattr(args, "agonist_concentration_um", None)
+    rest_offset_mv = getattr(args, "rest_offset_mv", None)
+    gain_fluidity = getattr(args, "gain_fluidity_coeff", None)
+    dt_seconds = float(getattr(args, "dt_seconds", 1.0))
+    if not any(
+        v is not None
+        for v in [profile, obs_profile, agonist, rest_offset_mv, gain_fluidity]
+    ):
         return None
     gabaa = None
     serotonergic = None
     observation_noise = None
-    if profile and ('gabaa' in profile or agonist is not None or rest_offset_mv is not None):
+    if profile and (
+        "gabaa" in profile or agonist is not None or rest_offset_mv is not None
+    ):
         gabaa = GABAATonicSpec(
-            profile=profile or 'custom-gabaa',
+            profile=profile or "custom-gabaa",
             agonist_concentration_um=float(agonist or 0.0),
             rest_offset_mv=float(rest_offset_mv or 0.0),
             shunt_strength=0.25,
@@ -72,9 +83,13 @@ def _neuromod_from_args(args: argparse.Namespace) -> NeuromodulationSpec | None:
             desensitization_rate_hz=0.02,
             recovery_rate_hz=0.02,
         )
-    if profile and ('serotonergic' in profile or 'criticality' in profile or gain_fluidity is not None):
+    if profile and (
+        "serotonergic" in profile
+        or "criticality" in profile
+        or gain_fluidity is not None
+    ):
         serotonergic = SerotonergicPlasticitySpec(
-            profile=profile or 'custom-serotonergic',
+            profile=profile or "custom-serotonergic",
             gain_fluidity_coeff=float(gain_fluidity or 0.05),
             reorganization_drive=0.05,
             coherence_bias=0.01,
@@ -82,15 +97,15 @@ def _neuromod_from_args(args: argparse.Namespace) -> NeuromodulationSpec | None:
     if obs_profile:
         observation_noise = ObservationNoiseSpec(
             profile=obs_profile,
-            std=0.0012 if obs_profile == 'observation_noise_bold_like' else 0.0005,
+            std=0.0012 if obs_profile == "observation_noise_bold_like" else 0.0005,
             temporal_smoothing=0.35,
         )
     return NeuromodulationSpec(
-        profile=profile or obs_profile or 'custom-neuromodulation',
+        profile=profile or obs_profile or "custom-neuromodulation",
         enabled=True,
         dt_seconds=dt_seconds,
-        intrinsic_field_jitter=getattr(args, 'quantum_jitter', False),
-        intrinsic_field_jitter_var=float(getattr(args, 'jitter_var', 0.0005)),
+        intrinsic_field_jitter=getattr(args, "quantum_jitter", False),
+        intrinsic_field_jitter_var=float(getattr(args, "jitter_var", 0.0005)),
         gabaa_tonic=gabaa,
         serotonergic=serotonergic,
         observation_noise=observation_noise,
@@ -112,30 +127,44 @@ def _spec_from_args(args: argparse.Namespace) -> SimulationSpec:
     )
 
 
-def _sequence_from_args(args: argparse.Namespace, *, require_history: bool = False) -> FieldSequence:
+def _sequence_from_args(
+    args: argparse.Namespace, *, require_history: bool = False
+) -> FieldSequence:
     if getattr(args, "input_npy", None):
         seq = _load_npy(args.input_npy)
     else:
         spec = _spec_from_args(args)
         seq = simulate_history(spec) if require_history else simulate_final(spec)
     if require_history and not seq.has_history:
-        raise ValueError("command requires history; provide --input-npy with 3D array or omit it to simulate with history")
+        raise ValueError(
+            "command requires history; provide --input-npy with 3D array or omit it to simulate with history"
+        )
     return seq
 
 
 def _pair_from_args(args: argparse.Namespace) -> tuple[FieldSequence, FieldSequence]:
-    left = _load_npy(args.input_a_npy) if args.input_a_npy else simulate_history(_spec_from_args(args))
+    left = (
+        _load_npy(args.input_a_npy)
+        if args.input_a_npy
+        else simulate_history(_spec_from_args(args))
+    )
     if args.input_b_npy:
         right = _load_npy(args.input_b_npy)
     else:
         spec = _spec_from_args(args)
         seed = spec.seed if spec.seed is not None else 42
-        right = simulate_history(SimulationSpec(**{**spec.as_runtime_dict(), "seed": seed + 1}))
+        right = simulate_history(
+            SimulationSpec(**{**spec.as_runtime_dict(), "seed": seed + 1})
+        )
     return left, right
 
 
 def cmd_simulate(args: argparse.Namespace) -> int:
-    seq = simulate_history(_spec_from_args(args)) if args.with_history else simulate_final(_spec_from_args(args))
+    seq = (
+        simulate_history(_spec_from_args(args))
+        if args.with_history
+        else simulate_final(_spec_from_args(args))
+    )
     payload = seq.to_dict(include_arrays=args.include_arrays)
     payload["command"] = "simulate"
     return _dump_json(payload, args.output)
@@ -144,39 +173,52 @@ def cmd_simulate(args: argparse.Namespace) -> int:
 def cmd_extract(args: argparse.Namespace) -> int:
     seq = _sequence_from_args(args)
     descriptor = compute_morphology_descriptor(seq)
-    return _dump_json({"command": "extract", "descriptor": descriptor.to_dict(), "features": descriptor.features}, args.output)
+    return _dump_json(
+        {
+            "command": "extract",
+            "descriptor": descriptor.to_dict(),
+            "features": descriptor.features,
+        },
+        args.output,
+    )
 
 
 def cmd_detect(args: argparse.Namespace) -> int:
     seq = _sequence_from_args(args)
     detection = detect_anomaly(seq)
     payload = detection.to_dict()
-    payload.setdefault('anomaly_label', payload['label'])
-    payload.setdefault('anomaly_score', payload['score'])
-    if payload.get('regime'):
-        payload.setdefault('regime_label', payload['regime']['label'])
+    payload.setdefault("anomaly_label", payload["label"])
+    payload.setdefault("anomaly_score", payload["score"])
+    if payload.get("regime"):
+        payload.setdefault("regime_label", payload["regime"]["label"])
     return _dump_json({"command": "detect", "detection": payload}, args.output)
 
 
 def cmd_forecast(args: argparse.Namespace) -> int:
     seq = _sequence_from_args(args, require_history=True)
     result = forecast_next(seq, horizon=args.horizon)
-    return _dump_json({"command": "forecast", "forecast": result.to_dict()}, args.output)
+    return _dump_json(
+        {"command": "forecast", "forecast": result.to_dict()}, args.output
+    )
 
 
 def cmd_compare(args: argparse.Namespace) -> int:
     left, right = _pair_from_args(args)
     result = compare_sequences(left, right)
     payload = result.to_dict()
-    payload.setdefault('similarity_label', payload['label'])
+    payload.setdefault("similarity_label", payload["label"])
     return _dump_json({"command": "compare", "comparison": payload}, args.output)
 
 
 def cmd_report(args: argparse.Namespace) -> int:
     seq = _sequence_from_args(args, require_history=True)
-    comparison = _load_npy(args.compare_npy) if getattr(args, 'compare_npy', None) else None
-    if getattr(args, 'output_dir', None):
-        tmp_root = Path(args.output_dir).parent / (Path(args.output_dir).name + '_tmp_root')
+    comparison = (
+        _load_npy(args.compare_npy) if getattr(args, "compare_npy", None) else None
+    )
+    if getattr(args, "output_dir", None):
+        tmp_root = Path(args.output_dir).parent / (
+            Path(args.output_dir).name + "_tmp_root"
+        )
         result = build_analysis_report(
             seq,
             tmp_root,
@@ -188,6 +230,7 @@ def cmd_report(args: argparse.Namespace) -> int:
         dst_dir = Path(args.output_dir)
         if dst_dir.exists():
             import shutil
+
             shutil.rmtree(dst_dir)
         dst_dir.parent.mkdir(parents=True, exist_ok=True)
         src_dir.replace(dst_dir)
@@ -213,7 +256,7 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 def cmd_verify_bundle(args: argparse.Namespace) -> int:
     payload = verify_bundle(args.path)
-    if not payload['ok']:
+    if not payload["ok"]:
         print(json.dumps(payload, indent=2))
         return 1
     return _dump_json(payload, args.output)
@@ -250,7 +293,11 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         "core": [root / "benchmark_core.py"],
         "scalability": [root / "benchmark_scalability.py"],
         "quality": [root / "benchmark_quality.py"],
-        "all": [root / "benchmark_core.py", root / "benchmark_scalability.py", root / "benchmark_quality.py"],
+        "all": [
+            root / "benchmark_core.py",
+            root / "benchmark_scalability.py",
+            root / "benchmark_quality.py",
+        ],
     }
     return max(_run_script(path) for path in suites[args.suite])
 
@@ -271,8 +318,12 @@ def _add_spec(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--alpha", type=float, default=0.18)
     parser.add_argument("--spike-probability", type=float, default=0.25)
     parser.add_argument("--turing-threshold", type=float, default=0.75)
-    parser.add_argument("--turing-enabled", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--quantum-jitter", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument(
+        "--turing-enabled", action=argparse.BooleanOptionalAction, default=True
+    )
+    parser.add_argument(
+        "--quantum-jitter", action=argparse.BooleanOptionalAction, default=False
+    )
     parser.add_argument("--jitter-var", type=float, default=0.0005)
     parser.add_argument("--neuromod-profile", type=str, default=None)
     parser.add_argument("--dt-seconds", type=float, default=1.0)
@@ -284,13 +335,19 @@ def _add_spec(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="mfn", description="Morphology-aware Field Intelligence Engine CLI")
+    parser = argparse.ArgumentParser(
+        prog="mfn", description="Morphology-aware Field Intelligence Engine CLI"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("simulate", help="deterministic field simulation")
     _add_spec(p)
-    p.add_argument("--with-history", action=argparse.BooleanOptionalAction, default=False)
-    p.add_argument("--include-arrays", action=argparse.BooleanOptionalAction, default=False)
+    p.add_argument(
+        "--with-history", action=argparse.BooleanOptionalAction, default=False
+    )
+    p.add_argument(
+        "--include-arrays", action=argparse.BooleanOptionalAction, default=False
+    )
     p.set_defaults(func=cmd_simulate)
 
     p = sub.add_parser("extract", help="morphology-aware feature extraction")
@@ -322,10 +379,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--horizon", type=int, default=8)
     p.add_argument("--output-root", type=str, default="artifacts/runs")
     p.add_argument("--output-dir", type=str, default=None)
-    p.add_argument("--export-symbolic-context", action=argparse.BooleanOptionalAction, default=True)
+    p.add_argument(
+        "--export-symbolic-context", action=argparse.BooleanOptionalAction, default=True
+    )
     p.set_defaults(func=cmd_report)
 
-    p = sub.add_parser("verify-bundle", help="verify report/release/showcase manifests, hashes, and signatures")
+    p = sub.add_parser(
+        "verify-bundle",
+        help="verify report/release/showcase manifests, hashes, and signatures",
+    )
     p.add_argument("path", type=str)
     p.add_argument("--output", type=str, default=None)
     p.set_defaults(func=cmd_verify_bundle)
@@ -336,13 +398,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--batch-size", type=int, default=4)
     p.add_argument("--grid-size", type=int, default=32)
     p.add_argument("--steps", type=int, default=24)
-    p.add_argument("--turing-enabled", action=argparse.BooleanOptionalAction, default=True)
-    p.add_argument("--quantum-jitter", action=argparse.BooleanOptionalAction, default=False)
+    p.add_argument(
+        "--turing-enabled", action=argparse.BooleanOptionalAction, default=True
+    )
+    p.add_argument(
+        "--quantum-jitter", action=argparse.BooleanOptionalAction, default=False
+    )
     p.add_argument("--output", type=str, default=None)
     p.set_defaults(func=cmd_validate)
 
     p = sub.add_parser("benchmark", help="run benchmark suites")
-    p.add_argument("--suite", choices=["core", "scalability", "quality", "all"], default="core")
+    p.add_argument(
+        "--suite", choices=["core", "scalability", "quality", "all"], default="core"
+    )
     p.set_defaults(func=cmd_benchmark)
 
     p = sub.add_parser("api", help="run FastAPI server")

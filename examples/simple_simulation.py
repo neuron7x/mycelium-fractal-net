@@ -34,7 +34,9 @@ from mycelium_fractal_net import (
 )
 
 
-def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureVector | None:
+def run_demo(
+    *, verbose: bool = True, return_features: bool = False
+) -> FeatureVector | None:
     """
     Run the MFN simple simulation demo.
 
@@ -141,14 +143,20 @@ def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureV
 
     # Dimension sanity check (per MFN_FEATURE_SCHEMA.md)
     # D_box ∈ [0, 2.5] for MFN simulations (biological: [1.4, 1.9])
-    assert 0.0 <= features["D_box"] <= 2.5, f"D_box={features['D_box']:.3f} out of range [0, 2.5]"
+    assert (
+        0.0 <= features["D_box"] <= 2.5
+    ), f"D_box={features['D_box']:.3f} out of range [0, 2.5]"
 
     # Mean potential sanity check
     # V_mean should be in physiological range [-95, 40] mV
-    assert -100.0 <= features["V_mean"] <= 50.0, f"V_mean={features['V_mean']:.1f} out of range"
+    assert (
+        -100.0 <= features["V_mean"] <= 50.0
+    ), f"V_mean={features['V_mean']:.1f} out of range"
 
     # Active fraction check
-    assert 0.0 <= features["f_active"] <= 1.0, f"f_active={features['f_active']:.3f} out of range"
+    assert (
+        0.0 <= features["f_active"] <= 1.0
+    ), f"f_active={features['f_active']:.3f} out of range"
 
     # R² check (regression quality)
     assert 0.0 <= features["D_r2"] <= 1.0, f"D_r2={features['D_r2']:.3f} out of range"
@@ -185,7 +193,9 @@ def run_demo(*, verbose: bool = True, return_features: bool = False) -> FeatureV
             f"Simulation:         {sim_config.grid_size}x{sim_config.grid_size} grid, "
             f"{sim_config.steps} steps"
         )
-        print(f"Fractal dimension:  {features['D_box']:.4f} (biological range: 1.4-1.9)")
+        print(
+            f"Fractal dimension:  {features['D_box']:.4f} (biological range: 1.4-1.9)"
+        )
         print(f"Active cells:       {features['f_active'] * 100:.1f}%")
         print(f"Mean potential:     {features['V_mean']:.2f} mV")
         print(f"Growth events:      {result.growth_events}")

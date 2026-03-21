@@ -1,26 +1,74 @@
-
 """Canonical MFN type exports (lazy)."""
 
 __all__ = [
-    'SimulationConfig', 'SimulationResult', 'FeatureConfig', 'DatasetConfig',
-    'FieldState', 'FieldHistory', 'FieldSequence', 'SimulationSpec', 'GridShape', 'BoundaryCondition',
-    'NeuromodulationSpec', 'GABAATonicSpec', 'SerotonergicPlasticitySpec', 'ObservationNoiseSpec',
-    'FeatureVector', 'MorphologyDescriptor', 'FEATURE_NAMES', 'FEATURE_COUNT',
-    'AnomalyEvent', 'RegimeState', 'DetectionEvidence',
-    'ForecastResult', 'ComparisonResult', 'AnalysisReport',
-    'TemporalFeatures', 'StabilityMetrics', 'ComplexityMetrics',
-    'ConnectivityFeatures', 'NeuromodulationFeatures',
-    'ChangePointResult', 'DriftSummary', 'TopologySummary',
-    'NeuromodulationStateSnapshot',
-    'ScenarioConfig', 'ScenarioType', 'DatasetRow', 'DatasetMeta', 'DatasetStats',
+    "SimulationConfig",
+    "SimulationResult",
+    "FeatureConfig",
+    "DatasetConfig",
+    "FieldState",
+    "FieldHistory",
+    "FieldSequence",
+    "SimulationSpec",
+    "GridShape",
+    "BoundaryCondition",
+    "NeuromodulationSpec",
+    "GABAATonicSpec",
+    "SerotonergicPlasticitySpec",
+    "ObservationNoiseSpec",
+    "FeatureVector",
+    "MorphologyDescriptor",
+    "FEATURE_NAMES",
+    "FEATURE_COUNT",
+    "AnomalyEvent",
+    "RegimeState",
+    "DetectionEvidence",
+    "ForecastResult",
+    "ComparisonResult",
+    "AnalysisReport",
+    "TemporalFeatures",
+    "StabilityMetrics",
+    "ComplexityMetrics",
+    "ConnectivityFeatures",
+    "NeuromodulationFeatures",
+    "ChangePointResult",
+    "DriftSummary",
+    "TopologySummary",
+    "NeuromodulationStateSnapshot",
+    "ScenarioConfig",
+    "ScenarioType",
+    "DatasetRow",
+    "DatasetMeta",
+    "DatasetStats",
 ]
 
 
 def __getattr__(name: str):
-    if name in {'SimulationConfig', 'SimulationResult', 'FeatureConfig', 'DatasetConfig'}:
-        from .config import DatasetConfig, FeatureConfig, SimulationConfig, SimulationResult
+    if name in {
+        "SimulationConfig",
+        "SimulationResult",
+        "FeatureConfig",
+        "DatasetConfig",
+    }:
+        from .config import (
+            DatasetConfig,
+            FeatureConfig,
+            SimulationConfig,
+            SimulationResult,
+        )
+
         return locals()[name]
-    if name in {'FieldState', 'FieldHistory', 'FieldSequence', 'SimulationSpec', 'GridShape', 'BoundaryCondition', 'NeuromodulationSpec', 'GABAATonicSpec', 'SerotonergicPlasticitySpec', 'ObservationNoiseSpec'}:
+    if name in {
+        "FieldState",
+        "FieldHistory",
+        "FieldSequence",
+        "SimulationSpec",
+        "GridShape",
+        "BoundaryCondition",
+        "NeuromodulationSpec",
+        "GABAATonicSpec",
+        "SerotonergicPlasticitySpec",
+        "ObservationNoiseSpec",
+    }:
         from .field import (
             BoundaryCondition,
             FieldHistory,
@@ -33,14 +81,36 @@ def __getattr__(name: str):
             SerotonergicPlasticitySpec,
             SimulationSpec,
         )
+
         return locals()[name]
-    if name in {'FeatureVector', 'MorphologyDescriptor', 'FEATURE_NAMES', 'FEATURE_COUNT'}:
-        from .features import FEATURE_COUNT, FEATURE_NAMES, FeatureVector, MorphologyDescriptor
+    if name in {
+        "FeatureVector",
+        "MorphologyDescriptor",
+        "FEATURE_NAMES",
+        "FEATURE_COUNT",
+    }:
+        from .features import (
+            FEATURE_COUNT,
+            FEATURE_NAMES,
+            FeatureVector,
+            MorphologyDescriptor,
+        )
+
         return locals()[name]
-    if name in {'AnomalyEvent', 'RegimeState', 'DetectionEvidence'}:
+    if name in {"AnomalyEvent", "RegimeState", "DetectionEvidence"}:
         from .detection import AnomalyEvent, DetectionEvidence, RegimeState
+
         return locals()[name]
-    if name in {'TemporalFeatures', 'StabilityMetrics', 'ComplexityMetrics', 'ConnectivityFeatures', 'NeuromodulationFeatures', 'ChangePointResult', 'DriftSummary', 'TopologySummary'}:
+    if name in {
+        "TemporalFeatures",
+        "StabilityMetrics",
+        "ComplexityMetrics",
+        "ConnectivityFeatures",
+        "NeuromodulationFeatures",
+        "ChangePointResult",
+        "DriftSummary",
+        "TopologySummary",
+    }:
         from .analytics import (
             ChangePointResult,
             ComplexityMetrics,
@@ -51,20 +121,26 @@ def __getattr__(name: str):
             TemporalFeatures,
             TopologySummary,
         )
+
         return locals()[name]
-    if name == 'NeuromodulationStateSnapshot':
+    if name == "NeuromodulationStateSnapshot":
         from .field import NeuromodulationStateSnapshot
+
         return NeuromodulationStateSnapshot
-    if name in {'ForecastResult', 'ComparisonResult'}:
+    if name in {"ForecastResult", "ComparisonResult"}:
         from .forecast import ComparisonResult, ForecastResult
+
         return locals()[name]
-    if name == 'AnalysisReport':
+    if name == "AnalysisReport":
         from .report import AnalysisReport
+
         return AnalysisReport
-    if name in {'ScenarioConfig', 'ScenarioType'}:
+    if name in {"ScenarioConfig", "ScenarioType"}:
         from .scenario import ScenarioConfig, ScenarioType
+
         return locals()[name]
-    if name in {'DatasetRow', 'DatasetMeta', 'DatasetStats'}:
+    if name in {"DatasetRow", "DatasetMeta", "DatasetStats"}:
         from .dataset import DatasetMeta, DatasetRow, DatasetStats
+
         return locals()[name]
     raise AttributeError(name)

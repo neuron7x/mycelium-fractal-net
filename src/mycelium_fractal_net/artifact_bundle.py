@@ -8,9 +8,10 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-def _get_crypto():
+def _get_crypto() -> tuple[Any, Any, Any, Any]:
     from importlib import import_module
-    sig_mod = import_module('mycelium_fractal_net.crypto.signatures')
+
+    sig_mod = import_module("mycelium_fractal_net.crypto.signatures")
     return (
         sig_mod,
         sig_mod.SignatureKeyPair,
@@ -27,7 +28,7 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def _derive_keypair_from_seed(seed_text: str):
+def _derive_keypair_from_seed(seed_text: str) -> Any:
     signature_impl, SignatureKeyPair, _, _ = _get_crypto()
     seed = hashlib.sha256(seed_text.encode("utf-8")).digest()
     h = signature_impl._sha512(seed)
@@ -76,7 +77,9 @@ def sign_artifact(
         "signed_at": datetime.now(timezone.utc).isoformat(),
     }
     sig_path = artifact_path.with_suffix(artifact_path.suffix + ".sig.json")
-    sig_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    sig_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     if audit_log is not None:
         _append_audit_event(
             Path(audit_log),
@@ -98,7 +101,11 @@ def verify_artifact_signature(
     audit_log: str | Path | None = None,
 ) -> bool:
     artifact_path = Path(path)
-    sig_path = Path(signature_path) if signature_path is not None else artifact_path.with_suffix(artifact_path.suffix + ".sig.json")
+    sig_path = (
+        Path(signature_path)
+        if signature_path is not None
+        else artifact_path.with_suffix(artifact_path.suffix + ".sig.json")
+    )
     payload = json.loads(sig_path.read_text(encoding="utf-8"))
     _, _, _, verify_signature_fn = _get_crypto()
     digest = sha256_file(artifact_path)
@@ -123,7 +130,10 @@ def verify_artifact_signature(
 
 
 def sign_artifacts(
-    paths: Iterable[str | Path], *, config_path: str | Path, audit_log: str | Path | None = None
+    paths: Iterable[str | Path],
+    *,
+    config_path: str | Path,
+    audit_log: str | Path | None = None,
 ) -> list[dict[str, str]]:
     signed = []
     for path in paths:
@@ -146,7 +156,11 @@ def manifest_entries_ok(manifest_path: str | Path) -> tuple[bool, list[str]]:
     failures: list[str] = []
     if path.name == "manifest.json":
         for section in ("artifact_manifest", "optional_artifact_manifest"):
-            for entry in data.get(section, {}).values() if isinstance(data.get(section), dict) else data.get(section, []):
+            for entry in (
+                data.get(section, {}).values()
+                if isinstance(data.get(section), dict)
+                else data.get(section, [])
+            ):
                 rel = entry["path"]
                 target = path.parent / rel
                 if not target.exists():
@@ -185,17 +199,33 @@ def verify_bundle(root_or_manifest: str | Path) -> dict[str, Any]:
     if root.is_file():
         manifests = [root]
     else:
-        candidates = [root / "manifest.json", root / "release_manifest.json", root / "showcase_manifest.json"]
+        candidates = [
+            root / "manifest.json",
+            root / "release_manifest.json",
+            root / "showcase_manifest.json",
+        ]
         manifests = [item for item in candidates if item.exists()]
         if not manifests:
-            manifests = list(root.rglob("manifest.json")) + list(root.rglob("release_manifest.json")) + list(root.rglob("showcase_manifest.json"))
+            manifests = (
+                list(root.rglob("manifest.json"))
+                + list(root.rglob("release_manifest.json"))
+                + list(root.rglob("showcase_manifest.json"))
+            )
     results = []
     ok = True
     for manifest in manifests:
         manifest_ok, failures = manifest_entries_ok(manifest)
         ok = ok and manifest_ok
-        results.append({"manifest": str(manifest), "ok": manifest_ok, "failures": failures})
+        results.append(
+            {"manifest": str(manifest), "ok": manifest_ok, "failures": failures}
+        )
     return {"ok": ok, "manifests": results}
 
 
-__all__ = ["sha256_file", "sign_artifact", "verify_artifact_signature", "sign_artifacts", "verify_bundle"]
+__all__ = [
+    "sha256_file",
+    "sign_artifact",
+    "verify_artifact_signature",
+    "sign_artifacts",
+    "verify_bundle",
+]

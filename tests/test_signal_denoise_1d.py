@@ -15,7 +15,12 @@ from mycelium_fractal_net.signal import Fractal1DPreprocessor, OptimizedFractalD
 
 MODE_CONFIGS = [
     {},
-    {"mode": "fractal", "population_size": 64, "range_size": 8, "iterations_fractal": 1},
+    {
+        "mode": "fractal",
+        "population_size": 64,
+        "range_size": 8,
+        "iterations_fractal": 1,
+    },
 ]
 
 SPIKE_IMPROVEMENT_RATIO = 0.98  # require at least modest improvement on spikes
@@ -38,7 +43,9 @@ def _mse(a: np.ndarray, b: np.ndarray) -> float:
         ((2, 3, 512), {"mode": "fractal", "population_size": 32, "range_size": 8}),
     ],
 )
-def test_shape_invariants(shape: tuple[int, ...], mode_kwargs: dict[str, object]) -> None:
+def test_shape_invariants(
+    shape: tuple[int, ...], mode_kwargs: dict[str, object]
+) -> None:
     torch.manual_seed(123)
     np.random.seed(123)
     data = torch.randn(*shape)
@@ -202,9 +209,15 @@ def test_recursive_energy_stability() -> None:
     torch.manual_seed(11)
     np.random.seed(11)
     length = 256
-    base = torch.linspace(-1.0, 1.0, steps=length, dtype=torch.float64).unsqueeze(0).unsqueeze(0)
+    base = (
+        torch.linspace(-1.0, 1.0, steps=length, dtype=torch.float64)
+        .unsqueeze(0)
+        .unsqueeze(0)
+    )
     noise = 0.05 * torch.randn_like(base)
-    sinusoid = torch.sin(torch.linspace(0, 4 * np.pi, length, dtype=torch.float64)).view(1, 1, -1)
+    sinusoid = torch.sin(
+        torch.linspace(0, 4 * np.pi, length, dtype=torch.float64)
+    ).view(1, 1, -1)
     signal = base + noise + 0.2 * sinusoid
 
     kernel = torch.tensor([[[0.25, 0.5, 0.25]]], dtype=torch.float64)
@@ -288,7 +301,12 @@ def test_cfde_return_stats_multiscale_mode() -> None:
         out, stats = model(data, return_stats=True)  # type: ignore[misc]
     assert out.shape == data.shape
     assert set(
-        ["inhibition_rate", "reconstruction_mse", "baseline_mse", "effective_iterations"]
+        [
+            "inhibition_rate",
+            "reconstruction_mse",
+            "baseline_mse",
+            "effective_iterations",
+        ]
     ).issubset(stats.keys())
     assert 0.0 <= stats["inhibition_rate"] <= 1.0
     assert stats["effective_iterations"] >= 1.0
@@ -316,7 +334,9 @@ def test_fractal_bounded_oscillation_across_iterations() -> None:
         return torch.mean((a - b) ** 2)
 
     assert diff_energy(iter2, iter1) <= diff_energy(iter1, data) * OSCILLATION_TOLERANCE
-    assert diff_energy(iter3, iter2) <= diff_energy(iter2, iter1) * OSCILLATION_TOLERANCE
+    assert (
+        diff_energy(iter3, iter2) <= diff_energy(iter2, iter1) * OSCILLATION_TOLERANCE
+    )
 
 
 def test_preprocessor_can_return_stats() -> None:
@@ -381,7 +401,9 @@ def test_multiscale_not_worse_than_single_on_spikes() -> None:
     base[length // 2 :] -= 0.15
     noisy = base + rng.normal(0.0, 0.05, size=length)
     spike_indices = rng.choice(length, size=20, replace=False)
-    noisy[spike_indices] += rng.normal(0.8, 0.1, size=20) * rng.choice([-1.0, 1.0], size=20)
+    noisy[spike_indices] += rng.normal(0.8, 0.1, size=20) * rng.choice(
+        [-1.0, 1.0], size=20
+    )
 
     tensor = torch.tensor(noisy, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
     single = OptimizedFractalDenoise1D(

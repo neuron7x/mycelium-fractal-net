@@ -55,7 +55,9 @@ class MyceliumField:
         from .types import SimulationConfig as SC
 
         if not isinstance(config, SC):
-            raise TypeError(f"config must be SimulationConfig, got {type(config).__name__}")
+            raise TypeError(
+                f"config must be SimulationConfig, got {type(config).__name__}"
+            )
 
         self._config = config
         self._rng = np.random.default_rng(config.seed)

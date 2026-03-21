@@ -17,9 +17,15 @@ Parameter constraints (biophysical):
 import math
 
 import pytest
+
 torch = pytest.importorskip("torch")
 
-from mycelium_fractal_net import STDP_A_MINUS, STDP_A_PLUS, STDP_TAU_MINUS, STDP_TAU_PLUS
+from mycelium_fractal_net import (
+    STDP_A_MINUS,
+    STDP_A_PLUS,
+    STDP_TAU_MINUS,
+    STDP_TAU_PLUS,
+)
 from mycelium_fractal_net.model import STDPPlasticity
 
 

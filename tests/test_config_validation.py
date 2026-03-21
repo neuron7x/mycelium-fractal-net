@@ -102,10 +102,14 @@ class TestSimulationConfigValidation:
     def test_spike_probability_boundaries(self) -> None:
         """Test spike probability at boundaries."""
         # Valid: 0.0
-        config = SimulationConfig(grid_size=32, steps=32, alpha=0.18, spike_probability=0.0)
+        config = SimulationConfig(
+            grid_size=32, steps=32, alpha=0.18, spike_probability=0.0
+        )
         validate_simulation_config(config)
         # Valid: 1.0
-        config = SimulationConfig(grid_size=32, steps=32, alpha=0.18, spike_probability=1.0)
+        config = SimulationConfig(
+            grid_size=32, steps=32, alpha=0.18, spike_probability=1.0
+        )
         validate_simulation_config(config)
 
     def test_spike_probability_invalid(self) -> None:
@@ -118,10 +122,14 @@ class TestSimulationConfigValidation:
     def test_turing_threshold_boundaries(self) -> None:
         """Test turing threshold at boundaries."""
         # Valid: 0.0
-        config = SimulationConfig(grid_size=32, steps=32, alpha=0.18, turing_threshold=0.0)
+        config = SimulationConfig(
+            grid_size=32, steps=32, alpha=0.18, turing_threshold=0.0
+        )
         validate_simulation_config(config)
         # Valid: 1.0
-        config = SimulationConfig(grid_size=32, steps=32, alpha=0.18, turing_threshold=1.0)
+        config = SimulationConfig(
+            grid_size=32, steps=32, alpha=0.18, turing_threshold=1.0
+        )
         validate_simulation_config(config)
 
     def test_turing_threshold_invalid(self) -> None:
@@ -205,12 +213,16 @@ class TestFeatureConfigValidation:
     def test_threshold_order_invalid_low_med(self) -> None:
         """Test low >= med raises error."""
         with pytest.raises(ValueError, match="threshold_low_mv.*threshold_med_mv"):
-            FeatureConfig(threshold_low_mv=-50.0, threshold_med_mv=-50.0, threshold_high_mv=-40.0)
+            FeatureConfig(
+                threshold_low_mv=-50.0, threshold_med_mv=-50.0, threshold_high_mv=-40.0
+            )
 
     def test_threshold_order_invalid_med_high(self) -> None:
         """Test med >= high raises error."""
         with pytest.raises(ValueError, match="threshold_med_mv.*threshold_high_mv"):
-            FeatureConfig(threshold_low_mv=-70.0, threshold_med_mv=-40.0, threshold_high_mv=-40.0)
+            FeatureConfig(
+                threshold_low_mv=-70.0, threshold_med_mv=-40.0, threshold_high_mv=-40.0
+            )
 
     def test_from_dict_preserves_invalid_values_for_validation(self) -> None:
         """Ensure falsy user values do not get replaced with defaults."""
@@ -347,13 +359,17 @@ class TestDatasetConfigValidation:
     def test_spike_prob_range_from_dict_requires_two_values(self) -> None:
         """from_dict should validate spike_prob_range length before indexing."""
 
-        with pytest.raises(ValueError, match="spike_prob_range must contain exactly two"):
+        with pytest.raises(
+            ValueError, match="spike_prob_range must contain exactly two"
+        ):
             DatasetConfig.from_dict({"spike_prob_range": [0.1]})
 
     def test_turing_threshold_range_from_dict_requires_two_values(self) -> None:
         """from_dict should guard turing_threshold_range length."""
 
-        with pytest.raises(ValueError, match="turing_threshold_range must contain exactly two"):
+        with pytest.raises(
+            ValueError, match="turing_threshold_range must contain exactly two"
+        ):
             DatasetConfig.from_dict({"turing_threshold_range": [0.1]})
 
     def test_turing_threshold_range_invalid(self) -> None:

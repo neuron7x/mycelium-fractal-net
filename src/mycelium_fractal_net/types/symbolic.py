@@ -17,17 +17,21 @@ class SymbolicContext:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            'schema_version': 'mfn-symbolic-context-v1',
-            'run_id': self.run_id,
-            'simulation_spec': self.simulation_spec,
-            'key_metrics': {str(k): float(v) for k, v in self.key_metrics.items()},
-            'regime_labels': {str(k): str(v) for k, v in self.regime_labels.items()},
-            'forecast_summary': {
-                str(k): (float(v) if isinstance(v, (int, float)) else str(v)) for k, v in self.forecast_summary.items()
+            "schema_version": "mfn-symbolic-context-v1",
+            "run_id": self.run_id,
+            "simulation_spec": self.simulation_spec,
+            "key_metrics": {str(k): float(v) for k, v in self.key_metrics.items()},
+            "regime_labels": {str(k): str(v) for k, v in self.regime_labels.items()},
+            "forecast_summary": {
+                str(k): (float(v) if isinstance(v, (int, float)) else str(v))
+                for k, v in self.forecast_summary.items()
             },
-            'compare_summary': {
-                str(k): (float(v) if isinstance(v, (int, float)) else str(v)) for k, v in self.compare_summary.items()
+            "compare_summary": {
+                str(k): (float(v) if isinstance(v, (int, float)) else str(v))
+                for k, v in self.compare_summary.items()
             },
-            'manifest_hashes': {str(k): str(v) for k, v in self.manifest_hashes.items()},
-            'metadata': dict(self.metadata),
+            "manifest_hashes": {
+                str(k): str(v) for k, v in self.manifest_hashes.items()
+            },
+            "metadata": dict(self.metadata),
         }

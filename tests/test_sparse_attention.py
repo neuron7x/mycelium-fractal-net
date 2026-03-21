@@ -16,6 +16,7 @@ Complexity:
 import math
 
 import pytest
+
 torch = pytest.importorskip("torch")
 
 from mycelium_fractal_net import SPARSE_TOPK

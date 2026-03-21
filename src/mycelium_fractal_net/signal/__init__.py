@@ -11,10 +11,10 @@ __all__ = [
 
 
 def __getattr__(name: str):
-    if name == 'OptimizedFractalDenoise1D':
-        value = getattr(import_module('mycelium_fractal_net.signal.denoise_1d'), name)
-    elif name == 'Fractal1DPreprocessor':
-        value = getattr(import_module('mycelium_fractal_net.signal.preprocessor'), name)
+    if name == "OptimizedFractalDenoise1D":
+        value = getattr(import_module("mycelium_fractal_net.signal.denoise_1d"), name)
+    elif name == "Fractal1DPreprocessor":
+        value = getattr(import_module("mycelium_fractal_net.signal.preprocessor"), name)
     else:
         raise AttributeError(name)
     globals()[name] = value

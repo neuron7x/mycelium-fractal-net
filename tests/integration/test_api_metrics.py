@@ -144,7 +144,9 @@ class TestMetricsEndpoint:
             # Check for our custom metric
             assert "mfn_http_requests_total" in content
 
-    def test_metrics_contain_latency_histogram(self, metrics_client: TestClient) -> None:
+    def test_metrics_contain_latency_histogram(
+        self, metrics_client: TestClient
+    ) -> None:
         """Metrics should contain request latency histogram."""
         # Make a request first
         metrics_client.get("/health")
@@ -196,7 +198,9 @@ class TestMetricsCollection:
             # Should have recorded the /health request
             assert "/health" in content or "health" in content
 
-    def test_metrics_record_different_endpoints(self, metrics_client: TestClient) -> None:
+    def test_metrics_record_different_endpoints(
+        self, metrics_client: TestClient
+    ) -> None:
         """Metrics should track different endpoints separately."""
         # Make requests to different endpoints
         metrics_client.get("/health")
@@ -315,7 +319,9 @@ class TestMetricsConfig:
 class TestMetricsMiddleware:
     """Tests for metrics middleware behavior."""
 
-    def test_middleware_does_not_break_requests(self, metrics_client: TestClient) -> None:
+    def test_middleware_does_not_break_requests(
+        self, metrics_client: TestClient
+    ) -> None:
         """Metrics middleware should not break normal request flow."""
         response = metrics_client.get("/health")
         assert response.status_code == 200

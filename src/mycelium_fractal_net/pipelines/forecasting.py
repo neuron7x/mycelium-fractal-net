@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from mycelium_fractal_net.core.forecast import forecast_next

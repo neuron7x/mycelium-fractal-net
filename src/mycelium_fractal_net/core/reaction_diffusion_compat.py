@@ -30,9 +30,13 @@ def _compat_check_array(name: str, arr: NDArray[np.floating[Any]]) -> None:
     nan_count = int(np.sum(np.isnan(arr)))
     inf_count = int(np.sum(np.isinf(arr)))
     if nan_count > 0:
-        raise NumericalInstabilityError(f"NaN values detected in {name}", field_name=name, nan_count=nan_count)
+        raise NumericalInstabilityError(
+            f"NaN values detected in {name}", field_name=name, nan_count=nan_count
+        )
     if inf_count > 0:
-        raise NumericalInstabilityError(f"Inf values detected in {name}", field_name=name, inf_count=inf_count)
+        raise NumericalInstabilityError(
+            f"Inf values detected in {name}", field_name=name, inf_count=inf_count
+        )
 
 
 def compat_diffusion_step(
@@ -126,7 +130,9 @@ def compat_apply_quantum_jitter(
     return np.asarray(out + jitter, dtype=np.float64)
 
 
-def compat_clamp_field(field: NDArray[np.floating[Any]]) -> tuple[NDArray[np.floating[Any]], int]:
+def compat_clamp_field(
+    field: NDArray[np.floating[Any]],
+) -> tuple[NDArray[np.floating[Any]], int]:
     out = np.asarray(field, dtype=np.float64).copy()
     clamped_mask = (out > FIELD_V_MAX) | (out < FIELD_V_MIN)
     clamped = int(np.count_nonzero(clamped_mask))
@@ -143,7 +149,12 @@ def compat_full_step(
     config: ReactionDiffusionConfig,
     *,
     turing_enabled: bool = True,
-) -> tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]], NDArray[np.floating[Any]], dict[str, int]]:
+) -> tuple[
+    NDArray[np.floating[Any]],
+    NDArray[np.floating[Any]],
+    NDArray[np.floating[Any]],
+    dict[str, int],
+]:
     from .reaction_diffusion_engine import ReactionDiffusionEngine
 
     engine = ReactionDiffusionEngine(config)

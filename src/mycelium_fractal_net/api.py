@@ -46,7 +46,14 @@ import os
 import time
 from typing import List
 
-from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -161,7 +168,11 @@ if _cors_origins:
         allow_credentials=not _allow_all,  # Cannot use credentials with "*"
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*", API_KEY_HEADER],
-        expose_headers=[REQUEST_ID_HEADER, "X-RateLimit-Limit", "X-RateLimit-Remaining"],
+        expose_headers=[
+            REQUEST_ID_HEADER,
+            "X-RateLimit-Limit",
+            "X-RateLimit-Remaining",
+        ],
     )
 
 # Add production middleware (order matters: last added = first executed)
@@ -467,7 +478,9 @@ async def stream_features(websocket: WebSocket) -> None:
             if msg_type == WSMessageType.INIT.value:
                 try:
                     init_req = WSInitRequest(**data.get("payload", {}))
-                    ws_manager.connections[connection_id].client_info = init_req.client_info
+                    ws_manager.connections[connection_id].client_info = (
+                        init_req.client_info
+                    )
                     await websocket.send_json(
                         {
                             "type": WSMessageType.INIT.value,
@@ -563,7 +576,9 @@ async def stream_features(websocket: WebSocket) -> None:
                         # Start streaming task
                         ctx = ServiceContext(mode=ExecutionMode.API)
                         stream_task = asyncio.create_task(
-                            _stream_features_task(connection_id, stream_id, params, ctx, ws_manager)
+                            _stream_features_task(
+                                connection_id, stream_id, params, ctx, ws_manager
+                            )
                         )
                     else:
                         await websocket.send_json(
@@ -657,7 +672,9 @@ async def simulation_live(websocket: WebSocket) -> None:
             if msg_type == WSMessageType.INIT.value:
                 try:
                     init_req = WSInitRequest(**data.get("payload", {}))
-                    ws_manager.connections[connection_id].client_info = init_req.client_info
+                    ws_manager.connections[connection_id].client_info = (
+                        init_req.client_info
+                    )
                     await websocket.send_json(
                         {
                             "type": WSMessageType.INIT.value,
@@ -887,7 +904,6 @@ async def _stream_simulation_task(
         await manager.send_message(connection_id, error_msg)
 
 
-
 # === Canonical v1 structural analytics endpoints ===
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.compare import compare as compare_sequences
@@ -918,53 +934,68 @@ class V1FieldPayload(BaseModel):
 
 
 def _spec_from_v1(req: V1SimulationRequest) -> SimulationSpec:
-    return SimulationSpec(**req.model_dump(exclude={'with_history'}))
+    return SimulationSpec(**req.model_dump(exclude={"with_history"}))
 
 
 def _sequence_from_payload(payload: V1FieldPayload) -> FieldSequence:
     if payload.history is not None:
         import numpy as np
+
         hist = np.asarray(payload.history, dtype=np.float64)
         return FieldSequence(field=hist[-1], history=hist, spec=None, metadata={})
     if payload.field is not None:
         import numpy as np
+
         fld = np.asarray(payload.field, dtype=np.float64)
         return FieldSequence(field=fld, history=None, spec=None, metadata={})
     if payload.spec is not None:
         spec = _spec_from_v1(payload.spec)
-        return simulate_history(spec) if payload.spec.with_history else simulate_final(spec)
-    raise HTTPException(status_code=400, detail='Provide history, field, or spec')
+        return (
+            simulate_history(spec)
+            if payload.spec.with_history
+            else simulate_final(spec)
+        )
+    raise HTTPException(status_code=400, detail="Provide history, field, or spec")
 
 
-@app.post('/v1/simulate')
+@app.post("/v1/simulate")
 async def v1_simulate(request: V1SimulationRequest) -> dict:
     spec = _spec_from_v1(request)
     seq = simulate_history(spec) if request.with_history else simulate_final(spec)
     return seq.to_dict(include_arrays=True)
 
 
-@app.post('/v1/extract')
+@app.post("/v1/extract")
 async def v1_extract(payload: V1FieldPayload) -> dict:
     seq = _sequence_from_payload(payload)
-    return {'descriptor': compute_morphology_descriptor(seq).to_dict()}
+    return {"descriptor": compute_morphology_descriptor(seq).to_dict()}
 
 
-@app.post('/v1/detect')
+@app.post("/v1/detect")
 async def v1_detect(payload: V1FieldPayload) -> dict:
     seq = _sequence_from_payload(payload)
-    return {'detection': detect_anomaly(seq).to_dict()}
+    return {"detection": detect_anomaly(seq).to_dict()}
 
 
 class V1ForecastRequest(V1FieldPayload):
     horizon: int = Field(default=8, ge=1)
 
 
-@app.post('/v1/forecast')
+@app.post("/v1/forecast")
 async def v1_forecast(payload: V1ForecastRequest) -> dict:
     seq = _sequence_from_payload(payload)
     if not seq.has_history:
-        seq = simulate_history(seq.spec) if seq.spec is not None else FieldSequence(field=seq.field, history=seq.field[None, :, :], spec=seq.spec, metadata=seq.metadata)
-    return {'forecast': forecast_next(seq, horizon=payload.horizon).to_dict()}
+        seq = (
+            simulate_history(seq.spec)
+            if seq.spec is not None
+            else FieldSequence(
+                field=seq.field,
+                history=seq.field[None, :, :],
+                spec=seq.spec,
+                metadata=seq.metadata,
+            )
+        )
+    return {"forecast": forecast_next(seq, horizon=payload.horizon).to_dict()}
 
 
 class V1CompareRequest(BaseModel):
@@ -972,24 +1003,36 @@ class V1CompareRequest(BaseModel):
     right: V1FieldPayload
 
 
-@app.post('/v1/compare')
+@app.post("/v1/compare")
 async def v1_compare(payload: V1CompareRequest) -> dict:
     left = _sequence_from_payload(payload.left)
     right = _sequence_from_payload(payload.right)
-    return {'comparison': compare_sequences(left, right).to_dict()}
+    return {"comparison": compare_sequences(left, right).to_dict()}
 
 
 class V1ReportRequest(V1ForecastRequest):
-    output_root: str = 'artifacts/runs'
+    output_root: str = "artifacts/runs"
 
 
-@app.post('/v1/report')
+@app.post("/v1/report")
 async def v1_report(payload: V1ReportRequest) -> dict:
     seq = _sequence_from_payload(payload)
     if not seq.has_history:
-        seq = simulate_history(seq.spec) if seq.spec is not None else FieldSequence(field=seq.field, history=seq.field[None, :, :], spec=seq.spec, metadata=seq.metadata)
-    report = build_analysis_report(seq, output_root=payload.output_root, horizon=payload.horizon)
+        seq = (
+            simulate_history(seq.spec)
+            if seq.spec is not None
+            else FieldSequence(
+                field=seq.field,
+                history=seq.field[None, :, :],
+                spec=seq.spec,
+                metadata=seq.metadata,
+            )
+        )
+    report = build_analysis_report(
+        seq, output_root=payload.output_root, horizon=payload.horizon
+    )
     return report.to_dict()
+
 
 def main(host: str | None = None, port: int | None = None) -> None:
     """Run the FastAPI server with uvicorn."""

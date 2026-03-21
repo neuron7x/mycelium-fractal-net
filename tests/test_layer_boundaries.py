@@ -133,7 +133,10 @@ class TestCoreLayerBoundaries:
                 assert module is not None
             except ImportError as e:
                 # ML-dependent modules (stdp, federated) require torch [ml] extra
-                if "torch" in str(e) and module_name.split(".")[-1] in ("stdp", "federated"):
+                if "torch" in str(e) and module_name.split(".")[-1] in (
+                    "stdp",
+                    "federated",
+                ):
                     pytest.skip(f"{module_name} requires torch [ml] extra")
                 pytest.fail(f"Failed to import {module_name}: {e}")
 
@@ -185,7 +188,9 @@ class TestNoCircularImports:
     def test_core_imports_without_errors(self) -> None:
         """Test all core modules can be imported without circular import errors."""
         # Clear any cached imports
-        modules_to_clear = [m for m in sys.modules if m.startswith("mycelium_fractal_net")]
+        modules_to_clear = [
+            m for m in sys.modules if m.startswith("mycelium_fractal_net")
+        ]
         for m in modules_to_clear:
             del sys.modules[m]
 
@@ -265,9 +270,9 @@ class TestLayerDependencyDirection:
 
         # API should import from integration
         integration_imports = [i for i in imports if "integration" in i]
-        assert len(integration_imports) > 0, (
-            "api.py should import from integration layer for schemas and adapters"
-        )
+        assert (
+            len(integration_imports) > 0
+        ), "api.py should import from integration layer for schemas and adapters"
 
 
 class TestModuleExportsConsistency:

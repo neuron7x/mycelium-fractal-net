@@ -138,7 +138,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         self.stride = max(1, base_window // 2)
         self.r = base_window
         requested_acceptor_iters = (
-            acceptor_iterations if acceptor_iterations is not None else iterations_fractal
+            acceptor_iterations
+            if acceptor_iterations is not None
+            else iterations_fractal
         )
         # Minimum of 7 iterations matches CFDE fixed-point stabilization requirement
         self.acceptor_iterations = max(requested_acceptor_iters, 7)
@@ -172,7 +174,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         weight = kernel.expand(channels, -1, -1)
         return F.conv1d(padded, weight, groups=channels)
 
-    def _denoise_signal(self, x: torch.Tensor, *, canonical: bool = False) -> torch.Tensor:
+    def _denoise_signal(
+        self, x: torch.Tensor, *, canonical: bool = False
+    ) -> torch.Tensor:
         """Denoise a canonical [B, C, L] signal with grouped smoothing and overlap-add."""
         reshape: Callable[[torch.Tensor], torch.Tensor]
         if canonical:
@@ -181,6 +185,7 @@ class OptimizedFractalDenoise1D(nn.Module):
 
             def reshape(out: torch.Tensor) -> torch.Tensor:
                 return out
+
         else:
             canonical_signal, reshape, original_dtype = _canonicalize_1d(x)
         x_working = canonical_signal.to(torch.float64)
@@ -258,7 +263,9 @@ class OptimizedFractalDenoise1D(nn.Module):
             fd = self._estimate_fractal_dimension(input_fp64)
             inhibit_mask = fd > self.fractal_dim_threshold
             effective_acceptor_iterations = (
-                self.acceptor_iterations if not self.do_no_harm else max(1, self.iterations_fractal)
+                self.acceptor_iterations
+                if not self.do_no_harm
+                else max(1, self.iterations_fractal)
             )
             if not inhibit_mask.all():
                 if self.cfde_mode == "multiscale":
@@ -277,7 +284,9 @@ class OptimizedFractalDenoise1D(nn.Module):
             else:
                 current = input_fp64
                 if return_stats or debug_flag:
-                    stats = self._empty_stats(inhibition_rate=1.0, effective_iterations=0.0)
+                    stats = self._empty_stats(
+                        inhibition_rate=1.0, effective_iterations=0.0
+                    )
         else:
             raise ValueError(
                 f"Unsupported mode '{self.mode}'. Supported modes are: 'multiscale', 'fractal'"
@@ -286,11 +295,16 @@ class OptimizedFractalDenoise1D(nn.Module):
         if self.log_mutual_information:
             mi = self._mutual_information(input_fp64, current)
             self.last_mutual_information = float(mi.item())
-            logger.info("Mutual information (input→output): %.6f", self.last_mutual_information)
+            logger.info(
+                "Mutual information (input→output): %.6f", self.last_mutual_information
+            )
 
         if stats is not None and inhibit_mask is not None:
             mask_rate = float(inhibit_mask.float().mean().item())
-            stats = {**stats, "inhibition_rate": max(stats.get("inhibition_rate", 0.0), mask_rate)}
+            stats = {
+                **stats,
+                "inhibition_rate": max(stats.get("inhibition_rate", 0.0), mask_rate),
+            }
 
         if debug_flag:
             self._run_debug_checks(current, input_fp64)
@@ -361,7 +375,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         current = input_fp64
         stats_accum: list[dict[str, float]] = []
         for _ in range(effective_acceptor_iterations):
-            result = self._denoise_fractal(current, canonical=True, return_stats=return_stats)
+            result = self._denoise_fractal(
+                current, canonical=True, return_stats=return_stats
+            )
             if isinstance(result, tuple):
                 current, iter_stats = result
                 if return_stats:
@@ -377,12 +393,15 @@ class OptimizedFractalDenoise1D(nn.Module):
                 ),
                 "reconstruction_mse": sum(s["reconstruction_mse"] for s in stats_accum)
                 / len(stats_accum),
-                "baseline_mse": sum(s["baseline_mse"] for s in stats_accum) / len(stats_accum),
+                "baseline_mse": sum(s["baseline_mse"] for s in stats_accum)
+                / len(stats_accum),
                 "effective_iterations": float(len(stats_accum)),
                 "range_size": stats_accum[-1].get("range_size", float(self.range_size)),
             }
         else:
-            stats = self._empty_stats(effective_iterations=float(effective_acceptor_iterations))
+            stats = self._empty_stats(
+                effective_iterations=float(effective_acceptor_iterations)
+            )
         return current, stats
 
     def _multiscale_fractal(
@@ -424,9 +443,13 @@ class OptimizedFractalDenoise1D(nn.Module):
             diff_tensor = torch.diff(out_tensor, dim=-1)
             penalty_value = torch.nan_to_num(diff_tensor.std(), nan=0.0).item()
             proxy_val += SMOOTHNESS_PENALTY_WEIGHT * penalty_value
-            fallback_proxy = stats_out.get("baseline_mse", stats_out["reconstruction_mse"])
+            fallback_proxy = stats_out.get(
+                "baseline_mse", stats_out["reconstruction_mse"]
+            )
             # In rare cases proxy_val may be non-finite; fall back to per-scale error stats.
-            proxy_errors.append(proxy_val if math.isfinite(proxy_val) else fallback_proxy)
+            proxy_errors.append(
+                proxy_val if math.isfinite(proxy_val) else fallback_proxy
+            )
 
         if not outputs:
             single_result = self._denoise_fractal(
@@ -448,7 +471,9 @@ class OptimizedFractalDenoise1D(nn.Module):
             fallback_stats["selected_range_size"] = float(self.range_size)
             return fallback_current, fallback_stats
 
-        proxy_tensor = torch.tensor(proxy_errors, device=input_fp64.device, dtype=input_fp64.dtype)
+        proxy_tensor = torch.tensor(
+            proxy_errors, device=input_fp64.device, dtype=input_fp64.dtype
+        )
         if self.multiscale_aggregate == "best":
             best_idx = int(proxy_tensor.argmin().item())
             current = outputs[best_idx]
@@ -460,7 +485,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         else:
             tau = float(proxy_tensor.std().clamp_min(MIN_SOFTMAX_STD).item())
             weights = torch.softmax(-proxy_tensor / tau, dim=0)
-            weighted_outputs = torch.stack([w * o for w, o in zip(weights, outputs)], dim=0)
+            weighted_outputs = torch.stack(
+                [w * o for w, o in zip(weights, outputs)], dim=0
+            )
             current = torch.sum(weighted_outputs, dim=0)
             selected_range = float(
                 sum(float(w.item()) * float(scale) for w, scale in zip(weights, scales))
@@ -492,16 +519,22 @@ class OptimizedFractalDenoise1D(nn.Module):
         if inhibit_mask.any():
             current = torch.where(inhibit_mask.unsqueeze(-1), input_fp64, current)
 
-        avg_inhibition = sum(s["inhibition_rate"] for s in stats_list) / max(len(stats_list), 1)
+        avg_inhibition = sum(s["inhibition_rate"] for s in stats_list) / max(
+            len(stats_list), 1
+        )
         base_stats = selected_stats
         selected_range_value = float(selected_range)
         stats = {
-            "inhibition_rate": max(base_stats.get("inhibition_rate", 0.0), avg_inhibition),
+            "inhibition_rate": max(
+                base_stats.get("inhibition_rate", 0.0), avg_inhibition
+            ),
             "reconstruction_mse": base_stats.get("reconstruction_mse", 0.0),
             "baseline_mse": base_stats.get("baseline_mse", 0.0),
             "effective_iterations": float(len(scales)),
             "range_size": base_stats.get("range_size", selected_range_value),
-            "selected_range_size": base_stats.get("selected_range_size", selected_range_value),
+            "selected_range_size": base_stats.get(
+                "selected_range_size", selected_range_value
+            ),
         }
         return current, stats
 
@@ -568,7 +601,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         slope = (log_L * log_k_centered).sum(dim=-1) / denominator
         return slope
 
-    def _mutual_information(self, x: torch.Tensor, y: torch.Tensor, bins: int = 32) -> torch.Tensor:
+    def _mutual_information(
+        self, x: torch.Tensor, y: torch.Tensor, bins: int = 32
+    ) -> torch.Tensor:
         """Estimate mutual information between flattened tensors."""
         x_flat = x.reshape(-1)
         y_flat = y.reshape(-1)
@@ -580,8 +615,16 @@ class OptimizedFractalDenoise1D(nn.Module):
         if (x_max - x_min).abs() < eps or (y_max - y_min).abs() < eps:
             return torch.tensor(0.0, device=x.device, dtype=x.dtype)
 
-        x_bins = ((x_flat - x_min) / (x_max - x_min + eps) * (bins - 1)).long().clamp(0, bins - 1)
-        y_bins = ((y_flat - y_min) / (y_max - y_min + eps) * (bins - 1)).long().clamp(0, bins - 1)
+        x_bins = (
+            ((x_flat - x_min) / (x_max - x_min + eps) * (bins - 1))
+            .long()
+            .clamp(0, bins - 1)
+        )
+        y_bins = (
+            ((y_flat - y_min) / (y_max - y_min + eps) * (bins - 1))
+            .long()
+            .clamp(0, bins - 1)
+        )
 
         joint_idx = x_bins * bins + y_bins
         joint_hist = torch.bincount(joint_idx, minlength=bins * bins).to(
@@ -611,6 +654,7 @@ class OptimizedFractalDenoise1D(nn.Module):
 
             def reshape(out: torch.Tensor) -> torch.Tensor:
                 return out
+
         else:
             canonical_signal, reshape, original_dtype = _canonicalize_1d(x)
 
@@ -664,7 +708,9 @@ class OptimizedFractalDenoise1D(nn.Module):
             population_size if population_size is not None else self.population_size
         )
         effective_population = max(1, min(effective_population, self.max_population_ci))
-        candidate_pool = min(num_domains, min(effective_population * 2, self.max_population_ci))
+        candidate_pool = min(
+            num_domains, min(effective_population * 2, self.max_population_ci)
+        )
         top_k = candidate_pool
         pop_size = min(effective_population, top_k)
         if top_k == 0 or pop_size == 0:
@@ -683,7 +729,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         )
 
         top_domains_expanded = top_domains.unsqueeze(2).expand(-1, -1, N_ranges, -1, -1)
-        base_idx = torch.arange(N_ranges * pop_size, device=device).view(1, 1, N_ranges, pop_size)
+        base_idx = torch.arange(N_ranges * pop_size, device=device).view(
+            1, 1, N_ranges, pop_size
+        )
         sample_idx = torch.remainder(base_idx, top_k).expand(B, C, -1, -1)
         candidate_domains = torch.gather(
             top_domains_expanded,
@@ -694,7 +742,9 @@ class OptimizedFractalDenoise1D(nn.Module):
         ranges_expanded = ranges.unsqueeze(3)
         range_mean = baseline_mean.unsqueeze(3)
         domain_mean = candidate_domains.mean(dim=-1, keepdim=True)
-        cov = ((ranges_expanded - range_mean) * (candidate_domains - domain_mean)).mean(dim=-1)
+        cov = ((ranges_expanded - range_mean) * (candidate_domains - domain_mean)).mean(
+            dim=-1
+        )
         var_d = candidate_domains.var(dim=-1, unbiased=False) + self.ridge_lambda
 
         s = cov / (var_d + self._eps)

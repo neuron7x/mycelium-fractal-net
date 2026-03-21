@@ -11,6 +11,7 @@ Reference: MFN_MATH_MODEL.md Appendix C (STDP Mathematical Model)
 import math
 
 import pytest
+
 torch = pytest.importorskip("torch")
 
 from mycelium_fractal_net.core.stdp import (

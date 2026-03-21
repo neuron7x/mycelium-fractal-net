@@ -14,19 +14,27 @@ _ML_INSTALL_HINT = (
 )
 
 
-def require_ml_dependency(module_name: str = 'torch') -> ModuleType:
+def require_ml_dependency(module_name: str = "torch") -> ModuleType:
     try:
         return import_module(module_name)
-    except Exception as exc:  # pragma: no cover - exact ImportError text varies by platform
+    except (
+        Exception
+    ) as exc:  # pragma: no cover - exact ImportError text varies by platform
         raise MissingOptionalDependencyError(
             f"Missing optional ML dependency '{module_name}'. {_ML_INSTALL_HINT}"
         ) from exc
 
 
-def optional_dependency_error(module_name: str = 'torch') -> MissingOptionalDependencyError:
+def optional_dependency_error(
+    module_name: str = "torch",
+) -> MissingOptionalDependencyError:
     return MissingOptionalDependencyError(
         f"Missing optional ML dependency '{module_name}'. {_ML_INSTALL_HINT}"
     )
 
 
-__all__ = ['MissingOptionalDependencyError', 'require_ml_dependency', 'optional_dependency_error']
+__all__ = [
+    "MissingOptionalDependencyError",
+    "require_ml_dependency",
+    "optional_dependency_error",
+]

@@ -53,6 +53,7 @@ INITIAL_POTENTIAL_STD: float = 0.005
 
 class BoundaryCondition(Enum):
     """Available boundary conditions for the spatial grid."""
+
     PERIODIC = "periodic"
     NEUMANN = "neumann"
     DIRICHLET = "dirichlet"
@@ -85,6 +86,7 @@ class ReactionDiffusionConfig:
 
     All parameters have physically meaningful defaults from MFN_MATH_MODEL.md.
     """
+
     grid_size: int = 64
     d_activator: float = DEFAULT_D_ACTIVATOR
     d_inhibitor: float = DEFAULT_D_INHIBITOR
@@ -113,52 +115,68 @@ class ReactionDiffusionConfig:
                 max_bound=float(GRID_SIZE_MAX),
                 parameter_name="grid_size",
             )
-        _validate_diffusion_coefficient("d_activator", self.d_activator, D_ACTIVATOR_MIN)
-        _validate_diffusion_coefficient("d_inhibitor", self.d_inhibitor, D_INHIBITOR_MIN)
+        _validate_diffusion_coefficient(
+            "d_activator", self.d_activator, D_ACTIVATOR_MIN
+        )
+        _validate_diffusion_coefficient(
+            "d_inhibitor", self.d_inhibitor, D_INHIBITOR_MIN
+        )
         _validate_diffusion_coefficient("alpha", self.alpha, ALPHA_MIN)
         if not (R_ACTIVATOR_MIN <= self.r_activator <= R_ACTIVATOR_MAX):
             raise ValueOutOfRangeError(
                 f"r_activator must be in [{R_ACTIVATOR_MIN}, {R_ACTIVATOR_MAX}]",
-                value=self.r_activator, min_bound=R_ACTIVATOR_MIN,
-                max_bound=R_ACTIVATOR_MAX, parameter_name="r_activator",
+                value=self.r_activator,
+                min_bound=R_ACTIVATOR_MIN,
+                max_bound=R_ACTIVATOR_MAX,
+                parameter_name="r_activator",
             )
         if not (R_INHIBITOR_MIN <= self.r_inhibitor <= R_INHIBITOR_MAX):
             raise ValueOutOfRangeError(
                 f"r_inhibitor must be in [{R_INHIBITOR_MIN}, {R_INHIBITOR_MAX}]",
-                value=self.r_inhibitor, min_bound=R_INHIBITOR_MIN,
-                max_bound=R_INHIBITOR_MAX, parameter_name="r_inhibitor",
+                value=self.r_inhibitor,
+                min_bound=R_INHIBITOR_MIN,
+                max_bound=R_INHIBITOR_MAX,
+                parameter_name="r_inhibitor",
             )
         if not (TURING_THRESHOLD_MIN <= self.turing_threshold <= TURING_THRESHOLD_MAX):
             raise ValueOutOfRangeError(
                 f"turing_threshold must be in [{TURING_THRESHOLD_MIN}, {TURING_THRESHOLD_MAX}]",
-                value=self.turing_threshold, min_bound=TURING_THRESHOLD_MIN,
-                max_bound=TURING_THRESHOLD_MAX, parameter_name="turing_threshold",
+                value=self.turing_threshold,
+                min_bound=TURING_THRESHOLD_MIN,
+                max_bound=TURING_THRESHOLD_MAX,
+                parameter_name="turing_threshold",
             )
         if not (0 <= self.spike_probability <= 1):
             raise ValueOutOfRangeError(
                 "Spike probability must be in [0, 1]",
-                value=self.spike_probability, min_bound=0.0,
-                max_bound=1.0, parameter_name="spike_probability",
+                value=self.spike_probability,
+                min_bound=0.0,
+                max_bound=1.0,
+                parameter_name="spike_probability",
             )
         if not (JITTER_VAR_MIN <= self.jitter_var <= JITTER_VAR_MAX):
             raise ValueOutOfRangeError(
                 f"jitter_var must be in [{JITTER_VAR_MIN}, {JITTER_VAR_MAX}]",
-                value=self.jitter_var, min_bound=JITTER_VAR_MIN,
-                max_bound=JITTER_VAR_MAX, parameter_name="jitter_var",
+                value=self.jitter_var,
+                min_bound=JITTER_VAR_MIN,
+                max_bound=JITTER_VAR_MAX,
+                parameter_name="jitter_var",
             )
         if self.neuromodulation is not None:
-            dt_seconds = float(self.neuromodulation.get('dt_seconds', 1.0))
+            dt_seconds = float(self.neuromodulation.get("dt_seconds", 1.0))
             if dt_seconds <= 0:
                 raise ValueOutOfRangeError(
-                    'neuromodulation.dt_seconds must be > 0',
-                    value=dt_seconds, min_bound=0.0,
-                    parameter_name='neuromodulation.dt_seconds',
+                    "neuromodulation.dt_seconds must be > 0",
+                    value=dt_seconds,
+                    min_bound=0.0,
+                    parameter_name="neuromodulation.dt_seconds",
                 )
 
 
 @dataclass
 class ReactionDiffusionMetrics:
     """Metrics collected during reaction-diffusion simulation."""
+
     field_min_v: float = 0.0
     field_max_v: float = 0.0
     field_mean_v: float = 0.0

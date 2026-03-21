@@ -60,7 +60,9 @@ class TestNernstMathematicalProperties:
         From MFN_MATH_MODEL.md:
         - RT/zF at 37°C, z=1 = 26.73 mV
         """
-        rtf_calculated = (R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT) * 1000.0
+        rtf_calculated = (
+            R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT
+        ) * 1000.0
         assert 26.5 < rtf_calculated < 27.0
         assert abs(rtf_calculated - NERNST_RTFZ_MV) < 0.01
 
@@ -126,7 +128,9 @@ class TestNernstMathematicalProperties:
         for z, c_out, c_in, (e_min, e_max) in test_cases:
             e = compute_nernst_potential(z, c_out, c_in)
             e_mv = e * 1000.0
-            assert e_min < e_mv < e_max, f"E = {e_mv:.2f} mV out of expected range for z={z}"
+            assert (
+                e_min < e_mv < e_max
+            ), f"E = {e_mv:.2f} mV out of expected range for z={z}"
 
     def test_sign_consistency(self) -> None:
         """Verify sign consistency: [X]_out > [X]_in and z > 0 → E > 0.
@@ -222,7 +226,9 @@ class TestReactionDiffusionMathematicalProperties:
         rng1 = np.random.default_rng(42)
         rng2 = np.random.default_rng(42)
 
-        field_with, _ = simulate_mycelium_field(rng1, grid_size=64, steps=100, turing_enabled=True)
+        field_with, _ = simulate_mycelium_field(
+            rng1, grid_size=64, steps=100, turing_enabled=True
+        )
         field_without, _ = simulate_mycelium_field(
             rng2, grid_size=64, steps=100, turing_enabled=False
         )
@@ -252,13 +258,17 @@ class TestReactionDiffusionMathematicalProperties:
         steps=st.integers(min_value=10, max_value=100),
     )
     @settings(max_examples=20)
-    def test_simulation_stability_property(self, seed: int, grid_size: int, steps: int) -> None:
+    def test_simulation_stability_property(
+        self, seed: int, grid_size: int, steps: int
+    ) -> None:
         """Property: Simulation always produces finite values."""
         rng = np.random.default_rng(seed)
         field, _ = simulate_mycelium_field(
             rng, grid_size=grid_size, steps=steps, turing_enabled=True
         )
-        assert np.isfinite(field).all(), f"NaN/Inf for seed={seed}, grid={grid_size}, steps={steps}"
+        assert np.isfinite(
+            field
+        ).all(), f"NaN/Inf for seed={seed}, grid={grid_size}, steps={steps}"
 
 
 class TestFractalMathematicalProperties:
@@ -312,7 +322,9 @@ class TestFractalMathematicalProperties:
         dimensions = []
         for seed in range(10):
             rng = np.random.default_rng(seed + 100)
-            field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
+            field, _ = simulate_mycelium_field(
+                rng, grid_size=64, steps=100, turing_enabled=True
+            )
             binary = field > np.percentile(field, 50)
             if binary.sum() > 100:
                 d = estimate_fractal_dimension(binary)
@@ -492,7 +504,9 @@ class TestClampingAndBounds:
         activator/inhibitor would cause instability.
         """
         rng = np.random.default_rng(42)
-        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=500, turing_enabled=True)
+        field, _ = simulate_mycelium_field(
+            rng, grid_size=64, steps=500, turing_enabled=True
+        )
         # If clamping failed, field would diverge
         assert np.isfinite(field).all()
         assert field.std() < 0.1  # Reasonable variance

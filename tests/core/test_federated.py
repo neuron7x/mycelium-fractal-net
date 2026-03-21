@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+
 torch = pytest.importorskip("torch")
 
 from mycelium_fractal_net.core.federated import HierarchicalKrumAggregator

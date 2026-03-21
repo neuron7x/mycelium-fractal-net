@@ -62,7 +62,11 @@ class TestAuthorizationEnforcement:
     def test_all_endpoints_checked_for_auth(self, secured_client: TestClient) -> None:
         """All protected endpoints should require authentication."""
         endpoints = [
-            ("/validate", "POST", {"seed": 42, "epochs": 1, "grid_size": 32, "steps": 32}),
+            (
+                "/validate",
+                "POST",
+                {"seed": 42, "epochs": 1, "grid_size": 32, "steps": 32},
+            ),
             ("/simulate", "POST", {"seed": 42, "grid_size": 32, "steps": 32}),
             (
                 "/nernst",
@@ -82,7 +86,9 @@ class TestAuthorizationEnforcement:
 
         for path, method, body in endpoints:
             response = secured_client.post(path, json=body)
-            assert response.status_code == 401, f"Endpoint {path} should require authentication"
+            assert (
+                response.status_code == 401
+            ), f"Endpoint {path} should require authentication"
 
     def test_authenticated_access_allowed(self, secured_client: TestClient) -> None:
         """Authenticated requests should be allowed."""
@@ -212,7 +218,9 @@ class TestSecurityHeaders:
 class TestAPISecurityCompliance:
     """Integration tests for API security compliance."""
 
-    def test_no_sensitive_data_in_error_responses(self, secured_client: TestClient) -> None:
+    def test_no_sensitive_data_in_error_responses(
+        self, secured_client: TestClient
+    ) -> None:
         """Error responses should not leak sensitive information."""
         response = secured_client.post(
             "/nernst",

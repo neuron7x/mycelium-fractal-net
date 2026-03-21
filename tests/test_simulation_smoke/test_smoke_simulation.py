@@ -17,7 +17,11 @@ class TestRunSimulationMinimalConfig:
 
     def test_result_type_is_simulation_result(self) -> None:
         """Test that the result type is SimulationResult."""
-        from mycelium_fractal_net import SimulationConfig, SimulationResult, run_mycelium_simulation
+        from mycelium_fractal_net import (
+            SimulationConfig,
+            SimulationResult,
+            run_mycelium_simulation,
+        )
 
         config = SimulationConfig(grid_size=8, steps=5, seed=42)
         result = run_mycelium_simulation(config)
@@ -189,9 +193,9 @@ class TestRunSimulationReproducibleSeed:
         result2 = run_mycelium_simulation(config2)
 
         # Fields should be different (not exactly equal)
-        assert not np.allclose(result1.field, result2.field), (
-            "Fields are unexpectedly identical with different seeds"
-        )
+        assert not np.allclose(
+            result1.field, result2.field
+        ), "Fields are unexpectedly identical with different seeds"
 
     def test_multiple_runs_same_seed_consistent(self) -> None:
         """Test that multiple runs with same seed are consistent."""
@@ -218,7 +222,10 @@ class TestRunSimulationWithHistory:
 
     def test_history_is_present(self) -> None:
         """Test that history is returned when using with_history variant."""
-        from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net import (
+            SimulationConfig,
+            run_mycelium_simulation_with_history,
+        )
 
         config = SimulationConfig(grid_size=8, steps=5, seed=42)
         result = run_mycelium_simulation_with_history(config)
@@ -227,7 +234,10 @@ class TestRunSimulationWithHistory:
 
     def test_history_shape_matches_config(self) -> None:
         """Test that history shape matches steps and grid size."""
-        from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net import (
+            SimulationConfig,
+            run_mycelium_simulation_with_history,
+        )
 
         grid_size = 8
         steps = 10
@@ -239,7 +249,10 @@ class TestRunSimulationWithHistory:
 
     def test_history_has_no_nan(self) -> None:
         """Test that history contains no NaN values."""
-        from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net import (
+            SimulationConfig,
+            run_mycelium_simulation_with_history,
+        )
 
         config = SimulationConfig(grid_size=8, steps=5, seed=42)
         result = run_mycelium_simulation_with_history(config)
@@ -249,7 +262,10 @@ class TestRunSimulationWithHistory:
 
     def test_history_is_finite(self) -> None:
         """Test that all history values are finite."""
-        from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net import (
+            SimulationConfig,
+            run_mycelium_simulation_with_history,
+        )
 
         config = SimulationConfig(grid_size=8, steps=5, seed=42)
         result = run_mycelium_simulation_with_history(config)
@@ -259,7 +275,10 @@ class TestRunSimulationWithHistory:
 
     def test_final_field_matches_last_history(self) -> None:
         """Test that final field matches last history entry."""
-        from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation_with_history
+        from mycelium_fractal_net import (
+            SimulationConfig,
+            run_mycelium_simulation_with_history,
+        )
 
         config = SimulationConfig(grid_size=8, steps=5, seed=42)
         result = run_mycelium_simulation_with_history(config)

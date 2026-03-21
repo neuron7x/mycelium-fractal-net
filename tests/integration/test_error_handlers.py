@@ -60,9 +60,12 @@ def test_create_error_response_includes_core_fields():
     assert response.timestamp is not None
 
 
-def test_register_error_handlers_registers_expected_handlers(app_with_handlers: FastAPI):
+def test_register_error_handlers_registers_expected_handlers(
+    app_with_handlers: FastAPI,
+):
     assert (
-        app_with_handlers.exception_handlers[RequestValidationError] is validation_exception_handler
+        app_with_handlers.exception_handlers[RequestValidationError]
+        is validation_exception_handler
     )
     assert (
         app_with_handlers.exception_handlers[ValidationError]
@@ -126,7 +129,9 @@ def test_validation_exception_handler_includes_details(app_with_handlers: FastAP
     assert details[0]["value"] == "not-an-int"
 
 
-def test_pydantic_validation_exception_handler_handles_model_errors(app_with_handlers: FastAPI):
+def test_pydantic_validation_exception_handler_handles_model_errors(
+    app_with_handlers: FastAPI,
+):
     client = TestClient(app_with_handlers, raise_server_exceptions=False)
     response = client.get("/pydantic-error", headers={"X-Request-ID": "req-2"})
     payload = response.json()
@@ -139,7 +144,9 @@ def test_pydantic_validation_exception_handler_handles_model_errors(app_with_han
     assert payload["details"][0]["message"]
 
 
-def test_value_error_handler_prefers_internal_error_for_wrong_type(app_with_handlers: FastAPI):
+def test_value_error_handler_prefers_internal_error_for_wrong_type(
+    app_with_handlers: FastAPI,
+):
     client = TestClient(app_with_handlers, raise_server_exceptions=False)
 
     # Trigger ValidationError and ensure it is routed to the appropriate handler

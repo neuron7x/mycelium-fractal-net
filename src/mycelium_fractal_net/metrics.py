@@ -6,16 +6,16 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 
 try:  # optional torch surface
-    import torch  # type: ignore
+    import torch
 except Exception:  # pragma: no cover
-    torch = None  # type: ignore[assignment]
+    torch = None
 
 ArrayLike = Union[np.ndarray, Any]
 _EPS = 1e-12
 
 
 def _to_numpy(a: ArrayLike) -> np.ndarray:
-    if torch is not None and hasattr(torch, 'is_tensor') and torch.is_tensor(a):
+    if torch is not None and hasattr(torch, "is_tensor") and torch.is_tensor(a):
         a = a.detach().cpu().numpy()
     return np.asarray(a, dtype=np.float64)
 
@@ -66,7 +66,9 @@ def snr(clean: ArrayLike, noisy: ArrayLike) -> float:
     return _snr_from_arrays(clean_np, noisy_np)
 
 
-def psnr(clean: ArrayLike, test: ArrayLike, data_range: Optional[float] = None) -> float:
+def psnr(
+    clean: ArrayLike, test: ArrayLike, data_range: Optional[float] = None
+) -> float:
     clean_np, test_np = _to_numpy(clean), _to_numpy(test)
     _validate_inputs(clean_np, test_np)
     err = _mse_from_arrays(clean_np, test_np)

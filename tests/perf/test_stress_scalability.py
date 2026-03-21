@@ -25,6 +25,8 @@ import tracemalloc
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -37,7 +39,6 @@ from mycelium_fractal_net import (
     run_mycelium_simulation,
     run_mycelium_simulation_with_history,
 )
-from mycelium_fractal_net.core.simulate import simulate_history
 from mycelium_fractal_net.core import (
     FractalConfig,
     FractalGrowthEngine,
@@ -48,6 +49,7 @@ from mycelium_fractal_net.core import (
     aggregate_gradients_krum,
     compute_lyapunov_exponent,
 )
+from mycelium_fractal_net.core.simulate import simulate_history
 
 # ============================================================================
 # Scalability Thresholds
@@ -73,7 +75,9 @@ MIN_SAMPLES_PER_SECOND = 5  # Minimum simulation throughput
 # ============================================================================
 
 
-def measure_memory_and_time(func: callable, *args: Any, **kwargs: Any) -> dict[str, Any]:
+def measure_memory_and_time(
+    func: callable, *args: Any, **kwargs: Any
+) -> dict[str, Any]:
     """
     Measure memory usage and execution time of a function.
 
@@ -199,9 +203,9 @@ class TestLargeGridScalability:
         time_128 = times[2][1]
         scaling_ratio = time_128 / time_32 if time_32 > 0 else float("inf")
 
-        assert scaling_ratio < 25, (
-            f"Time scaling {scaling_ratio:.1f}x for 128/32 grid exceeds 25x limit"
-        )
+        assert (
+            scaling_ratio < 25
+        ), f"Time scaling {scaling_ratio:.1f}x for 128/32 grid exceeds 25x limit"
 
 
 class TestLongSimulations:
@@ -238,9 +242,9 @@ class TestLongSimulations:
         metrics = measure_memory_and_time(run_mycelium_simulation_with_history, config)
 
         # History: 500 steps * 32 * 32 * 8 bytes = ~4MB, allow up to 50MB total
-        assert metrics["peak_memory_mb"] < 50, (
-            f"History simulation used {metrics['peak_memory_mb']:.2f}MB, exceeds 50MB limit"
-        )
+        assert (
+            metrics["peak_memory_mb"] < 50
+        ), f"History simulation used {metrics['peak_memory_mb']:.2f}MB, exceeds 50MB limit"
 
         result = metrics["result"]
         assert result.history is not None
@@ -267,9 +271,9 @@ class TestMemoryStress:
         tracemalloc.stop()
 
         # Should not accumulate significant memory across runs
-        assert peak / (1024 * 1024) < 100, (
-            f"Memory accumulated to {peak / (1024 * 1024):.2f}MB after 20 runs"
-        )
+        assert (
+            peak / (1024 * 1024) < 100
+        ), f"Memory accumulated to {peak / (1024 * 1024):.2f}MB after 20 runs"
 
     def test_large_batch_feature_extraction(self) -> None:
         """Feature extraction from many simulations should be memory-efficient."""
@@ -291,9 +295,9 @@ class TestMemoryStress:
         tracemalloc.stop()
 
         assert len(features_list) == 10
-        assert peak / (1024 * 1024) < 100, (
-            f"Batch feature extraction used {peak / (1024 * 1024):.2f}MB, exceeds 100MB"
-        )
+        assert (
+            peak / (1024 * 1024) < 100
+        ), f"Batch feature extraction used {peak / (1024 * 1024):.2f}MB, exceeds 100MB"
 
 
 class TestConcurrentProcessing:
@@ -303,7 +307,9 @@ class TestConcurrentProcessing:
         """Simulations should be thread-safe with different seeds."""
         num_workers = 4
         num_tasks = 8
-        params_list = [{"seed": i * 100, "grid_size": 32, "steps": 32} for i in range(num_tasks)]
+        params_list = [
+            {"seed": i * 100, "grid_size": 32, "steps": 32} for i in range(num_tasks)
+        ]
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             results = list(executor.map(run_simulation_task, params_list))
@@ -319,7 +325,9 @@ class TestConcurrentProcessing:
         """Concurrent simulations should maintain reasonable throughput."""
         num_workers = 2
         num_tasks = 10
-        params_list = [{"seed": i * 50, "grid_size": 32, "steps": 50} for i in range(num_tasks)]
+        params_list = [
+            {"seed": i * 50, "grid_size": 32, "steps": 50} for i in range(num_tasks)
+        ]
 
         start = time.perf_counter()
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
@@ -344,9 +352,9 @@ class TestLargeDataProcessing:
 
         metrics = measure_memory_and_time(estimate_fractal_dimension, large_field)
 
-        assert metrics["elapsed_s"] < 1.0, (
-            f"Fractal dimension on 256x256 took {metrics['elapsed_s']:.3f}s, exceeds 1s"
-        )
+        assert (
+            metrics["elapsed_s"] < 1.0
+        ), f"Fractal dimension on 256x256 took {metrics['elapsed_s']:.3f}s, exceeds 1s"
         result = metrics["result"]
         assert 1.0 <= result <= 2.0  # Valid fractal dimension range
 
@@ -357,9 +365,9 @@ class TestLargeDataProcessing:
 
         metrics = measure_memory_and_time(compute_lyapunov_exponent, large_history)
 
-        assert metrics["elapsed_s"] < 2.0, (
-            f"Lyapunov on 500x64x64 took {metrics['elapsed_s']:.3f}s, exceeds 2s"
-        )
+        assert (
+            metrics["elapsed_s"] < 2.0
+        ), f"Lyapunov on 500x64x64 took {metrics['elapsed_s']:.3f}s, exceeds 2s"
         result = metrics["result"]
         assert not np.isnan(result)
         assert not np.isinf(result)
@@ -375,9 +383,9 @@ class TestLargeDataProcessing:
 
         metrics = measure_memory_and_time(engine.generate_ifs)
 
-        assert metrics["elapsed_s"] < 5.0, (
-            f"IFS 50k points took {metrics['elapsed_s']:.3f}s, exceeds 5s"
-        )
+        assert (
+            metrics["elapsed_s"] < 5.0
+        ), f"IFS 50k points took {metrics['elapsed_s']:.3f}s, exceeds 5s"
         points, lyapunov = metrics["result"]
         assert points.shape[0] == 50000
         assert not np.isnan(points).any()
@@ -399,9 +407,9 @@ class TestFederatedScalability:
             byzantine_fraction=0.2,
         )
 
-        assert metrics["elapsed_s"] < 5.0, (
-            f"Krum with {num_clients} clients took {metrics['elapsed_s']:.3f}s, exceeds 5s"
-        )
+        assert (
+            metrics["elapsed_s"] < 5.0
+        ), f"Krum with {num_clients} clients took {metrics['elapsed_s']:.3f}s, exceeds 5s"
         result = metrics["result"]
         assert result.shape == (gradient_dim,)
         assert not torch.isnan(result).any()
@@ -419,9 +427,9 @@ class TestFederatedScalability:
             byzantine_fraction=0.2,
         )
 
-        assert metrics["elapsed_s"] < 10.0, (
-            f"Krum with large gradients took {metrics['elapsed_s']:.3f}s, exceeds 10s"
-        )
+        assert (
+            metrics["elapsed_s"] < 10.0
+        ), f"Krum with large gradients took {metrics['elapsed_s']:.3f}s, exceeds 10s"
 
 
 class TestNumericalStabilityUnderStress:
@@ -547,12 +555,16 @@ class TestScalabilityBenchmarks:
                     "memory_mb": metrics["peak_memory_mb"],
                 }
             )
-            print(f"Grid {gs}x{gs}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB")
+            print(
+                f"Grid {gs}x{gs}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB"
+            )
 
         # Print scaling ratios
         for i in range(1, len(results)):
             time_ratio = results[i]["time_s"] / results[i - 1]["time_s"]
-            mem_ratio = results[i]["memory_mb"] / max(results[i - 1]["memory_mb"], 0.001)
+            mem_ratio = results[i]["memory_mb"] / max(
+                results[i - 1]["memory_mb"], 0.001
+            )
             print(
                 f"Scaling {results[i - 1]['grid_size']} -> {results[i]['grid_size']}: "
                 f"time {time_ratio:.2f}x, memory {mem_ratio:.2f}x"
@@ -573,18 +585,29 @@ class TestScalabilityBenchmarks:
                     "memory_mb": metrics["peak_memory_mb"],
                 }
             )
-            print(f"Steps {steps}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB")
+            print(
+                f"Steps {steps}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB"
+            )
 
 
 class TestMemmapScalePath:
     """Disk-backed history smoke coverage for larger history contours."""
 
     def test_memmap_history_backend_smoke(self, tmp_path) -> None:
-        seq = simulate_history(__import__("mycelium_fractal_net").SimulationSpec(grid_size=64, steps=32, seed=42), history_backend="memmap", history_dir=tmp_path)
+        seq = simulate_history(
+            __import__("mycelium_fractal_net").SimulationSpec(
+                grid_size=64, steps=32, seed=42
+            ),
+            history_backend="memmap",
+            history_dir=tmp_path,
+        )
         assert seq.history is not None
         assert seq.metadata["history_backend"] == "memmap"
         assert Path(str(seq.metadata["history_memmap_path"])).exists()
 
-    @pytest.mark.skipif(True, reason="1024x1024 experimental path is perf-only and not part of default CI")
+    @pytest.mark.skipif(
+        True,
+        reason="1024x1024 experimental path is perf-only and not part of default CI",
+    )
     def test_experimental_scale_placeholder(self) -> None:
         pass

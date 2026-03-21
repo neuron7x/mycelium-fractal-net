@@ -125,7 +125,9 @@ class Fractal1DPreprocessor(nn.Module):
         super().__init__()
         if preset not in self._PRESETS:
             available = ", ".join(self._PRESETS.keys())
-            raise ValueError(f"Unsupported preset: {preset}. Available presets: {available}")
+            raise ValueError(
+                f"Unsupported preset: {preset}. Available presets: {available}"
+            )
 
         cfg = self._PRESETS[preset]
         self.normalize = cfg["normalize"]

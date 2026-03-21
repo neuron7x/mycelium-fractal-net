@@ -53,29 +53,85 @@ INTEGRATION_COUNT: int = 77
 
 # === Core Iteration Parameters (1-10) ===
 CORE_ITERATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
-    1: {"name": "base_iteration_factor", "value": 1.0, "description": "Base iteration multiplier"},
-    2: {"name": "iteration_scaling", "value": 1.5, "description": "Iteration scaling factor"},
+    1: {
+        "name": "base_iteration_factor",
+        "value": 1.0,
+        "description": "Base iteration multiplier",
+    },
+    2: {
+        "name": "iteration_scaling",
+        "value": 1.5,
+        "description": "Iteration scaling factor",
+    },
     3: {"name": "iteration_warmup", "value": 100, "description": "Warmup iterations"},
-    4: {"name": "iteration_cooldown", "value": 50, "description": "Cooldown iterations"},
-    5: {"name": "iteration_batch_size", "value": 1000, "description": "Batch size for iterations"},
-    6: {"name": "iteration_checkpoint", "value": 10000, "description": "Checkpoint interval"},
-    7: {"name": "iteration_timeout_ms", "value": 5000, "description": "Timeout in milliseconds"},
-    8: {"name": "iteration_retry_count", "value": 3, "description": "Retry count on failure"},
-    9: {"name": "iteration_cache_size", "value": 1024, "description": "Cache size in KB"},
-    10: {"name": "iteration_buffer_size", "value": 4096, "description": "Buffer size in bytes"},
+    4: {
+        "name": "iteration_cooldown",
+        "value": 50,
+        "description": "Cooldown iterations",
+    },
+    5: {
+        "name": "iteration_batch_size",
+        "value": 1000,
+        "description": "Batch size for iterations",
+    },
+    6: {
+        "name": "iteration_checkpoint",
+        "value": 10000,
+        "description": "Checkpoint interval",
+    },
+    7: {
+        "name": "iteration_timeout_ms",
+        "value": 5000,
+        "description": "Timeout in milliseconds",
+    },
+    8: {
+        "name": "iteration_retry_count",
+        "value": 3,
+        "description": "Retry count on failure",
+    },
+    9: {
+        "name": "iteration_cache_size",
+        "value": 1024,
+        "description": "Cache size in KB",
+    },
+    10: {
+        "name": "iteration_buffer_size",
+        "value": 4096,
+        "description": "Buffer size in bytes",
+    },
 }
 
 # === Key Derivation Integrations (11-20) ===
 KEY_DERIVATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
-    11: {"name": "kdf_algorithm", "value": "pbkdf2", "description": "Key derivation algorithm"},
+    11: {
+        "name": "kdf_algorithm",
+        "value": "pbkdf2",
+        "description": "Key derivation algorithm",
+    },
     12: {"name": "kdf_hash", "value": "sha256", "description": "Hash function for KDF"},
     13: {"name": "kdf_salt_length", "value": 16, "description": "Salt length in bytes"},
-    14: {"name": "kdf_key_length", "value": 32, "description": "Derived key length in bytes"},
-    15: {"name": "kdf_memory_cost", "value": 65536, "description": "Memory cost for Argon2"},
+    14: {
+        "name": "kdf_key_length",
+        "value": 32,
+        "description": "Derived key length in bytes",
+    },
+    15: {
+        "name": "kdf_memory_cost",
+        "value": 65536,
+        "description": "Memory cost for Argon2",
+    },
     16: {"name": "kdf_time_cost", "value": 3, "description": "Time cost for Argon2"},
-    17: {"name": "kdf_parallelism", "value": 4, "description": "Parallelism for Argon2"},
+    17: {
+        "name": "kdf_parallelism",
+        "value": 4,
+        "description": "Parallelism for Argon2",
+    },
     18: {"name": "kdf_version", "value": "1.3", "description": "KDF version"},
-    19: {"name": "kdf_context", "value": "encryption", "description": "Derivation context"},
+    19: {
+        "name": "kdf_context",
+        "value": "encryption",
+        "description": "Derivation context",
+    },
     20: {"name": "kdf_info_length", "value": 32, "description": "Info length for HKDF"},
 }
 
@@ -83,7 +139,11 @@ KEY_DERIVATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
 ENCRYPTION_OPTIMIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
     21: {"name": "enc_block_size", "value": 16, "description": "Encryption block size"},
     22: {"name": "enc_iv_length", "value": 16, "description": "IV length in bytes"},
-    23: {"name": "enc_tag_length", "value": 16, "description": "Authentication tag length"},
+    23: {
+        "name": "enc_tag_length",
+        "value": 16,
+        "description": "Authentication tag length",
+    },
     # Security note: Key rotation of 86400s (24h) follows NIST SP 800-57 recommendations.
     # Shorter intervals (e.g., 3600s) may be used for higher security requirements.
     24: {
@@ -91,59 +151,155 @@ ENCRYPTION_OPTIMIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
         "value": 86400,
         "description": "Key rotation interval (seconds). Security-critical: 24h default.",
     },
-    25: {"name": "enc_compression", "value": False, "description": "Enable compression"},
+    25: {
+        "name": "enc_compression",
+        "value": False,
+        "description": "Enable compression",
+    },
     26: {"name": "enc_padding", "value": "pkcs7", "description": "Padding scheme"},
     27: {"name": "enc_mode", "value": "cbc", "description": "Encryption mode"},
-    28: {"name": "enc_chunk_size", "value": 65536, "description": "Chunk size for streaming"},
+    28: {
+        "name": "enc_chunk_size",
+        "value": 65536,
+        "description": "Chunk size for streaming",
+    },
     29: {"name": "enc_header_size", "value": 32, "description": "Header size in bytes"},
     30: {"name": "enc_footer_size", "value": 32, "description": "Footer size in bytes"},
 }
 
 # === Hash Function Integrations (31-40) ===
 HASH_FUNCTION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
-    31: {"name": "hash_algorithm", "value": "sha256", "description": "Primary hash algorithm"},
-    32: {"name": "hash_output_length", "value": 32, "description": "Hash output length"},
+    31: {
+        "name": "hash_algorithm",
+        "value": "sha256",
+        "description": "Primary hash algorithm",
+    },
+    32: {
+        "name": "hash_output_length",
+        "value": 32,
+        "description": "Hash output length",
+    },
     33: {"name": "hash_block_size", "value": 64, "description": "Hash block size"},
     34: {"name": "hmac_key_length", "value": 32, "description": "HMAC key length"},
-    35: {"name": "hash_iterations", "value": 1, "description": "Hash iterations for strengthening"},
-    36: {"name": "hash_personalization", "value": "", "description": "Personalization string"},
+    35: {
+        "name": "hash_iterations",
+        "value": 1,
+        "description": "Hash iterations for strengthening",
+    },
+    36: {
+        "name": "hash_personalization",
+        "value": "",
+        "description": "Personalization string",
+    },
     37: {"name": "hash_salt_prefix", "value": "mfn_", "description": "Salt prefix"},
-    38: {"name": "hash_domain_separator", "value": "|", "description": "Domain separator"},
-    39: {"name": "hash_version_byte", "value": 1, "description": "Version byte for hashes"},
+    38: {
+        "name": "hash_domain_separator",
+        "value": "|",
+        "description": "Domain separator",
+    },
+    39: {
+        "name": "hash_version_byte",
+        "value": 1,
+        "description": "Version byte for hashes",
+    },
     40: {"name": "hash_checksum_length", "value": 4, "description": "Checksum length"},
 }
 
 # === Salt Generation Integrations (41-50) ===
 SALT_GENERATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
-    41: {"name": "salt_entropy_bits", "value": 128, "description": "Entropy bits for salt"},
+    41: {
+        "name": "salt_entropy_bits",
+        "value": 128,
+        "description": "Entropy bits for salt",
+    },
     42: {"name": "salt_source", "value": "os_urandom", "description": "Random source"},
-    43: {"name": "salt_unique_per_op", "value": True, "description": "Unique salt per operation"},
-    44: {"name": "salt_timestamp_mix", "value": False, "description": "Mix timestamp in salt"},
-    45: {"name": "salt_counter_mix", "value": False, "description": "Mix counter in salt"},
+    43: {
+        "name": "salt_unique_per_op",
+        "value": True,
+        "description": "Unique salt per operation",
+    },
+    44: {
+        "name": "salt_timestamp_mix",
+        "value": False,
+        "description": "Mix timestamp in salt",
+    },
+    45: {
+        "name": "salt_counter_mix",
+        "value": False,
+        "description": "Mix counter in salt",
+    },
     46: {"name": "salt_version", "value": 1, "description": "Salt generation version"},
-    47: {"name": "salt_encoding", "value": "raw", "description": "Salt encoding format"},
-    48: {"name": "salt_derivation", "value": False, "description": "Enable salt derivation"},
-    49: {"name": "salt_cache_enabled", "value": False, "description": "Enable salt caching"},
-    50: {"name": "salt_validation", "value": True, "description": "Enable salt validation"},
+    47: {
+        "name": "salt_encoding",
+        "value": "raw",
+        "description": "Salt encoding format",
+    },
+    48: {
+        "name": "salt_derivation",
+        "value": False,
+        "description": "Enable salt derivation",
+    },
+    49: {
+        "name": "salt_cache_enabled",
+        "value": False,
+        "description": "Enable salt caching",
+    },
+    50: {
+        "name": "salt_validation",
+        "value": True,
+        "description": "Enable salt validation",
+    },
 }
 
 # === Memory Optimization Integrations (51-60) ===
 MEMORY_OPTIMIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
-    51: {"name": "mem_pool_size", "value": 1048576, "description": "Memory pool size in bytes"},
+    51: {
+        "name": "mem_pool_size",
+        "value": 1048576,
+        "description": "Memory pool size in bytes",
+    },
     52: {"name": "mem_alignment", "value": 64, "description": "Memory alignment"},
-    53: {"name": "mem_secure_alloc", "value": True, "description": "Use secure allocation"},
-    54: {"name": "mem_zero_on_free", "value": True, "description": "Zero memory on free"},
+    53: {
+        "name": "mem_secure_alloc",
+        "value": True,
+        "description": "Use secure allocation",
+    },
+    54: {
+        "name": "mem_zero_on_free",
+        "value": True,
+        "description": "Zero memory on free",
+    },
     55: {"name": "mem_lock_pages", "value": False, "description": "Lock memory pages"},
     56: {"name": "mem_guard_pages", "value": True, "description": "Use guard pages"},
-    57: {"name": "mem_canary_enabled", "value": True, "description": "Enable memory canaries"},
-    58: {"name": "mem_max_alloc", "value": 16777216, "description": "Maximum allocation size"},
-    59: {"name": "mem_prealloc_count", "value": 16, "description": "Preallocated buffers"},
-    60: {"name": "mem_gc_threshold", "value": 0.8, "description": "GC threshold (0.0-1.0)"},
+    57: {
+        "name": "mem_canary_enabled",
+        "value": True,
+        "description": "Enable memory canaries",
+    },
+    58: {
+        "name": "mem_max_alloc",
+        "value": 16777216,
+        "description": "Maximum allocation size",
+    },
+    59: {
+        "name": "mem_prealloc_count",
+        "value": 16,
+        "description": "Preallocated buffers",
+    },
+    60: {
+        "name": "mem_gc_threshold",
+        "value": 0.8,
+        "description": "GC threshold (0.0-1.0)",
+    },
 }
 
 # === Parallelization Integrations (61-70) ===
 PARALLELIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
-    61: {"name": "parallel_enabled", "value": True, "description": "Enable parallelization"},
+    61: {
+        "name": "parallel_enabled",
+        "value": True,
+        "description": "Enable parallelization",
+    },
     62: {"name": "parallel_threads", "value": 4, "description": "Number of threads"},
     63: {
         "name": "parallel_chunk_size",
@@ -151,23 +307,63 @@ PARALLELIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
         "description": "Chunk size for parallel ops",
     },
     64: {"name": "parallel_queue_depth", "value": 8, "description": "Work queue depth"},
-    65: {"name": "parallel_affinity", "value": False, "description": "Enable CPU affinity"},
-    66: {"name": "parallel_priority", "value": "normal", "description": "Thread priority"},
-    67: {"name": "parallel_timeout", "value": 30000, "description": "Parallel op timeout (ms)"},
-    68: {"name": "parallel_retry", "value": 2, "description": "Retry count for failed ops"},
-    69: {"name": "parallel_batch_mode", "value": True, "description": "Enable batch processing"},
-    70: {"name": "parallel_load_balance", "value": True, "description": "Enable load balancing"},
+    65: {
+        "name": "parallel_affinity",
+        "value": False,
+        "description": "Enable CPU affinity",
+    },
+    66: {
+        "name": "parallel_priority",
+        "value": "normal",
+        "description": "Thread priority",
+    },
+    67: {
+        "name": "parallel_timeout",
+        "value": 30000,
+        "description": "Parallel op timeout (ms)",
+    },
+    68: {
+        "name": "parallel_retry",
+        "value": 2,
+        "description": "Retry count for failed ops",
+    },
+    69: {
+        "name": "parallel_batch_mode",
+        "value": True,
+        "description": "Enable batch processing",
+    },
+    70: {
+        "name": "parallel_load_balance",
+        "value": True,
+        "description": "Enable load balancing",
+    },
 }
 
 # === Validation and Audit Integrations (71-77) ===
 VALIDATION_AUDIT_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
     71: {"name": "audit_enabled", "value": True, "description": "Enable audit logging"},
     72: {"name": "audit_level", "value": "info", "description": "Audit log level"},
-    73: {"name": "validation_strict", "value": True, "description": "Enable strict validation"},
-    74: {"name": "validation_timeout", "value": 5000, "description": "Validation timeout (ms)"},
+    73: {
+        "name": "validation_strict",
+        "value": True,
+        "description": "Enable strict validation",
+    },
+    74: {
+        "name": "validation_timeout",
+        "value": 5000,
+        "description": "Validation timeout (ms)",
+    },
     75: {"name": "compliance_mode", "value": "soc2", "description": "Compliance mode"},
-    76: {"name": "integrity_check", "value": True, "description": "Enable integrity checks"},
-    77: {"name": "checksum_algorithm", "value": "crc32", "description": "Checksum algorithm"},
+    76: {
+        "name": "integrity_check",
+        "value": True,
+        "description": "Enable integrity checks",
+    },
+    77: {
+        "name": "checksum_algorithm",
+        "value": "crc32",
+        "description": "Checksum algorithm",
+    },
 }
 
 
@@ -313,7 +509,9 @@ class DataIntegrationConfig:
         Returns:
             List of integrations in the category.
         """
-        return [intg for intg in self._integrations.values() if intg.category == category]
+        return [
+            intg for intg in self._integrations.values() if intg.category == category
+        ]
 
     def get_enabled_integrations(self) -> List[DataIntegration]:
         """Get all enabled integrations."""
@@ -375,7 +573,9 @@ class DataIntegrationConfig:
             "version": self.version,
             "total_integrations": INTEGRATION_COUNT,
             "enabled_count": self.count_enabled(),
-            "integrations": {i: intg.to_dict() for i, intg in self._integrations.items()},
+            "integrations": {
+                i: intg.to_dict() for i, intg in self._integrations.items()
+            },
         }
 
     def get_optimization_summary(self) -> Dict[str, Any]:

@@ -211,9 +211,9 @@ class TestControlScenarios:
         assert np.isfinite(field).all(), "NaN/Inf detected"
         assert field.min() >= -0.095, "Field below lower bound"
         assert field.max() <= 0.040, "Field above upper bound"
-        assert final_var < initial_var, (
-            f"Variance should decrease: initial={initial_var:.6f}, final={final_var:.6f}"
-        )
+        assert (
+            final_var < initial_var
+        ), f"Variance should decrease: initial={initial_var:.6f}, final={final_var:.6f}"
 
     def test_growth_with_spikes(self, rng: np.random.Generator) -> None:
         """
@@ -234,7 +234,9 @@ class TestControlScenarios:
         assert np.isfinite(field).all(), "NaN/Inf detected"
         assert field.min() >= -0.095, "Field below lower bound"
         assert field.max() <= 0.040, "Field above upper bound"
-        assert growth_events > 0, f"Expected growth events with p=0.5, got {growth_events}"
+        assert (
+            growth_events > 0
+        ), f"Expected growth events with p=0.5, got {growth_events}"
 
     def test_turing_pattern_formation(self, rng: np.random.Generator) -> None:
         """
@@ -271,7 +273,9 @@ class TestControlScenarios:
         diff = np.abs(field_with_turing - field_without_turing)
         max_diff = diff.max()
 
-        assert max_diff > 1e-6, f"Turing should produce different results, max_diff={max_diff}"
+        assert (
+            max_diff > 1e-6
+        ), f"Turing should produce different results, max_diff={max_diff}"
 
     def test_quantum_jitter_stability(self, rng: np.random.Generator) -> None:
         """
@@ -476,7 +480,9 @@ class TestFeatureDiscrimination:
         # as this depends on threshold choice. The key test is that the dimension
         # feature is computable and valid for both regimes.
 
-    def test_high_vs_low_activity_discrimination(self, rng: np.random.Generator) -> None:
+    def test_high_vs_low_activity_discrimination(
+        self, rng: np.random.Generator
+    ) -> None:
         """
         Features should differentiate high-activity vs low-activity regimes.
 
@@ -590,7 +596,9 @@ class TestFalsificationSignals:
         max_coord = np.abs(points).max()
 
         assert lyapunov < 0, f"FALSIFICATION: IFS not contractive (λ={lyapunov})"
-        assert max_coord < 100, f"FALSIFICATION: IFS attractor unbounded (max={max_coord})"
+        assert (
+            max_coord < 100
+        ), f"FALSIFICATION: IFS attractor unbounded (max={max_coord})"
 
     def test_cfl_stability_boundary(self) -> None:
         """
@@ -603,7 +611,9 @@ class TestFalsificationSignals:
         # Just below CFL limit
         field, _ = simulate_mycelium_field(rng, grid_size=32, steps=200, alpha=0.24)
 
-        assert np.isfinite(field).all(), "FALSIFICATION: System unstable below CFL limit (α=0.24)"
+        assert np.isfinite(
+            field
+        ).all(), "FALSIFICATION: System unstable below CFL limit (α=0.24)"
 
 
 class TestDatasetRegimeDiscrimination:
@@ -670,7 +680,9 @@ class TestDatasetRegimeDiscrimination:
                 all_std.append(std_v)
 
         # There should be variance in features across regimes
-        assert np.std(all_D) > 0.001, "Fractal dimension shows no variance across regimes"
+        assert (
+            np.std(all_D) > 0.001
+        ), "Fractal dimension shows no variance across regimes"
         assert np.std(all_std) > 0.001, "Std shows no variance across regimes"
 
         # Print summary for report

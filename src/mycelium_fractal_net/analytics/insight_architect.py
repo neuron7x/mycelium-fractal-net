@@ -115,12 +115,17 @@ class FractalInsightArchitect:
         ``meso``, ``macro`` or a list of mappings each containing ``level``.
         """
         normalized = self._normalize(data)
-        missing_levels = [lvl for lvl in ("micro", "meso", "macro") if not normalized.levels[lvl]]
+        missing_levels = [
+            lvl for lvl in ("micro", "meso", "macro") if not normalized.levels[lvl]
+        ]
         if missing_levels:
             raise InsufficientDataError(self._build_clarifications(missing_levels))
 
         metrics = [
-            p.metric for items in normalized.levels.values() for p in items if p.metric is not None
+            p.metric
+            for items in normalized.levels.values()
+            for p in items
+            if p.metric is not None
         ]
         invariant_threshold = self._compute_threshold(metrics)
 
@@ -156,7 +161,9 @@ class FractalInsightArchitect:
         return self.generate(data, principle_name=principle_name).format()
 
     # Normalization --------------------------------------------------------------
-    def _normalize(self, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> _NormalizedData:
+    def _normalize(
+        self, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]
+    ) -> _NormalizedData:
         levels: dict[str, list[LevelPattern]] = {"micro": [], "meso": [], "macro": []}
         tensions: list[str] = []
         goal = None
@@ -221,7 +228,9 @@ class FractalInsightArchitect:
         clarifications = [templates[lvl] for lvl in missing_levels]
         return clarifications[: self.max_clarifications]
 
-    def _build_name(self, principle_name: str | None, normalized: _NormalizedData) -> str:
+    def _build_name(
+        self, principle_name: str | None, normalized: _NormalizedData
+    ) -> str:
         if principle_name:
             return principle_name.strip().upper()
         micro = self._primary_pattern(normalized.levels["micro"]).name
@@ -230,7 +239,9 @@ class FractalInsightArchitect:
 
     def _build_summary(self, normalized: _NormalizedData) -> str:
         macro = self._primary_pattern(normalized.levels["macro"]).name
-        tension = normalized.tensions[0] if normalized.tensions else "каскадне посилення"
+        tension = (
+            normalized.tensions[0] if normalized.tensions else "каскадне посилення"
+        )
         goal = normalized.goal or "стабілізувати систему"
         return f"{tension} призводить до {macro}; мета — {goal}."
 
@@ -316,7 +327,9 @@ class FractalInsightArchitect:
     @staticmethod
     def _primary_pattern(patterns: list[LevelPattern]) -> LevelPattern:
         if not patterns:
-            raise ValueError("patterns cannot be empty; надайте хоча б один патерн для рівня")
+            raise ValueError(
+                "patterns cannot be empty; надайте хоча б один патерн для рівня"
+            )
         return patterns[0]
 
     @staticmethod

@@ -189,7 +189,9 @@ def decrypt_data(
         aad = _normalize_associated_data(associated_data, encoding)
 
         cipher = AESGCMCipher(key=key)
-        plaintext_bytes = cipher.decrypt(raw_ciphertext, associated_data=aad, return_bytes=True)
+        plaintext_bytes = cipher.decrypt(
+            raw_ciphertext, associated_data=aad, return_bytes=True
+        )
 
         if isinstance(plaintext_bytes, str):
             return plaintext_bytes

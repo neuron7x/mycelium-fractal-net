@@ -30,7 +30,10 @@ from mycelium_fractal_net.config import (
     make_simulation_config_default,
     make_simulation_config_demo,
 )
-from mycelium_fractal_net.experiments.generate_dataset import ConfigSampler, generate_dataset
+from mycelium_fractal_net.experiments.generate_dataset import (
+    ConfigSampler,
+    generate_dataset,
+)
 
 # ============================================================================
 # Performance Baselines (from MFN_PERFORMANCE_BASELINES.md)
@@ -195,9 +198,9 @@ class TestDatasetDemoPerf:
         elapsed = time.perf_counter() - start
 
         # Verify all samples succeeded
-        assert stats["successful"] == num_samples, (
-            f"Dataset generation failed: {stats['successful']}/{num_samples} successful"
-        )
+        assert (
+            stats["successful"] == num_samples
+        ), f"Dataset generation failed: {stats['successful']}/{num_samples} successful"
 
         assert elapsed <= threshold, (
             f"Dataset generation exceeded performance threshold: "

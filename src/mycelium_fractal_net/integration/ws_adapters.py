@@ -79,7 +79,9 @@ async def stream_features_adapter(
 
                 # Filter features if specified
                 if params.features:
-                    features = {k: v for k, v in features.items() if k in params.features}
+                    features = {
+                        k: v for k, v in features.items() if k in params.features
+                    }
 
                 # Create update message
                 update = WSFeatureUpdate(
@@ -159,7 +161,9 @@ async def stream_simulation_live_adapter(
                 growth_events += 1
 
             # Send update at specified interval
-            if (step + 1) % params.update_interval_steps == 0 or step == params.steps - 1:
+            if (
+                step + 1
+            ) % params.update_interval_steps == 0 or step == params.steps - 1:
                 field = rd_engine.field
                 if field is not None:
                     # Compute state metrics
@@ -269,7 +273,9 @@ def _compute_fractal_features(field: NDArray[np.floating[Any]]) -> Dict[str, flo
     return features
 
 
-def _compute_fractal_dimension(field: NDArray[np.floating[Any]], threshold: float = 0.01) -> float:
+def _compute_fractal_dimension(
+    field: NDArray[np.floating[Any]], threshold: float = 0.01
+) -> float:
     """
     Compute box-counting fractal dimension.
 

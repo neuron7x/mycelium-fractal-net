@@ -332,7 +332,9 @@ class MembraneEngine:
 
         # Nernst equation: E = (RT/zF) * ln(c_out/c_in)
         ratio = c_out / c_in
-        potential = (R_GAS_CONSTANT * temp) / (z_valence * FARADAY_CONSTANT) * math.log(ratio)
+        potential = (
+            (R_GAS_CONSTANT * temp) / (z_valence * FARADAY_CONSTANT) * math.log(ratio)
+        )
 
         # Stability check
         if self.config.check_stability:
@@ -389,12 +391,16 @@ class MembraneEngine:
         c_out = np.maximum(concentration_out, self.config.ion_clamp_min)
         c_in = np.maximum(concentration_in, self.config.ion_clamp_min)
 
-        clamped_count = int(np.sum(c_out != concentration_out) + np.sum(c_in != concentration_in))
+        clamped_count = int(
+            np.sum(c_out != concentration_out) + np.sum(c_in != concentration_in)
+        )
         self._metrics.clamping_events += clamped_count
 
         # Vectorized Nernst equation
         ratio = c_out / c_in
-        potential = (R_GAS_CONSTANT * temp) / (z_valence * FARADAY_CONSTANT) * np.log(ratio)
+        potential = (
+            (R_GAS_CONSTANT * temp) / (z_valence * FARADAY_CONSTANT) * np.log(ratio)
+        )
 
         # Stability check
         if self.config.check_stability:
@@ -427,7 +433,9 @@ class MembraneEngine:
     def integrate_ode(
         self,
         v0: float | NDArray[np.floating],
-        derivative_fn: Callable[[float | NDArray[np.floating]], float | NDArray[np.floating]],
+        derivative_fn: Callable[
+            [float | NDArray[np.floating]], float | NDArray[np.floating]
+        ],
         steps: int,
         clamp: bool = True,
     ) -> tuple[float | NDArray[np.floating], MembraneMetrics]:
@@ -476,7 +484,9 @@ class MembraneEngine:
 
             # Clamping
             if clamp:
-                v_clamped = np.clip(v, self.config.potential_min_v, self.config.potential_max_v)
+                v_clamped = np.clip(
+                    v, self.config.potential_min_v, self.config.potential_max_v
+                )
                 clamped = np.sum(v != v_clamped)
                 self._metrics.clamping_events += int(clamped)
                 v = v_clamped
@@ -549,7 +559,9 @@ class MembraneEngine:
         k3 = derivative_fn(v + 0.5 * dt * k2)
         k4 = derivative_fn(v + dt * k3)
 
-        return cast(NDArray[np.floating[Any]], v + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4))
+        return cast(
+            NDArray[np.floating[Any]], v + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        )
 
     def validate_potential_range(
         self,

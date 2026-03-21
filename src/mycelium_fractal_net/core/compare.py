@@ -35,30 +35,47 @@ _TOP_CHANGED_FEATURES: int = 12
 
 
 def _topology_label(drift: dict[str, float]) -> str:
-    connectivity = float(drift.get('connectivity_divergence', 0.0))
-    hierarchy = float(drift.get('hierarchy_flattening', 0.0))
-    modularity = float(drift.get('modularity_shift', 0.0))
-    noise = float(drift.get('noise_discrimination', 0.0))
-    if noise >= _NOISE_PATHOLOGICAL_HIGH or (noise >= _NOISE_PATHOLOGICAL_LOW and connectivity < _CONNECTIVITY_LOW and modularity < _MODULARITY_LOW):
-        return 'pathological-drift'
-    if hierarchy >= _HIERARCHY_FLAT_THRESHOLD and connectivity < _CONNECTIVITY_FLAT_CEILING and modularity < _MODULARITY_LOW:
-        return 'flattened-hierarchy'
-    if connectivity >= _CONNECTIVITY_REORG_THRESHOLD or modularity >= _MODULARITY_REORG_THRESHOLD:
-        return 'reorganized'
-    return 'nominal'
+    connectivity = float(drift.get("connectivity_divergence", 0.0))
+    hierarchy = float(drift.get("hierarchy_flattening", 0.0))
+    modularity = float(drift.get("modularity_shift", 0.0))
+    noise = float(drift.get("noise_discrimination", 0.0))
+    if noise >= _NOISE_PATHOLOGICAL_HIGH or (
+        noise >= _NOISE_PATHOLOGICAL_LOW
+        and connectivity < _CONNECTIVITY_LOW
+        and modularity < _MODULARITY_LOW
+    ):
+        return "pathological-drift"
+    if (
+        hierarchy >= _HIERARCHY_FLAT_THRESHOLD
+        and connectivity < _CONNECTIVITY_FLAT_CEILING
+        and modularity < _MODULARITY_LOW
+    ):
+        return "flattened-hierarchy"
+    if (
+        connectivity >= _CONNECTIVITY_REORG_THRESHOLD
+        or modularity >= _MODULARITY_REORG_THRESHOLD
+    ):
+        return "reorganized"
+    return "nominal"
 
 
 _REORGANIZATION_MAP = {
-    'nominal': 'stable',
-    'flattened-hierarchy': 'transitional',
-    'pathological-drift': 'pathological_noise',
-    'reorganized': 'reorganized',
+    "nominal": "stable",
+    "flattened-hierarchy": "transitional",
+    "pathological-drift": "pathological_noise",
+    "reorganized": "reorganized",
 }
 
 
-def compare(a: FieldSequence | MorphologyDescriptor, b: FieldSequence | MorphologyDescriptor) -> ComparisonResult:
-    left = a if isinstance(a, MorphologyDescriptor) else compute_morphology_descriptor(a)
-    right = b if isinstance(b, MorphologyDescriptor) else compute_morphology_descriptor(b)
+def compare(
+    a: FieldSequence | MorphologyDescriptor, b: FieldSequence | MorphologyDescriptor
+) -> ComparisonResult:
+    left = (
+        a if isinstance(a, MorphologyDescriptor) else compute_morphology_descriptor(a)
+    )
+    right = (
+        b if isinstance(b, MorphologyDescriptor) else compute_morphology_descriptor(b)
+    )
     left_vec = left.to_embedding_array()
     right_vec = right.to_embedding_array()
     distance = float(np.linalg.norm(left_vec - right_vec))
@@ -68,30 +85,73 @@ def compare(a: FieldSequence | MorphologyDescriptor, b: FieldSequence | Morpholo
     right_flat = right.flatten()
     keys = sorted(set(left_flat) & set(right_flat))
     changed = [
-        {'feature': key, 'left': float(left_flat[key]), 'right': float(right_flat[key]), 'abs_delta': abs(float(left_flat[key]) - float(right_flat[key]))}
-        for key in sorted(keys, key=lambda k: abs(left_flat[k] - right_flat[k]), reverse=True)[:_TOP_CHANGED_FEATURES]
+        {
+            "feature": key,
+            "left": float(left_flat[key]),
+            "right": float(right_flat[key]),
+            "abs_delta": abs(float(left_flat[key]) - float(right_flat[key])),
+        }
+        for key in sorted(
+            keys, key=lambda k: abs(left_flat[k] - right_flat[k]), reverse=True
+        )[:_TOP_CHANGED_FEATURES]
     ]
     drift = morphology_drift(left, right)
-    drift.update({
-        'connectivity_divergence': abs(float(left.connectivity.get('connectivity_divergence', 0.0) - right.connectivity.get('connectivity_divergence', 0.0))),
-        'hierarchy_flattening': abs(float(left.connectivity.get('hierarchy_flattening', 0.0) - right.connectivity.get('hierarchy_flattening', 0.0))),
-        'modularity_shift': abs(float(left.connectivity.get('modularity_proxy', 0.0) - right.connectivity.get('modularity_proxy', 0.0))),
-        'noise_discrimination': abs(float(left.neuromodulation.get('observation_noise_gain', 0.0) - right.neuromodulation.get('observation_noise_gain', 0.0))),
-    })
+    drift.update(
+        {
+            "connectivity_divergence": abs(
+                float(
+                    left.connectivity.get("connectivity_divergence", 0.0)
+                    - right.connectivity.get("connectivity_divergence", 0.0)
+                )
+            ),
+            "hierarchy_flattening": abs(
+                float(
+                    left.connectivity.get("hierarchy_flattening", 0.0)
+                    - right.connectivity.get("hierarchy_flattening", 0.0)
+                )
+            ),
+            "modularity_shift": abs(
+                float(
+                    left.connectivity.get("modularity_proxy", 0.0)
+                    - right.connectivity.get("modularity_proxy", 0.0)
+                )
+            ),
+            "noise_discrimination": abs(
+                float(
+                    left.neuromodulation.get("observation_noise_gain", 0.0)
+                    - right.neuromodulation.get("observation_noise_gain", 0.0)
+                )
+            ),
+        }
+    )
     if cosine >= _COSINE_NEAR_IDENTICAL and distance < _DISTANCE_NEAR_IDENTICAL:
-        label = 'near-identical'
+        label = "near-identical"
     elif cosine >= _COSINE_SIMILAR:
-        label = 'similar'
+        label = "similar"
     elif cosine >= _COSINE_RELATED:
-        label = 'related'
+        label = "related"
     else:
-        label = 'divergent'
-    nearest_structural_analog = 'self-similar' if label == 'near-identical' else 'reference-family' if label in {'similar', 'related'} else 'no-close-analog'
+        label = "divergent"
+    nearest_structural_analog = (
+        "self-similar"
+        if label == "near-identical"
+        else (
+            "reference-family" if label in {"similar", "related"} else "no-close-analog"
+        )
+    )
     topo_label = _topology_label(drift)
     reorg_label = _REORGANIZATION_MAP.get(topo_label, topo_label)
-    topology_summary = {k: float(drift[k]) for k in ('connectivity_divergence', 'hierarchy_flattening', 'modularity_shift', 'noise_discrimination')}
+    topology_summary = {
+        k: float(drift[k])
+        for k in (
+            "connectivity_divergence",
+            "hierarchy_flattening",
+            "modularity_shift",
+            "noise_discrimination",
+        )
+    }
     return ComparisonResult(
-        version='mfn-compare-v4',
+        version="mfn-compare-v4",
         distance=distance,
         cosine_similarity=cosine,
         label=label,
@@ -102,8 +162,8 @@ def compare(a: FieldSequence | MorphologyDescriptor, b: FieldSequence | Morpholo
         topology_label=topo_label,
         reorganization_label=reorg_label,
         metadata={
-            'embedding_dim': float(len(left_vec)),
-            'normalized_distance': float(drift['normalized_distance']),
-            'label_axes_orthogonal': True,
+            "embedding_dim": float(len(left_vec)),
+            "normalized_distance": float(drift["normalized_distance"]),
+            "label_axes_orthogonal": True,
         },
     )

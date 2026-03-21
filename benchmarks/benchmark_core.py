@@ -13,8 +13,8 @@ Run with: python benchmarks/benchmark_core.py
 """
 
 import csv
-import os
 import json
+import os
 import sys
 import time
 import tracemalloc
@@ -25,7 +25,6 @@ from typing import Optional
 
 import numpy as np
 import torch
-
 
 from mycelium_fractal_net import estimate_fractal_dimension, simulate_mycelium_field
 from mycelium_fractal_net.model import MyceliumFractalNet
@@ -94,9 +93,13 @@ class BenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Forward pass latency: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
+        print(
+            f"Forward pass latency: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
+        )
         if not result.passed:
-            print(f"  WARNING: Latency {avg_latency_ms:.2f}ms exceeds {target_ms}ms target")
+            print(
+                f"  WARNING: Latency {avg_latency_ms:.2f}ms exceeds {target_ms}ms target"
+            )
 
         self.results.append(result)
         return result
@@ -139,7 +142,9 @@ class BenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Forward pass (batch=128): {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
+        print(
+            f"Forward pass (batch=128): {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
+        )
 
         self.results.append(result)
         return result
@@ -164,7 +169,9 @@ class BenchmarkSuite:
         steps = 40 if profile != "full" else 100
         for _ in range(num_iterations):
             rng = np.random.default_rng(42)
-            _, _ = simulate_mycelium_field(rng, grid_size=grid_size, steps=steps, turing_enabled=True)
+            _, _ = simulate_mycelium_field(
+                rng, grid_size=grid_size, steps=steps, turing_enabled=True
+            )
         end = time.perf_counter()
 
         avg_latency_ms = (end - start) / num_iterations * 1000
@@ -218,7 +225,9 @@ class BenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Fractal dimension estimation: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
+        print(
+            f"Fractal dimension estimation: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
+        )
 
         self.results.append(result)
         return result
@@ -389,7 +398,9 @@ class BenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Model initialization: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
+        print(
+            f"Model initialization: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
+        )
 
         self.results.append(result)
         return result
@@ -457,7 +468,17 @@ class BenchmarkSuite:
         with open(output_path, "w") as f:
             json.dump(results_dict, f, indent=2)
         with open(csv_path, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=["name", "metric_value", "metric_unit", "target_value", "passed", "timestamp"])
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "name",
+                    "metric_value",
+                    "metric_unit",
+                    "target_value",
+                    "passed",
+                    "timestamp",
+                ],
+            )
             writer.writeheader()
             for row in self.results:
                 writer.writerow(asdict(row))

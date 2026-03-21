@@ -32,7 +32,9 @@ def test_env_backend_reads_direct_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert manager.get_secret("MFN_API_KEY") == "env-secret"
 
 
-def test_env_backend_reads_from_file_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_env_backend_reads_from_file_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     """ENV backend should read secrets from <KEY>_FILE when present."""
     secret_file = tmp_path / "mfn_api_key"
     secret_file.write_text("file-secret", encoding="utf-8")
@@ -69,7 +71,9 @@ def test_file_backend_requires_file_path() -> None:
 def test_file_backend_reads_env_format(tmp_path: Path) -> None:
     """File backend should parse .env-style key/value pairs."""
     secrets_file = tmp_path / "secrets.env"
-    secrets_file.write_text("# Comment line\nMFN_API_KEY=env-style-secret\n", encoding="utf-8")
+    secrets_file.write_text(
+        "# Comment line\nMFN_API_KEY=env-style-secret\n", encoding="utf-8"
+    )
     config = SecretManagerConfig(backend=SecretsBackend.FILE, file_path=secrets_file)
     manager = SecretManager(config)
     assert manager.get_secret("MFN_API_KEY") == "env-style-secret"
@@ -84,7 +88,9 @@ def test_get_list_parses_json_array(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_get_list_parses_lines_and_commas(monkeypatch: pytest.MonkeyPatch) -> None:
     """List secrets should support newline and comma delimiters."""
-    monkeypatch.setenv("MFN_ALLOWED_ORIGINS", "https://a.com,https://b.com\nhttps://c.com")
+    monkeypatch.setenv(
+        "MFN_ALLOWED_ORIGINS", "https://a.com,https://b.com\nhttps://c.com"
+    )
     manager = SecretManager(SecretManagerConfig(backend=SecretsBackend.ENV))
     assert manager.get_list("MFN_ALLOWED_ORIGINS") == [
         "https://a.com",

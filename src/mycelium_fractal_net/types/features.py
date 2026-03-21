@@ -1,4 +1,3 @@
-
 """Canonical feature and morphology descriptor types."""
 
 from __future__ import annotations
@@ -44,24 +43,43 @@ assert len(FEATURE_NAMES) == FEATURE_COUNT
 # Unknown keys cause a warning (not an error) for forward compatibility.
 FEATURE_NAMES_SET: frozenset[str] = frozenset(FEATURE_NAMES)
 
-STABILITY_KEYS: frozenset[str] = frozenset({
-    'instability_index', 'near_transition_score', 'collapse_risk_score',
-})
+STABILITY_KEYS: frozenset[str] = frozenset(
+    {
+        "instability_index",
+        "near_transition_score",
+        "collapse_risk_score",
+    }
+)
 
-COMPLEXITY_KEYS: frozenset[str] = frozenset({
-    'temporal_lzc', 'temporal_hfd', 'multiscale_entropy_short',
-})
+COMPLEXITY_KEYS: frozenset[str] = frozenset(
+    {
+        "temporal_lzc",
+        "temporal_hfd",
+        "multiscale_entropy_short",
+    }
+)
 
-CONNECTIVITY_KEYS: frozenset[str] = frozenset({
-    'connectivity_divergence', 'hierarchy_flattening',
-    'modularity_proxy', 'modularity_shift', 'global_coherence_shift',
-    'active_ratio', 'gbc_like_summary',
-})
+CONNECTIVITY_KEYS: frozenset[str] = frozenset(
+    {
+        "connectivity_divergence",
+        "hierarchy_flattening",
+        "modularity_proxy",
+        "modularity_shift",
+        "global_coherence_shift",
+        "active_ratio",
+        "gbc_like_summary",
+    }
+)
 
-NEUROMODULATION_KEYS: frozenset[str] = frozenset({
-    'enabled', 'plasticity_index', 'effective_inhibition',
-    'effective_gain', 'observation_noise_gain',
-})
+NEUROMODULATION_KEYS: frozenset[str] = frozenset(
+    {
+        "enabled",
+        "plasticity_index",
+        "effective_inhibition",
+        "effective_gain",
+        "observation_noise_gain",
+    }
+)
 
 
 def _validate_feature_keys(
@@ -102,44 +120,55 @@ class MorphologyDescriptor:
 
     def __post_init__(self) -> None:
         # Normalize: if typed object passed, convert to dict for storage
-        for group_name in ('features', 'temporal', 'multiscale', 'stability',
-                           'complexity', 'connectivity', 'neuromodulation'):
+        for group_name in (
+            "features",
+            "temporal",
+            "multiscale",
+            "stability",
+            "complexity",
+            "connectivity",
+            "neuromodulation",
+        ):
             val = getattr(self, group_name)
-            if hasattr(val, 'to_dict') and not isinstance(val, dict):
+            if hasattr(val, "to_dict") and not isinstance(val, dict):
                 object.__setattr__(self, group_name, val.to_dict())
             else:
-                object.__setattr__(self, group_name, {k: float(v) for k, v in val.items()})
-        object.__setattr__(self, 'embedding', tuple(float(v) for v in self.embedding))
-        object.__setattr__(self, 'metadata', dict(self.metadata))
+                object.__setattr__(
+                    self, group_name, {k: float(v) for k, v in val.items()}
+                )
+        object.__setattr__(self, "embedding", tuple(float(v) for v in self.embedding))
+        object.__setattr__(self, "metadata", dict(self.metadata))
         if not self.embedding:
-            raise ValueError('embedding must not be empty')
+            raise ValueError("embedding must not be empty")
         arr = np.asarray(self.embedding, dtype=np.float64)
         if not np.isfinite(arr).all():
-            raise ValueError('embedding contains NaN or Inf values')
+            raise ValueError("embedding contains NaN or Inf values")
         if self.stability:
-            _validate_feature_keys('stability', self.stability, STABILITY_KEYS)
+            _validate_feature_keys("stability", self.stability, STABILITY_KEYS)
         if self.complexity:
-            _validate_feature_keys('complexity', self.complexity, COMPLEXITY_KEYS)
+            _validate_feature_keys("complexity", self.complexity, COMPLEXITY_KEYS)
         if self.connectivity:
-            _validate_feature_keys('connectivity', self.connectivity, CONNECTIVITY_KEYS)
+            _validate_feature_keys("connectivity", self.connectivity, CONNECTIVITY_KEYS)
         if self.neuromodulation:
-            _validate_feature_keys('neuromodulation', self.neuromodulation, NEUROMODULATION_KEYS)
+            _validate_feature_keys(
+                "neuromodulation", self.neuromodulation, NEUROMODULATION_KEYS
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            'schema_version': 'mfn-morphology-descriptor-v2',
-            'descriptor_version': self.version,
-            'runtime_version': '4.1.0',
-            'version': self.version,
-            'embedding': list(self.embedding),
-            'features': dict(self.features),
-            'temporal': dict(self.temporal),
-            'multiscale': dict(self.multiscale),
-            'stability': dict(self.stability),
-            'complexity': dict(self.complexity),
-            'connectivity': dict(self.connectivity),
-            'neuromodulation': dict(self.neuromodulation),
-            'metadata': dict(self.metadata),
+            "schema_version": "mfn-morphology-descriptor-v2",
+            "descriptor_version": self.version,
+            "runtime_version": "4.1.0",
+            "version": self.version,
+            "embedding": list(self.embedding),
+            "features": dict(self.features),
+            "temporal": dict(self.temporal),
+            "multiscale": dict(self.multiscale),
+            "stability": dict(self.stability),
+            "complexity": dict(self.complexity),
+            "connectivity": dict(self.connectivity),
+            "neuromodulation": dict(self.neuromodulation),
+            "metadata": dict(self.metadata),
         }
 
     def to_series(self) -> pd.Series:
@@ -149,44 +178,46 @@ class MorphologyDescriptor:
     def flatten(self) -> dict[str, float]:
         payload: dict[str, float] = {}
         payload.update(self.features)
-        payload.update({f'temporal_{k}': v for k, v in self.temporal.items()})
-        payload.update({f'multiscale_{k}': v for k, v in self.multiscale.items()})
-        payload.update({f'stability_{k}': v for k, v in self.stability.items()})
-        payload.update({f'complexity_{k}': v for k, v in self.complexity.items()})
-        payload.update({f'connectivity_{k}': v for k, v in self.connectivity.items()})
-        payload.update({f'neuromodulation_{k}': v for k, v in self.neuromodulation.items()})
-        payload.update({f'embedding_{i:02d}': v for i, v in enumerate(self.embedding)})
+        payload.update({f"temporal_{k}": v for k, v in self.temporal.items()})
+        payload.update({f"multiscale_{k}": v for k, v in self.multiscale.items()})
+        payload.update({f"stability_{k}": v for k, v in self.stability.items()})
+        payload.update({f"complexity_{k}": v for k, v in self.complexity.items()})
+        payload.update({f"connectivity_{k}": v for k, v in self.connectivity.items()})
+        payload.update(
+            {f"neuromodulation_{k}": v for k, v in self.neuromodulation.items()}
+        )
+        payload.update({f"embedding_{i:02d}": v for i, v in enumerate(self.embedding)})
         return payload
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'MorphologyDescriptor':
+    def from_dict(cls, data: dict[str, Any]) -> "MorphologyDescriptor":
         return cls(
-            version=str(data.get('descriptor_version', data['version'])),
-            embedding=tuple(float(v) for v in data['embedding']),
-            features=dict(data.get('features', {})),
-            temporal=dict(data.get('temporal', {})),
-            multiscale=dict(data.get('multiscale', {})),
-            stability=dict(data.get('stability', {})),
-            complexity=dict(data.get('complexity', {})),
-            connectivity=dict(data.get('connectivity', {})),
-            neuromodulation=dict(data.get('neuromodulation', {})),
-            metadata=dict(data.get('metadata', {})),
+            version=str(data.get("descriptor_version", data["version"])),
+            embedding=tuple(float(v) for v in data["embedding"]),
+            features=dict(data.get("features", {})),
+            temporal=dict(data.get("temporal", {})),
+            multiscale=dict(data.get("multiscale", {})),
+            stability=dict(data.get("stability", {})),
+            complexity=dict(data.get("complexity", {})),
+            connectivity=dict(data.get("connectivity", {})),
+            neuromodulation=dict(data.get("neuromodulation", {})),
+            metadata=dict(data.get("metadata", {})),
         )
 
     def to_embedding_array(self) -> NDArray[np.float64]:
         return np.asarray(self.embedding, dtype=np.float64)
 
     def to_parquet_row(self) -> dict[str, float | str]:
-        row: dict[str, float | str] = {'version': self.version}
+        row: dict[str, float | str] = {"version": self.version}
         row.update(self.flatten())
         return row
 
 
 __all__ = [
-    'FeatureVector',
-    'FEATURE_NAMES',
-    'FEATURE_COUNT',
-    'compute_features',
-    'validate_feature_ranges',
-    'MorphologyDescriptor',
+    "FeatureVector",
+    "FEATURE_NAMES",
+    "FEATURE_COUNT",
+    "compute_features",
+    "validate_feature_ranges",
+    "MorphologyDescriptor",
 ]
