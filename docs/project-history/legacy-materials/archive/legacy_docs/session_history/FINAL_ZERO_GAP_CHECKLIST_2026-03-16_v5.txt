@@ -1,0 +1,19 @@
+DONE
+- canonical core.extract and core.report added
+- docs consolidated to README + 5 docs under docs/; extras moved to archive/legacy_docs/
+- release prep automation added (scripts/release_prep.py)
+- chunked verification automation added (scripts/verify_matrix.py)
+- API smoke artifact generated at artifacts/verification/api_smoke.json
+- benchmark artifacts present in benchmarks/results/
+- scenario outputs generated in artifacts/release/scenarios/
+
+VERIFIED
+- import mycelium_fractal_net
+- mfn --help
+- /health /metrics /v1/* via FastAPI TestClient
+- report/scenario/benchmark quality paths
+- multiple pytest chunks (see artifacts/verification/full_suite_manual/)
+
+UNKNOWN_OR_PARTIAL
+- one monolithic full-repo pytest transcript
+- stress/perf long-run transcript completeness inside sandbox

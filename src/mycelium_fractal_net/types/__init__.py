@@ -1,78 +1,70 @@
-"""
-Canonical data structures for MyceliumFractalNet.
 
-This module provides the unified domain model for MFN, consolidating all
-canonical types that flow through the system. Each type is documented with
-its mathematical/physical meaning and references to the relevant documentation.
-
-Type Categories:
-    - **Configuration Types**: SimulationConfig, FeatureConfig, DatasetConfig
-    - **Result Types**: SimulationResult
-    - **Field Types**: FieldState, FieldHistory, GridShape
-    - **Feature Types**: FeatureVector, FeatureSchema
-    - **Scenario Types**: ScenarioConfig, ScenarioType, DatasetRow, DatasetMeta
-    - **API Types**: Request/Response models for REST API
-
-Design Principles:
-    1. Single source of truth - each concept is defined once
-    2. Aligned with documentation - field names match MFN_FEATURE_SCHEMA.md
-    3. Validation on construction - all types validate their invariants
-    4. Interoperability - types support conversion to/from dict, array, DataFrame
-
-Reference:
-    - docs/MFN_DATA_MODEL.md — Data model documentation
-    - docs/MFN_FEATURE_SCHEMA.md — Feature definitions
-    - docs/MFN_DATA_PIPELINES.md — Dataset schema
-    - docs/MFN_MATH_MODEL.md — Mathematical formalization
-"""
-
-# Re-export all canonical types for convenient access
-from .config import (
-    DatasetConfig,
-    FeatureConfig,
-    SimulationConfig,
-    SimulationResult,
-)
-from .dataset import (
-    DatasetMeta,
-    DatasetRow,
-    DatasetStats,
-)
-from .features import (
-    FEATURE_COUNT,
-    FEATURE_NAMES,
-    FeatureVector,
-)
-from .field import (
-    BoundaryCondition,
-    FieldHistory,
-    FieldState,
-    GridShape,
-)
-from .scenario import (
-    ScenarioConfig,
-    ScenarioType,
-)
+"""Canonical MFN type exports (lazy)."""
 
 __all__ = [
-    # Configuration
-    "SimulationConfig",
-    "SimulationResult",
-    "FeatureConfig",
-    "DatasetConfig",
-    # Field
-    "FieldState",
-    "FieldHistory",
-    "GridShape",
-    "BoundaryCondition",
-    # Features
-    "FeatureVector",
-    "FEATURE_NAMES",
-    "FEATURE_COUNT",
-    # Scenario & Dataset
-    "ScenarioConfig",
-    "ScenarioType",
-    "DatasetRow",
-    "DatasetMeta",
-    "DatasetStats",
+    'SimulationConfig', 'SimulationResult', 'FeatureConfig', 'DatasetConfig',
+    'FieldState', 'FieldHistory', 'FieldSequence', 'SimulationSpec', 'GridShape', 'BoundaryCondition',
+    'NeuromodulationSpec', 'GABAATonicSpec', 'SerotonergicPlasticitySpec', 'ObservationNoiseSpec',
+    'FeatureVector', 'MorphologyDescriptor', 'FEATURE_NAMES', 'FEATURE_COUNT',
+    'AnomalyEvent', 'RegimeState', 'DetectionEvidence',
+    'ForecastResult', 'ComparisonResult', 'AnalysisReport',
+    'TemporalFeatures', 'StabilityMetrics', 'ComplexityMetrics',
+    'ConnectivityFeatures', 'NeuromodulationFeatures',
+    'ChangePointResult', 'DriftSummary', 'TopologySummary',
+    'NeuromodulationStateSnapshot',
+    'ScenarioConfig', 'ScenarioType', 'DatasetRow', 'DatasetMeta', 'DatasetStats',
 ]
+
+
+def __getattr__(name: str):
+    if name in {'SimulationConfig', 'SimulationResult', 'FeatureConfig', 'DatasetConfig'}:
+        from .config import DatasetConfig, FeatureConfig, SimulationConfig, SimulationResult
+        return locals()[name]
+    if name in {'FieldState', 'FieldHistory', 'FieldSequence', 'SimulationSpec', 'GridShape', 'BoundaryCondition', 'NeuromodulationSpec', 'GABAATonicSpec', 'SerotonergicPlasticitySpec', 'ObservationNoiseSpec'}:
+        from .field import (
+            BoundaryCondition,
+            FieldHistory,
+            FieldSequence,
+            FieldState,
+            GABAATonicSpec,
+            GridShape,
+            NeuromodulationSpec,
+            ObservationNoiseSpec,
+            SerotonergicPlasticitySpec,
+            SimulationSpec,
+        )
+        return locals()[name]
+    if name in {'FeatureVector', 'MorphologyDescriptor', 'FEATURE_NAMES', 'FEATURE_COUNT'}:
+        from .features import FEATURE_COUNT, FEATURE_NAMES, FeatureVector, MorphologyDescriptor
+        return locals()[name]
+    if name in {'AnomalyEvent', 'RegimeState', 'DetectionEvidence'}:
+        from .detection import AnomalyEvent, DetectionEvidence, RegimeState
+        return locals()[name]
+    if name in {'TemporalFeatures', 'StabilityMetrics', 'ComplexityMetrics', 'ConnectivityFeatures', 'NeuromodulationFeatures', 'ChangePointResult', 'DriftSummary', 'TopologySummary'}:
+        from .analytics import (
+            ChangePointResult,
+            ComplexityMetrics,
+            ConnectivityFeatures,
+            DriftSummary,
+            NeuromodulationFeatures,
+            StabilityMetrics,
+            TemporalFeatures,
+            TopologySummary,
+        )
+        return locals()[name]
+    if name == 'NeuromodulationStateSnapshot':
+        from .field import NeuromodulationStateSnapshot
+        return NeuromodulationStateSnapshot
+    if name in {'ForecastResult', 'ComparisonResult'}:
+        from .forecast import ComparisonResult, ForecastResult
+        return locals()[name]
+    if name == 'AnalysisReport':
+        from .report import AnalysisReport
+        return AnalysisReport
+    if name in {'ScenarioConfig', 'ScenarioType'}:
+        from .scenario import ScenarioConfig, ScenarioType
+        return locals()[name]
+    if name in {'DatasetRow', 'DatasetMeta', 'DatasetStats'}:
+        from .dataset import DatasetMeta, DatasetRow, DatasetStats
+        return locals()[name]
+    raise AttributeError(name)

@@ -26,6 +26,9 @@ def load_example_module(name: str):
     return module
 
 
+pytest.importorskip("torch")
+
+
 class TestFinanceRegimeDetectionExample:
     """Tests for the finance regime detection example."""
 

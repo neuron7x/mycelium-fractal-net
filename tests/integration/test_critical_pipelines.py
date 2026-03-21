@@ -395,6 +395,7 @@ class TestCLIWorkflow:
 
     def test_cli_module_imports(self) -> None:
         """Test that CLI module imports without errors."""
+        pytest.importorskip("torch")
         # Import CLI module to verify it loads
         import mycelium_fractal_net_v4_1  # noqa: F401
 
@@ -405,6 +406,7 @@ class TestCLIWorkflow:
 
     def test_validation_config_from_args(self) -> None:
         """Test ValidationConfig creation."""
+        pytest.importorskip("torch")
         from mycelium_fractal_net import ValidationConfig
 
         config = ValidationConfig(

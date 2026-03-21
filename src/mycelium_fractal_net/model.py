@@ -33,11 +33,15 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import sympy as sp
-import torch
-import torch.nn.functional as F
 from numpy.typing import NDArray
-from torch import nn
-from torch.utils.data import DataLoader, TensorDataset
+
+from mycelium_fractal_net._optional import require_ml_dependency
+
+torch = require_ml_dependency("torch")
+F = torch.nn.functional
+nn = torch.nn
+DataLoader = torch.utils.data.DataLoader
+TensorDataset = torch.utils.data.TensorDataset
 
 # === Physical Constants (SI) ===
 R_GAS_CONSTANT: float = 8.314  # J/(mol*K)

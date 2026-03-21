@@ -1,0 +1,28 @@
+FINAL IMPROVEMENT CYCLE V6
+
+Closed:
+- rich report bundle added: report.html + 5 SVG visual artifacts + summary.json
+- manifest extended with optional_artifact_list and optional_artifact_manifest
+- release bundle strengthened: index.html, scenario_catalog.json, canonical scenario manifests
+- showcase bundle added: scripts/showcase_run.py + artifacts/showcase/index.html + showcase_manifest.json
+- benchmark_quality upgraded with explicit baseline comparison and delta metrics
+- Makefile extended with showcase target
+- README and docs/LOCAL_RUNBOOK updated with showcase entrypoint
+- API smoke verified: /health /metrics /v1/simulate /v1/extract /v1/detect /v1/forecast /v1/compare /v1/report
+- release_prep verified
+- benchmark_quality verified
+- report pipeline verified with optional visual artifacts present
+
+Evidence:
+- artifacts/showcase/index.html
+- artifacts/showcase/showcase_manifest.json
+- artifacts/release/index.html
+- artifacts/release/release_manifest.json
+- benchmarks/results/benchmark_quality.json
+- benchmarks/results/benchmark_quality.csv
+- artifacts/showcase/runs/<run_id>/report.html
+- artifacts/showcase/runs/<run_id>/manifest.json
+
+Not claimed:
+- one monolithic full-repo pytest -q transcript in a single artifact
+- exhaustive stress/perf rerun beyond benchmark_quality and prior verification bundle

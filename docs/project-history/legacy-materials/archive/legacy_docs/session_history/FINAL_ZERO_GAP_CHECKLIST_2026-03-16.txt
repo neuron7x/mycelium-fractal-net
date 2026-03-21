@@ -1,0 +1,6 @@
+Final cycle artifacts:
+- scripts/verify_matrix.py
+- scripts/release_prep.py
+- core/extract.py
+- core/report.py
+- docs consolidated; legacy moved to archive/legacy_docs/

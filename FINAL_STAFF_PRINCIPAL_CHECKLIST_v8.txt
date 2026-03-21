@@ -1,0 +1,26 @@
+Morphology-aware Field Intelligence Engine — Staff/Principal completion cycle v8
+
+DONE
+- uv.lock generated
+- uv-first Makefile + .devcontainer
+- package-dir/src canonicalization kept
+- root surface compressed; historical material moved to docs/project-history/
+- import-linter contracts added and passing
+- OpenAPI export + contract check scripts added
+- benchmark core/scalability canonical JSON+CSV outputs added
+- validation summary JSON added
+- release SBOM generation added
+- release evidence/index/checklist refreshed
+
+VERIFIED
+- editable install
+- import mycelium_fractal_net
+- mfn --help
+- canonical completion test subsets
+- benchmark_quality
+- release scenarios bundle
+- report/showcase assets
+
+NOT PROVEN AS ONE MONOLITHIC ARTIFACT
+- one uninterrupted full-repo pytest -q transcript in this sandbox
+- one completed uv sync proof log in this sandbox (lockfile was generated; sync began successfully)

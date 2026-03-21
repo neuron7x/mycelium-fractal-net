@@ -12,7 +12,9 @@ Reference: docs/MFN_CODE_STRUCTURE.md, README.md
 import inspect
 
 import numpy as np
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
 
 
 class TestPublicAPIExistence:

@@ -118,3 +118,15 @@ notebooks/*.gif
 
 # Cleanup logs
 cleanup_logs/
+
+# Runtime artifacts (generated, not source)
+artifacts/
+!artifacts/.gitkeep
+
+# Import linter cache
+.import_linter_cache/
+
+# NumPy binary files
+*.npy
+*.npz
+*.memmap

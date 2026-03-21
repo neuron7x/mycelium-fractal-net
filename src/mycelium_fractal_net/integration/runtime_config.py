@@ -13,7 +13,6 @@ from mycelium_fractal_net.config_profiles import (
     load_config_profile,
 )
 from mycelium_fractal_net.integration.schemas import ValidateRequest
-from mycelium_fractal_net.model import ValidationConfig
 
 DEFAULT_PROFILE_ENV = "MFN_CONFIG_PROFILE"
 DEFAULT_PROFILE_NAME = "dev"
@@ -32,11 +31,13 @@ def _load_profile(profile_name: str | None) -> ConfigProfile | None:
 def assemble_validation_config(
     request: ValidateRequest | Mapping[str, Any] | None = None,
     profile_name: str | None = None,
-) -> ValidationConfig:
+):
     """
     Build ValidationConfig using a deterministic precedence:
     defaults → profile → env overrides (applied via load_config_profile) → request overrides.
     """
+    from mycelium_fractal_net.model import ValidationConfig
+
     base_config = ValidationConfig()
     # ValidationConfig is a simple container; copying vars() is sufficient for defaults.
     base = vars(base_config).copy()

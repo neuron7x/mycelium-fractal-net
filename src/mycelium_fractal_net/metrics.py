@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import math
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
-import torch
 
-ArrayLike = Union[np.ndarray, torch.Tensor]
+try:  # optional torch surface
+    import torch  # type: ignore
+except Exception:  # pragma: no cover
+    torch = None  # type: ignore[assignment]
+
+ArrayLike = Union[np.ndarray, Any]
 _EPS = 1e-12
 
 
 def _to_numpy(a: ArrayLike) -> np.ndarray:
-    if hasattr(torch, "is_tensor") and torch.is_tensor(a):
+    if torch is not None and hasattr(torch, 'is_tensor') and torch.is_tensor(a):
         a = a.detach().cpu().numpy()
     return np.asarray(a, dtype=np.float64)
 
@@ -51,49 +55,18 @@ def _snr_from_arrays(clean_np: np.ndarray, noisy_np: np.ndarray) -> float:
 
 
 def mse(a: ArrayLike, b: ArrayLike) -> float:
-    """
-    Mean Squared Error between two arrays.
-
-    Args:
-        a: Reference array.
-        b: Comparison array.
-
-    Returns:
-        Non-negative float MSE value.
-    """
     a_np, b_np = _to_numpy(a), _to_numpy(b)
     _validate_inputs(a_np, b_np)
     return _mse_from_arrays(a_np, b_np)
 
 
 def snr(clean: ArrayLike, noisy: ArrayLike) -> float:
-    """
-    Signal-to-noise ratio (dB) using clean reference and noisy observation.
-
-    Args:
-        clean: Reference clean signal.
-        noisy: Observed signal of the same shape.
-
-    Returns:
-        SNR in decibels. Returns +inf when noise power is zero.
-    """
     clean_np, noisy_np = _to_numpy(clean), _to_numpy(noisy)
     _validate_inputs(clean_np, noisy_np)
     return _snr_from_arrays(clean_np, noisy_np)
 
 
 def psnr(clean: ArrayLike, test: ArrayLike, data_range: Optional[float] = None) -> float:
-    """
-    Peak signal-to-noise ratio (dB).
-
-    Args:
-        clean: Reference signal.
-        test: Test signal to compare.
-        data_range: Optional dynamic range. If None, uses max(clean,test)-min(clean,test).
-
-    Returns:
-        PSNR in decibels. Returns +inf when MSE == 0.
-    """
     clean_np, test_np = _to_numpy(clean), _to_numpy(test)
     _validate_inputs(clean_np, test_np)
     err = _mse_from_arrays(clean_np, test_np)
@@ -110,19 +83,6 @@ def ssim(
     k1: float = 0.01,
     k2: float = 0.03,
 ) -> float:
-    """
-    Structural Similarity Index (global, unclipped window).
-
-    Args:
-        clean: Reference signal/image.
-        test: Signal/image to compare.
-        data_range: Optional dynamic range; inferred if None.
-        k1: Stabilization constant factor for luminance.
-        k2: Stabilization constant factor for contrast.
-
-    Returns:
-        SSIM score in [-1, 1] (higher is better).
-    """
     clean_np, test_np = _to_numpy(clean), _to_numpy(test)
     _validate_inputs(clean_np, test_np)
 
@@ -149,12 +109,6 @@ def ssim(
 def validate_quality_metrics(
     clean: ArrayLike, test: ArrayLike
 ) -> Tuple[float, float, float, float]:
-    """
-    Convenience helper that validates inputs and returns all quality metrics.
-
-    Returns:
-        Tuple of (mse, snr, psnr, ssim).
-    """
     clean_np, test_np = _to_numpy(clean), _to_numpy(test)
     _validate_inputs(clean_np, test_np)
     mse_val = _mse_from_arrays(clean_np, test_np)

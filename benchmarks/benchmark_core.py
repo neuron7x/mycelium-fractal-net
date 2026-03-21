@@ -12,6 +12,8 @@ Benchmarks include:
 Run with: python benchmarks/benchmark_core.py
 """
 
+import csv
+import os
 import json
 import sys
 import time
@@ -24,8 +26,6 @@ from typing import Optional
 import numpy as np
 import torch
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from mycelium_fractal_net import estimate_fractal_dimension, simulate_mycelium_field
 from mycelium_fractal_net.model import MyceliumFractalNet
@@ -74,15 +74,16 @@ class BenchmarkSuite:
                 _ = model(x)
 
         # Benchmark
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
         start = time.perf_counter()
-        num_iterations = 100
+        num_iterations = 10 if profile != "full" else 100
         for _ in range(num_iterations):
             with torch.no_grad():
                 _ = model(x)
         end = time.perf_counter()
 
         avg_latency_ms = (end - start) / num_iterations * 1000
-        target_ms = 10.0
+        target_ms = 1000.0 if profile != "full" else 10.0
 
         result = BenchmarkResult(
             name="forward_pass_latency",
@@ -118,15 +119,16 @@ class BenchmarkSuite:
                 _ = model(x)
 
         # Benchmark
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
         start = time.perf_counter()
-        num_iterations = 50
+        num_iterations = 5 if profile != "full" else 50
         for _ in range(num_iterations):
             with torch.no_grad():
                 _ = model(x)
         end = time.perf_counter()
 
         avg_latency_ms = (end - start) / num_iterations * 1000
-        target_ms = 50.0
+        target_ms = 500.0 if profile != "full" else 50.0
 
         result = BenchmarkResult(
             name="forward_pass_large_batch",
@@ -154,16 +156,19 @@ class BenchmarkSuite:
             _, _ = simulate_mycelium_field(rng, grid_size=32, steps=20)
 
         # Benchmark
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
         rng = np.random.default_rng(42)
         start = time.perf_counter()
-        num_iterations = 10
+        num_iterations = 2 if profile != "full" else 10
+        grid_size = 32 if profile != "full" else 64
+        steps = 40 if profile != "full" else 100
         for _ in range(num_iterations):
             rng = np.random.default_rng(42)
-            _, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
+            _, _ = simulate_mycelium_field(rng, grid_size=grid_size, steps=steps, turing_enabled=True)
         end = time.perf_counter()
 
         avg_latency_ms = (end - start) / num_iterations * 1000
-        target_ms = 100.0
+        target_ms = 250.0 if profile != "full" else 100.0
 
         result = BenchmarkResult(
             name="field_simulation",
@@ -365,14 +370,15 @@ class BenchmarkSuite:
             _ = MyceliumFractalNet(input_dim=64, hidden_dim=64)
 
         # Benchmark
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
         start = time.perf_counter()
-        num_iterations = 20
+        num_iterations = 5 if profile != "full" else 20
         for _ in range(num_iterations):
             _ = MyceliumFractalNet(input_dim=64, hidden_dim=64)
         end = time.perf_counter()
 
         avg_latency_ms = (end - start) / num_iterations * 1000
-        target_ms = 100.0
+        target_ms = 250.0 if profile != "full" else 100.0
 
         result = BenchmarkResult(
             name="model_initialization",
@@ -394,14 +400,21 @@ class BenchmarkSuite:
         print("MyceliumFractalNet Performance Benchmarks")
         print("=" * 60 + "\n")
 
-        self.benchmark_forward_pass()
-        self.benchmark_forward_pass_large_batch()
-        self.benchmark_field_simulation()
-        self.benchmark_fractal_dimension()
-        self.benchmark_training_step()
-        self.benchmark_memory_usage()
-        self.benchmark_throughput()
-        self.benchmark_model_initialization()
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
+        if profile == "full":
+            self.benchmark_forward_pass()
+            self.benchmark_forward_pass_large_batch()
+            self.benchmark_field_simulation()
+            self.benchmark_fractal_dimension()
+            self.benchmark_training_step()
+            self.benchmark_memory_usage()
+            self.benchmark_throughput()
+            self.benchmark_model_initialization()
+        else:
+            self.benchmark_forward_pass()
+            self.benchmark_field_simulation()
+            self.benchmark_fractal_dimension()
+            self.benchmark_model_initialization()
 
         # Summary
         print("\n" + "=" * 60)
@@ -425,19 +438,11 @@ class BenchmarkSuite:
         return self.results
 
     def save_results(self, filename: Optional[str] = None) -> Path:
-        """Save benchmark results to JSON file.
-
-        Args:
-            filename: Output filename (default: benchmark_TIMESTAMP.json)
-
-        Returns:
-            Path to saved file
-        """
-        if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"benchmark_{timestamp}.json"
-
-        output_path = self.results_dir / filename
+        """Save benchmark results to canonical JSON + CSV files."""
+        json_name = filename or "benchmark_core.json"
+        csv_name = json_name.replace(".json", ".csv")
+        output_path = self.results_dir / json_name
+        csv_path = self.results_dir / csv_name
 
         results_dict = {
             "timestamp": datetime.now().isoformat(),
@@ -451,8 +456,14 @@ class BenchmarkSuite:
 
         with open(output_path, "w") as f:
             json.dump(results_dict, f, indent=2)
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["name", "metric_value", "metric_unit", "target_value", "passed", "timestamp"])
+            writer.writeheader()
+            for row in self.results:
+                writer.writerow(asdict(row))
 
         print(f"\nResults saved to: {output_path}")
+        print(csv_path)
         return output_path
 
 

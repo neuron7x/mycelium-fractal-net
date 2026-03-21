@@ -20,7 +20,7 @@ from typing import Any
 
 import numpy as np
 import pytest
-import torch
+torch = pytest.importorskip("torch")
 
 from mycelium_fractal_net.core import HierarchicalKrumAggregator as CoreHierarchicalKrumAggregator
 from mycelium_fractal_net.model import HierarchicalKrumAggregator
@@ -134,12 +134,12 @@ class TestKrumAlgorithmCorrectness:
 
         # n=2, f=0 violates requirement (2 <= 2*0 + 2)
         grads_two = [torch.randn(5) for _ in range(2)]
-        with pytest.raises(ValueError, match="2f \+ 2"):
+        with pytest.raises(ValueError, match=r"2f \+ 2"):
             agg.krum_select(grads_two, num_byzantine=0)
 
         # n=3, f=1 violates requirement (3 <= 2*1 + 2)
         grads_three = [torch.randn(5) for _ in range(3)]
-        with pytest.raises(ValueError, match="2f \+ 2"):
+        with pytest.raises(ValueError, match=r"2f \+ 2"):
             agg.krum_select(grads_three, num_byzantine=1)
 
 
@@ -268,12 +268,12 @@ class TestCoreKrumParityWithModel:
 
         # n=2, f=0 violates requirement (2 <= 2*0 + 2)
         grads_two = [torch.randn(5) for _ in range(2)]
-        with pytest.raises(ValueError, match="2f \+ 2"):
+        with pytest.raises(ValueError, match=r"2f \+ 2"):
             agg.krum_select(grads_two, num_byzantine=0)
 
         # n=3, f=1 also violates requirement (3 <= 2*1 + 2)
         grads_three = [torch.randn(5) for _ in range(3)]
-        with pytest.raises(ValueError, match="2f \+ 2"):
+        with pytest.raises(ValueError, match=r"2f \+ 2"):
             agg.krum_select(grads_three, num_byzantine=1)
 
 

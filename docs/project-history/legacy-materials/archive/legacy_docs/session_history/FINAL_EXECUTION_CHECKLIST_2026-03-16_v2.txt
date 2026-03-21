@@ -1,0 +1,48 @@
+Morphology-aware Field Intelligence Engine — completion checkpoint v2
+Date: 2026-03-16
+
+DONE
+- Fixed legacy import/runtime ambiguity for experiments package.
+- Added installed compatibility wrappers: src/experiments/* and src/mycelium_fractal_net_v4_1.py.
+- Added packaging support for experiments and legacy CLI module in pyproject.toml.
+- Converted root experiments/* into thin compatibility wrappers.
+- Extended canonical experiments.generate_dataset with backward-compatible SweepConfig support.
+- Preserved canonical package logic under src/mycelium_fractal_net/*.
+- Optimized federated large-gradient aggregation fast path for performance-critical workloads.
+- Verified editable install and package import.
+- Verified legacy imports: experiments, mycelium_fractal_net_v4_1.
+- Verified targeted regression tests:
+  * tests/integration/test_critical_pipelines.py::TestPipeline3DatasetGeneration::test_complete_pipeline_flow
+  * tests/integration/test_critical_pipelines.py::TestCLIWorkflow::test_cli_module_imports
+  * tests/perf/test_stress_scalability.py::TestFederatedScalability::test_krum_large_gradients
+- Verified major suites passing together:
+  * tests/e2e
+  * tests/integration
+  * tests/core
+  * tests/security
+  * tests/test_mycelium_fractal_net
+  * tests/validation
+- Verified tests/examples pass.
+- Verified tests/performance pass.
+- Verified CLI commands create artifacts:
+  * mfn simulate
+  * mfn extract
+  * mfn detect
+  * mfn forecast
+  * mfn compare
+  * mfn report
+- Verified benchmark_quality exports JSON/CSV into benchmarks/results/.
+
+EVIDENCE SNAPSHOT
+- experiments SweepConfig legacy path now succeeds.
+- aggregate_gradients_krum large-gradient direct run observed ~8.34s for 20 x 100000 tensors after optimization.
+- report command writes artifacts/runs/<run_id>/ under requested root.
+
+NOT FULLY CLOSED
+- Full monolithic `pytest -q` end-to-end was not captured as a single final proof artifact in this pass.
+- Full tests/perf directory as one uninterrupted terminal transcript was not captured due sandbox runner instability; targeted failing perf blocker was fixed and validated.
+- Full repo-wide public-release cleanup of every legacy document was not attempted in this pass.
+
+READY STATE
+- Substantially more complete and locally testable than prior ZIP.
+- Canonical engine surface remains intact; compatibility surface is cleaner and more reproducible.

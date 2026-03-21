@@ -26,6 +26,9 @@ def load_example_module(name: str):
     return module
 
 
+pytest.importorskip("torch")
+
+
 class TestRLExplorationExample:
     """Tests for the RL exploration example."""
 

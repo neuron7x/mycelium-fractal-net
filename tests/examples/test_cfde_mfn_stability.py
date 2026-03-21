@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import numpy as np
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
 
 from mycelium_fractal_net.signal import Fractal1DPreprocessor
 

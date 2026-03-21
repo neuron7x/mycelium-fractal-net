@@ -1,0 +1,46 @@
+[importlinter]
+root_package = mycelium_fractal_net
+include_external_packages = False
+
+[importlinter:contract:canonical_core_isolation]
+name = Canonical core operations must not depend on interfaces or adapters
+type = forbidden
+source_modules =
+    mycelium_fractal_net.core.simulate
+    mycelium_fractal_net.core.extract
+    mycelium_fractal_net.core.detect
+    mycelium_fractal_net.core.forecast
+    mycelium_fractal_net.core.compare
+    mycelium_fractal_net.core.report
+forbidden_modules =
+    mycelium_fractal_net.integration
+    mycelium_fractal_net.api
+    mycelium_fractal_net.cli
+
+[importlinter:contract:pipelines_no_transport]
+name = Pipelines must not import transport layers
+type = forbidden
+source_modules =
+    mycelium_fractal_net.pipelines
+forbidden_modules =
+    mycelium_fractal_net.api
+    mycelium_fractal_net.cli
+
+[importlinter:contract:v1_interfaces_engine_only]
+name = Canonical interfaces depend only on engine-facing packages
+type = forbidden
+source_modules =
+    mycelium_fractal_net.cli
+    mycelium_fractal_net.integration.api_server
+forbidden_modules =
+    mycelium_fractal_net.crypto
+
+[importlinter:contract:compat_layer_only_delegates_to_canonical_kernel]
+name = Numerics compat layer must not own simulation logic or alternate runtime kernels
+type = forbidden
+source_modules =
+    mycelium_fractal_net.numerics.update_rules
+forbidden_modules =
+    mycelium_fractal_net.core.engine
+    mycelium_fractal_net.core.simulate
+    mycelium_fractal_net.model

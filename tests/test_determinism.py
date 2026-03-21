@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("torch")
+
 from mycelium_fractal_net import run_validation
 from mycelium_fractal_net.model import ValidationConfig
 

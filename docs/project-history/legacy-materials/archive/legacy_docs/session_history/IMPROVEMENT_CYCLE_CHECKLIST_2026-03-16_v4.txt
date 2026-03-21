@@ -1,0 +1,22 @@
+Morphology-aware Field Intelligence Engine — improvement cycle v4
+
+Closed in this cycle
+- strengthened report manifest to v2 with per-artifact sha256 + byte-size fingerprinting
+- made run_id collision-resistant (timestamp with microseconds + seed suffix)
+- aligned detection payloads with product contract via top_contributing_features alias
+- aligned comparison payloads with product contract via morphology_distance alias
+- added nearest_structural_analog to comparison outputs
+- fixed Makefile bootstrap quoting
+- added scripts/improvement_cycle.py for one-command local engine/API/report sanity cycle
+- regenerated report artifact and benchmark_quality outputs locally
+
+Verified in this cycle
+- PYTHONPATH=src pytest -q tests/test_completion_contracts_cycle.py tests/test_api_server_completion.py tests/test_artifact_pipeline_completion.py tests/test_scenario_pipelines_completion.py tests/test_cli_workflows.py
+- PYTHONPATH=src python scripts/improvement_cycle.py
+- PYTHONPATH=src python benchmarks/benchmark_quality.py
+- PYTHONPATH=src python -m mycelium_fractal_net.cli --help
+- PYTHONPATH=src python -m mycelium_fractal_net.cli report --grid-size 16 --steps 8 --horizon 4 --output artifacts/local/report_cycle.json
+
+Open / honest
+- active venv still pointed to an older editable checkout, so this verification cycle was executed against the current repo via PYTHONPATH=src instead of relying on that stale editable install
+- I did not claim a fresh zero-environment install proof in this cycle

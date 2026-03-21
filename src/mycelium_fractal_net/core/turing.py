@@ -37,9 +37,10 @@ Example:
 
 from __future__ import annotations
 
-# Re-export the original simulate_mycelium_field from model.py
-# to maintain exact backward compatibility
-from ..model import simulate_mycelium_field
+from typing import Any, Tuple
+
+import numpy as np
+from numpy.typing import NDArray
 
 # Re-export validated reaction-diffusion engine for advanced use
 from .reaction_diffusion_engine import (
@@ -63,6 +64,76 @@ R_ACTIVATOR = DEFAULT_R_ACTIVATOR
 R_INHIBITOR = DEFAULT_R_INHIBITOR
 FIELD_ALPHA = DEFAULT_FIELD_ALPHA
 QUANTUM_JITTER_VAR = DEFAULT_QUANTUM_JITTER_VAR
+
+
+def simulate_mycelium_field(
+    rng: np.random.Generator,
+    grid_size: int = 64,
+    steps: int = 64,
+    alpha: float = 0.18,
+    spike_probability: float = 0.25,
+    turing_enabled: bool = True,
+    turing_threshold: float = TURING_THRESHOLD,
+    quantum_jitter: bool = False,
+    jitter_var: float = QUANTUM_JITTER_VAR,
+) -> Tuple[NDArray[Any], int]:
+    """Simulate mycelium-like potential field on 2D lattice with Turing morphogenesis.
+
+    Returns (field, growth_events). Field in volts, clamped to [-95, 40] mV.
+    """
+    field = rng.normal(loc=-0.07, scale=0.005, size=(grid_size, grid_size))
+    growth_events = 0
+
+    if turing_enabled:
+        activator = rng.uniform(0, 0.1, size=(grid_size, grid_size))
+        inhibitor = rng.uniform(0, 0.1, size=(grid_size, grid_size))
+        da, di = 0.1, 0.05
+        ra, ri = 0.01, 0.02
+
+    for step in range(steps):
+        if rng.random() < spike_probability:
+            i = int(rng.integers(0, grid_size))
+            j = int(rng.integers(0, grid_size))
+            field[i, j] += float(rng.normal(loc=0.02, scale=0.005))
+            growth_events += 1
+
+        up = np.roll(field, 1, axis=0)
+        down = np.roll(field, -1, axis=0)
+        left = np.roll(field, 1, axis=1)
+        right = np.roll(field, -1, axis=1)
+        laplacian = up + down + left + right - 4.0 * field
+        field = field + alpha * laplacian
+
+        if turing_enabled:
+            a_lap = (
+                np.roll(activator, 1, axis=0)
+                + np.roll(activator, -1, axis=0)
+                + np.roll(activator, 1, axis=1)
+                + np.roll(activator, -1, axis=1)
+                - 4.0 * activator
+            )
+            i_lap = (
+                np.roll(inhibitor, 1, axis=0)
+                + np.roll(inhibitor, -1, axis=0)
+                + np.roll(inhibitor, 1, axis=1)
+                + np.roll(inhibitor, -1, axis=1)
+                - 4.0 * inhibitor
+            )
+            activator += da * a_lap + ra * (activator * (1 - activator) - inhibitor)
+            inhibitor += di * i_lap + ri * (activator - inhibitor)
+            turing_mask = activator > turing_threshold
+            field[turing_mask] += 0.005
+            activator = np.clip(activator, 0, 1)
+            inhibitor = np.clip(inhibitor, 0, 1)
+
+        if quantum_jitter:
+            jitter = rng.normal(0, np.sqrt(jitter_var), size=field.shape)
+            field += jitter
+
+        field = np.clip(field, -0.095, 0.040)
+
+    return field, growth_events
+
 
 __all__ = [
     # Constants

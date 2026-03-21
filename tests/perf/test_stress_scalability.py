@@ -27,7 +27,8 @@ from typing import Any
 
 import numpy as np
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
 
 from mycelium_fractal_net import (
     SimulationConfig,
@@ -36,6 +37,7 @@ from mycelium_fractal_net import (
     run_mycelium_simulation,
     run_mycelium_simulation_with_history,
 )
+from mycelium_fractal_net.core.simulate import simulate_history
 from mycelium_fractal_net.core import (
     FractalConfig,
     FractalGrowthEngine,
@@ -572,3 +574,17 @@ class TestScalabilityBenchmarks:
                 }
             )
             print(f"Steps {steps}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB")
+
+
+class TestMemmapScalePath:
+    """Disk-backed history smoke coverage for larger history contours."""
+
+    def test_memmap_history_backend_smoke(self, tmp_path) -> None:
+        seq = simulate_history(__import__("mycelium_fractal_net").SimulationSpec(grid_size=64, steps=32, seed=42), history_backend="memmap", history_dir=tmp_path)
+        assert seq.history is not None
+        assert seq.metadata["history_backend"] == "memmap"
+        assert Path(str(seq.metadata["history_memmap_path"])).exists()
+
+    @pytest.mark.skipif(True, reason="1024x1024 experimental path is perf-only and not part of default CI")
+    def test_experimental_scale_placeholder(self) -> None:
+        pass

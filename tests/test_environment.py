@@ -1,46 +1,23 @@
-"""
-Environment validation tests.
-
-These tests verify that critical dependencies are installed correctly.
-They run fast and fail early if the environment is misconfigured.
-"""
+"""Environment validation tests."""
 
 
 def test_must_have_pandas() -> None:
-    """Verify pandas is installed for dataset generation."""
-    try:
-        import pandas  # noqa: F401
-    except ModuleNotFoundError:
-        raise RuntimeError(
-            "pandas is required for dataset generation. "
-            "Install with: pip install -r requirements.txt"
-        )
+    import pandas  # noqa: F401
 
 
 def test_must_have_numpy() -> None:
-    """Verify numpy is installed for numerical computations."""
-    try:
-        import numpy  # noqa: F401
-    except ModuleNotFoundError:
-        raise RuntimeError(
-            "numpy is required for numerical computations. "
-            "Install with: pip install -r requirements.txt"
-        )
+    import numpy  # noqa: F401
 
 
-def test_must_have_torch() -> None:
-    """Verify torch is installed for neural network operations."""
+def test_torch_is_optional_ml_dependency() -> None:
     try:
         import torch  # noqa: F401
     except ModuleNotFoundError:
-        raise RuntimeError(
-            "torch is required for neural network operations. "
-            "Install with: pip install -r requirements.txt"
-        )
+        # Core install is valid without ML extras.
+        return
 
 
 def test_pandas_version_compatibility() -> None:
-    """Verify pandas version is within supported range."""
     import pandas as pd
     from packaging import version
 
@@ -56,11 +33,4 @@ def test_pandas_version_compatibility() -> None:
 
 
 def test_numpy_typing_available() -> None:
-    """Verify numpy.typing module is available for type hints."""
-    try:
-        from numpy.typing import NDArray  # noqa: F401
-    except ImportError:
-        raise RuntimeError(
-            "numpy.typing is required. Ensure numpy >= 1.20 is installed. "
-            "Install with: pip install -r requirements.txt"
-        )
+    from numpy.typing import NDArray  # noqa: F401

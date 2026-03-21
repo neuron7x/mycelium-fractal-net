@@ -38,8 +38,10 @@ Example:
 
 from __future__ import annotations
 
-import torch
-from torch import nn
+from mycelium_fractal_net._optional import require_ml_dependency
+
+torch = require_ml_dependency("torch")
+nn = torch.nn
 
 # Default STDP parameters (from neurophysiology)
 STDP_TAU_PLUS: float = 0.020  # 20 ms

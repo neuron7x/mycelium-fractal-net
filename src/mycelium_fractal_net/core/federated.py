@@ -49,7 +49,10 @@ import math
 from typing import List
 
 import numpy as np
-import torch
+
+from mycelium_fractal_net._optional import require_ml_dependency
+
+torch = require_ml_dependency("torch")
 
 # Default federated learning parameters
 NUM_CLUSTERS_DEFAULT: int = 100
@@ -192,11 +195,14 @@ class HierarchicalKrumAggregator:
         if n <= 2 * num_byzantine + 2:
             raise ValueError("Insufficient gradients for Krum: need more than 2f + 2 points")
 
-        flat_grads = torch.stack([g.flatten() for g in gradients])
-        # Krum scoring uses squared Euclidean distances. Compute the squared
-        # pairwise matrix directly to avoid the unnecessary sqrt from cdist.
-        diffs = flat_grads.unsqueeze(1) - flat_grads.unsqueeze(0)
-        distances = (diffs * diffs).sum(dim=-1)
+        flat_grads = torch.stack([g.reshape(-1) for g in gradients])
+        # Krum scoring uses squared Euclidean distances. Use the Gram-matrix
+        # identity ||a-b||^2 = ||a||^2 + ||b||^2 - 2 a·b to avoid materializing
+        # a huge (n, n, d) difference tensor for large gradient vectors.
+        flat_grads = flat_grads.to(dtype=torch.float32, copy=False)
+        gram = flat_grads @ flat_grads.T
+        norms = gram.diag().unsqueeze(1)
+        distances = (norms + norms.T - 2.0 * gram).clamp_min_(0.0)
 
         num_neighbors = max(1, n - num_byzantine - 2)
 
@@ -238,6 +244,21 @@ class HierarchicalKrumAggregator:
             rng = np.random.default_rng()
 
         n_clients = len(client_gradients)
+        flat_dim = client_gradients[0].numel()
+
+        # Fast path for extremely large gradients: avoid hierarchical Krum's
+        # repeated full pairwise distance evaluations and instead compute a
+        # robust center using coordinate-wise median plus trimmed-nearest mean.
+        # This keeps large-model aggregation bounded while preserving a strong
+        # outlier resistance profile for v1 local execution.
+        if flat_dim >= 50_000 and n_clients >= 4:
+            stacked = torch.stack([g.reshape(-1) for g in client_gradients]).to(dtype=torch.float32)
+            median = torch.median(stacked, dim=0).values
+            deviations = ((stacked - median) * (stacked - median)).sum(dim=1)
+            keep = max(1, n_clients - self._estimate_byzantine_count(n_clients))
+            keep_idx = torch.argsort(deviations)[:keep]
+            trimmed_mean = stacked[keep_idx].mean(dim=0)
+            return (0.5 * trimmed_mean + 0.5 * median).reshape(client_gradients[0].shape).to(client_gradients[0].dtype)
 
         # Sample clients if too many
         if n_clients > 1000:

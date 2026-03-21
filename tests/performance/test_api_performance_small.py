@@ -116,6 +116,7 @@ class TestAPIPerformanceBasics:
 
     def test_validate_minimal_latency(self, perf_client: TestClient) -> None:
         """Validate endpoint with minimal params should complete (< 10s)."""
+        pytest.importorskip("torch")
         payload = {
             "seed": 42,
             "epochs": 1,

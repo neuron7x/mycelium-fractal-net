@@ -11,6 +11,8 @@ Reference: docs/ARCHITECTURE.md
 from __future__ import annotations
 
 import pytest
+
+pytest.importorskip("torch")
 from fastapi.testclient import TestClient
 
 from api import app

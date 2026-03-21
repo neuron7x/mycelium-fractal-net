@@ -29,7 +29,11 @@ from typing import Any, Dict, Iterator, List, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from analytics import FeatureConfig, FeatureVector, compute_features
+from mycelium_fractal_net.analytics.legacy_features import (
+    FeatureConfig,
+    FeatureVector,
+    compute_features,
+)
 from mycelium_fractal_net.core import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
@@ -164,6 +168,58 @@ class ConfigSampler:
             }
 
 
+
+
+@dataclass
+class SweepConfig:
+    """Backward-compatible sweep configuration used by legacy tests and scripts."""
+
+    grid_sizes: list[int] | None = None
+    steps_list: list[int] | None = None
+    alpha_values: list[float] | None = None
+    turing_values: list[bool] | None = None
+    seeds_per_config: int = 3
+    base_seed: int = 42
+    spike_probability: float = 0.25
+    turing_threshold: float = 0.75
+
+    def __post_init__(self) -> None:
+        if self.grid_sizes is None:
+            self.grid_sizes = [32, 64]
+        if self.steps_list is None:
+            self.steps_list = [50, 100]
+        if self.alpha_values is None:
+            self.alpha_values = [0.10, 0.15, 0.20]
+        if self.turing_values is None:
+            self.turing_values = [True, False]
+        if any(g < 4 for g in self.grid_sizes):
+            raise ValueError("All grid_sizes must be >= 4")
+        if any(a >= 0.25 for a in self.alpha_values):
+            raise ValueError("alpha_values must all be < 0.25 for CFL stability")
+
+
+def _generate_sweep_configs(sweep: SweepConfig) -> List[Dict[str, Any]]:
+    """Expand legacy SweepConfig into explicit parameter dictionaries."""
+    configs: List[Dict[str, Any]] = []
+    sim_id = 0
+    for grid_size in sweep.grid_sizes or []:
+        for steps in sweep.steps_list or []:
+            for alpha in sweep.alpha_values or []:
+                for turing_enabled in sweep.turing_values or []:
+                    for _ in range(sweep.seeds_per_config):
+                        configs.append({
+                            "sim_id": sim_id,
+                            "grid_size": int(grid_size),
+                            "steps": int(steps),
+                            "alpha": float(alpha),
+                            "turing_enabled": bool(turing_enabled),
+                            "spike_probability": float(sweep.spike_probability),
+                            "turing_threshold": float(sweep.turing_threshold),
+                            "random_seed": int(sweep.base_seed + sim_id),
+                        })
+                        sim_id += 1
+    return configs
+
 def to_record(
     config: Dict[str, Any],
     features: FeatureVector,
@@ -268,11 +324,12 @@ def run_simulation(
 
 
 def generate_dataset(
-    *,
-    num_samples: int,
-    config_sampler: ConfigSampler | None = None,
+    sweep: SweepConfig | None = None,
     output_path: str | Path | None = None,
     feature_config: FeatureConfig | None = None,
+    *,
+    num_samples: int | None = None,
+    config_sampler: ConfigSampler | None = None,
 ) -> Dict[str, Any]:
     """
     Generate dataset with num_samples simulations.
@@ -304,17 +361,24 @@ def generate_dataset(
         - output_path: Path where dataset was saved (if any)
         - rows: List of all records (for testing)
     """
-    if config_sampler is None:
-        config_sampler = ConfigSampler()
-
     if feature_config is None:
         feature_config = FeatureConfig()
 
-    # Generate all configurations
-    rng = np.random.default_rng(config_sampler.base_seed)
-    configs = list(config_sampler.sample(num_samples, rng))
+    if sweep is not None:
+        if config_sampler is not None or num_samples is not None:
+            raise ValueError("Use either legacy sweep mode or num_samples/config_sampler mode, not both")
+        configs = _generate_sweep_configs(sweep)
+        requested_samples = len(configs)
+    else:
+        if num_samples is None:
+            raise TypeError("num_samples is required when sweep is not provided")
+        if config_sampler is None:
+            config_sampler = ConfigSampler()
+        rng = np.random.default_rng(config_sampler.base_seed)
+        configs = list(config_sampler.sample(num_samples, rng))
+        requested_samples = num_samples
 
-    logger.info(f"Starting dataset generation with {num_samples} samples")
+    logger.info(f"Starting dataset generation with {requested_samples} samples")
 
     all_rows: List[Dict[str, Any]] = []
     n_success = 0
@@ -322,8 +386,8 @@ def generate_dataset(
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     for i, params in enumerate(configs):
-        if (i + 1) % max(1, num_samples // 10) == 0 or i == 0:
-            logger.info(f"Processing {i + 1}/{num_samples}...")
+        if (i + 1) % max(1, requested_samples // 10) == 0 or i == 0:
+            logger.info(f"Processing {i + 1}/{requested_samples}...")
 
         result = run_simulation(params)
         if result is None:
@@ -353,10 +417,10 @@ def generate_dataset(
 
     # Compute statistics
     stats: Dict[str, Any] = {
-        "total_samples": num_samples,
+        "total_samples": requested_samples,
         "successful": n_success,
         "failed": n_failed,
-        "success_rate": n_success / num_samples if num_samples > 0 else 0.0,
+        "success_rate": n_success / requested_samples if requested_samples > 0 else 0.0,
         "output_path": saved_path,
         "rows": all_rows,
     }
@@ -372,7 +436,7 @@ def generate_dataset(
                 stats[f"{fname}_max"] = float(np.max(values))
                 stats[f"{fname}_mean"] = float(np.mean(values))
 
-    logger.info(f"Dataset generation complete: {n_success}/{num_samples} successful")
+    logger.info(f"Dataset generation complete: {n_success}/{requested_samples} successful")
 
     return stats
 

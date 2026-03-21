@@ -1,6 +1,8 @@
 """Tests for MyceliumFractalNet neural network model."""
 
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
 
 from mycelium_fractal_net.model import MyceliumFractalNet
 
