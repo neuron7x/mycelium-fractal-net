@@ -106,12 +106,16 @@ class ScenarioConfig:
         if self.num_samples < 1:
             raise ValueError(f"num_samples must be >= 1, got {self.num_samples}")
         if self.seeds_per_config < 1:
-            raise ValueError(f"seeds_per_config must be >= 1, got {self.seeds_per_config}")
+            raise ValueError(
+                f"seeds_per_config must be >= 1, got {self.seeds_per_config}"
+            )
         if not self.alpha_values:
             raise ValueError("alpha_values must contain at least one value")
         for alpha in self.alpha_values:
             if alpha <= 0 or alpha >= 0.25:
-                raise ValueError(f"alpha must be in (0, 0.25) for CFL stability, got {alpha}")
+                raise ValueError(
+                    f"alpha must be in (0, 0.25) for CFL stability, got {alpha}"
+                )
 
 
 @dataclass
@@ -432,10 +436,10 @@ def run_scenario(
     """
     # Import here to avoid circular imports
     from mycelium_fractal_net.analytics.legacy_features import (
-    FeatureConfig,
-    FeatureVector,
-    compute_features,
-)
+        FeatureConfig,
+        FeatureVector,
+        compute_features,
+    )
 
     # Determine output path
     if data_root is None:
@@ -477,7 +481,9 @@ def run_scenario(
         try:
             features = compute_features(history, feature_config)
         except Exception as e:
-            logger.warning(f"Feature extraction failed for sim_id={params['sim_id']}: {e}")
+            logger.warning(
+                f"Feature extraction failed for sim_id={params['sim_id']}: {e}"
+            )
             n_failed += 1
             continue
 
@@ -525,7 +531,9 @@ from .sensor_grid_anomaly import run as run_sensor_grid_anomaly_scenario
 from .synthetic_morphology import run as run_synthetic_morphology_scenario
 
 
-def run_canonical_scenarios(output_root: str | Path = "artifacts/scenarios") -> dict[str, dict[str, str]]:
+def run_canonical_scenarios(
+    output_root: str | Path = "artifacts/scenarios",
+) -> dict[str, dict[str, str]]:
     return {
         "synthetic_morphology": run_synthetic_morphology_scenario(output_root),
         "sensor_grid_anomaly": run_sensor_grid_anomaly_scenario(output_root),
@@ -534,8 +542,15 @@ def run_canonical_scenarios(output_root: str | Path = "artifacts/scenarios") -> 
 
 
 __all__ = [
-    "ScenarioType", "ScenarioConfig", "DatasetMeta",
-    "get_preset_config", "list_presets", "run_scenario", "run_canonical_scenarios",
-    "run_synthetic_morphology_scenario", "run_sensor_grid_anomaly_scenario", "run_regime_transition_scenario",
+    "ScenarioType",
+    "ScenarioConfig",
+    "DatasetMeta",
+    "get_preset_config",
+    "list_presets",
+    "run_scenario",
+    "run_canonical_scenarios",
+    "run_synthetic_morphology_scenario",
+    "run_sensor_grid_anomaly_scenario",
+    "run_regime_transition_scenario",
     "_generate_param_configs",
 ]

@@ -14,7 +14,7 @@ from mycelium_fractal_net.core.exceptions import NumericalInstabilityError
 try:  # optional acceleration contour
     from numba import njit
 except Exception:  # pragma: no cover
-    njit = None  # type: ignore[assignment]
+    njit = None
 
 
 class BoundaryCondition(Enum):
@@ -26,7 +26,12 @@ class BoundaryCondition(Enum):
 def _use_accel(use_accel: bool | None) -> bool:
     if use_accel is not None:
         return bool(use_accel)
-    return os.getenv('MFN_ENABLE_ACCEL_LAPLACIAN', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    return os.getenv("MFN_ENABLE_ACCEL_LAPLACIAN", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _laplacian_numpy_periodic(field: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -57,14 +62,15 @@ def _laplacian_numpy_neumann(field: NDArray[np.floating]) -> NDArray[np.floating
 
 
 def _laplacian_numpy_dirichlet(field: NDArray[np.floating]) -> NDArray[np.floating]:
-    up = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode='constant', constant_values=0)
-    down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode='constant', constant_values=0)
-    left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode='constant', constant_values=0)
-    right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode='constant', constant_values=0)
+    up = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode="constant", constant_values=0)
+    down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant", constant_values=0)
+    left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant", constant_values=0)
+    right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant", constant_values=0)
     return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
 
 
 if njit is not None:
+
     @njit(cache=True)
     def _laplacian_periodic_jit(field):
         rows, cols = field.shape
@@ -75,7 +81,13 @@ if njit is not None:
             for j in range(cols):
                 left = (j - 1) % cols
                 right = (j + 1) % cols
-                out[i, j] = field[up, j] + field[down, j] + field[i, left] + field[i, right] - 4.0 * field[i, j]
+                out[i, j] = (
+                    field[up, j]
+                    + field[down, j]
+                    + field[i, left]
+                    + field[i, right]
+                    - 4.0 * field[i, j]
+                )
         return out
 
     @njit(cache=True)
@@ -88,7 +100,13 @@ if njit is not None:
             for j in range(cols):
                 left = j if j == 0 else j - 1
                 right = j if j == cols - 1 else j + 1
-                out[i, j] = field[up, j] + field[down, j] + field[i, left] + field[i, right] - 4.0 * field[i, j]
+                out[i, j] = (
+                    field[up, j]
+                    + field[down, j]
+                    + field[i, left]
+                    + field[i, right]
+                    - 4.0 * field[i, j]
+                )
         return out
 
     @njit(cache=True)
@@ -103,6 +121,7 @@ if njit is not None:
                 right = field[i, j + 1] if j < cols - 1 else 0.0
                 out[i, j] = up + down + left + right - 4.0 * field[i, j]
         return out
+
 else:  # pragma: no cover
     _laplacian_periodic_jit = None
     _laplacian_neumann_jit = None
@@ -111,8 +130,8 @@ else:  # pragma: no cover
 
 def laplacian_backend(use_accel: bool | None = None) -> str:
     if _use_accel(use_accel) and njit is not None:
-        return 'numba-jit'
-    return 'numpy-reference'
+        return "numba-jit"
+    return "numpy-reference"
 
 
 def compute_laplacian(
@@ -123,18 +142,28 @@ def compute_laplacian(
 ) -> NDArray[np.floating]:
     field = np.asarray(field, dtype=np.float64)
     if field.ndim != 2:
-        raise ValueError(f'field must be 2D, got ndim={field.ndim}')
+        raise ValueError(f"field must be 2D, got ndim={field.ndim}")
 
     accel = _use_accel(use_accel) and njit is not None
     if boundary == BoundaryCondition.PERIODIC:
-        laplacian = _laplacian_periodic_jit(field) if accel else _laplacian_numpy_periodic(field)
+        laplacian = (
+            _laplacian_periodic_jit(field)
+            if accel
+            else _laplacian_numpy_periodic(field)
+        )
     elif boundary == BoundaryCondition.NEUMANN:
-        laplacian = _laplacian_neumann_jit(field) if accel else _laplacian_numpy_neumann(field)
+        laplacian = (
+            _laplacian_neumann_jit(field) if accel else _laplacian_numpy_neumann(field)
+        )
     else:
-        laplacian = _laplacian_dirichlet_jit(field) if accel else _laplacian_numpy_dirichlet(field)
+        laplacian = (
+            _laplacian_dirichlet_jit(field)
+            if accel
+            else _laplacian_numpy_dirichlet(field)
+        )
 
     if check_stability:
-        validate_field_stability(laplacian, field_name='laplacian')
+        validate_field_stability(laplacian, field_name="laplacian")
     return cast(NDArray[np.floating[Any]], laplacian)
 
 
@@ -160,38 +189,40 @@ def compute_gradient(
             grad_x[-1, :] = field[-1, :] - field[-2, :]
             grad_y[:, 0] = field[:, 1] - field[:, 0]
             grad_y[:, -1] = field[:, -1] - field[:, -2]
-    return cast(NDArray[np.floating[Any]], grad_x), cast(NDArray[np.floating[Any]], grad_y)
+    return cast(NDArray[np.floating[Any]], grad_x), cast(
+        NDArray[np.floating[Any]], grad_y
+    )
 
 
 def compute_field_statistics(field: NDArray[np.floating]) -> dict[str, float]:
     return {
-        'min': float(np.min(field)),
-        'max': float(np.max(field)),
-        'mean': float(np.mean(field)),
-        'std': float(np.std(field)),
-        'nan_count': int(np.sum(np.isnan(field))),
-        'inf_count': int(np.sum(np.isinf(field))),
-        'finite_fraction': float(np.mean(np.isfinite(field))),
+        "min": float(np.min(field)),
+        "max": float(np.max(field)),
+        "mean": float(np.mean(field)),
+        "std": float(np.std(field)),
+        "nan_count": int(np.sum(np.isnan(field))),
+        "inf_count": int(np.sum(np.isinf(field))),
+        "finite_fraction": float(np.mean(np.isfinite(field))),
     }
 
 
 def validate_field_stability(
     field: NDArray[np.floating],
-    field_name: str = 'field',
+    field_name: str = "field",
     step: int | None = None,
 ) -> bool:
     nan_count = int(np.sum(np.isnan(field)))
     inf_count = int(np.sum(np.isinf(field)))
     if nan_count > 0:
         raise NumericalInstabilityError(
-            f'NaN values detected in {field_name}',
+            f"NaN values detected in {field_name}",
             step=step,
             field_name=field_name,
             nan_count=nan_count,
         )
     if inf_count > 0:
         raise NumericalInstabilityError(
-            f'Inf values detected in {field_name}',
+            f"Inf values detected in {field_name}",
             step=step,
             field_name=field_name,
             inf_count=inf_count,
@@ -219,12 +250,12 @@ def clamp_field(
 
 
 __all__ = [
-    'BoundaryCondition',
-    'compute_laplacian',
-    'laplacian_backend',
-    'compute_gradient',
-    'compute_field_statistics',
-    'validate_field_stability',
-    'validate_field_bounds',
-    'clamp_field',
+    "BoundaryCondition",
+    "compute_laplacian",
+    "laplacian_backend",
+    "compute_gradient",
+    "compute_field_statistics",
+    "validate_field_stability",
+    "validate_field_bounds",
+    "clamp_field",
 ]

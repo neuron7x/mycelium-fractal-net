@@ -194,8 +194,12 @@ class TestNernstPotentialArray:
         assert np.all(np.isfinite(e))
 
         # Check metrics updated
-        assert engine.metrics.potential_min_v == pytest.approx(float(np.min(e)), abs=1e-10)
-        assert engine.metrics.potential_max_v == pytest.approx(float(np.max(e)), abs=1e-10)
+        assert engine.metrics.potential_min_v == pytest.approx(
+            float(np.min(e)), abs=1e-10
+        )
+        assert engine.metrics.potential_max_v == pytest.approx(
+            float(np.max(e)), abs=1e-10
+        )
 
 
 class TestODEIntegration:
@@ -418,7 +422,9 @@ class TestBiophysicalCalibration:
 
         with pytest.raises(ValueOutOfRangeError, match="valence"):
             engine.compute_nernst_potential(
-                z_valence=-3, concentration_out_molar=5e-3, concentration_in_molar=140e-3
+                z_valence=-3,
+                concentration_out_molar=5e-3,
+                concentration_in_molar=140e-3,
             )
 
     def test_all_valid_valences_work(self) -> None:
@@ -462,9 +468,9 @@ class TestInvariantsVerification:
         for z, c_out, c_in in test_cases:
             e_v = engine.compute_nernst_potential(z, c_out, c_in)
             e_mv = e_v * 1000.0
-            assert POTENTIAL_MIN_V * 1000 <= e_mv <= POTENTIAL_MAX_V * 1000, (
-                f"E = {e_mv:.1f} mV outside bounds for z={z}, ratio={c_out / c_in:.1f}"
-            )
+            assert (
+                POTENTIAL_MIN_V * 1000 <= e_mv <= POTENTIAL_MAX_V * 1000
+            ), f"E = {e_mv:.1f} mV outside bounds for z={z}, ratio={c_out / c_in:.1f}"
 
     def test_sign_consistency_invariant(self) -> None:
         """Sign consistency: [X]_out > [X]_in and z > 0 → E > 0.

@@ -69,7 +69,9 @@ def logging_client():
 class TestRequestID:
     """Tests for request ID generation and propagation."""
 
-    def test_response_includes_request_id_header(self, logging_client: TestClient) -> None:
+    def test_response_includes_request_id_header(
+        self, logging_client: TestClient
+    ) -> None:
         """Response should include X-Request-ID header."""
         response = logging_client.get("/health")
         assert response.status_code == 200
@@ -108,7 +110,9 @@ class TestRequestID:
         assert get_request_id() is None
         assert get_request_context() == {}
 
-    def test_different_requests_get_different_ids(self, logging_client: TestClient) -> None:
+    def test_different_requests_get_different_ids(
+        self, logging_client: TestClient
+    ) -> None:
         """Different requests should get different IDs."""
         response1 = logging_client.get("/health")
         response2 = logging_client.get("/health")

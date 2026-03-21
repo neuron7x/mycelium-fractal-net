@@ -70,9 +70,7 @@ from .connectors import (
     KafkaConnectorAdapter,
     RESTConnector,
 )
-from .connectors import (
-    RetryStrategy as ConnectorRetryStrategy,
-)
+from .connectors import RetryStrategy as ConnectorRetryStrategy
 from .crypto_adapters import (
     CryptoAPIError,
     decrypt_data_adapter,
@@ -131,9 +129,7 @@ from .publishers import (
     PublisherStatus,
     WebhookPublisher,
 )
-from .publishers import (
-    RetryStrategy as PublisherRetryStrategy,
-)
+from .publishers import RetryStrategy as PublisherRetryStrategy
 from .rate_limiter import (
     RateLimiter,
     RateLimitMiddleware,

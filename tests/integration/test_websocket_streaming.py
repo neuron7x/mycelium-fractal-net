@@ -80,7 +80,9 @@ def ws_client_with_auth():
 class TestWebSocketStreamFeatures:
     """Tests for /ws/stream_features endpoint."""
 
-    @pytest.mark.skip(reason="Streaming tests timeout with TestClient - require async test setup")
+    @pytest.mark.skip(
+        reason="Streaming tests timeout with TestClient - require async test setup"
+    )
     def test_stream_features_basic_flow(self, ws_client):
         """Test basic connection and subscription flow."""
         with ws_client.websocket_connect("/ws/stream_features") as websocket:
@@ -155,7 +157,9 @@ class TestWebSocketStreamFeatures:
                     # Received one update, that's enough - unsubscribe now
                     break
 
-            assert feature_updates_received > 0, "Should receive at least one feature update"
+            assert (
+                feature_updates_received > 0
+            ), "Should receive at least one feature update"
 
             # Step 5: Unsubscribe before closing
             websocket.send_json(
@@ -243,7 +247,10 @@ class TestWebSocketStreamFeatures:
         with ws_client.websocket_connect("/ws/stream_features") as websocket:
             # Step 1: Init
             websocket.send_json(
-                {"type": WSMessageType.INIT.value, "payload": {"protocol_version": "1.0"}}
+                {
+                    "type": WSMessageType.INIT.value,
+                    "payload": {"protocol_version": "1.0"},
+                }
             )
             response = websocket.receive_json()
             assert response["type"] == WSMessageType.INIT.value
@@ -265,7 +272,9 @@ class TestWebSocketStreamFeatures:
 class TestWebSocketSimulationLive:
     """Tests for /ws/simulation_live endpoint."""
 
-    @pytest.mark.skip(reason="Streaming tests timeout with TestClient - require async test setup")
+    @pytest.mark.skip(
+        reason="Streaming tests timeout with TestClient - require async test setup"
+    )
     def test_simulation_live_basic_flow(self, ws_client):
         """Test basic simulation streaming."""
         with ws_client.websocket_connect("/ws/simulation_live") as websocket:
@@ -341,7 +350,10 @@ class TestWebSocketSimulationLive:
         with ws_client.websocket_connect("/ws/simulation_live") as websocket:
             # Init
             websocket.send_json(
-                {"type": WSMessageType.INIT.value, "payload": {"protocol_version": "1.0"}}
+                {
+                    "type": WSMessageType.INIT.value,
+                    "payload": {"protocol_version": "1.0"},
+                }
             )
             response = websocket.receive_json()
             assert response["type"] == WSMessageType.INIT.value
@@ -368,7 +380,10 @@ class TestWebSocketHeartbeat:
         with ws_client.websocket_connect("/ws/stream_features") as websocket:
             # Basic setup
             websocket.send_json(
-                {"type": WSMessageType.INIT.value, "payload": {"protocol_version": "1.0"}}
+                {
+                    "type": WSMessageType.INIT.value,
+                    "payload": {"protocol_version": "1.0"},
+                }
             )
             websocket.receive_json()
 
@@ -400,7 +415,10 @@ class TestWebSocketErrorHandling:
         with ws_client.websocket_connect("/ws/stream_features") as websocket:
             # Init
             websocket.send_json(
-                {"type": WSMessageType.INIT.value, "payload": {"protocol_version": "1.0"}}
+                {
+                    "type": WSMessageType.INIT.value,
+                    "payload": {"protocol_version": "1.0"},
+                }
             )
             websocket.receive_json()
 
@@ -422,7 +440,10 @@ class TestWebSocketErrorHandling:
         """Test authentication with expired timestamp."""
         with ws_client_with_auth.websocket_connect("/ws/stream_features") as websocket:
             websocket.send_json(
-                {"type": WSMessageType.INIT.value, "payload": {"protocol_version": "1.0"}}
+                {
+                    "type": WSMessageType.INIT.value,
+                    "payload": {"protocol_version": "1.0"},
+                }
             )
             websocket.receive_json()
 
@@ -460,14 +481,20 @@ class TestWebSocketConnectionManager:
 
     async def test_backpressure_strategies(self):
         """Test different backpressure strategies."""
-        from mycelium_fractal_net.integration import BackpressureStrategy, WSConnectionManager
+        from mycelium_fractal_net.integration import (
+            BackpressureStrategy,
+            WSConnectionManager,
+        )
 
         # Test drop_oldest
         manager_drop_oldest = WSConnectionManager(
             backpressure_strategy=BackpressureStrategy.DROP_OLDEST,
             max_queue_size=10,
         )
-        assert manager_drop_oldest.backpressure_strategy == BackpressureStrategy.DROP_OLDEST
+        assert (
+            manager_drop_oldest.backpressure_strategy
+            == BackpressureStrategy.DROP_OLDEST
+        )
 
         # Test compress
         manager_compress = WSConnectionManager(
@@ -588,6 +615,9 @@ class TestWebSocketConnectionManager:
             invalid_timestamp = "not-a-number"
 
             assert (
-                manager.authenticate(connection_id, "test-ws-key-12345", invalid_timestamp) is False
+                manager.authenticate(
+                    connection_id, "test-ws-key-12345", invalid_timestamp
+                )
+                is False
             )
             assert manager.connections[connection_id].authenticated is False

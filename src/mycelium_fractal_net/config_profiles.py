@@ -37,7 +37,9 @@ class ValidationProfile:
                 f"grid_size must be between {GRID_SIZE_MIN} and {GRID_SIZE_MAX}"
             )
         if not (STEPS_MIN <= self.steps <= STEPS_MAX):
-            raise ConfigValidationError(f"steps must be between {STEPS_MIN} and {STEPS_MAX}")
+            raise ConfigValidationError(
+                f"steps must be between {STEPS_MIN} and {STEPS_MAX}"
+            )
         for name in ("seed", "epochs", "batch_size"):
             if getattr(self, name) <= 0:
                 raise ConfigValidationError(f"{name} must be positive")
@@ -176,7 +178,9 @@ class ExpectedMetricsProfile:
     def validate(self) -> None:
         low, high = self.fractal_dim_range
         if low <= 0 or high <= 0 or low >= high:
-            raise ConfigValidationError("fractal_dim_range must be (low, high) with 0 < low < high")
+            raise ConfigValidationError(
+                "fractal_dim_range must be (low, high) with 0 < low < high"
+            )
         if self.runtime_seconds_max <= 0:
             raise ConfigValidationError("runtime_seconds_max must be positive")
         if self.memory_mb_max <= 0:
@@ -245,7 +249,9 @@ class ConfigProfile:
             model=ModelProfile.from_dict(dict(data["model"])),
             simulation=SimulationProfile.from_dict(dict(data["simulation"])),
             federated=FederatedProfile.from_dict(dict(data["federated"])),
-            expected_metrics=ExpectedMetricsProfile.from_dict(dict(data["expected_metrics"])),
+            expected_metrics=ExpectedMetricsProfile.from_dict(
+                dict(data["expected_metrics"])
+            ),
         )
 
 

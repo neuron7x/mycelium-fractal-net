@@ -1,4 +1,3 @@
-
 """Canonical detection result types."""
 
 from __future__ import annotations
@@ -31,12 +30,22 @@ class DetectionEvidence:
     dynamic_threshold: float = 0.0
 
     def to_dict(self) -> dict[str, float]:
-        return {k: float(getattr(self, k)) for k in self.__dataclass_fields__
-                if getattr(self, k) != 0.0 or k in (
-                    'change_score', 'criticality_pressure', 'complexity_gain',
-                    'connectivity_divergence', 'hierarchy_flattening',
-                    'plasticity_index', 'observation_noise_gain', 'effective_inhibition',
-                )}
+        return {
+            k: float(getattr(self, k))
+            for k in self.__dataclass_fields__
+            if getattr(self, k) != 0.0
+            or k
+            in (
+                "change_score",
+                "criticality_pressure",
+                "complexity_gain",
+                "connectivity_divergence",
+                "hierarchy_flattening",
+                "plasticity_index",
+                "observation_noise_gain",
+                "effective_inhibition",
+            )
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, float]) -> "DetectionEvidence":
@@ -53,15 +62,15 @@ class RegimeState:
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
-            'schema_version': 'mfn-regime-state-v1',
-            'runtime_version': '4.1.0',
-            'label': self.label,
-            'score': float(self.score),
-            'confidence': float(self.confidence),
-            'evidence': {k: float(v) for k, v in self.evidence.items()},
-            'contributing_features': list(self.contributing_features),
+            "schema_version": "mfn-regime-state-v1",
+            "runtime_version": "4.1.0",
+            "label": self.label,
+            "score": float(self.score),
+            "confidence": float(self.confidence),
+            "evidence": {k: float(v) for k, v in self.evidence.items()},
+            "contributing_features": list(self.contributing_features),
         }
-        payload['top_contributing_features'] = list(self.contributing_features)
+        payload["top_contributing_features"] = list(self.contributing_features)
         return payload
 
 
@@ -76,14 +85,14 @@ class AnomalyEvent:
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
-            'schema_version': 'mfn-anomaly-event-v1',
-            'runtime_version': '4.1.0',
-            'score': float(self.score),
-            'label': self.label,
-            'confidence': float(self.confidence),
-            'evidence': {k: float(v) for k, v in self.evidence.items()},
-            'contributing_features': list(self.contributing_features),
-            'regime': None if self.regime is None else self.regime.to_dict(),
+            "schema_version": "mfn-anomaly-event-v1",
+            "runtime_version": "4.1.0",
+            "score": float(self.score),
+            "label": self.label,
+            "confidence": float(self.confidence),
+            "evidence": {k: float(v) for k, v in self.evidence.items()},
+            "contributing_features": list(self.contributing_features),
+            "regime": None if self.regime is None else self.regime.to_dict(),
         }
-        payload['top_contributing_features'] = list(self.contributing_features)
+        payload["top_contributing_features"] = list(self.contributing_features)
         return payload

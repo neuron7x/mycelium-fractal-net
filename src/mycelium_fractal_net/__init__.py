@@ -60,7 +60,12 @@ from .core.detect import detect_anomaly
 from .core.extract import extract as extract_operation
 from .core.forecast import forecast_next
 from .core.report import report as report_operation
-from .core.simulate import simulate_batch, simulate_final, simulate_history, simulate_scenario
+from .core.simulate import (
+    simulate_batch,
+    simulate_final,
+    simulate_history,
+    simulate_scenario,
+)
 from .pipelines import (
     build_analysis_report,
     get_preset_config,
@@ -90,7 +95,7 @@ from .types.report import AnalysisReport
 def simulate(
     spec: SimulationSpec,
     *,
-    history_backend: str = 'memory',
+    history_backend: str = "memory",
     history_dir: str | None = None,
 ) -> FieldSequence:
     """Run a morphology simulation and return the field sequence.
@@ -118,7 +123,9 @@ def simulate(
     """
     if not isinstance(spec, SimulationSpec):
         raise TypeError(f"spec must be SimulationSpec, got {type(spec).__name__}")
-    return simulate_history(spec, history_backend=history_backend, history_dir=history_dir)
+    return simulate_history(
+        spec, history_backend=history_backend, history_dir=history_dir
+    )
 
 
 def extract(sequence: FieldSequence) -> MorphologyDescriptor:
@@ -145,7 +152,9 @@ def extract(sequence: FieldSequence) -> MorphologyDescriptor:
     0.012...
     """
     if not isinstance(sequence, FieldSequence):
-        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
+        raise TypeError(
+            f"sequence must be FieldSequence, got {type(sequence).__name__}"
+        )
     return extract_operation(sequence)
 
 
@@ -175,7 +184,9 @@ def detect(sequence: FieldSequence) -> AnomalyEvent:
     'stable'
     """
     if not isinstance(sequence, FieldSequence):
-        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
+        raise TypeError(
+            f"sequence must be FieldSequence, got {type(sequence).__name__}"
+        )
     return detect_anomaly(sequence)
 
 
@@ -204,7 +215,9 @@ def forecast(sequence: FieldSequence, horizon: int = 8) -> ForecastResult:
     4
     """
     if not isinstance(sequence, FieldSequence):
-        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
+        raise TypeError(
+            f"sequence must be FieldSequence, got {type(sequence).__name__}"
+        )
     return forecast_next(sequence, horizon=horizon)
 
 
@@ -236,10 +249,13 @@ def compare(
     'near-identical'
     """
     from .core.compare import compare as _compare
+
     return _compare(a, b)
 
 
-def report(sequence: FieldSequence, output_root: str, horizon: int = 8) -> AnalysisReport:
+def report(
+    sequence: FieldSequence, output_root: str, horizon: int = 8
+) -> AnalysisReport:
     """Generate a full analysis report with artifacts.
 
     Orchestrates extraction, detection, forecasting, comparison, and
@@ -266,41 +282,74 @@ def report(sequence: FieldSequence, output_root: str, horizon: int = 8) -> Analy
     'nominal'
     """
     if not isinstance(sequence, FieldSequence):
-        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
+        raise TypeError(
+            f"sequence must be FieldSequence, got {type(sequence).__name__}"
+        )
     return report_operation(sequence, output_root=output_root, horizon=horizon)
 
 
 _LAZY_MODULES = {
-    name: f'{__name__}.{name}'
-    for name in ['analytics', 'core', 'experiments', 'integration', 'numerics', 'pipelines', 'security', 'signal', 'types']
+    name: f"{__name__}.{name}"
+    for name in [
+        "analytics",
+        "core",
+        "experiments",
+        "integration",
+        "numerics",
+        "pipelines",
+        "security",
+        "signal",
+        "types",
+    ]
 }
 
 _LAZY_ATTRS = {
-    'HierarchicalKrumAggregator': ('mycelium_fractal_net.core.federated', 'HierarchicalKrumAggregator'),
-    'aggregate_gradients_krum': ('mycelium_fractal_net.core.federated', 'aggregate_gradients_krum'),
-    'STDPPlasticity': ('mycelium_fractal_net.core.stdp', 'STDPPlasticity'),
-    'estimate_fractal_dimension': ('mycelium_fractal_net.core.fractal', 'estimate_fractal_dimension'),
-    'generate_fractal_ifs': ('mycelium_fractal_net.core.fractal', 'generate_fractal_ifs'),
-    'simulate_mycelium_field': ('mycelium_fractal_net.core.turing', 'simulate_mycelium_field'),
+    "HierarchicalKrumAggregator": (
+        "mycelium_fractal_net.core.federated",
+        "HierarchicalKrumAggregator",
+    ),
+    "aggregate_gradients_krum": (
+        "mycelium_fractal_net.core.federated",
+        "aggregate_gradients_krum",
+    ),
+    "STDPPlasticity": ("mycelium_fractal_net.core.stdp", "STDPPlasticity"),
+    "estimate_fractal_dimension": (
+        "mycelium_fractal_net.core.fractal",
+        "estimate_fractal_dimension",
+    ),
+    "generate_fractal_ifs": (
+        "mycelium_fractal_net.core.fractal",
+        "generate_fractal_ifs",
+    ),
+    "simulate_mycelium_field": (
+        "mycelium_fractal_net.core.turing",
+        "simulate_mycelium_field",
+    ),
     # Pure constants — sourced from CPU-only modules (no torch dependency)
-    'BODY_TEMPERATURE_K': ('mycelium_fractal_net.core.membrane_engine', 'BODY_TEMPERATURE_K'),
-    'FARADAY_CONSTANT': ('mycelium_fractal_net.core.membrane_engine', 'FARADAY_CONSTANT'),
-    'ION_CLAMP_MIN': ('mycelium_fractal_net.core.membrane_engine', 'ION_CLAMP_MIN'),
-    'R_GAS_CONSTANT': ('mycelium_fractal_net.core.membrane_engine', 'R_GAS_CONSTANT'),
-    'TURING_THRESHOLD': ('mycelium_fractal_net.core.turing', 'TURING_THRESHOLD'),
-    'QUANTUM_JITTER_VAR': ('mycelium_fractal_net.core.turing', 'QUANTUM_JITTER_VAR'),
-    'NERNST_RTFZ_MV': ('mycelium_fractal_net.core.nernst', 'NERNST_RTFZ_MV'),
+    "BODY_TEMPERATURE_K": (
+        "mycelium_fractal_net.core.membrane_engine",
+        "BODY_TEMPERATURE_K",
+    ),
+    "FARADAY_CONSTANT": (
+        "mycelium_fractal_net.core.membrane_engine",
+        "FARADAY_CONSTANT",
+    ),
+    "ION_CLAMP_MIN": ("mycelium_fractal_net.core.membrane_engine", "ION_CLAMP_MIN"),
+    "R_GAS_CONSTANT": ("mycelium_fractal_net.core.membrane_engine", "R_GAS_CONSTANT"),
+    "TURING_THRESHOLD": ("mycelium_fractal_net.core.turing", "TURING_THRESHOLD"),
+    "QUANTUM_JITTER_VAR": ("mycelium_fractal_net.core.turing", "QUANTUM_JITTER_VAR"),
+    "NERNST_RTFZ_MV": ("mycelium_fractal_net.core.nernst", "NERNST_RTFZ_MV"),
     # ML-dependent surfaces — torch required at access time
-    'MyceliumFractalNet': ('mycelium_fractal_net.model', 'MyceliumFractalNet'),
-    'SPARSE_TOPK': ('mycelium_fractal_net.model', 'SPARSE_TOPK'),
-    'STDP_A_MINUS': ('mycelium_fractal_net.model', 'STDP_A_MINUS'),
-    'STDP_A_PLUS': ('mycelium_fractal_net.model', 'STDP_A_PLUS'),
-    'STDP_TAU_MINUS': ('mycelium_fractal_net.model', 'STDP_TAU_MINUS'),
-    'STDP_TAU_PLUS': ('mycelium_fractal_net.model', 'STDP_TAU_PLUS'),
-    'SparseAttention': ('mycelium_fractal_net.model', 'SparseAttention'),
-    'ValidationConfig': ('mycelium_fractal_net.model', 'ValidationConfig'),
-    'run_validation': ('mycelium_fractal_net.model', 'run_validation'),
-    'run_validation_cli': ('mycelium_fractal_net.model', 'run_validation_cli'),
+    "MyceliumFractalNet": ("mycelium_fractal_net.model", "MyceliumFractalNet"),
+    "SPARSE_TOPK": ("mycelium_fractal_net.model", "SPARSE_TOPK"),
+    "STDP_A_MINUS": ("mycelium_fractal_net.model", "STDP_A_MINUS"),
+    "STDP_A_PLUS": ("mycelium_fractal_net.model", "STDP_A_PLUS"),
+    "STDP_TAU_MINUS": ("mycelium_fractal_net.model", "STDP_TAU_MINUS"),
+    "STDP_TAU_PLUS": ("mycelium_fractal_net.model", "STDP_TAU_PLUS"),
+    "SparseAttention": ("mycelium_fractal_net.model", "SparseAttention"),
+    "ValidationConfig": ("mycelium_fractal_net.model", "ValidationConfig"),
+    "run_validation": ("mycelium_fractal_net.model", "run_validation"),
+    "run_validation_cli": ("mycelium_fractal_net.model", "run_validation_cli"),
 }
 
 
@@ -319,9 +368,25 @@ def __getattr__(name: str):
 
 
 V1_SURFACE = (
-    'simulate', 'extract', 'detect', 'forecast', 'compare', 'report',
-    'SimulationSpec', 'NeuromodulationSpec', 'GABAATonicSpec', 'SerotonergicPlasticitySpec', 'ObservationNoiseSpec', 'FieldSequence', 'MorphologyDescriptor', 'AnomalyEvent', 'RegimeState',
-    'ForecastResult', 'ComparisonResult', 'AnalysisReport', '__version__',
+    "simulate",
+    "extract",
+    "detect",
+    "forecast",
+    "compare",
+    "report",
+    "SimulationSpec",
+    "NeuromodulationSpec",
+    "GABAATonicSpec",
+    "SerotonergicPlasticitySpec",
+    "ObservationNoiseSpec",
+    "FieldSequence",
+    "MorphologyDescriptor",
+    "AnomalyEvent",
+    "RegimeState",
+    "ForecastResult",
+    "ComparisonResult",
+    "AnalysisReport",
+    "__version__",
 )
 
 # Frozen surfaces: maintained for backward compatibility but not actively
@@ -331,20 +396,61 @@ V1_SURFACE = (
 #   core.federated → external federated learning framework
 #   integration.ws_* → standard WebSocket libraries
 FROZEN_SURFACES = (
-    'crypto', 'core.federated', 'k8s.yaml', 'integration.ws_*', 'load_tests', 'notebooks', 'planning',
+    "crypto",
+    "core.federated",
+    "k8s.yaml",
+    "integration.ws_*",
+    "load_tests",
+    "notebooks",
+    "planning",
 )
 DEPRECATED_SURFACES = {
-    'crypto': 'Use artifact_bundle for signing. crypto/ will be removed in v5.0.',
-    'core.federated': 'Federated learning is frozen. Use external frameworks.',
+    "crypto": "Use artifact_bundle for signing. crypto/ will be removed in v5.0.",
+    "core.federated": "Federated learning is frozen. Use external frameworks.",
 }
 
 
 __all__ = list(V1_SURFACE) + [
-    'FeatureVector', 'FractalConfig', 'FractalGrowthEngine', 'FractalMetrics', 'MembraneConfig', 'MembraneEngine', 'MembraneMetrics', 'MyceliumField',
-    'NumericalInstabilityError', 'ReactionDiffusionConfig', 'ReactionDiffusionEngine', 'ReactionDiffusionMetrics',
-    'SimulationConfig', 'SimulationResult', 'StabilityError', 'ValueOutOfRangeError', 'compute_fractal_features', 'compute_lyapunov_exponent', 'compute_nernst_potential',
-    'estimate_fractal_dimension', 'generate_fractal_ifs', 'simulate_mycelium_field',
-    'HierarchicalKrumAggregator', 'aggregate_gradients_krum', 'STDPPlasticity',
-    'BODY_TEMPERATURE_K', 'FARADAY_CONSTANT', 'ION_CLAMP_MIN', 'MyceliumFractalNet', 'NERNST_RTFZ_MV', 'QUANTUM_JITTER_VAR', 'R_GAS_CONSTANT', 'SPARSE_TOPK',
-    'STDP_A_MINUS', 'STDP_A_PLUS', 'STDP_TAU_MINUS', 'STDP_TAU_PLUS', 'SparseAttention', 'TURING_THRESHOLD', 'ValidationConfig', 'run_validation', 'run_validation_cli',
+    "FeatureVector",
+    "FractalConfig",
+    "FractalGrowthEngine",
+    "FractalMetrics",
+    "MembraneConfig",
+    "MembraneEngine",
+    "MembraneMetrics",
+    "MyceliumField",
+    "NumericalInstabilityError",
+    "ReactionDiffusionConfig",
+    "ReactionDiffusionEngine",
+    "ReactionDiffusionMetrics",
+    "SimulationConfig",
+    "SimulationResult",
+    "StabilityError",
+    "ValueOutOfRangeError",
+    "compute_fractal_features",
+    "compute_lyapunov_exponent",
+    "compute_nernst_potential",
+    "estimate_fractal_dimension",
+    "generate_fractal_ifs",
+    "simulate_mycelium_field",
+    "HierarchicalKrumAggregator",
+    "aggregate_gradients_krum",
+    "STDPPlasticity",
+    "BODY_TEMPERATURE_K",
+    "FARADAY_CONSTANT",
+    "ION_CLAMP_MIN",
+    "MyceliumFractalNet",
+    "NERNST_RTFZ_MV",
+    "QUANTUM_JITTER_VAR",
+    "R_GAS_CONSTANT",
+    "SPARSE_TOPK",
+    "STDP_A_MINUS",
+    "STDP_A_PLUS",
+    "STDP_TAU_MINUS",
+    "STDP_TAU_PLUS",
+    "SparseAttention",
+    "TURING_THRESHOLD",
+    "ValidationConfig",
+    "run_validation",
+    "run_validation_cli",
 ]

@@ -392,7 +392,9 @@ class ECDHKeyExchange:
         """Get the private key (should be kept secret)."""
         return self._keypair.private_key
 
-    def compute_shared_secret(self, peer_public_key: Union[bytes, ECDHKeyPair]) -> bytes:
+    def compute_shared_secret(
+        self, peer_public_key: Union[bytes, ECDHKeyPair]
+    ) -> bytes:
         """
         Compute shared secret with a peer's public key.
 

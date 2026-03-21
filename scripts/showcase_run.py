@@ -6,42 +6,56 @@ import sys
 from pathlib import Path
 
 import mycelium_fractal_net as mfn
-from mycelium_fractal_net.artifact_bundle import sha256_file, sign_artifacts, verify_bundle
+from mycelium_fractal_net.artifact_bundle import (
+    sha256_file,
+    sign_artifacts,
+    verify_bundle,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'artifacts' / 'showcase'
+OUT = ROOT / "artifacts" / "showcase"
 OUT.mkdir(parents=True, exist_ok=True)
 
 
 def _run_release_prep() -> None:
-    script = ROOT / 'scripts' / 'release_prep.py'
+    script = ROOT / "scripts" / "release_prep.py"
     subprocess.run([sys.executable, str(script)], cwd=ROOT, check=True)
 
 
 def main() -> int:
-    spec = mfn.SimulationSpec(grid_size=32, steps=24, seed=42, alpha=0.16, spike_probability=0.22)
+    spec = mfn.SimulationSpec(
+        grid_size=32, steps=24, seed=42, alpha=0.16, spike_probability=0.22
+    )
     seq = mfn.simulate_history(spec)
     descriptor = mfn.extract(seq)
     detection = mfn.detect(seq)
     forecast = mfn.forecast(seq, horizon=6)
     comparison = mfn.compare(seq, seq)
-    report = mfn.report(seq, output_root=str(OUT / 'runs'), horizon=6)
+    report = mfn.report(seq, output_root=str(OUT / "runs"), horizon=6)
     _run_release_prep()
 
-    criticality = ROOT / 'artifacts' / 'showcase' / 'criticality_sweep' / 'criticality_sweep_summary.json'
+    criticality = (
+        ROOT
+        / "artifacts"
+        / "showcase"
+        / "criticality_sweep"
+        / "criticality_sweep_summary.json"
+    )
     bundle = {
-        'product': 'Morphology-aware Field Intelligence Engine',
-        'spec': spec.to_dict(),
-        'descriptor_version': descriptor.version,
-        'anomaly_label': detection.label,
-        'forecast_method': forecast.method,
-        'comparison_label': comparison.label,
-        'report_dir': str((OUT / 'runs' / report.run_id).resolve()),
-        'release_bundle': str((ROOT / 'artifacts' / 'release' / 'index.html').resolve()),
-        'criticality_sweep': str(criticality.resolve()) if criticality.exists() else '',
-        'bundle_artifacts': [],
-        'crypto_audit_log': 'crypto_audit.jsonl',
-        'bundle_verified': True,
+        "product": "Morphology-aware Field Intelligence Engine",
+        "spec": spec.to_dict(),
+        "descriptor_version": descriptor.version,
+        "anomaly_label": detection.label,
+        "forecast_method": forecast.method,
+        "comparison_label": comparison.label,
+        "report_dir": str((OUT / "runs" / report.run_id).resolve()),
+        "release_bundle": str(
+            (ROOT / "artifacts" / "release" / "index.html").resolve()
+        ),
+        "criticality_sweep": str(criticality.resolve()) if criticality.exists() else "",
+        "bundle_artifacts": [],
+        "crypto_audit_log": "crypto_audit.jsonl",
+        "bundle_verified": True,
     }
     html = f"""<!doctype html>
 <html lang='en'>
@@ -62,22 +76,24 @@ def main() -> int:
 </ul>
 </div>
 </body></html>"""
-    (OUT / 'index.html').write_text(html, encoding='utf-8')
-    bundle['bundle_artifacts'] = [
-        {'path': 'index.html', 'sha256': sha256_file(OUT / 'index.html')},
+    (OUT / "index.html").write_text(html, encoding="utf-8")
+    bundle["bundle_artifacts"] = [
+        {"path": "index.html", "sha256": sha256_file(OUT / "index.html")},
     ]
-    (OUT / 'showcase_manifest.json').write_text(json.dumps(bundle, indent=2) + '\n', encoding='utf-8')
-    sign_artifacts(
-        [OUT / 'showcase_manifest.json'],
-        config_path=ROOT / 'configs' / 'crypto.yaml',
-        audit_log=OUT / 'crypto_audit.jsonl',
+    (OUT / "showcase_manifest.json").write_text(
+        json.dumps(bundle, indent=2) + "\n", encoding="utf-8"
     )
-    verification = verify_bundle(OUT / 'showcase_manifest.json')
-    if not verification['ok']:
+    sign_artifacts(
+        [OUT / "showcase_manifest.json"],
+        config_path=ROOT / "configs" / "crypto.yaml",
+        audit_log=OUT / "crypto_audit.jsonl",
+    )
+    verification = verify_bundle(OUT / "showcase_manifest.json")
+    if not verification["ok"]:
         raise SystemExit(json.dumps(verification, indent=2))
     print(json.dumps(bundle, indent=2))
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

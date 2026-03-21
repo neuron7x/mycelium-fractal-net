@@ -33,7 +33,9 @@ class NeuromodulationState:
 
     @property
     def occupancy_total(self) -> NDArray[np.float64]:
-        return self.occupancy_resting + self.occupancy_active + self.occupancy_desensitized
+        return (
+            self.occupancy_resting + self.occupancy_active + self.occupancy_desensitized
+        )
 
     def occupancy_mass_error_max(self) -> float:
         return float(np.max(np.abs(self.occupancy_total - 1.0)))
@@ -49,17 +51,17 @@ class NeuromodulationState:
 
     def summary(self) -> dict[str, float]:
         return {
-            'occupancy_resting': float(np.mean(self.occupancy_resting)),
-            'occupancy_active': float(np.mean(self.occupancy_active)),
-            'occupancy_desensitized': float(np.mean(self.occupancy_desensitized)),
-            'occupancy_mass_error_max': self.occupancy_mass_error_max(),
-            'effective_inhibition': float(np.mean(self.effective_inhibition)),
-            'effective_gain': float(np.mean(self.effective_gain)),
-            'plasticity_index': float(np.mean(self.plasticity_index)),
-            'observation_noise_gain': float(np.mean(self.observation_noise_gain)),
+            "occupancy_resting": float(np.mean(self.occupancy_resting)),
+            "occupancy_active": float(np.mean(self.occupancy_active)),
+            "occupancy_desensitized": float(np.mean(self.occupancy_desensitized)),
+            "occupancy_mass_error_max": self.occupancy_mass_error_max(),
+            "effective_inhibition": float(np.mean(self.effective_inhibition)),
+            "effective_gain": float(np.mean(self.effective_gain)),
+            "plasticity_index": float(np.mean(self.plasticity_index)),
+            "observation_noise_gain": float(np.mean(self.observation_noise_gain)),
         }
 
     def to_dict(self) -> dict[str, Any]:
         payload = self.summary()
-        payload['occupancy_bounds_ok'] = self.occupancy_bounds_ok()
+        payload["occupancy_bounds_ok"] = self.occupancy_bounds_ok()
         return payload

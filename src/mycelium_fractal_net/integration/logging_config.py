@@ -173,7 +173,9 @@ class TextFormatter(logging.Formatter):
 
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         msg = record.getMessage()
-        message = f"{timestamp} {record.levelname:8} {request_id_str}{record.name}: {msg}"
+        message = (
+            f"{timestamp} {record.levelname:8} {request_id_str}{record.name}: {msg}"
+        )
 
         if record.exc_info:
             message += "\n" + self.formatException(record.exc_info)
@@ -233,7 +235,9 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     Adds the request ID to response headers and logging context.
     """
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """
         Process request and manage request ID.
 
@@ -301,7 +305,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         self.config = config or get_api_config().logging
         self.logger = logging.getLogger("mfn.api")
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """
         Process request and log details.
 

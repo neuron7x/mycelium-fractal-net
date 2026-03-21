@@ -1,7 +1,7 @@
 # MFN Validation Report — Experimental Validation & Falsification
 
 **Document Version**: 1.1  
-**Last Updated**: 2026-03-17  
+**Last Updated**: 2026-03-21  
 **Applies to**: MyceliumFractalNet v4.1.0
 
 ---

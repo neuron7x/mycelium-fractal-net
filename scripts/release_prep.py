@@ -5,7 +5,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from mycelium_fractal_net.artifact_bundle import sha256_file, sign_artifacts, verify_bundle
+from mycelium_fractal_net.artifact_bundle import (
+    sha256_file,
+    sign_artifacts,
+    verify_bundle,
+)
 from mycelium_fractal_net.pipelines.scenarios import run_canonical_scenarios
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,11 +74,27 @@ def _run_quality_benchmark() -> None:
 def main() -> int:
     _run_quality_benchmark()
     scenarios = run_canonical_scenarios(RELEASE_DIR / "scenarios")
-    subprocess.run([sys.executable, str(ROOT / "scripts" / "criticality_sweep.py")], cwd=ROOT, check=True)
-    subprocess.run([sys.executable, str(ROOT / "scripts" / "generate_sbom.py")], cwd=ROOT, check=True)
-    subprocess.run([sys.executable, str(ROOT / "scripts" / "attest_artifacts.py")], cwd=ROOT, check=True)
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "criticality_sweep.py")],
+        cwd=ROOT,
+        check=True,
+    )
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "generate_sbom.py")],
+        cwd=ROOT,
+        check=True,
+    )
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "attest_artifacts.py")],
+        cwd=ROOT,
+        check=True,
+    )
     attestation_path = RELEASE_DIR / "attestation.json"
-    attestation = json.loads(attestation_path.read_text(encoding="utf-8")) if attestation_path.exists() else {}
+    attestation = (
+        json.loads(attestation_path.read_text(encoding="utf-8"))
+        if attestation_path.exists()
+        else {}
+    )
 
     manifest = {
         "product": "Morphology-aware Field Intelligence Engine",
@@ -100,13 +120,21 @@ def main() -> int:
         "bundle_artifacts": [],
         "crypto_audit_log": "crypto_audit.jsonl",
     }
-    (RELEASE_DIR / "scenario_catalog.json").write_text(json.dumps(scenarios, indent=2) + "\n", encoding="utf-8")
+    (RELEASE_DIR / "scenario_catalog.json").write_text(
+        json.dumps(scenarios, indent=2) + "\n", encoding="utf-8"
+    )
     (RELEASE_DIR / "index.html").write_text(_html_index(manifest), encoding="utf-8")
     manifest["bundle_artifacts"] = [
         {"path": "index.html", "sha256": sha256_file(RELEASE_DIR / "index.html")},
-        {"path": "attestation.json", "sha256": sha256_file(attestation_path)} if attestation_path.exists() else {"path": "attestation.json", "sha256": "MISSING"},
+        (
+            {"path": "attestation.json", "sha256": sha256_file(attestation_path)}
+            if attestation_path.exists()
+            else {"path": "attestation.json", "sha256": "MISSING"}
+        ),
     ]
-    (RELEASE_DIR / "release_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    (RELEASE_DIR / "release_manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    )
     sign_artifacts(
         [RELEASE_DIR / "release_manifest.json"],
         config_path=ROOT / "configs" / "crypto.yaml",

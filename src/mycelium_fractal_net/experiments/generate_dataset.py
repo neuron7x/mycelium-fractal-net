@@ -148,9 +148,13 @@ class ConfigSampler:
             steps = int(rng.integers(self.steps_range[0], self.steps_range[1] + 1))
             alpha = float(rng.uniform(self.alpha_range[0], self.alpha_range[1]))
             turing_enabled = bool(rng.choice(self.turing_values))
-            spike_prob = float(rng.uniform(self.spike_prob_range[0], self.spike_prob_range[1]))
+            spike_prob = float(
+                rng.uniform(self.spike_prob_range[0], self.spike_prob_range[1])
+            )
             turing_threshold = float(
-                rng.uniform(self.turing_threshold_range[0], self.turing_threshold_range[1])
+                rng.uniform(
+                    self.turing_threshold_range[0], self.turing_threshold_range[1]
+                )
             )
 
             # Generate reproducible seed for this simulation
@@ -166,8 +170,6 @@ class ConfigSampler:
                 "turing_threshold": turing_threshold,
                 "random_seed": random_seed,
             }
-
-
 
 
 @dataclass
@@ -207,18 +209,21 @@ def _generate_sweep_configs(sweep: SweepConfig) -> List[Dict[str, Any]]:
             for alpha in sweep.alpha_values or []:
                 for turing_enabled in sweep.turing_values or []:
                     for _ in range(sweep.seeds_per_config):
-                        configs.append({
-                            "sim_id": sim_id,
-                            "grid_size": int(grid_size),
-                            "steps": int(steps),
-                            "alpha": float(alpha),
-                            "turing_enabled": bool(turing_enabled),
-                            "spike_probability": float(sweep.spike_probability),
-                            "turing_threshold": float(sweep.turing_threshold),
-                            "random_seed": int(sweep.base_seed + sim_id),
-                        })
+                        configs.append(
+                            {
+                                "sim_id": sim_id,
+                                "grid_size": int(grid_size),
+                                "steps": int(steps),
+                                "alpha": float(alpha),
+                                "turing_enabled": bool(turing_enabled),
+                                "spike_probability": float(sweep.spike_probability),
+                                "turing_threshold": float(sweep.turing_threshold),
+                                "random_seed": int(sweep.base_seed + sim_id),
+                            }
+                        )
                         sim_id += 1
     return configs
+
 
 def to_record(
     config: Dict[str, Any],
@@ -366,7 +371,9 @@ def generate_dataset(
 
     if sweep is not None:
         if config_sampler is not None or num_samples is not None:
-            raise ValueError("Use either legacy sweep mode or num_samples/config_sampler mode, not both")
+            raise ValueError(
+                "Use either legacy sweep mode or num_samples/config_sampler mode, not both"
+            )
         configs = _generate_sweep_configs(sweep)
         requested_samples = len(configs)
     else:
@@ -400,7 +407,9 @@ def generate_dataset(
         try:
             features = compute_features(history, feature_config)
         except Exception as e:
-            logger.warning(f"Feature extraction failed for sim_id={params['sim_id']}: {e}")
+            logger.warning(
+                f"Feature extraction failed for sim_id={params['sim_id']}: {e}"
+            )
             n_failed += 1
             continue
 
@@ -436,7 +445,9 @@ def generate_dataset(
                 stats[f"{fname}_max"] = float(np.max(values))
                 stats[f"{fname}_mean"] = float(np.mean(values))
 
-    logger.info(f"Dataset generation complete: {n_success}/{requested_samples} successful")
+    logger.info(
+        f"Dataset generation complete: {n_success}/{requested_samples} successful"
+    )
 
     return stats
 

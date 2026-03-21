@@ -73,7 +73,9 @@ def test_auth_required_without_keys_raises(monkeypatch) -> None:
     except ValueError as exc:
         assert "no API keys were provided" in str(exc)
     else:
-        raise AssertionError("Expected ValueError when auth is required but no keys set")
+        raise AssertionError(
+            "Expected ValueError when auth is required but no keys set"
+        )
 
 
 def test_rate_limit_invalid_requests_raises(monkeypatch) -> None:

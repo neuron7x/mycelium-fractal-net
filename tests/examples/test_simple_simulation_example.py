@@ -58,7 +58,9 @@ class TestSimpleSimulationExample:
         assert not np.any(np.isinf(feature_array)), "No Inf values allowed"
 
         # Fractal dimension check (D_box ∈ [0, 2.5] for MFN)
-        assert 0.0 <= features["D_box"] <= 2.5, f"D_box={features['D_box']} out of range"
+        assert (
+            0.0 <= features["D_box"] <= 2.5
+        ), f"D_box={features['D_box']} out of range"
 
         # R² check (regression quality ∈ [0, 1])
         assert 0.0 <= features["D_r2"] <= 1.0, f"D_r2={features['D_r2']} out of range"

@@ -30,7 +30,10 @@ from mycelium_fractal_net.config import (
     make_simulation_config_demo,
     validate_simulation_config,
 )
-from mycelium_fractal_net.experiments.generate_dataset import ConfigSampler, generate_dataset
+from mycelium_fractal_net.experiments.generate_dataset import (
+    ConfigSampler,
+    generate_dataset,
+)
 
 
 class TestFullPipelineDemo:
@@ -88,7 +91,9 @@ class TestFullPipelineDemo:
 
         # Verify feature ranges (sanity checks)
         assert 0.0 <= features.values["D_box"] <= 2.5, "D_box out of expected range"
-        assert 0.0 <= features.values["f_active"] <= 1.0, "f_active out of expected range"
+        assert (
+            0.0 <= features.values["f_active"] <= 1.0
+        ), "f_active out of expected range"
 
         # Stage 5: Build DatasetConfig and generate small dataset
         ds_config = make_dataset_config_demo()
@@ -111,9 +116,9 @@ class TestFullPipelineDemo:
             )
 
             # Stage 6: Verify dataset generation results
-            assert stats["successful"] == num_samples, (
-                f"Expected {num_samples} successful, got {stats['successful']}"
-            )
+            assert (
+                stats["successful"] == num_samples
+            ), f"Expected {num_samples} successful, got {stats['successful']}"
             assert stats["failed"] == 0, f"Unexpected failures: {stats['failed']}"
             assert stats["success_rate"] == 1.0
 
@@ -175,9 +180,9 @@ class TestPipelineWithDifferentConfigs:
         features2 = compute_fractal_features(result)
 
         for name in features1.values:
-            assert features1.values[name] == pytest.approx(features2.values[name], rel=1e-10), (
-                f"Feature {name} not deterministic"
-            )
+            assert features1.values[name] == pytest.approx(
+                features2.values[name], rel=1e-10
+            ), f"Feature {name} not deterministic"
 
 
 class TestConfigValidation:

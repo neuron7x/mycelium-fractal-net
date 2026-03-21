@@ -9,10 +9,10 @@ This module provides benchmarks for system behavior under stress:
 Run with: python benchmarks/benchmark_scalability.py
 """
 
-import gc
 import csv
-import os
+import gc
 import json
+import os
 import sys
 import time
 import tracemalloc
@@ -23,7 +23,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
-
 
 from mycelium_fractal_net import (
     SimulationConfig,
@@ -217,7 +216,9 @@ class ScalabilityBenchmarkSuite:
         num_workers = 2 if profile != "full" else 4
         num_tasks = 4 if profile != "full" else 16
         steps = 20 if profile != "full" else 50
-        params_list = [{"seed": i * 100, "grid_size": 32, "steps": steps} for i in range(num_tasks)]
+        params_list = [
+            {"seed": i * 100, "grid_size": 32, "steps": steps} for i in range(num_tasks)
+        ]
 
         gc.collect()
         tracemalloc.start()
@@ -252,18 +253,21 @@ class ScalabilityBenchmarkSuite:
         self.results.append(bench_result)
         return bench_result
 
-
     def benchmark_laplacian_numpy_vs_jit(self) -> ScalabilityResult:
         """Benchmark reference vs optional accelerated Laplacian with parity check."""
         rng = np.random.default_rng(42)
         field = rng.normal(size=(128, 128)).astype(np.float64)
 
         start = time.perf_counter()
-        reference = compute_laplacian(field, boundary=BoundaryCondition.PERIODIC, use_accel=False)
+        reference = compute_laplacian(
+            field, boundary=BoundaryCondition.PERIODIC, use_accel=False
+        )
         reference_elapsed = time.perf_counter() - start
 
         start = time.perf_counter()
-        accelerated = compute_laplacian(field, boundary=BoundaryCondition.PERIODIC, use_accel=True)
+        accelerated = compute_laplacian(
+            field, boundary=BoundaryCondition.PERIODIC, use_accel=True
+        )
         accelerated_elapsed = time.perf_counter() - start
 
         passed = bool(np.allclose(reference, accelerated, rtol=0.0, atol=1e-12))
@@ -285,7 +289,12 @@ class ScalabilityBenchmarkSuite:
     def benchmark_memmap_history_scale(self) -> ScalabilityResult:
         """Benchmark disk-backed history path for larger scale contours."""
         profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
-        experimental = os.getenv("MFN_EXPERIMENTAL_SCALE", "0").lower() in {"1", "true", "yes", "on"}
+        experimental = os.getenv("MFN_EXPERIMENTAL_SCALE", "0").lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
         if experimental:
             grid_size = 1024
             steps = 16
@@ -302,13 +311,20 @@ class ScalabilityBenchmarkSuite:
         gc.collect()
         tracemalloc.start()
         start = time.perf_counter()
-        seq = simulate_history(SimulationSpec(grid_size=grid_size, steps=steps, seed=42), history_backend="memmap")
+        seq = simulate_history(
+            SimulationSpec(grid_size=grid_size, steps=steps, seed=42),
+            history_backend="memmap",
+        )
         elapsed = time.perf_counter() - start
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         peak_mb = peak / (1024 * 1024)
         memmap_path = Path(str(seq.metadata.get("history_memmap_path", "")))
-        passed = seq.history is not None and memmap_path.exists() and seq.field.shape == (grid_size, grid_size)
+        passed = (
+            seq.history is not None
+            and memmap_path.exists()
+            and seq.field.shape == (grid_size, grid_size)
+        )
         result = ScalabilityResult(
             name=name,
             metric_value=elapsed,
@@ -318,7 +334,9 @@ class ScalabilityBenchmarkSuite:
             memory_mb=peak_mb,
             timestamp=datetime.now().isoformat(),
         )
-        print(f"Memmap history ({grid_size}x{grid_size}, {steps} steps): {elapsed:.2f}s, {peak_mb:.2f}MB")
+        print(
+            f"Memmap history ({grid_size}x{grid_size}, {steps} steps): {elapsed:.2f}s, {peak_mb:.2f}MB"
+        )
         self.results.append(result)
         return result
 
@@ -389,7 +407,9 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Fractal dimension (256x256): {elapsed:.3f}s, dim={dim:.3f} (target: <{target_s}s)")
+        print(
+            f"Fractal dimension (256x256): {elapsed:.3f}s, dim={dim:.3f} (target: <{target_s}s)"
+        )
 
         self.results.append(bench_result)
         return bench_result
@@ -425,7 +445,9 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(f"Lyapunov (500x64x64): {elapsed:.3f}s, λ={lyap:.3f} (target: <{target_s}s)")
+        print(
+            f"Lyapunov (500x64x64): {elapsed:.3f}s, λ={lyap:.3f} (target: <{target_s}s)"
+        )
 
         self.results.append(bench_result)
         return bench_result
@@ -495,7 +517,18 @@ class ScalabilityBenchmarkSuite:
         with open(output_path, "w") as f:
             json.dump(results_dict, f, indent=2)
         with open(csv_path, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=["name", "metric_value", "metric_unit", "target_value", "passed", "memory_mb", "timestamp"])
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "name",
+                    "metric_value",
+                    "metric_unit",
+                    "target_value",
+                    "passed",
+                    "memory_mb",
+                    "timestamp",
+                ],
+            )
             writer.writeheader()
             for row in self.results:
                 writer.writerow(asdict(row))

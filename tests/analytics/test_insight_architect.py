@@ -1,11 +1,16 @@
 import pytest
 
-from mycelium_fractal_net.analytics import FractalInsightArchitect, InsufficientDataError
+from mycelium_fractal_net.analytics import (
+    FractalInsightArchitect,
+    InsufficientDataError,
+)
 
 
 def test_generate_insight_template_and_metrics():
     data = {
-        "micro": [{"pattern": "Затримка відповіді", "metric": 0.12, "evidence": "email >5хв"}],
+        "micro": [
+            {"pattern": "Затримка відповіді", "metric": 0.12, "evidence": "email >5хв"}
+        ],
         "meso": [{"pattern": "Накопичення черг", "metric": 0.35}],
         "macro": [{"pattern": "Просідання пропускної здатності", "metric": 0.18}],
         "tensions": ["Локальні затримки накопичуються"],

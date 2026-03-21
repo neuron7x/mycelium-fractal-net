@@ -38,7 +38,12 @@ def client() -> TestClient:
 
 
 # Test data constants
-SAMPLE_GRADIENTS_4D = [[1.0, 2.0, 3.0], [1.1, 2.1, 3.1], [1.2, 2.2, 3.2], [10.0, 10.0, 10.0]]
+SAMPLE_GRADIENTS_4D = [
+    [1.0, 2.0, 3.0],
+    [1.1, 2.1, 3.1],
+    [1.2, 2.2, 3.2],
+    [10.0, 10.0, 10.0],
+]
 SAMPLE_GRADIENTS_2D = [[1.0, 2.0], [1.1, 2.1], [1.2, 2.2]]
 
 
@@ -77,8 +82,12 @@ class TestCLIAPIConsistency:
         api_metrics = response.json()
 
         # Core metrics should be identical for same seed
-        assert cli_metrics["loss_start"] == pytest.approx(api_metrics["loss_start"], rel=1e-5)
-        assert cli_metrics["loss_final"] == pytest.approx(api_metrics["loss_final"], rel=1e-5)
+        assert cli_metrics["loss_start"] == pytest.approx(
+            api_metrics["loss_start"], rel=1e-5
+        )
+        assert cli_metrics["loss_final"] == pytest.approx(
+            api_metrics["loss_final"], rel=1e-5
+        )
         assert cli_metrics["nernst_symbolic_mV"] == pytest.approx(
             api_metrics["nernst_symbolic_mV"], rel=1e-5
         )
@@ -318,7 +327,9 @@ class TestDeterminism:
 
         assert data1["growth_events"] == data2["growth_events"]
         assert data1["pot_min_mV"] == pytest.approx(data2["pot_min_mV"], rel=1e-5)
-        assert data1["fractal_dimension"] == pytest.approx(data2["fractal_dimension"], rel=1e-5)
+        assert data1["fractal_dimension"] == pytest.approx(
+            data2["fractal_dimension"], rel=1e-5
+        )
 
     def test_nernst_determinism(self, client: TestClient) -> None:
         """Nernst computation should be deterministic."""
@@ -364,7 +375,10 @@ class TestCORSConfiguration:
         # In dev mode (default), should have CORS headers
         # Access-Control-Allow-Origin should be present
         # Note: In test mode this may vary based on MFN_ENV setting
-        assert "access-control-allow-origin" in response.headers or response.status_code == 200
+        assert (
+            "access-control-allow-origin" in response.headers
+            or response.status_code == 200
+        )
 
     def test_cors_post_request_with_origin(self, client: TestClient) -> None:
         """Test CORS works for POST requests."""

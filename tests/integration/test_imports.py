@@ -130,6 +130,7 @@ def test_physical_constants_import() -> None:
         R_GAS_CONSTANT,
         TURING_THRESHOLD,
     )
+
     # ML-dependent constants: only available with torch [ml] extra
     try:
         from mycelium_fractal_net import (

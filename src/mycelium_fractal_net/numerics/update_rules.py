@@ -19,9 +19,6 @@ from mycelium_fractal_net.core.reaction_diffusion_engine import (
     DEFAULT_R_ACTIVATOR,
     DEFAULT_R_INHIBITOR,
     DEFAULT_TURING_THRESHOLD,
-    FIELD_V_MAX,
-    FIELD_V_MIN,
-    MAX_STABLE_DIFFUSION,
     ReactionDiffusionConfig,
     compat_activator_inhibitor_step,
     compat_apply_growth_event,
@@ -41,7 +38,9 @@ from mycelium_fractal_net.core.reaction_diffusion_engine import (
 from mycelium_fractal_net.numerics.grid_ops import BoundaryCondition
 
 
-def _to_core_boundary(boundary: BoundaryCondition | CoreBoundaryCondition) -> CoreBoundaryCondition:
+def _to_core_boundary(
+    boundary: BoundaryCondition | CoreBoundaryCondition,
+) -> CoreBoundaryCondition:
     if isinstance(boundary, CoreBoundaryCondition):
         return boundary
     return CoreBoundaryCondition(boundary.value)
@@ -138,7 +137,9 @@ def apply_quantum_jitter(
     )
 
 
-def clamp_potential_field(field: NDArray[np.floating[Any]]) -> tuple[NDArray[np.floating[Any]], int]:
+def clamp_potential_field(
+    field: NDArray[np.floating[Any]],
+) -> tuple[NDArray[np.floating[Any]], int]:
     return compat_clamp_field(np.asarray(field, dtype=np.float64))
 
 

@@ -82,7 +82,13 @@ class AuthConfig:
     api_key_required: bool = False
     api_keys: List[str] = field(default_factory=list)
     public_endpoints: List[str] = field(
-        default_factory=lambda: ["/health", "/metrics", "/docs", "/redoc", "/openapi.json"]
+        default_factory=lambda: [
+            "/health",
+            "/metrics",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+        ]
     )
 
     @classmethod
@@ -111,7 +117,9 @@ class AuthConfig:
 
         # Single key via env or file-backed secret
         try:
-            single_key = secret_manager.get_secret("MFN_API_KEY", file_env_key="MFN_API_KEY_FILE")
+            single_key = secret_manager.get_secret(
+                "MFN_API_KEY", file_env_key="MFN_API_KEY_FILE"
+            )
         except SecretRetrievalError as exc:
             raise ValueError(str(exc)) from exc
         if single_key:
@@ -119,7 +127,9 @@ class AuthConfig:
 
         # Multiple keys (comma-separated/newline/JSON) via env or file
         try:
-            multi_keys = secret_manager.get_list("MFN_API_KEYS", file_env_key="MFN_API_KEYS_FILE")
+            multi_keys = secret_manager.get_list(
+                "MFN_API_KEYS", file_env_key="MFN_API_KEYS_FILE"
+            )
         except SecretRetrievalError as exc:
             raise ValueError(str(exc)) from exc
 

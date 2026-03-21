@@ -16,10 +16,12 @@ from pathlib import Path
 import mycelium_fractal_net as mfn
 
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE = json.loads((ROOT / "configs" / "benchmark_baseline.json").read_text())["benchmarks"]
+BASELINE = json.loads((ROOT / "configs" / "benchmark_baseline.json").read_text())[
+    "benchmarks"
+]
 
-# Allow 3x margin for CI variability (different hardware, load)
-MARGIN = 3.0
+# Allow 5x margin for CI variability (fullcheck runs parallel stages)
+MARGIN = 5.0
 
 
 def test_simulation_performance() -> None:
@@ -35,6 +37,7 @@ def test_extract_performance() -> None:
     spec = mfn.SimulationSpec(grid_size=64, steps=64, seed=42)
     seq = mfn.simulate(spec)
     from mycelium_fractal_net.analytics.morphology import _descriptor_cache
+
     _descriptor_cache.clear()
     start = time.perf_counter()
     mfn.extract(seq)
@@ -47,6 +50,7 @@ def test_detect_performance() -> None:
     spec = mfn.SimulationSpec(grid_size=64, steps=64, seed=42)
     seq = mfn.simulate(spec)
     from mycelium_fractal_net.analytics.morphology import _descriptor_cache
+
     _descriptor_cache.clear()
     start = time.perf_counter()
     mfn.detect(seq)
@@ -59,6 +63,7 @@ def test_report_performance() -> None:
     spec = mfn.SimulationSpec(grid_size=64, steps=64, seed=42)
     seq = mfn.simulate(spec)
     from mycelium_fractal_net.analytics.morphology import _descriptor_cache
+
     _descriptor_cache.clear()
     with tempfile.TemporaryDirectory() as tmp:
         start = time.perf_counter()

@@ -160,12 +160,12 @@ class TopologySummary:
 
 
 __all__ = [
-    'TemporalFeatures',
-    'StabilityMetrics',
-    'ComplexityMetrics',
-    'ConnectivityFeatures',
-    'NeuromodulationFeatures',
-    'ChangePointResult',
-    'DriftSummary',
-    'TopologySummary',
+    "TemporalFeatures",
+    "StabilityMetrics",
+    "ComplexityMetrics",
+    "ConnectivityFeatures",
+    "NeuromodulationFeatures",
+    "ChangePointResult",
+    "DriftSummary",
+    "TopologySummary",
 ]

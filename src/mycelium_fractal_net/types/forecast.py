@@ -46,10 +46,10 @@ class TrajectoryStep:
 
 
 class _StrictForecastPayload(BaseModel):
-    model_config = ConfigDict(extra='forbid', frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: str = 'mfn-forecast-result-v1'
-    runtime_version: str = '4.1.0'
+    schema_version: str = "mfn-forecast-result-v1"
+    runtime_version: str = "4.1.0"
     version: str
     horizon: int = Field(gt=0)
     method: str = Field(min_length=1)
@@ -61,32 +61,48 @@ class _StrictForecastPayload(BaseModel):
     benchmark_metrics: dict[str, float] = Field(min_length=1)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    @field_validator('uncertainty_envelope', 'predicted_state_summary', 'evaluation_metrics', 'benchmark_metrics')
+    @field_validator(
+        "uncertainty_envelope",
+        "predicted_state_summary",
+        "evaluation_metrics",
+        "benchmark_metrics",
+    )
     @classmethod
-    def _validate_non_empty_numeric_mapping(cls, value: dict[str, float]) -> dict[str, float]:
+    def _validate_non_empty_numeric_mapping(
+        cls, value: dict[str, float]
+    ) -> dict[str, float]:
         if not value:
-            raise ValueError('mapping must be non-empty')
+            raise ValueError("mapping must be non-empty")
         return {str(k): float(v) for k, v in value.items()}
 
-    @field_validator('descriptor_trajectory')
+    @field_validator("descriptor_trajectory")
     @classmethod
-    def _validate_descriptor_trajectory(cls, value: list[dict[str, float]]) -> list[dict[str, float]]:
+    def _validate_descriptor_trajectory(
+        cls, value: list[dict[str, float]]
+    ) -> list[dict[str, float]]:
         return [{str(k): float(v) for k, v in step.items()} for step in value]
 
-    @field_validator('predicted_states')
+    @field_validator("predicted_states")
     @classmethod
-    def _validate_predicted_states(cls, value: list[list[list[float]]]) -> list[list[list[float]]]:
-        return [
-            [[float(cell) for cell in row] for row in frame]
-            for frame in value
-        ]
+    def _validate_predicted_states(
+        cls, value: list[list[list[float]]]
+    ) -> list[list[list[float]]]:
+        return [[[float(cell) for cell in row] for row in frame] for frame in value]
 
-    @field_validator('benchmark_metrics')
+    @field_validator("benchmark_metrics")
     @classmethod
-    def _validate_required_benchmark_metrics(cls, value: dict[str, float]) -> dict[str, float]:
-        missing = [key for key in ('forecast_structural_error', 'adaptive_damping') if key not in value]
+    def _validate_required_benchmark_metrics(
+        cls, value: dict[str, float]
+    ) -> dict[str, float]:
+        missing = [
+            key
+            for key in ("forecast_structural_error", "adaptive_damping")
+            if key not in value
+        ]
         if missing:
-            raise ValueError(f"benchmark_metrics missing required keys: {', '.join(missing)}")
+            raise ValueError(
+                f"benchmark_metrics missing required keys: {', '.join(missing)}"
+            )
         return value
 
 
@@ -95,7 +111,7 @@ _FORECAST_RESULT_ADAPTER = TypeAdapter(_StrictForecastPayload)
 
 def validate_forecast_payload(payload: dict[str, Any]) -> dict[str, Any]:
     validated = _FORECAST_RESULT_ADAPTER.validate_python(payload)
-    return validated.model_dump(mode='python')
+    return validated.model_dump(mode="python")
 
 
 @dataclass(frozen=True)
@@ -116,18 +132,20 @@ class ForecastResult:
 
     def _raw_payload(self) -> dict[str, Any]:
         return {
-            'schema_version': 'mfn-forecast-result-v1',
-            'runtime_version': '4.1.0',
-            'version': self.version,
-            'horizon': int(self.horizon),
-            'method': self.method,
-            'uncertainty_envelope': dict(self.uncertainty_envelope),
-            'descriptor_trajectory': [dict(step) for step in self.descriptor_trajectory],
-            'predicted_states': self.predicted_states,
-            'predicted_state_summary': dict(self.predicted_state_summary),
-            'evaluation_metrics': dict(self.evaluation_metrics),
-            'benchmark_metrics': dict(self.benchmark_metrics),
-            'metadata': dict(self.metadata),
+            "schema_version": "mfn-forecast-result-v1",
+            "runtime_version": "4.1.0",
+            "version": self.version,
+            "horizon": int(self.horizon),
+            "method": self.method,
+            "uncertainty_envelope": dict(self.uncertainty_envelope),
+            "descriptor_trajectory": [
+                dict(step) for step in self.descriptor_trajectory
+            ],
+            "predicted_states": self.predicted_states,
+            "predicted_state_summary": dict(self.predicted_state_summary),
+            "evaluation_metrics": dict(self.evaluation_metrics),
+            "benchmark_metrics": dict(self.benchmark_metrics),
+            "metadata": dict(self.metadata),
         }
 
     def validate(self) -> dict[str, Any]:
@@ -143,35 +161,38 @@ class ComparisonResult:
     distance: float
     cosine_similarity: float
     label: str
-    nearest_structural_analog: str = 'reference'
+    nearest_structural_analog: str = "reference"
     changed_dimensions: list[dict[str, float]] = field(default_factory=list)
     drift_summary: dict[str, float] = field(default_factory=dict)
     topology_summary: dict[str, float] = field(default_factory=dict)
-    topology_label: str = 'nominal'
-    reorganization_label: str = 'stable'
+    topology_label: str = "nominal"
+    reorganization_label: str = "stable"
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
-            'schema_version': 'mfn-comparison-result-v1',
-            'runtime_version': '4.1.0',
-            'version': self.version,
-            'distance': float(self.distance),
-            'morphology_distance': float(self.distance),
-            'cosine_similarity': float(self.cosine_similarity),
-            'label': self.label,
-            'nearest_structural_analog': self.nearest_structural_analog,
-            'changed_dimensions': [
-                {k: (float(v) if isinstance(v, (int, float)) else v) for k, v in item.items()}
+            "schema_version": "mfn-comparison-result-v1",
+            "runtime_version": "4.1.0",
+            "version": self.version,
+            "distance": float(self.distance),
+            "morphology_distance": float(self.distance),
+            "cosine_similarity": float(self.cosine_similarity),
+            "label": self.label,
+            "nearest_structural_analog": self.nearest_structural_analog,
+            "changed_dimensions": [
+                {
+                    k: (float(v) if isinstance(v, (int, float)) else v)
+                    for k, v in item.items()
+                }
                 for item in self.changed_dimensions
             ],
-            'drift_summary': {k: float(v) for k, v in self.drift_summary.items()},
-            'topology_summary': {k: float(v) for k, v in self.topology_summary.items()},
-            'topology_label': self.topology_label,
-            'reorganization_label': self.reorganization_label,
-            'metadata': dict(self.metadata),
+            "drift_summary": {k: float(v) for k, v in self.drift_summary.items()},
+            "topology_summary": {k: float(v) for k, v in self.topology_summary.items()},
+            "topology_label": self.topology_label,
+            "reorganization_label": self.reorganization_label,
+            "metadata": dict(self.metadata),
         }
         return payload
 
 
-__all__ = ['ForecastResult', 'ComparisonResult', 'validate_forecast_payload']
+__all__ = ["ForecastResult", "ComparisonResult", "validate_forecast_payload"]

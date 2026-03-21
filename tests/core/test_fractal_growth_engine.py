@@ -379,7 +379,9 @@ class TestStabilitySmoke:
             binary = rng.random((64, 64)) > threshold
             dim = engine.estimate_dimension(binary)
 
-            assert 0 <= dim <= 2.5, f"Invalid dimension {dim:.3f} for threshold={threshold}"
+            assert (
+                0 <= dim <= 2.5
+            ), f"Invalid dimension {dim:.3f} for threshold={threshold}"
 
 
 class TestPerformance:
@@ -496,9 +498,9 @@ class TestInvariantsVerification:
             engine = FractalGrowthEngine(config)
             _, lyap = engine.generate_ifs()
 
-            assert lyap < LYAPUNOV_STABLE_MAX, (
-                f"λ = {lyap:.3f} >= 0 at seed={seed} (non-contractive)"
-            )
+            assert (
+                lyap < LYAPUNOV_STABLE_MAX
+            ), f"λ = {lyap:.3f} >= 0 at seed={seed} (non-contractive)"
             assert engine.metrics.is_contractive
 
     def test_contraction_requirement_invariant(self) -> None:
@@ -531,9 +533,9 @@ class TestInvariantsVerification:
             binary = rng.random((64, 64)) > threshold
             dim = engine.estimate_dimension(binary)
 
-            assert FRACTAL_DIM_MIN <= dim <= FRACTAL_DIM_MAX + 0.5, (
-                f"Dimension {dim:.3f} outside bounds for threshold={threshold}"
-            )
+            assert (
+                FRACTAL_DIM_MIN <= dim <= FRACTAL_DIM_MAX + 0.5
+            ), f"Dimension {dim:.3f} outside bounds for threshold={threshold}"
 
     def test_biological_dimension_range(self) -> None:
         """Mycelium-like patterns should have D ∈ [1.4, 1.9].

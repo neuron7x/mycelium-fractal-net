@@ -70,7 +70,9 @@ class TestNernstPotential:
             concentration_in_molar=_mm_to_molar(K_IN_MM),
         )
         e_mv = e_v * 1000.0
-        assert -92.0 < e_mv < -85.0, f"E_K={e_mv:.2f} mV outside expected range [-92, -85]"
+        assert (
+            -92.0 < e_mv < -85.0
+        ), f"E_K={e_mv:.2f} mV outside expected range [-92, -85]"
 
     def test_sodium_physiological(self) -> None:
         """Test Na+ reversal potential at physiological conditions.
@@ -140,9 +142,9 @@ class TestNernstPotential:
         ratio = e_at_310k / e_at_293k
         expected_ratio = 310.0 / 293.0
 
-        assert abs(ratio - expected_ratio) < 0.001, (
-            f"Temperature scaling incorrect: got {ratio:.4f}, expected {expected_ratio:.4f}"
-        )
+        assert (
+            abs(ratio - expected_ratio) < 0.001
+        ), f"Temperature scaling incorrect: got {ratio:.4f}, expected {expected_ratio:.4f}"
 
     def test_nernst_valence_scaling(self) -> None:
         """Test that Nernst potential scales inversely with valence.
@@ -174,7 +176,9 @@ class TestNernstPotential:
         temp=st.floats(min_value=273.0, max_value=323.0),
     )
     @settings(max_examples=50)
-    def test_nernst_equation_properties(self, ion_in: float, ion_out: float, temp: float) -> None:
+    def test_nernst_equation_properties(
+        self, ion_in: float, ion_out: float, temp: float
+    ) -> None:
         """Property-based test: Nernst equation mathematical properties.
 
         Properties tested:
@@ -201,9 +205,9 @@ class TestNernstPotential:
         )
 
         # Test symmetry property
-        assert np.isclose(e1, -e2, atol=1e-10), (
-            f"Nernst symmetry violated: E1={e1}, E2={e2}, should have E1=-E2"
-        )
+        assert np.isclose(
+            e1, -e2, atol=1e-10
+        ), f"Nernst symmetry violated: E1={e1}, E2={e2}, should have E1=-E2"
 
         # Test finiteness
         assert np.isfinite(e1), f"Non-finite potential: E={e1}"
@@ -227,23 +231,25 @@ class TestNernstPotential:
         )
 
         # E should equal RT/zF when ln(ratio) = 1
-        assert np.isclose(e, rt_zf, rtol=1e-10), (
-            f"RT/zF inconsistency: computed {e:.6f}, expected {rt_zf:.6f}"
-        )
+        assert np.isclose(
+            e, rt_zf, rtol=1e-10
+        ), f"RT/zF inconsistency: computed {e:.6f}, expected {rt_zf:.6f}"
 
     def test_nernst_rtfz_at_body_temp(self) -> None:
         """Verify NERNST_RTFZ_MV constant is correct."""
         # Calculate manually: (R * T) / (z * F) * 1000 for z=1 at 310K
-        expected_rtfz = (R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT) * 1000.0
+        expected_rtfz = (
+            R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT
+        ) * 1000.0
 
-        assert np.isclose(NERNST_RTFZ_MV, expected_rtfz, rtol=1e-6), (
-            f"NERNST_RTFZ_MV={NERNST_RTFZ_MV}, expected={expected_rtfz}"
-        )
+        assert np.isclose(
+            NERNST_RTFZ_MV, expected_rtfz, rtol=1e-6
+        ), f"NERNST_RTFZ_MV={NERNST_RTFZ_MV}, expected={expected_rtfz}"
 
         # Should be approximately 26.7 mV
-        assert 26.5 < NERNST_RTFZ_MV < 27.0, (
-            f"RT/zF at 37°C should be ~26.7 mV, got {NERNST_RTFZ_MV:.2f} mV"
-        )
+        assert (
+            26.5 < NERNST_RTFZ_MV < 27.0
+        ), f"RT/zF at 37°C should be ~26.7 mV, got {NERNST_RTFZ_MV:.2f} mV"
 
 
 class TestNernstEdgeCases:
@@ -274,7 +280,9 @@ class TestNernstEdgeCases:
             concentration_out_molar=0.140,
             concentration_in_molar=0.140,
         )
-        assert np.isclose(e_v, 0.0, atol=1e-12), f"E should be 0 when [in]=[out], got {e_v}"
+        assert np.isclose(
+            e_v, 0.0, atol=1e-12
+        ), f"E should be 0 when [in]=[out], got {e_v}"
 
     def test_high_valence_ions(self) -> None:
         """Test Nernst equation with high valence ions (e.g., Fe3+)."""
@@ -307,8 +315,12 @@ class TestFieldSimulationStability:
 
         field_mv = field * 1000.0
 
-        assert field_mv.min() >= -95.0 - 0.1, f"Min potential {field_mv.min():.2f} mV < -95 mV"
-        assert field_mv.max() <= 40.0 + 0.1, f"Max potential {field_mv.max():.2f} mV > 40 mV"
+        assert (
+            field_mv.min() >= -95.0 - 0.1
+        ), f"Min potential {field_mv.min():.2f} mV < -95 mV"
+        assert (
+            field_mv.max() <= 40.0 + 0.1
+        ), f"Max potential {field_mv.max():.2f} mV > 40 mV"
 
     def test_field_stability_long_simulation(self) -> None:
         """Test numerical stability over 1000 steps."""
@@ -324,12 +336,18 @@ class TestFieldSimulationStability:
         )
 
         # Check for NaN/Inf
-        assert np.isfinite(field).all(), "Field contains NaN/Inf values after 1000 steps"
+        assert np.isfinite(
+            field
+        ).all(), "Field contains NaN/Inf values after 1000 steps"
 
         # Check physiological bounds
         field_mv = field * 1000.0
-        assert field_mv.min() >= -95.0 - 0.1, f"Min potential {field_mv.min():.2f} mV < -95 mV"
-        assert field_mv.max() <= 40.0 + 0.1, f"Max potential {field_mv.max():.2f} mV > 40 mV"
+        assert (
+            field_mv.min() >= -95.0 - 0.1
+        ), f"Min potential {field_mv.min():.2f} mV < -95 mV"
+        assert (
+            field_mv.max() <= 40.0 + 0.1
+        ), f"Max potential {field_mv.max():.2f} mV > 40 mV"
 
         # Growth events should occur
         assert growth_events >= 1, "No growth events in 1000 steps"
@@ -351,9 +369,9 @@ class TestFieldSimulationStability:
 
     def test_turing_morphogenesis_threshold(self) -> None:
         """Verify Turing threshold matches specification."""
-        assert abs(TURING_THRESHOLD - 0.75) < 1e-6, (
-            f"TURING_THRESHOLD={TURING_THRESHOLD}, expected 0.75"
-        )
+        assert (
+            abs(TURING_THRESHOLD - 0.75) < 1e-6
+        ), f"TURING_THRESHOLD={TURING_THRESHOLD}, expected 0.75"
 
     def test_quantum_jitter_variance(self) -> None:
         """Test quantum jitter adds appropriate noise."""
@@ -364,7 +382,11 @@ class TestFieldSimulationStability:
             rng_no_jitter, grid_size=32, steps=50, quantum_jitter=False
         )
         field_with_jitter, _ = simulate_mycelium_field(
-            rng_with_jitter, grid_size=32, steps=50, quantum_jitter=True, jitter_var=0.0005
+            rng_with_jitter,
+            grid_size=32,
+            steps=50,
+            quantum_jitter=True,
+            jitter_var=0.0005,
         )
 
         # Fields should differ due to jitter
@@ -404,7 +426,9 @@ class TestFractalDimension:
         """Test fractal dimension from simulated field converges to expected range."""
         rng = np.random.default_rng(42)
 
-        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
+        field, _ = simulate_mycelium_field(
+            rng, grid_size=64, steps=100, turing_enabled=True
+        )
 
         # Use threshold near mean to get reasonable number of active cells
         # Field is initialized around -70mV, so use -70mV as threshold
@@ -414,7 +438,9 @@ class TestFractalDimension:
         if binary.sum() > 0:
             d = estimate_fractal_dimension(binary)
             # Mycelial networks typically have D ≈ 1.585 (Fricker 2017)
-            assert 1.0 <= d <= 2.5, f"Simulated field D={d:.3f} outside expected range [1.0, 2.5]"
+            assert (
+                1.0 <= d <= 2.5
+            ), f"Simulated field D={d:.3f} outside expected range [1.0, 2.5]"
         else:
             # If no active cells at this threshold, the test still passes
             # as this is a valid simulation state
@@ -459,9 +485,9 @@ class TestNetworkNumericalStability:
             # Check gradients are finite
             for name, param in model.named_parameters():
                 if param.grad is not None:
-                    assert torch.isfinite(param.grad).all(), (
-                        f"Non-finite gradient in {name} at step {step}"
-                    )
+                    assert torch.isfinite(
+                        param.grad
+                    ).all(), f"Non-finite gradient in {name} at step {step}"
 
             optimizer.step()
 

@@ -276,7 +276,9 @@ class TestBoundaryConditions:
         expected_down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant")
         expected_left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant")
         expected_right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant")
-        expected = expected_up + expected_down + expected_left + expected_right - 4 * field
+        expected = (
+            expected_up + expected_down + expected_left + expected_right - 4 * field
+        )
 
         assert np.allclose(laplacian, expected)
 
@@ -367,7 +369,9 @@ class TestStabilitySmoke:
             ReactionDiffusionConfig(grid_size=16, alpha=0.10, random_seed=42),
             ReactionDiffusionConfig(grid_size=32, alpha=0.18, random_seed=42),
             ReactionDiffusionConfig(grid_size=64, alpha=0.20, random_seed=42),
-            ReactionDiffusionConfig(grid_size=32, alpha=0.24, random_seed=42),  # Near limit
+            ReactionDiffusionConfig(
+                grid_size=32, alpha=0.24, random_seed=42
+            ),  # Near limit
         ]
 
         for config in configs:
@@ -576,12 +580,12 @@ class TestInvariantsVerification:
 
         # Convert to mV for comparison
         field_mv = field * 1000.0
-        assert field_mv.min() >= FIELD_V_MIN * 1000 - 0.5, (
-            f"Min {field_mv.min():.2f} mV < {FIELD_V_MIN * 1000:.0f} mV"
-        )
-        assert field_mv.max() <= FIELD_V_MAX * 1000 + 0.5, (
-            f"Max {field_mv.max():.2f} mV > {FIELD_V_MAX * 1000:.0f} mV"
-        )
+        assert (
+            field_mv.min() >= FIELD_V_MIN * 1000 - 0.5
+        ), f"Min {field_mv.min():.2f} mV < {FIELD_V_MIN * 1000:.0f} mV"
+        assert (
+            field_mv.max() <= FIELD_V_MAX * 1000 + 0.5
+        ), f"Max {field_mv.max():.2f} mV > {FIELD_V_MAX * 1000:.0f} mV"
 
     def test_no_nan_inf_invariant(self) -> None:
         """No NaN/Inf after 1000+ steps.
@@ -652,6 +656,6 @@ class TestInvariantsVerification:
         _, metrics = engine.simulate(steps=100)
 
         # Expect ~25 events, allow 10-40 range for randomness
-        assert 10 <= metrics.growth_events <= 40, (
-            f"Expected ~25 events, got {metrics.growth_events}"
-        )
+        assert (
+            10 <= metrics.growth_events <= 40
+        ), f"Expected ~25 events, got {metrics.growth_events}"

@@ -55,15 +55,11 @@ class SimulationMetrics:
         d: dict[str, Any] = {}
         for k in self.__dataclass_fields__:
             d[k] = getattr(self, k)
-        d['occupancy_bounds_ok'] = self.occupancy_bounds_ok
+        d["occupancy_bounds_ok"] = self.occupancy_bounds_ok
         return d
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "SimulationMetrics":
-        fields = {}
-        for k, f in cls.__dataclass_fields__.items():
-            if k in data:
-                fields[k] = type(f.default)(data[k]) if not isinstance(f.default, type) else data[k]
         return cls(**{k: data[k] for k in cls.__dataclass_fields__ if k in data})
 
 
@@ -89,7 +85,9 @@ class SimulationConfig:
 
     def __post_init__(self) -> None:
         # Normalize: accept typed NeuromodulationSpec or dict
-        if self.neuromodulation is not None and hasattr(self.neuromodulation, 'to_dict'):
+        if self.neuromodulation is not None and hasattr(
+            self.neuromodulation, "to_dict"
+        ):
             self.neuromodulation = self.neuromodulation.to_dict()
         if not (4 <= self.grid_size <= 512):
             raise ValueError("grid_size must be in [4, 512]")
@@ -190,7 +188,9 @@ class SimulationConfig:
             try:
                 return int(value)
             except (TypeError, ValueError) as exc:
-                raise ValueError(f"seed must be an integer when provided, got {value!r}") from exc
+                raise ValueError(
+                    f"seed must be an integer when provided, got {value!r}"
+                ) from exc
 
         return cls(
             grid_size=int(data.get("grid_size", 64)),

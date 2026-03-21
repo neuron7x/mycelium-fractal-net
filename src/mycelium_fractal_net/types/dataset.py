@@ -39,7 +39,9 @@ SIMULATION_META_COLUMNS: List[str] = [
 ]
 
 # All expected columns in canonical order
-ALL_DATASET_COLUMNS: List[str] = SIMULATION_PARAM_COLUMNS + FEATURE_NAMES + SIMULATION_META_COLUMNS
+ALL_DATASET_COLUMNS: List[str] = (
+    SIMULATION_PARAM_COLUMNS + FEATURE_NAMES + SIMULATION_META_COLUMNS
+)
 
 
 @dataclass
@@ -161,7 +163,6 @@ class DatasetRow:
         )
 
 
-
 @dataclass
 class DatasetMeta:
     """Metadata about a generated dataset."""
@@ -242,12 +243,16 @@ class DatasetStats:
         return cls(
             num_rows=len(df),
             num_features=len(feature_cols),
-            scenario_names=df["scenario_name"].unique().tolist()
-            if "scenario_name" in df.columns
-            else [],
-            grid_sizes=sorted(df["grid_size"].unique().tolist())
-            if "grid_size" in df.columns
-            else [],
+            scenario_names=(
+                df["scenario_name"].unique().tolist()
+                if "scenario_name" in df.columns
+                else []
+            ),
+            grid_sizes=(
+                sorted(df["grid_size"].unique().tolist())
+                if "grid_size" in df.columns
+                else []
+            ),
             feature_stats=feature_stats,
         )
 

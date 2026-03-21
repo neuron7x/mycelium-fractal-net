@@ -23,7 +23,9 @@ from .membrane_engine import (
 )
 
 # RT/zF at 37 deg C (z=1), natural log, in millivolts
-NERNST_RTFZ_MV: float = (R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT) * 1000.0
+NERNST_RTFZ_MV: float = (
+    R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT
+) * 1000.0
 
 
 def compute_nernst_potential(
@@ -62,7 +64,11 @@ def compute_nernst_potential(
         raise ValueError("Concentrations must be positive for Nernst potential.")
 
     ratio = c_out / c_in
-    return (R_GAS_CONSTANT * temperature_k) / (z_valence * FARADAY_CONSTANT) * math.log(ratio)
+    return (
+        (R_GAS_CONSTANT * temperature_k)
+        / (z_valence * FARADAY_CONSTANT)
+        * math.log(ratio)
+    )
 
 
 __all__ = [

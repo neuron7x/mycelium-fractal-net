@@ -69,10 +69,12 @@ def setup_test_environment():
 
 # === Shared fixtures for common test patterns ===
 
+
 @pytest.fixture(scope="session")
 def baseline_spec():
     """Canonical baseline SimulationSpec (seed=42, 16x16, 16 steps)."""
     from mycelium_fractal_net.types.field import SimulationSpec
+
     return SimulationSpec(grid_size=16, steps=16, seed=42)
 
 
@@ -80,6 +82,7 @@ def baseline_spec():
 def baseline_sequence(baseline_spec):
     """Pre-computed FieldSequence from baseline spec. Session-scoped for speed."""
     from mycelium_fractal_net.core.simulate import simulate_history
+
     return simulate_history(baseline_spec)
 
 
@@ -87,6 +90,7 @@ def baseline_sequence(baseline_spec):
 def baseline_descriptor(baseline_sequence):
     """Pre-computed MorphologyDescriptor from baseline sequence."""
     from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
+
     return compute_morphology_descriptor(baseline_sequence)
 
 
@@ -94,6 +98,7 @@ def baseline_descriptor(baseline_sequence):
 def clear_descriptor_cache():
     """Clear descriptor cache between tests to prevent cross-test contamination."""
     from mycelium_fractal_net.analytics.morphology import _descriptor_cache
+
     _descriptor_cache.clear()
     yield
     _descriptor_cache.clear()

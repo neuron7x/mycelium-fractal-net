@@ -39,7 +39,9 @@ SCHEMA_VERSION = "mfn-artifact-manifest-v2"
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -48,7 +50,9 @@ def _write_text(path: Path, text: str) -> None:
 
 
 def _ensure_history(sequence: FieldSequence) -> np.ndarray:
-    return sequence.history if sequence.history is not None else sequence.field[None, :, :]
+    return (
+        sequence.history if sequence.history is not None else sequence.field[None, :, :]
+    )
 
 
 def _sha256_file(path: Path) -> str:
@@ -59,7 +63,9 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _artifact_manifest(run_dir: Path, artifact_list: list[str]) -> dict[str, dict[str, Any]]:
+def _artifact_manifest(
+    run_dir: Path, artifact_list: list[str]
+) -> dict[str, dict[str, Any]]:
     manifest: dict[str, dict[str, Any]] = {}
     for name in artifact_list:
         path = run_dir / name
@@ -72,30 +78,41 @@ def _artifact_manifest(run_dir: Path, artifact_list: list[str]) -> dict[str, dic
 
 
 def _config_hash(sequence: FieldSequence) -> str:
-    spec_dict = sequence.spec.to_dict() if sequence.spec is not None else {
-        "grid_size": sequence.grid_size,
-        "steps": sequence.num_steps,
-        "seed": sequence.metadata.get("seed", 42),
-    }
-    return hashlib.sha256(json.dumps(spec_dict, sort_keys=True).encode("utf-8")).hexdigest()[:16]
-
-
+    spec_dict = (
+        sequence.spec.to_dict()
+        if sequence.spec is not None
+        else {
+            "grid_size": sequence.grid_size,
+            "steps": sequence.num_steps,
+            "seed": sequence.metadata.get("seed", 42),
+        }
+    )
+    return hashlib.sha256(
+        json.dumps(spec_dict, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
 
 
 def _git_sha(root: Path) -> str:
     try:
-        proc = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root, capture_output=True, text=True, check=False)
+        proc = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
         sha = proc.stdout.strip()
-        return sha or 'UNKNOWN'
+        return sha or "UNKNOWN"
     except Exception:
-        return 'UNKNOWN'
+        return "UNKNOWN"
 
 
 def _lock_hash(root: Path) -> str:
-    lock = root / 'uv.lock'
+    lock = root / "uv.lock"
     if not lock.exists():
-        return 'UNKNOWN'
+        return "UNKNOWN"
     return hashlib.sha256(lock.read_bytes()).hexdigest()
+
 
 def _to_rgb(value: float, vmin: float, vmax: float) -> tuple[int, int, int]:
     if vmax <= vmin:
@@ -136,7 +153,6 @@ def _svg_heatmap(array: np.ndarray, title: str) -> str:
     )
 
 
-
 def _svg_line(values: list[float], title: str, y_label: str) -> str:
     clean = [float(v) for v in values]
     if not clean:
@@ -160,12 +176,11 @@ def _svg_line(values: list[float], title: str, y_label: str) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
         f'<rect width="100%" height="100%" fill="#0f172a"/>'
         f'<text x="8" y="18" font-size="14" fill="#e2e8f0" font-family="monospace">{html.escape(title)}</text>'
-        f'{ticks}'
+        f"{ticks}"
         f'<polyline fill="none" stroke="#38bdf8" stroke-width="2" points="{" ".join(points)}"/>'
         f'<text x="8" y="{height - 8}" font-size="11" fill="#94a3b8" font-family="monospace">{html.escape(y_label)} | min={vmin:.4f}, max={vmax:.4f}</text>'
-        f'</svg>'
+        f"</svg>"
     )
-
 
 
 def _table_rows(mapping: dict[str, Any]) -> str:
@@ -173,7 +188,6 @@ def _table_rows(mapping: dict[str, Any]) -> str:
         f"<tr><th>{html.escape(str(k))}</th><td>{html.escape(str(v))}</td></tr>"
         for k, v in mapping.items()
     )
-
 
 
 def _build_report_html(
@@ -193,7 +207,9 @@ def _build_report_html(
                 "label": detection.get("label"),
                 "score": f'{float(detection.get("score", 0.0)):.4f}',
                 "confidence": f'{float(detection.get("confidence", 0.0)):.4f}',
-                "top_features": ", ".join(detection.get("top_contributing_features", [])),
+                "top_features": ", ".join(
+                    detection.get("top_contributing_features", [])
+                ),
             },
         ),
         (
@@ -256,7 +272,6 @@ small a {{ color: #38bdf8; }}
 """
 
 
-
 def build_analysis_report(
     sequence: FieldSequence,
     output_root: str | Path,
@@ -268,7 +283,11 @@ def build_analysis_report(
     descriptor = compute_morphology_descriptor(sequence)
     detection = detect_anomaly(sequence)
     forecast = forecast_next(sequence, horizon=horizon)
-    forecast_final = np.asarray(forecast.predicted_states[-1], dtype=np.float64) if forecast.predicted_states else sequence.field
+    forecast_final = (
+        np.asarray(forecast.predicted_states[-1], dtype=np.float64)
+        if forecast.predicted_states
+        else sequence.field
+    )
     auto_comparison_sequence = FieldSequence(
         field=forecast_final,
         history=None,
@@ -280,7 +299,9 @@ def build_analysis_report(
 
     project_root = Path(__file__).resolve().parents[3]
     timestamp_now = datetime.now(timezone.utc)
-    seed = int(sequence.metadata.get("seed", sequence.spec.seed if sequence.spec else 42))
+    seed = int(
+        sequence.metadata.get("seed", sequence.spec.seed if sequence.spec else 42)
+    )
     run_id = timestamp_now.strftime("run_%Y%m%dT%H%M%S_%fZ") + f"_s{seed}"
     run_dir = Path(output_root) / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -294,7 +315,10 @@ def build_analysis_report(
     forecast_dict = forecast.to_dict()
     comparison_dict = comparison.to_dict()
 
-    _write_json(run_dir / "config.json", {} if sequence.spec is None else sequence.spec.to_dict())
+    _write_json(
+        run_dir / "config.json",
+        {} if sequence.spec is None else sequence.spec.to_dict(),
+    )
     _write_json(run_dir / "descriptor.json", descriptor_dict)
     _write_json(run_dir / "detection.json", detection_dict)
     _write_json(run_dir / "forecast.json", forecast_dict)
@@ -401,14 +425,34 @@ def build_analysis_report(
     ]
     _write_text(run_dir / "report.md", "\n".join(markdown_lines) + "\n")
 
-    comparison_field = comparison_target.history[-1] if comparison_target.history is not None else comparison_target.field
+    comparison_field = (
+        comparison_target.history[-1]
+        if comparison_target.history is not None
+        else comparison_target.field
+    )
     delta_field = forecast_final - comparison_field
     _write_text(run_dir / "field.svg", _svg_heatmap(sequence.field, "Final field"))
-    _write_text(run_dir / "history_mean.svg", _svg_heatmap(np.mean(history, axis=0), "History mean field"))
-    _write_text(run_dir / "forecast_final.svg", _svg_heatmap(forecast_final, "Forecast final field"))
-    _write_text(run_dir / "comparison_delta.svg", _svg_heatmap(delta_field, "Forecast vs comparison delta"))
-    trajectory_values = [float(step.get("field_mean_mV", 0.0)) for step in forecast.descriptor_trajectory]
-    _write_text(run_dir / "trajectory.svg", _svg_line(trajectory_values, "Forecast mean potential trajectory", "field_mean_mV"))
+    _write_text(
+        run_dir / "history_mean.svg",
+        _svg_heatmap(np.mean(history, axis=0), "History mean field"),
+    )
+    _write_text(
+        run_dir / "forecast_final.svg",
+        _svg_heatmap(forecast_final, "Forecast final field"),
+    )
+    _write_text(
+        run_dir / "comparison_delta.svg",
+        _svg_heatmap(delta_field, "Forecast vs comparison delta"),
+    )
+    trajectory_values = [
+        float(step.get("field_mean_mV", 0.0)) for step in forecast.descriptor_trajectory
+    ]
+    _write_text(
+        run_dir / "trajectory.svg",
+        _svg_line(
+            trajectory_values, "Forecast mean potential trajectory", "field_mean_mV"
+        ),
+    )
     _write_json(run_dir / "summary.json", summary)
     _write_text(
         run_dir / "report.html",
@@ -425,13 +469,13 @@ def build_analysis_report(
     if export_symbolic_context:
         symbolic_context = report.to_symbolic_context(
             manifest_hashes={
-                'field': sha256_file(run_dir / 'field.npy'),
-                'history': sha256_file(run_dir / 'history.npy'),
-                'forecast': sha256_file(run_dir / 'forecast.json'),
-                'comparison': sha256_file(run_dir / 'comparison.json'),
+                "field": sha256_file(run_dir / "field.npy"),
+                "history": sha256_file(run_dir / "history.npy"),
+                "forecast": sha256_file(run_dir / "forecast.json"),
+                "comparison": sha256_file(run_dir / "comparison.json"),
             }
         )
-        _write_json(run_dir / 'symbolic_context.json', symbolic_context.to_dict())
+        _write_json(run_dir / "symbolic_context.json", symbolic_context.to_dict())
 
     initial_manifest = {
         "run_id": run_id,
@@ -451,15 +495,17 @@ def build_analysis_report(
     manifest = {
         **initial_manifest,
         "artifact_manifest": _artifact_manifest(run_dir, artifact_list),
-        "optional_artifact_manifest": _artifact_manifest(run_dir, list(optional_artifacts.values())),
-        "crypto_audit_log": 'crypto_audit.jsonl',
+        "optional_artifact_manifest": _artifact_manifest(
+            run_dir, list(optional_artifacts.values())
+        ),
+        "crypto_audit_log": "crypto_audit.jsonl",
     }
     _write_json(run_dir / "manifest.json", manifest)
-    audit_log = run_dir / 'crypto_audit.jsonl'
-    signed_paths = [run_dir / 'report.md', run_dir / 'manifest.json']
+    audit_log = run_dir / "crypto_audit.jsonl"
+    signed_paths = [run_dir / "report.md", run_dir / "manifest.json"]
     sign_artifacts(
         signed_paths,
-        config_path=project_root / 'configs' / 'crypto.yaml',
+        config_path=project_root / "configs" / "crypto.yaml",
         audit_log=audit_log,
     )
     # Enforce: verify immediately after signing (sign-then-verify contract)

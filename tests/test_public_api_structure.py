@@ -266,7 +266,10 @@ class TestREADMEExamples:
 
     def test_fractal_example(self) -> None:
         """Test fractal dimension example from README."""
-        from mycelium_fractal_net import estimate_fractal_dimension, simulate_mycelium_field
+        from mycelium_fractal_net import (
+            estimate_fractal_dimension,
+            simulate_mycelium_field,
+        )
 
         rng = np.random.default_rng(42)
         field, _ = simulate_mycelium_field(rng, grid_size=64, steps=64)
