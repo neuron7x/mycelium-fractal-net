@@ -1,18 +1,16 @@
-
 [project]
 name = "mycelium-fractal-net"
 version = "4.1.0"
-description = "Neuro-fractal mycelium dynamics engine with Nernst potentials, diffusion field, and fractal analysis."
+description = "Deterministic morphology-aware structural analytics engine with SDK, CLI, and API surfaces."
 authors = [{ name = "Yaroslav Vasylenko", email = "example@example.com" }]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = { text = "MIT" }
-keywords = ["neuroscience", "fractal", "mycelium", "simulation", "nernst", "LLM-tools"]
+keywords = ["morphology", "structural-analytics", "simulation", "forecasting", "anomaly-detection", "field-intelligence"]
 
 dependencies = [
   "numpy>=1.24",
   "sympy>=1.12",
-  "torch>=2.0.0,<3.0.0",
   "pydantic>=2.0",
   "fastapi>=0.100.0",
   "pandas>=1.5.3,<3.0.0",
@@ -23,13 +21,65 @@ dependencies = [
   "httpx>=0.24.0",
 ]
 
-[project.scripts]
-mfn-api = "mycelium_fractal_net.api:main"
-mfn-validate = "mycelium_fractal_net.model:run_validation_cli"
-
 [project.optional-dependencies]
+http = ["aiohttp>=3.9.4"]
+kafka = ["kafka-python>=2.0.0"]
+ml = ["torch>=2.0.0,<3.0.0"]
+accel = ["numba>=0.60.0"]
 dev = [
-  "pytest>=7.0",
+  "pytest>=8.0",
+  "pytest-cov>=4.0",
+  "pytest-asyncio>=0.21.0",
+  "pytest-timeout>=2.0.0",
+  "pytest-html>=4.1.1",
+  "ruff>=0.5.0",
+  "mypy>=1.8.0",
+  "black>=24.0.0",
+  "isort>=5.12.0",
+  "types-setuptools",
+  "httpx>=0.24.0",
+  "hypothesis>=6.0.0",
+  "uvicorn>=0.20.0",
+  "locust>=2.20.0",
+  "packaging>=21.0",
+  "import-linter>=2.0",
+]
+security = [
+  "pip-audit>=2.7.0",
+  "bandit>=1.7.9",
+  "checkov>=3.2.0",
+]
+reporting = [
+  "pytest-html>=4.1.1",
+]
+full = [
+  "aiohttp>=3.9.4",
+  "kafka-python>=2.0.0",
+  "torch>=2.0.0,<3.0.0",
+  "numba>=0.60.0",
+  "pytest>=8.0",
+  "pytest-cov>=4.0",
+  "pytest-asyncio>=0.21.0",
+  "pytest-timeout>=2.0.0",
+  "pytest-html>=4.1.1",
+  "ruff>=0.5.0",
+  "mypy>=1.8.0",
+  "black>=24.0.0",
+  "isort>=5.12.0",
+  "types-setuptools",
+  "hypothesis>=6.0.0",
+  "uvicorn>=0.20.0",
+  "locust>=2.20.0",
+  "packaging>=21.0",
+  "import-linter>=2.0",
+  "pip-audit>=2.7.0",
+  "bandit>=1.7.9",
+  "checkov>=3.2.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0",
   "pytest-cov>=4.0",
   "pytest-asyncio>=0.21.0",
   "pytest-timeout>=2.0.0",
@@ -44,34 +94,49 @@ dev = [
   "locust>=2.20.0",
   "tomli>=2.0.0; python_version < '3.11'",
   "packaging>=21.0",
+  "import-linter>=2.0",
 ]
-http = [
-  "aiohttp>=3.9.4",
-]
-kafka = [
-  "kafka-python>=2.0.0",
-]
-full = [
-  "aiohttp>=3.9.4",
-  "kafka-python>=2.0.0",
+security = [
+  "pip-audit>=2.7.0",
+  "bandit>=1.7.9",
+  "checkov>=3.2.0",
 ]
 
+[project.scripts]
+mfn = "mycelium_fractal_net.cli:main"
+mfn-api = "mycelium_fractal_net.cli:api_entrypoint"
+mfn-validate = "mycelium_fractal_net.cli:validate_entrypoint"
+
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=69.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = true
+package-dir = {"" = "src"}
+py-modules = ["api", "mycelium_fractal_net_v4_1"]
 
 [tool.setuptools.packages.find]
-where = ["src", "."]
-include = ["mycelium_fractal_net*", "analytics"]
-exclude = ["tests*", "docs*", "examples*", "experiments*"]
+where = ["src"]
+include = ["mycelium_fractal_net*", "analytics", "experiments"]
+exclude = ["tests*", "docs*", "examples*"]
+
+[tool.uv]
+default-groups = ["dev"]
+managed = true
 
 [tool.pytest.ini_options]
-addopts = "-q --disable-warnings --timeout=300"
+addopts = "-q --timeout=300"
 testpaths = ["tests"]
-pythonpath = [".", "src"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "error::UserWarning",
+    "error::FutureWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::pytest.PytestDeprecationWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
 
 [tool.ruff]
 line-length = 100
@@ -93,7 +158,7 @@ module = "tests.*"
 disallow_untyped_defs = true
 
 [tool.coverage.run]
-source = ["mycelium_fractal_net", "analytics"]
+source = ["mycelium_fractal_net"]
 branch = true
 omit = [
   "*/tests/*",

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import Literal, Mapping, TypedDict, cast
 
-import torch
-import torch.nn as nn
+from mycelium_fractal_net._optional import require_ml_dependency
+
+torch = require_ml_dependency("torch")
+nn = torch.nn
 
 from .denoise_1d import OptimizedFractalDenoise1D, _canonicalize_1d
 

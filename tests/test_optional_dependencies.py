@@ -1,4 +1,9 @@
+from __future__ import annotations
+
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 try:
     import tomllib
@@ -6,14 +11,87 @@ except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore[import-not-found]
 
 
-def test_optional_dependency_extras_defined():
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / 'src'
+
+
+def test_optional_dependency_extras_defined() -> None:
     pyproject = tomllib.loads(Path("pyproject.toml").read_text())
     extras = pyproject["project"]["optional-dependencies"]
 
     assert "http" in extras
     assert "kafka" in extras
+    assert "ml" in extras
+    assert "accel" in extras
     assert "full" in extras
 
     assert "aiohttp>=3.9.4" in extras["http"]
     assert "kafka-python>=2.0.0" in extras["kafka"]
-    assert set(extras["full"]) == {"aiohttp>=3.9.4", "kafka-python>=2.0.0"}
+    assert "torch>=2.0.0,<3.0.0" in extras["ml"]
+    assert "numba>=0.60.0" in extras["accel"]
+    # full extra must include all optional extras plus dev/security deps
+    full_set = set(extras["full"])
+    assert "aiohttp>=3.9.4" in full_set
+    assert "kafka-python>=2.0.0" in full_set
+    assert "torch>=2.0.0,<3.0.0" in full_set
+    assert "numba>=0.60.0" in full_set
+
+
+def _run_blocked_torch_script(tmp_path: Path, source: str) -> subprocess.CompletedProcess[str]:
+    script = tmp_path / 'blocked_torch_case.py'
+    script.write_text(source, encoding='utf-8')
+    return subprocess.run(
+        [sys.executable, str(script)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        env={**os.environ, 'PYTHONPATH': str(SRC)},
+    )
+
+
+def test_core_import_works_without_ml_dependency(tmp_path: Path) -> None:
+    proc = _run_blocked_torch_script(
+        tmp_path,
+        """
+import builtins
+_real_import = builtins.__import__
+
+def _blocked_import(name, *args, **kwargs):
+    if name == 'torch' or name.startswith('torch.'):
+        raise ModuleNotFoundError('blocked torch import for core-install test')
+    return _real_import(name, *args, **kwargs)
+
+builtins.__import__ = _blocked_import
+import mycelium_fractal_net as mfn
+assert callable(mfn.simulate)
+print('ok')
+""",
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert 'ok' in proc.stdout
+
+
+def test_ml_only_surface_emits_clear_error_without_torch(tmp_path: Path) -> None:
+    proc = _run_blocked_torch_script(
+        tmp_path,
+        """
+import builtins
+_real_import = builtins.__import__
+
+def _blocked_import(name, *args, **kwargs):
+    if name == 'torch' or name.startswith('torch.'):
+        raise ModuleNotFoundError('blocked torch import for core-install test')
+    return _real_import(name, *args, **kwargs)
+
+builtins.__import__ = _blocked_import
+import mycelium_fractal_net as mfn
+try:
+    _ = mfn.MyceliumFractalNet
+except ImportError as exc:
+    print(str(exc))
+else:
+    raise SystemExit('expected ImportError for ML surface')
+""",
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert 'optional ML dependency' in proc.stdout

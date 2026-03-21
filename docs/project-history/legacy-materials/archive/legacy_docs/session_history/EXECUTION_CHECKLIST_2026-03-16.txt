@@ -1,0 +1,35 @@
+Morphology-aware Field Intelligence Engine — execution checklist
+
+DONE
+- Canonical package namespace and mfn CLI preserved
+- Canonical type system added: FieldSequence, SimulationSpec, MorphologyDescriptor, AnomalyEvent, RegimeState, ForecastResult, ComparisonResult, AnalysisReport
+- Canonical operations wired: simulate, extract, detect, forecast, compare, report
+- SDK surface exported from mycelium_fractal_net
+- CLI surface works locally
+- API v1 endpoints added: /v1/simulate /v1/extract /v1/detect /v1/forecast /v1/compare /v1/report
+- Report pipeline writes artifacts/runs/<run_id>/ with config.json field.npy history.npy descriptor.json detection.json forecast.json comparison.json report.md manifest.json
+- benchmark_quality.py added with JSON/CSV export
+- Makefile normalized and runnable
+- Demo scenario dataset generation works
+- Focused test suites passed locally
+
+VERIFIED LOCALLY
+- import mycelium_fractal_net
+- mfn --help
+- mfn simulate/extract/detect/forecast/compare/report
+- make verify
+- make validate
+- make simulate
+- make extract
+- make detect
+- make forecast
+- make report
+- make benchmark
+- make demo-scenarios
+- /v1/* endpoints via FastAPI TestClient
+
+NOT FULLY CLOSED
+- full repository-wide pytest suite not exhaustively re-run in this pass
+- core/scalability benchmark suites not fully re-run in this pass
+- legacy docs outside the six primary documents were not deleted
+- public release assets (badges, visuals, release notes) only partially prepared

@@ -161,8 +161,18 @@ class DatasetRow:
         )
 
 
-# Re-export DatasetMeta from pipelines module (single source of truth)
-from mycelium_fractal_net.pipelines.scenarios import DatasetMeta
+
+@dataclass
+class DatasetMeta:
+    """Metadata about a generated dataset."""
+
+    scenario_name: str
+    output_path: Any
+    num_rows: int
+    num_columns: int
+    elapsed_seconds: float
+    timestamp: str
+    feature_names: list[str]
 
 
 @dataclass

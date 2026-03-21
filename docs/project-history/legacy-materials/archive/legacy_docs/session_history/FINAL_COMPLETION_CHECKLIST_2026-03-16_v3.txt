@@ -1,0 +1,39 @@
+Morphology-aware Field Intelligence Engine — Final completion checklist
+
+DONE
+- Added canonical API server module: src/mycelium_fractal_net/integration/api_server.py
+- Verified endpoints: GET /health, GET /metrics, POST /v1/simulate, /v1/extract, /v1/detect, /v1/forecast, /v1/compare, /v1/report
+- Standardized report artifact pipeline in artifacts/runs/<run_id>/
+- Report pipeline now writes: config.json, field.npy, history.npy, descriptor.json, detection.json, forecast.json, comparison.json, report.md, manifest.json
+- Manifest now includes run_id, engine_version, schema_version, seed, config_hash, timestamp, artifact_list
+- Added canonical scenario package: src/mycelium_fractal_net/pipelines/scenarios/
+- Added scenarios: synthetic_morphology.py, sensor_grid_anomaly.py, regime_transition.py
+- Added run_canonical_scenarios helper and generated scenario demo outputs
+- Improved canonical type metadata/versioning across field/features/detection/forecast/report outputs
+- Forecast results now include predicted_states and evaluation_metrics
+- Updated CLI API launcher to canonical api_server
+- Updated Makefile targets for bootstrap/verify/validate/simulate/extract/detect/forecast/benchmark/api/demo-scenarios
+- Added JSON+CSV export for benchmark_core and benchmark_scalability save_results
+- Added completion tests:
+  - tests/test_api_server_completion.py
+  - tests/test_artifact_pipeline_completion.py
+  - tests/test_scenario_pipelines_completion.py
+  - tests/test_schema_roundtrip_completion.py
+- Verified targeted completion suite passes
+- Verified e2e report generation and canonical artifacts locally
+- Generated benchmark artifacts under benchmarks/results/
+- Generated local artifacts and scenario outputs in repo
+
+VERIFIED LOCALLY
+- import mycelium_fractal_net
+- mfn --help
+- mfn simulate/extract/detect/forecast/compare/report
+- canonical api_server via FastAPI TestClient
+- benchmark_quality.py
+- benchmark_core smoke result + JSON/CSV export
+- benchmark_scalability smoke result + JSON/CSV export
+- targeted pytest completion suite
+
+NOT FULLY CLOSED AS ONE MONOLITHIC TRANSCRIPT
+- one single monolithic full-repo pytest transcript was not preserved as one artifact in this sandbox session
+- public release polish of every legacy document/file was not exhaustively reduced to only six docs; canonical docs were updated instead

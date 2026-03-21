@@ -35,6 +35,8 @@ crypto:
     # Signature algorithm
     # Supported: Ed25519 (default), ECDSA
     algorithm: "Ed25519"
+    # Deterministic seed for artifact attestation signatures.
+    deterministic_artifact_seed: "mfn-artifact-signing-v1"
   
   # Key management settings
   key_management:

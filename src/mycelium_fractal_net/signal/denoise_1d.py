@@ -6,9 +6,11 @@ import logging
 import math
 from typing import Callable, Literal, cast
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from mycelium_fractal_net._optional import require_ml_dependency
+
+torch = require_ml_dependency("torch")
+nn = torch.nn
+F = torch.nn.functional
 
 logger = logging.getLogger(__name__)
 

@@ -14,35 +14,66 @@ import numpy as np
 from numpy.typing import NDArray
 
 
+@dataclass(frozen=True)
+class SimulationMetrics:
+    """Strongly-typed simulation output metrics.
+
+    Replaces the untyped metadata dict from engine.py.
+    """
+
+    elapsed_time_s: float = 0.0
+    steps_computed: int = 0
+    field_min_v: float = 0.0
+    field_max_v: float = 0.0
+    field_mean_v: float = 0.0
+    field_std_v: float = 0.0
+    activator_mean: float = 0.0
+    inhibitor_mean: float = 0.0
+    turing_activations: int = 0
+    clamping_events: int = 0
+    plasticity_index_mean: float = 0.0
+    effective_inhibition_mean: float = 0.0
+    effective_gain_mean: float = 0.0
+    observation_noise_gain_mean: float = 0.0
+    occupancy_resting_mean: float = 1.0
+    occupancy_active_mean: float = 0.0
+    occupancy_desensitized_mean: float = 0.0
+    occupancy_mass_error_max: float = 0.0
+    excitability_offset_mean_v: float = 0.0
+    alpha_guard_triggered: bool = False
+    alpha_guard_triggers: int = 0
+    substeps_used: int = 1
+    effective_dt: float = 1.0
+    soft_boundary_pressure: float = 0.0
+    hard_clamp_events: int = 0
+
+    @property
+    def occupancy_bounds_ok(self) -> bool:
+        return self.occupancy_mass_error_max <= 1e-6
+
+    def to_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {}
+        for k in self.__dataclass_fields__:
+            d[k] = getattr(self, k)
+        d['occupancy_bounds_ok'] = self.occupancy_bounds_ok
+        return d
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SimulationMetrics":
+        fields = {}
+        for k, f in cls.__dataclass_fields__.items():
+            if k in data:
+                fields[k] = type(f.default)(data[k]) if not isinstance(f.default, type) else data[k]
+        return cls(**{k: data[k] for k in cls.__dataclass_fields__ if k in data})
+
+
 @dataclass
 class SimulationConfig:
-    """
-    Configuration parameters for mycelium field simulation.
+    """Configuration parameters for mycelium field simulation.
 
-    Attributes
-    ----------
-    grid_size : int
-        Size of the 2D grid (N × N). Default 64.
-    steps : int
-        Number of simulation steps. Default 64.
-    alpha : float
-        Diffusion coefficient. Must satisfy CFL condition (α ≤ 0.25). Default 0.18.
-    spike_probability : float
-        Probability of spike events per step. Default 0.25.
-    turing_enabled : bool
-        Enable Turing morphogenesis patterns. Default True.
-    turing_threshold : float
-        Activation threshold for Turing patterns. Default 0.75.
-    quantum_jitter : bool
-        Enable quantum noise jitter. Default False.
-    jitter_var : float
-        Variance of quantum jitter. Default 0.0005.
-    seed : int | None
-        Random seed for reproducibility. None for random seed.
-
-    Reference:
-        docs/MFN_DATA_MODEL.md — Canonical data model
-        docs/MFN_MATH_MODEL.md — Parameter bounds and physical constraints
+    ``neuromodulation`` accepts either a ``dict[str, Any]`` or a typed
+    ``NeuromodulationSpec``. If a typed spec is provided, it is converted
+    to a dict via ``to_dict()`` for engine compatibility.
     """
 
     grid_size: int = 64
@@ -54,9 +85,12 @@ class SimulationConfig:
     quantum_jitter: bool = False
     jitter_var: float = 0.0005
     seed: int | None = None
+    neuromodulation: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
-        """Validate configuration parameters."""
+        # Normalize: accept typed NeuromodulationSpec or dict
+        if self.neuromodulation is not None and hasattr(self.neuromodulation, 'to_dict'):
+            self.neuromodulation = self.neuromodulation.to_dict()
         if not (4 <= self.grid_size <= 512):
             raise ValueError("grid_size must be in [4, 512]")
         if self.steps < 1:
@@ -69,6 +103,10 @@ class SimulationConfig:
             raise ValueError("turing_threshold must be in [0, 1]")
         if not (0.0 <= self.jitter_var <= 0.01):
             raise ValueError("jitter_var must be in [0, 0.01]")
+        if self.neuromodulation is not None:
+            dt_seconds = float(self.neuromodulation.get("dt_seconds", 1.0))
+            if dt_seconds <= 0:
+                raise ValueError("neuromodulation.dt_seconds must be > 0")
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -87,6 +125,7 @@ class SimulationConfig:
             "quantum_jitter": self.quantum_jitter,
             "jitter_var": self.jitter_var,
             "seed": self.seed,
+            "neuromodulation": self.neuromodulation,
         }
 
     @classmethod
@@ -163,6 +202,7 @@ class SimulationConfig:
             quantum_jitter=_parse_bool(data.get("quantum_jitter"), False),
             jitter_var=float(data.get("jitter_var", 0.0005)),
             seed=_parse_seed(seed_value),
+            neuromodulation=data.get("neuromodulation"),
         )
 
 

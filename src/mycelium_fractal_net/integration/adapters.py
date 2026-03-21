@@ -17,15 +17,12 @@ from __future__ import annotations
 from typing import Any, Dict
 
 import numpy as np
-import torch
 
 from mycelium_fractal_net import (
     compute_nernst_potential,
     estimate_fractal_dimension,
-    run_validation,
     simulate_mycelium_field,
 )
-from mycelium_fractal_net.model import HierarchicalKrumAggregator
 
 from .runtime_config import assemble_validation_config
 from .schemas import (
@@ -62,6 +59,8 @@ def run_validation_adapter(
         ValueError: If validation parameters are invalid.
         RuntimeError: If validation fails.
     """
+    from mycelium_fractal_net import run_validation
+
     cfg = assemble_validation_config(request)
 
     # Run validation using core function
@@ -196,6 +195,11 @@ def aggregate_gradients_adapter(
                 f"gradient[0] length={expected_len} != "
                 f"gradient[{idx}] length={len(gradient)}"
             )
+
+    from mycelium_fractal_net._optional import require_ml_dependency
+    from mycelium_fractal_net.model import HierarchicalKrumAggregator
+
+    torch = require_ml_dependency("torch")
 
     # Convert to tensors
     gradients = [torch.tensor(g, dtype=torch.float32) for g in request.gradients]

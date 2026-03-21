@@ -9,7 +9,8 @@ References:
 """
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 

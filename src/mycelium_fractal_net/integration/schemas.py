@@ -24,6 +24,9 @@ class HealthResponse(BaseModel):
 
     status: str = "healthy"
     version: str = "4.1.0"
+    engine_version: str = "4.1.0"
+    api_version: str = "v1"
+    uptime: float = 0.0
 
 
 # =============================================================================

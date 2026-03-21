@@ -17,7 +17,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from .reaction_diffusion_engine import ReactionDiffusionConfig, ReactionDiffusionEngine
-from .types import SimulationConfig, SimulationResult
+from .types import SimulationConfig, SimulationMetrics, SimulationResult
 
 
 def run_mycelium_simulation(config: SimulationConfig) -> SimulationResult:
@@ -84,6 +84,7 @@ def run_mycelium_simulation(config: SimulationConfig) -> SimulationResult:
         spike_probability=config.spike_probability,
         random_seed=config.seed,
         check_stability=True,
+        neuromodulation=config.neuromodulation,
     )
 
     # Create and run the engine
@@ -98,32 +99,39 @@ def run_mycelium_simulation(config: SimulationConfig) -> SimulationResult:
 
     elapsed_time = time.perf_counter() - start_time
 
-    # Build metadata
-    metadata: dict[str, Any] = {
-        "config": {
-            "grid_size": config.grid_size,
-            "steps": config.steps,
-            "alpha": config.alpha,
-            "spike_probability": config.spike_probability,
-            "turing_enabled": config.turing_enabled,
-            "turing_threshold": config.turing_threshold,
-            "quantum_jitter": config.quantum_jitter,
-            "jitter_var": config.jitter_var,
-            "seed": config.seed,
-        },
-        "elapsed_time_s": elapsed_time,
-        "steps_computed": metrics.steps_computed,
-        "field_min_v": metrics.field_min_v,
-        "field_max_v": metrics.field_max_v,
-        "field_mean_v": metrics.field_mean_v,
-        "field_std_v": metrics.field_std_v,
-        "activator_mean": metrics.activator_mean,
-        "inhibitor_mean": metrics.inhibitor_mean,
-        "turing_activations": metrics.turing_activations,
-        "clamping_events": metrics.clamping_events,
-    }
+    # Build typed simulation metrics
+    sim_metrics = SimulationMetrics(
+        elapsed_time_s=elapsed_time,
+        steps_computed=metrics.steps_computed,
+        field_min_v=metrics.field_min_v,
+        field_max_v=metrics.field_max_v,
+        field_mean_v=metrics.field_mean_v,
+        field_std_v=metrics.field_std_v,
+        activator_mean=metrics.activator_mean,
+        inhibitor_mean=metrics.inhibitor_mean,
+        turing_activations=metrics.turing_activations,
+        clamping_events=metrics.clamping_events,
+        plasticity_index_mean=metrics.plasticity_index_mean,
+        effective_inhibition_mean=metrics.effective_inhibition_mean,
+        effective_gain_mean=metrics.effective_gain_mean,
+        observation_noise_gain_mean=metrics.observation_noise_gain_mean,
+        occupancy_resting_mean=metrics.occupancy_resting_mean,
+        occupancy_active_mean=metrics.occupancy_active_mean,
+        occupancy_desensitized_mean=metrics.occupancy_desensitized_mean,
+        occupancy_mass_error_max=metrics.occupancy_mass_error_max,
+        excitability_offset_mean_v=metrics.excitability_offset_mean_v,
+        alpha_guard_triggered=metrics.alpha_guard_triggered,
+        alpha_guard_triggers=metrics.alpha_guard_triggers,
+        substeps_used=metrics.substeps_used,
+        effective_dt=metrics.effective_dt,
+        soft_boundary_pressure=metrics.soft_boundary_pressure,
+        hard_clamp_events=metrics.hard_clamp_events,
+    )
 
-    # Convert field to float64 for consistency
+    # Build metadata: typed metrics + config snapshot for backward compat
+    metadata: dict[str, Any] = sim_metrics.to_dict()
+    metadata["config"] = config.to_dict()
+
     final_field: NDArray[np.float64] = field.astype(np.float64)
 
     return SimulationResult(
@@ -192,6 +200,7 @@ def run_mycelium_simulation_with_history(
         spike_probability=config.spike_probability,
         random_seed=config.seed,
         check_stability=True,
+        neuromodulation=config.neuromodulation,
     )
 
     engine = ReactionDiffusionEngine(rd_config)
@@ -209,29 +218,36 @@ def run_mycelium_simulation_with_history(
     final_field: NDArray[np.float64] = history_arr[-1].astype(np.float64)
     history: NDArray[np.float64] = history_arr.astype(np.float64)
 
-    metadata: dict[str, Any] = {
-        "config": {
-            "grid_size": config.grid_size,
-            "steps": config.steps,
-            "alpha": config.alpha,
-            "spike_probability": config.spike_probability,
-            "turing_enabled": config.turing_enabled,
-            "turing_threshold": config.turing_threshold,
-            "quantum_jitter": config.quantum_jitter,
-            "jitter_var": config.jitter_var,
-            "seed": config.seed,
-        },
-        "elapsed_time_s": elapsed_time,
-        "steps_computed": metrics.steps_computed,
-        "field_min_v": metrics.field_min_v,
-        "field_max_v": metrics.field_max_v,
-        "field_mean_v": metrics.field_mean_v,
-        "field_std_v": metrics.field_std_v,
-        "activator_mean": metrics.activator_mean,
-        "inhibitor_mean": metrics.inhibitor_mean,
-        "turing_activations": metrics.turing_activations,
-        "clamping_events": metrics.clamping_events,
-    }
+    sim_metrics = SimulationMetrics(
+        elapsed_time_s=elapsed_time,
+        steps_computed=metrics.steps_computed,
+        field_min_v=metrics.field_min_v,
+        field_max_v=metrics.field_max_v,
+        field_mean_v=metrics.field_mean_v,
+        field_std_v=metrics.field_std_v,
+        activator_mean=metrics.activator_mean,
+        inhibitor_mean=metrics.inhibitor_mean,
+        turing_activations=metrics.turing_activations,
+        clamping_events=metrics.clamping_events,
+        plasticity_index_mean=metrics.plasticity_index_mean,
+        effective_inhibition_mean=metrics.effective_inhibition_mean,
+        effective_gain_mean=metrics.effective_gain_mean,
+        observation_noise_gain_mean=metrics.observation_noise_gain_mean,
+        occupancy_resting_mean=metrics.occupancy_resting_mean,
+        occupancy_active_mean=metrics.occupancy_active_mean,
+        occupancy_desensitized_mean=metrics.occupancy_desensitized_mean,
+        occupancy_mass_error_max=metrics.occupancy_mass_error_max,
+        excitability_offset_mean_v=metrics.excitability_offset_mean_v,
+        alpha_guard_triggered=metrics.alpha_guard_triggered,
+        alpha_guard_triggers=metrics.alpha_guard_triggers,
+        substeps_used=metrics.substeps_used,
+        effective_dt=metrics.effective_dt,
+        soft_boundary_pressure=metrics.soft_boundary_pressure,
+        hard_clamp_events=metrics.hard_clamp_events,
+    )
+
+    metadata: dict[str, Any] = sim_metrics.to_dict()
+    metadata["config"] = config.to_dict()
 
     return SimulationResult(
         field=final_field,

@@ -1,0 +1,34 @@
+Morphology-aware Field Intelligence Engine — final execution checklist
+Date: 2026-03-16
+
+DONE
+- canonical public package surface normalized with __version__ and root exports
+- lazy module loading added to avoid root/integration circular import
+- deterministic SDK surface verified: simulate/extract/detect/forecast/compare/report
+- CLI surface verified: mfn simulate/extract/detect/forecast/compare/report/benchmark/api/validate
+- v1 API verified locally via TestClient: /v1/simulate /v1/extract /v1/detect /v1/forecast /v1/compare /v1/report
+- morphology temporal/multiscale/embedding algorithms upgraded
+- anomaly/regime/drift logic upgraded
+- forecast engine upgraded to ensemble_damped_delta_extrapolation
+- comparison engine upgraded with normalized drift metrics and richer changed-dim output
+- standardized report artifact layout verified
+- benchmark_quality exports verified: JSON + CSV
+- strong pytest subset passed
+
+VERIFIED COMMANDS
+- pip install -e .[dev]
+- mfn --help
+- mfn simulate --grid-size 16 --steps 8 --with-history --output artifacts/test/sim.json
+- mfn extract --grid-size 16 --steps 8 --output artifacts/test/extract.json
+- mfn detect --grid-size 16 --steps 8 --output artifacts/test/detect.json
+- mfn forecast --grid-size 16 --steps 8 --horizon 4 --output artifacts/test/forecast.json
+- mfn compare --grid-size 16 --steps 8 --output artifacts/test/compare.json
+- mfn report --grid-size 16 --steps 8 --horizon 4 --output artifacts/test/report.json --output-dir artifacts/test/report_dir
+- python benchmarks/benchmark_quality.py
+- pytest -q tests/test_morphology_engine_v1.py tests/test_engine_v1_surface.py tests/test_cli_workflows.py tests/test_integration_api_cli.py tests/test_pipelines_scenarios.py tests/test_data_pipelines_small.py tests/test_validation_cycle.py tests/test_determinism.py tests/integration/test_imports.py
+
+NOT FULLY CLOSED
+- full repo-wide pytest sweep was not re-run to completion in this pass
+- benchmark_core and benchmark_scalability were not fully re-profiled in this pass
+- legacy docs outside the six primary docs remain in repo and were not fully consolidated
+- public release polish (badges/screenshots/release notes cleanup) not fully finalized

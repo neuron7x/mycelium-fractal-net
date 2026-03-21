@@ -1,109 +1,53 @@
-"""
-Core numerical engines for MyceliumFractalNet.
+"""Core numerical and canonical operation exports."""
 
-This module provides numerically stable implementations of the six
-canonical domain modules:
+from __future__ import annotations
 
-1. **nernst** — Nernst-Planck electrochemistry (membrane potentials)
-2. **turing** — Turing morphogenesis (reaction-diffusion patterns)
-3. **fractal** — Fractal analysis (box-counting dimension, IFS)
-4. **stdp** — STDP plasticity (spike-timing dependent learning)
-5. **federated** — Byzantine-robust aggregation (Hierarchical Krum)
-6. **stability** — Lyapunov exponents and stability metrics
-
-All implementations follow MFN_MATH_MODEL.md specifications with:
-- Explicit stability constraints (CFL conditions, clamping)
-- NaN/Inf prevention via validation and clamping
-- Reproducible results via seeded RNG
-- Configurable parameters via dataclasses
-
-Layer Boundaries:
-    core/ contains pure mathematical/dynamical implementations.
-    No FastAPI, uvicorn, or HTTP-level dependencies allowed here.
-    Integration with external systems goes through integration/ layer.
-
-Reference:
-    - docs/MFN_MATH_MODEL.md — Mathematical formalization
-    - docs/ARCHITECTURE.md — System architecture
-    - docs/MFN_CODE_STRUCTURE.md — Code structure documentation
-"""
+from importlib import import_module
 
 from .engine import run_mycelium_simulation, run_mycelium_simulation_with_history
-from .exceptions import (
-    NumericalInstabilityError,
-    StabilityError,
-    ValueOutOfRangeError,
-)
-from .federated import (
-    HierarchicalKrumAggregator,
-    aggregate_gradients_krum,
-)
+from .exceptions import NumericalInstabilityError, StabilityError, ValueOutOfRangeError
+from .extract import extract
 from .field import MyceliumField
-from .fractal import (
-    estimate_fractal_dimension,
-    generate_fractal_ifs,
-)
-from .fractal_growth_engine import (
-    FractalConfig,
-    FractalGrowthEngine,
-    FractalMetrics,
-)
-from .membrane_engine import (
-    MembraneConfig,
-    MembraneEngine,
-    MembraneMetrics,
-)
+from .fractal_growth_engine import FractalConfig, FractalGrowthEngine, FractalMetrics
+from .membrane_engine import MembraneConfig, MembraneEngine, MembraneMetrics
 from .nernst import compute_nernst_potential
 from .reaction_diffusion_engine import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
     ReactionDiffusionMetrics,
 )
-from .stability import (
-    compute_lyapunov_exponent,
-    compute_stability_metrics,
-    is_stable,
-)
-from .stdp import STDPPlasticity
-from .turing import simulate_mycelium_field
+from .report import report
+from .stability import compute_lyapunov_exponent, compute_stability_metrics, is_stable
 from .types import SimulationConfig, SimulationResult
 
+_OPTIONAL_ATTRS = {
+    'HierarchicalKrumAggregator': 'mycelium_fractal_net.core.federated',
+    'aggregate_gradients_krum': 'mycelium_fractal_net.core.federated',
+    'STDPPlasticity': 'mycelium_fractal_net.core.stdp',
+    'estimate_fractal_dimension': 'mycelium_fractal_net.core.fractal',
+    'generate_fractal_ifs': 'mycelium_fractal_net.core.fractal',
+    'simulate_mycelium_field': 'mycelium_fractal_net.core.turing',
+}
+
+
+def __getattr__(name: str):
+    if name in _OPTIONAL_ATTRS:
+        module = import_module(_OPTIONAL_ATTRS[name])
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(name)
+
+
 __all__ = [
-    # Exceptions
-    "StabilityError",
-    "ValueOutOfRangeError",
-    "NumericalInstabilityError",
-    # Simulation Types
-    "SimulationConfig",
-    "SimulationResult",
-    "MyceliumField",
-    # Simulation API
-    "run_mycelium_simulation",
-    "run_mycelium_simulation_with_history",
-    # === Domain-Specific Public API ===
-    # Nernst (membrane potentials)
-    "compute_nernst_potential",
-    "MembraneEngine",
-    "MembraneConfig",
-    "MembraneMetrics",
-    # Turing (reaction-diffusion)
-    "simulate_mycelium_field",
-    "ReactionDiffusionEngine",
-    "ReactionDiffusionConfig",
-    "ReactionDiffusionMetrics",
-    # Fractal (dimension analysis)
-    "estimate_fractal_dimension",
-    "generate_fractal_ifs",
-    "FractalGrowthEngine",
-    "FractalConfig",
-    "FractalMetrics",
-    # STDP (plasticity)
-    "STDPPlasticity",
-    # Federated (Byzantine-robust aggregation)
-    "HierarchicalKrumAggregator",
-    "aggregate_gradients_krum",
-    # Stability (Lyapunov analysis)
-    "compute_lyapunov_exponent",
-    "compute_stability_metrics",
-    "is_stable",
+    'run_mycelium_simulation', 'run_mycelium_simulation_with_history',
+    'NumericalInstabilityError', 'StabilityError', 'ValueOutOfRangeError', 'extract',
+    'HierarchicalKrumAggregator', 'aggregate_gradients_krum', 'MyceliumField',
+    'estimate_fractal_dimension', 'generate_fractal_ifs',
+    'FractalConfig', 'FractalGrowthEngine', 'FractalMetrics',
+    'MembraneConfig', 'MembraneEngine', 'MembraneMetrics',
+    'compute_nernst_potential', 'report',
+    'ReactionDiffusionConfig', 'ReactionDiffusionEngine', 'ReactionDiffusionMetrics',
+    'compute_lyapunov_exponent', 'compute_stability_metrics', 'is_stable',
+    'STDPPlasticity', 'simulate_mycelium_field', 'SimulationConfig', 'SimulationResult',
 ]

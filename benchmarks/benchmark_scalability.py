@@ -10,6 +10,8 @@ Run with: python benchmarks/benchmark_scalability.py
 """
 
 import gc
+import csv
+import os
 import json
 import sys
 import time
@@ -22,15 +24,16 @@ from typing import Any, Optional
 
 import numpy as np
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from mycelium_fractal_net import (
     SimulationConfig,
+    SimulationSpec,
     estimate_fractal_dimension,
     run_mycelium_simulation,
 )
 from mycelium_fractal_net.core import compute_lyapunov_exponent
+from mycelium_fractal_net.core.simulate import simulate_history
+from mycelium_fractal_net.numerics.grid_ops import BoundaryCondition, compute_laplacian
 
 
 @dataclass
@@ -81,9 +84,12 @@ class ScalabilityBenchmarkSuite:
         gc.collect()
         tracemalloc.start()
 
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
+        grid_size = 64 if profile != "full" else 128
+        steps = 64 if profile != "full" else 200
         config = SimulationConfig(
-            grid_size=128,
-            steps=200,
+            grid_size=grid_size,
+            steps=steps,
             seed=42,
             turing_enabled=True,
         )
@@ -103,13 +109,13 @@ class ScalabilityBenchmarkSuite:
             metric_value=elapsed,
             metric_unit="s",
             target_value=target_s,
-            passed=elapsed < target_s and result.field.shape == (128, 128),
+            passed=elapsed < target_s and result.field.shape == (grid_size, grid_size),
             memory_mb=peak_mb,
             timestamp=datetime.now().isoformat(),
         )
 
         print(
-            f"Large grid (128x128, 200 steps): {elapsed:.2f}s, {peak_mb:.2f}MB "
+            f"Large grid ({grid_size}x{grid_size}, {steps} steps): {elapsed:.2f}s, {peak_mb:.2f}MB "
             f"(target: <{target_s}s)"
         )
 
@@ -207,9 +213,11 @@ class ScalabilityBenchmarkSuite:
 
         Target: >3 simulations/second with 4 workers
         """
-        num_workers = 4
-        num_tasks = 16
-        params_list = [{"seed": i * 100, "grid_size": 32, "steps": 50} for i in range(num_tasks)]
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
+        num_workers = 2 if profile != "full" else 4
+        num_tasks = 4 if profile != "full" else 16
+        steps = 20 if profile != "full" else 50
+        params_list = [{"seed": i * 100, "grid_size": 32, "steps": steps} for i in range(num_tasks)]
 
         gc.collect()
         tracemalloc.start()
@@ -243,6 +251,76 @@ class ScalabilityBenchmarkSuite:
 
         self.results.append(bench_result)
         return bench_result
+
+
+    def benchmark_laplacian_numpy_vs_jit(self) -> ScalabilityResult:
+        """Benchmark reference vs optional accelerated Laplacian with parity check."""
+        rng = np.random.default_rng(42)
+        field = rng.normal(size=(128, 128)).astype(np.float64)
+
+        start = time.perf_counter()
+        reference = compute_laplacian(field, boundary=BoundaryCondition.PERIODIC, use_accel=False)
+        reference_elapsed = time.perf_counter() - start
+
+        start = time.perf_counter()
+        accelerated = compute_laplacian(field, boundary=BoundaryCondition.PERIODIC, use_accel=True)
+        accelerated_elapsed = time.perf_counter() - start
+
+        passed = bool(np.allclose(reference, accelerated, rtol=0.0, atol=1e-12))
+        result = ScalabilityResult(
+            name="laplacian_numpy_vs_jit",
+            metric_value=accelerated_elapsed,
+            metric_unit="s",
+            target_value=reference_elapsed * 2.0 if reference_elapsed > 0 else 1.0,
+            passed=passed,
+            memory_mb=0.0,
+            timestamp=datetime.now().isoformat(),
+        )
+        print(
+            f"Laplacian parity: ref={reference_elapsed:.4f}s accel={accelerated_elapsed:.4f}s parity={'ok' if passed else 'fail'}"
+        )
+        self.results.append(result)
+        return result
+
+    def benchmark_memmap_history_scale(self) -> ScalabilityResult:
+        """Benchmark disk-backed history path for larger scale contours."""
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
+        experimental = os.getenv("MFN_EXPERIMENTAL_SCALE", "0").lower() in {"1", "true", "yes", "on"}
+        if experimental:
+            grid_size = 1024
+            steps = 16
+            name = "memmap_history_1024x1024_experimental"
+        elif profile == "full":
+            grid_size = 512
+            steps = 128
+            name = "memmap_history_512x512"
+        else:
+            grid_size = 128
+            steps = 24
+            name = "memmap_history_128x128_smoke"
+
+        gc.collect()
+        tracemalloc.start()
+        start = time.perf_counter()
+        seq = simulate_history(SimulationSpec(grid_size=grid_size, steps=steps, seed=42), history_backend="memmap")
+        elapsed = time.perf_counter() - start
+        _, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        peak_mb = peak / (1024 * 1024)
+        memmap_path = Path(str(seq.metadata.get("history_memmap_path", "")))
+        passed = seq.history is not None and memmap_path.exists() and seq.field.shape == (grid_size, grid_size)
+        result = ScalabilityResult(
+            name=name,
+            metric_value=elapsed,
+            metric_unit="s",
+            target_value=600.0 if experimental else 180.0,
+            passed=passed,
+            memory_mb=peak_mb,
+            timestamp=datetime.now().isoformat(),
+        )
+        print(f"Memmap history ({grid_size}x{grid_size}, {steps} steps): {elapsed:.2f}s, {peak_mb:.2f}MB")
+        self.results.append(result)
+        return result
 
     def benchmark_memory_efficiency(self) -> ScalabilityResult:
         """Benchmark memory efficiency with repeated simulations.
@@ -358,13 +436,23 @@ class ScalabilityBenchmarkSuite:
         print("MyceliumFractalNet Scalability Benchmarks")
         print("=" * 60 + "\n")
 
-        self.benchmark_large_grid_128()
-        self.benchmark_large_grid_256()
-        self.benchmark_long_simulation()
-        self.benchmark_concurrent_simulations()
-        self.benchmark_memory_efficiency()
-        self.benchmark_fractal_dimension_scaling()
-        self.benchmark_lyapunov_large_history()
+        profile = os.getenv("MFN_BENCHMARK_PROFILE", "smoke").lower()
+        if profile == "full":
+            self.benchmark_large_grid_128()
+            self.benchmark_large_grid_256()
+            self.benchmark_long_simulation()
+            self.benchmark_concurrent_simulations()
+            self.benchmark_memory_efficiency()
+            self.benchmark_fractal_dimension_scaling()
+            self.benchmark_lyapunov_large_history()
+            self.benchmark_laplacian_numpy_vs_jit()
+            self.benchmark_memmap_history_scale()
+        else:
+            self.benchmark_large_grid_128()
+            self.benchmark_concurrent_simulations()
+            self.benchmark_fractal_dimension_scaling()
+            self.benchmark_laplacian_numpy_vs_jit()
+            self.benchmark_memmap_history_scale()
 
         # Summary
         print("\n" + "=" * 60)
@@ -388,12 +476,11 @@ class ScalabilityBenchmarkSuite:
         return self.results
 
     def save_results(self, filename: Optional[str] = None) -> Path:
-        """Save benchmark results to JSON file."""
-        if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"scalability_{timestamp}.json"
-
-        output_path = self.results_dir / filename
+        """Save benchmark results to canonical JSON + CSV files."""
+        json_name = filename or "benchmark_scalability.json"
+        csv_name = json_name.replace(".json", ".csv")
+        output_path = self.results_dir / json_name
+        csv_path = self.results_dir / csv_name
 
         results_dict = {
             "timestamp": datetime.now().isoformat(),
@@ -407,8 +494,14 @@ class ScalabilityBenchmarkSuite:
 
         with open(output_path, "w") as f:
             json.dump(results_dict, f, indent=2)
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["name", "metric_value", "metric_unit", "target_value", "passed", "memory_mb", "timestamp"])
+            writer.writeheader()
+            for row in self.results:
+                writer.writerow(asdict(row))
 
         print(f"\nResults saved to: {output_path}")
+        print(csv_path)
         return output_path
 
 

@@ -1,60 +1,25 @@
-"""
-MyceliumFractalNet v4.1 package.
+"""Morphology-aware Field Intelligence Engine public API."""
 
-Bio-inspired adaptive network with fractal dynamics, STDP plasticity,
-sparse attention, and Byzantine-robust federated learning.
+from __future__ import annotations
 
-Public API (matching README examples):
---------------------------------------
+from importlib import import_module
+from importlib.metadata import PackageNotFoundError, version
 
-**Nernst-Planck Electrochemistry:**
-    >>> from mycelium_fractal_net import compute_nernst_potential
-    >>> E_K = compute_nernst_potential(z_valence=1, concentration_out_molar=5e-3,
-    ...                                concentration_in_molar=140e-3, temperature_k=310.0)
-    >>> # E_K ≈ -89 mV
+try:
+    __version__ = version("mycelium-fractal-net")
+except PackageNotFoundError:
+    __version__ = "4.1.0"
 
-**Turing Morphogenesis:**
-    >>> from mycelium_fractal_net import simulate_mycelium_field
-    >>> import numpy as np
-    >>> rng = np.random.default_rng(42)
-    >>> field, growth_events = simulate_mycelium_field(rng, grid_size=64, steps=64)
-
-**Fractal Analysis:**
-    >>> from mycelium_fractal_net import estimate_fractal_dimension
-    >>> binary = field > -0.060  # threshold -60 mV
-    >>> D = estimate_fractal_dimension(binary)
-    >>> # D ∈ [1.4, 1.9]
-
-**Federated Learning:**
-    >>> from mycelium_fractal_net import aggregate_gradients_krum
-    >>> import torch
-    >>> gradients = [torch.randn(100) for _ in range(50)]
-    >>> aggregated = aggregate_gradients_krum(gradients)
-
-Architecture Layers:
--------------------
-- **core/** — Pure mathematical/dynamical engines (no HTTP dependencies)
-- **integration/** — Schemas, adapters for API/CLI
-- **analytics/** — Feature extraction module
-- **types/** — Canonical data structures (see docs/MFN_DATA_MODEL.md)
-
-Reference:
-    - docs/MFN_SYSTEM_ROLE.md — System capabilities and boundaries
-    - docs/ARCHITECTURE.md — System architecture
-    - docs/MFN_CODE_STRUCTURE.md — Code structure documentation
-    - docs/MFN_DATA_MODEL.md — Canonical data model
-"""
-
-# === Analytics API ===
 from .analytics import (
     FeatureVector,
     FractalInsightArchitect,
     Insight,
     InsufficientDataError,
+    compute_basic_stats,
+    compute_box_counting_dimension,
     compute_fractal_features,
 )
-
-# === Centralized Configuration ===
+from .analytics.morphology import compute_morphology_descriptor
 from .config import (
     DatasetConfig,
     FeatureConfig,
@@ -68,19 +33,10 @@ from .config import (
     validate_feature_config,
     validate_simulation_config,
 )
-from .config_profiles import (
-    ConfigProfile,
-    ConfigValidationError,
-    apply_overrides,
-    load_config_profile,
-)
-
-# === Core Domain Modules (Canonical API) ===
 from .core import (
     FractalConfig,
     FractalGrowthEngine,
     FractalMetrics,
-    HierarchicalKrumAggregator,
     MembraneConfig,
     MembraneEngine,
     MembraneMetrics,
@@ -92,184 +48,303 @@ from .core import (
     SimulationConfig,
     SimulationResult,
     StabilityError,
-    STDPPlasticity,
     ValueOutOfRangeError,
-    aggregate_gradients_krum,
     compute_lyapunov_exponent,
     compute_nernst_potential,
     compute_stability_metrics,
-    estimate_fractal_dimension,
-    generate_fractal_ifs,
     is_stable,
     run_mycelium_simulation,
     run_mycelium_simulation_with_history,
-    simulate_mycelium_field,
 )
-
-# === Crypto Module (Cryptographic Primitives) ===
-from .crypto import (
-    ECDHKeyExchange,
-    ECDHKeyPair,
-    EdDSASignature,
-    SignatureKeyPair,
-    derive_symmetric_key,
-    generate_ecdh_keypair,
-    generate_signature_keypair,
-    sign_message,
-    verify_signature,
-)
-
-# === Model Layer (Neural Network, Validation) ===
-from .model import (
-    BODY_TEMPERATURE_K,
-    FARADAY_CONSTANT,
-    ION_CLAMP_MIN,
-    NERNST_RTFZ_MV,
-    QUANTUM_JITTER_VAR,
-    R_GAS_CONSTANT,
-    SPARSE_TOPK,
-    STDP_A_MINUS,
-    STDP_A_PLUS,
-    STDP_TAU_MINUS,
-    STDP_TAU_PLUS,
-    TURING_THRESHOLD,
-    MyceliumFractalNet,
-    SparseAttention,
-    ValidationConfig,
-    run_validation,
-    run_validation_cli,
-)
-
-# === Pipelines Module (Data Generation Scenarios) ===
+from .core.detect import detect_anomaly
+from .core.extract import extract as extract_operation
+from .core.forecast import forecast_next
+from .core.report import report as report_operation
+from .core.simulate import simulate_batch, simulate_final, simulate_history, simulate_scenario
 from .pipelines import (
+    build_analysis_report,
     get_preset_config,
     list_presets,
+    run_forecast_pipeline,
     run_scenario,
 )
-
-# === Types Module (Canonical Data Structures) ===
-from .types import (
+from .types.detection import AnomalyEvent, RegimeState
+from .types.features import FEATURE_COUNT, FEATURE_NAMES, MorphologyDescriptor
+from .types.field import (
     BoundaryCondition,
-    DatasetMeta,
-    DatasetRow,
-    DatasetStats,
     FieldHistory,
+    FieldSequence,
     FieldState,
+    GABAATonicSpec,
     GridShape,
-    ScenarioConfig,
-    ScenarioType,
+    NeuromodulationSpec,
+    NeuromodulationStateSnapshot,
+    ObservationNoiseSpec,
+    SerotonergicPlasticitySpec,
+    SimulationSpec,
+)
+from .types.forecast import ComparisonResult, ForecastResult
+from .types.report import AnalysisReport
+
+
+def simulate(
+    spec: SimulationSpec,
+    *,
+    history_backend: str = 'memory',
+    history_dir: str | None = None,
+) -> FieldSequence:
+    """Run a morphology simulation and return the field sequence.
+
+    Parameters
+    ----------
+    spec : SimulationSpec
+        Simulation parameters (grid size, steps, seed, neuromodulation, etc.).
+    history_backend : str
+        ``'memory'`` (default) or ``'memmap'`` for disk-backed history.
+    history_dir : str | None
+        Directory for memmap files. Only used when ``history_backend='memmap'``.
+
+    Returns
+    -------
+    FieldSequence
+        Simulated field with optional temporal history.
+
+    Examples
+    --------
+    >>> import mycelium_fractal_net as mfn
+    >>> seq = mfn.simulate(mfn.SimulationSpec(grid_size=32, steps=16, seed=42))
+    >>> seq.field.shape
+    (32, 32)
+    """
+    if not isinstance(spec, SimulationSpec):
+        raise TypeError(f"spec must be SimulationSpec, got {type(spec).__name__}")
+    return simulate_history(spec, history_backend=history_backend, history_dir=history_dir)
+
+
+def extract(sequence: FieldSequence) -> MorphologyDescriptor:
+    """Extract a morphology descriptor from a field sequence.
+
+    Computes 50+ features across 7 groups: base statistics, temporal
+    dynamics, multiscale profile, stability, complexity, connectivity,
+    and neuromodulation state.
+
+    Parameters
+    ----------
+    sequence : FieldSequence
+        Simulated field sequence.
+
+    Returns
+    -------
+    MorphologyDescriptor
+        Versioned descriptor with embedding and explainable feature groups.
+
+    Examples
+    --------
+    >>> desc = mfn.extract(seq)
+    >>> desc.stability['instability_index']
+    0.012...
+    """
+    if not isinstance(sequence, FieldSequence):
+        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
+    return extract_operation(sequence)
+
+
+def detect(sequence: FieldSequence) -> AnomalyEvent:
+    """Detect anomalies and classify the regime of a field sequence.
+
+    Returns an anomaly event with score, label (nominal/watch/anomalous),
+    and a nested regime state (stable/transitional/critical/reorganized/
+    pathological_noise).
+
+    Parameters
+    ----------
+    sequence : FieldSequence
+        Simulated field sequence.
+
+    Returns
+    -------
+    AnomalyEvent
+        Detection result with score, label, confidence, evidence, and regime.
+
+    Examples
+    --------
+    >>> event = mfn.detect(seq)
+    >>> event.label
+    'nominal'
+    >>> event.regime.label
+    'stable'
+    """
+    if not isinstance(sequence, FieldSequence):
+        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
+    return detect_anomaly(sequence)
+
+
+def forecast(sequence: FieldSequence, horizon: int = 8) -> ForecastResult:
+    """Forecast future field states using adaptive descriptor extrapolation.
+
+    Projects the field forward by ``horizon`` steps using damped linear
+    extrapolation with uncertainty quantification.
+
+    Parameters
+    ----------
+    sequence : FieldSequence
+        Simulated field sequence with history.
+    horizon : int
+        Number of future steps to predict. Default 8.
+
+    Returns
+    -------
+    ForecastResult
+        Predicted states, descriptor trajectory, and uncertainty envelope.
+
+    Examples
+    --------
+    >>> result = mfn.forecast(seq, horizon=4)
+    >>> result.to_dict()['horizon']
+    4
+    """
+    if not isinstance(sequence, FieldSequence):
+        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
+    return forecast_next(sequence, horizon=horizon)
+
+
+def compare(
+    a: FieldSequence | MorphologyDescriptor,
+    b: FieldSequence | MorphologyDescriptor,
+) -> ComparisonResult:
+    """Compare two field sequences or morphology descriptors.
+
+    Computes embedding distance, cosine similarity, topology drift,
+    and structural similarity label.
+
+    Parameters
+    ----------
+    a : FieldSequence | MorphologyDescriptor
+        Reference sequence or descriptor.
+    b : FieldSequence | MorphologyDescriptor
+        Candidate sequence or descriptor.
+
+    Returns
+    -------
+    ComparisonResult
+        Distance, similarity label, drift summary, and topology analysis.
+
+    Examples
+    --------
+    >>> result = mfn.compare(seq_a, seq_b)
+    >>> result.label
+    'near-identical'
+    """
+    from .core.compare import compare as _compare
+    return _compare(a, b)
+
+
+def report(sequence: FieldSequence, output_root: str, horizon: int = 8) -> AnalysisReport:
+    """Generate a full analysis report with artifacts.
+
+    Orchestrates extraction, detection, forecasting, comparison, and
+    artifact generation into a single reproducible run directory.
+
+    Parameters
+    ----------
+    sequence : FieldSequence
+        Simulated field sequence with history.
+    output_root : str
+        Root directory for output artifacts.
+    horizon : int
+        Forecast horizon. Default 8.
+
+    Returns
+    -------
+    AnalysisReport
+        Complete report with all analysis results and artifact paths.
+
+    Examples
+    --------
+    >>> report = mfn.report(seq, output_root='/tmp/mfn_report')
+    >>> report.detection.label
+    'nominal'
+    """
+    if not isinstance(sequence, FieldSequence):
+        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
+    return report_operation(sequence, output_root=output_root, horizon=horizon)
+
+
+_LAZY_MODULES = {
+    name: f'{__name__}.{name}'
+    for name in ['analytics', 'core', 'experiments', 'integration', 'numerics', 'pipelines', 'security', 'signal', 'types']
+}
+
+_LAZY_ATTRS = {
+    'HierarchicalKrumAggregator': ('mycelium_fractal_net.core.federated', 'HierarchicalKrumAggregator'),
+    'aggregate_gradients_krum': ('mycelium_fractal_net.core.federated', 'aggregate_gradients_krum'),
+    'STDPPlasticity': ('mycelium_fractal_net.core.stdp', 'STDPPlasticity'),
+    'estimate_fractal_dimension': ('mycelium_fractal_net.core.fractal', 'estimate_fractal_dimension'),
+    'generate_fractal_ifs': ('mycelium_fractal_net.core.fractal', 'generate_fractal_ifs'),
+    'simulate_mycelium_field': ('mycelium_fractal_net.core.turing', 'simulate_mycelium_field'),
+    # Pure constants — sourced from CPU-only modules (no torch dependency)
+    'BODY_TEMPERATURE_K': ('mycelium_fractal_net.core.membrane_engine', 'BODY_TEMPERATURE_K'),
+    'FARADAY_CONSTANT': ('mycelium_fractal_net.core.membrane_engine', 'FARADAY_CONSTANT'),
+    'ION_CLAMP_MIN': ('mycelium_fractal_net.core.membrane_engine', 'ION_CLAMP_MIN'),
+    'R_GAS_CONSTANT': ('mycelium_fractal_net.core.membrane_engine', 'R_GAS_CONSTANT'),
+    'TURING_THRESHOLD': ('mycelium_fractal_net.core.turing', 'TURING_THRESHOLD'),
+    'QUANTUM_JITTER_VAR': ('mycelium_fractal_net.core.turing', 'QUANTUM_JITTER_VAR'),
+    'NERNST_RTFZ_MV': ('mycelium_fractal_net.core.nernst', 'NERNST_RTFZ_MV'),
+    # ML-dependent surfaces — torch required at access time
+    'MyceliumFractalNet': ('mycelium_fractal_net.model', 'MyceliumFractalNet'),
+    'SPARSE_TOPK': ('mycelium_fractal_net.model', 'SPARSE_TOPK'),
+    'STDP_A_MINUS': ('mycelium_fractal_net.model', 'STDP_A_MINUS'),
+    'STDP_A_PLUS': ('mycelium_fractal_net.model', 'STDP_A_PLUS'),
+    'STDP_TAU_MINUS': ('mycelium_fractal_net.model', 'STDP_TAU_MINUS'),
+    'STDP_TAU_PLUS': ('mycelium_fractal_net.model', 'STDP_TAU_PLUS'),
+    'SparseAttention': ('mycelium_fractal_net.model', 'SparseAttention'),
+    'ValidationConfig': ('mycelium_fractal_net.model', 'ValidationConfig'),
+    'run_validation': ('mycelium_fractal_net.model', 'run_validation'),
+    'run_validation_cli': ('mycelium_fractal_net.model', 'run_validation_cli'),
+}
+
+
+def __getattr__(name: str):
+    if name in _LAZY_MODULES:
+        module = import_module(_LAZY_MODULES[name])
+        globals()[name] = module
+        return module
+    if name in _LAZY_ATTRS:
+        module_name, attr_name = _LAZY_ATTRS[name]
+        module = import_module(module_name)
+        value = getattr(module, attr_name)
+        globals()[name] = value
+        return value
+    raise AttributeError(name)
+
+
+V1_SURFACE = (
+    'simulate', 'extract', 'detect', 'forecast', 'compare', 'report',
+    'SimulationSpec', 'NeuromodulationSpec', 'GABAATonicSpec', 'SerotonergicPlasticitySpec', 'ObservationNoiseSpec', 'FieldSequence', 'MorphologyDescriptor', 'AnomalyEvent', 'RegimeState',
+    'ForecastResult', 'ComparisonResult', 'AnalysisReport', '__version__',
 )
 
-__all__ = [
-    # === PUBLIC API (as shown in README) ===
-    # Nernst-Planck (membrane potentials)
-    "compute_nernst_potential",
-    # Turing (reaction-diffusion)
-    "simulate_mycelium_field",
-    # Fractal (dimension analysis)
-    "estimate_fractal_dimension",
-    "generate_fractal_ifs",
-    # Federated (Byzantine-robust aggregation)
-    "aggregate_gradients_krum",
-    "HierarchicalKrumAggregator",
-    # Stability (Lyapunov analysis)
-    "compute_lyapunov_exponent",
-    "compute_stability_metrics",
-    "is_stable",
-    # === VALIDATION & NEURAL NETWORK ===
-    "run_validation",
-    "run_validation_cli",
-    "MyceliumFractalNet",
-    "ValidationConfig",
-    "ConfigProfile",
-    "ConfigValidationError",
-    "load_config_profile",
-    "apply_overrides",
-    # === SIMULATION API ===
-    "run_mycelium_simulation",
-    "run_mycelium_simulation_with_history",
-    "SimulationConfig",
-    "SimulationResult",
-    "MyceliumField",
-    # === ANALYTICS API ===
-    "FeatureVector",
-    "FractalInsightArchitect",
-    "Insight",
-    "InsufficientDataError",
-    "compute_fractal_features",
-    # === CORE ENGINE CLASSES ===
-    # Nernst
-    "MembraneEngine",
-    "MembraneConfig",
-    "MembraneMetrics",
-    # Turing
-    "ReactionDiffusionEngine",
-    "ReactionDiffusionConfig",
-    "ReactionDiffusionMetrics",
-    # Fractal
-    "FractalGrowthEngine",
-    "FractalConfig",
-    "FractalMetrics",
-    # STDP
-    "STDPPlasticity",
-    # Attention
-    "SparseAttention",
-    # === PHYSICAL CONSTANTS ===
-    "R_GAS_CONSTANT",
-    "FARADAY_CONSTANT",
-    "BODY_TEMPERATURE_K",
-    "NERNST_RTFZ_MV",
-    "ION_CLAMP_MIN",
-    "TURING_THRESHOLD",
-    "STDP_TAU_PLUS",
-    "STDP_TAU_MINUS",
-    "STDP_A_PLUS",
-    "STDP_A_MINUS",
-    "SPARSE_TOPK",
-    "QUANTUM_JITTER_VAR",
-    # === EXCEPTIONS ===
-    "StabilityError",
-    "ValueOutOfRangeError",
-    "NumericalInstabilityError",
-    # === CONFIGURATION ===
-    "DatasetConfig",
-    "FeatureConfig",
-    "validate_simulation_config",
-    "validate_feature_config",
-    "validate_dataset_config",
-    "make_simulation_config_demo",
-    "make_simulation_config_default",
-    "make_feature_config_demo",
-    "make_feature_config_default",
-    "make_dataset_config_demo",
-    "make_dataset_config_default",
-    # === TYPES MODULE (Canonical Data Structures) ===
-    # Field types
-    "FieldState",
-    "FieldHistory",
-    "GridShape",
-    "BoundaryCondition",
-    # Dataset types
-    "DatasetRow",
-    "DatasetMeta",
-    "DatasetStats",
-    # Scenario types
-    "ScenarioConfig",
-    "ScenarioType",
-    # === PIPELINES MODULE (Data Generation) ===
-    "run_scenario",
-    "get_preset_config",
-    "list_presets",
-    # === CRYPTO MODULE (Cryptographic Primitives) ===
-    "ECDHKeyExchange",
-    "ECDHKeyPair",
-    "EdDSASignature",
-    "SignatureKeyPair",
-    "derive_symmetric_key",
-    "generate_ecdh_keypair",
-    "generate_signature_keypair",
-    "sign_message",
-    "verify_signature",
-]
+# Frozen surfaces: maintained for backward compatibility but not actively
+# developed. Import triggers a DeprecationWarning. Will be removed in v5.0.
+# Use canonical alternatives:
+#   crypto → artifact_bundle (Ed25519 signing via importlib)
+#   core.federated → external federated learning framework
+#   integration.ws_* → standard WebSocket libraries
+FROZEN_SURFACES = (
+    'crypto', 'core.federated', 'k8s.yaml', 'integration.ws_*', 'load_tests', 'notebooks', 'planning',
+)
+DEPRECATED_SURFACES = {
+    'crypto': 'Use artifact_bundle for signing. crypto/ will be removed in v5.0.',
+    'core.federated': 'Federated learning is frozen. Use external frameworks.',
+}
 
-__version__ = "4.1.0"
+
+__all__ = list(V1_SURFACE) + [
+    'FeatureVector', 'FractalConfig', 'FractalGrowthEngine', 'FractalMetrics', 'MembraneConfig', 'MembraneEngine', 'MembraneMetrics', 'MyceliumField',
+    'NumericalInstabilityError', 'ReactionDiffusionConfig', 'ReactionDiffusionEngine', 'ReactionDiffusionMetrics',
+    'SimulationConfig', 'SimulationResult', 'StabilityError', 'ValueOutOfRangeError', 'compute_fractal_features', 'compute_lyapunov_exponent', 'compute_nernst_potential',
+    'estimate_fractal_dimension', 'generate_fractal_ifs', 'simulate_mycelium_field',
+    'HierarchicalKrumAggregator', 'aggregate_gradients_krum', 'STDPPlasticity',
+    'BODY_TEMPERATURE_K', 'FARADAY_CONSTANT', 'ION_CLAMP_MIN', 'MyceliumFractalNet', 'NERNST_RTFZ_MV', 'QUANTUM_JITTER_VAR', 'R_GAS_CONSTANT', 'SPARSE_TOPK',
+    'STDP_A_MINUS', 'STDP_A_PLUS', 'STDP_TAU_MINUS', 'STDP_TAU_PLUS', 'SparseAttention', 'TURING_THRESHOLD', 'ValidationConfig', 'run_validation', 'run_validation_cli',
+]

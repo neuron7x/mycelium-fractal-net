@@ -1,6 +1,9 @@
 """Tests for fractal IFS generation and Lyapunov stability."""
 
 import numpy as np
+import pytest
+
+pytest.importorskip("torch")
 
 from mycelium_fractal_net.model import (
     compute_lyapunov_exponent,

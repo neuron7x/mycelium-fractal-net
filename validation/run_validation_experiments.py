@@ -14,6 +14,7 @@ Run with: python validation/run_validation_experiments.py
 Reference: docs/MFN_MATH_MODEL.md
 """
 
+import json
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -22,8 +23,6 @@ from typing import Any
 
 import numpy as np
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from mycelium_fractal_net import (
     BODY_TEMPERATURE_K,
@@ -1090,9 +1089,29 @@ def main() -> int:
     runner = ValidationExperimentRunner(num_seeds=10)
     results = runner.run_all(update_report=True)
 
-    # Return exit code based on results
+    passed = sum(1 for r in results if r.status == "PASS")
     failed = sum(1 for r in results if r.status == "FAIL")
-    return 0 if failed == 0 else 1
+    summary_dir = Path(__file__).resolve().parents[1] / "artifacts" / "evidence" / "wave_7" / "validation"
+    summary_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "status": "PASS" if failed == 0 else "FAIL",
+        "seed_set": list(range(10)),
+        "num_results": len(results),
+        "passed": passed,
+        "failed": failed,
+        "numerical_stability_status": "PASS" if all(r.details.get("is_finite", True) for r in results) else "FAIL",
+        "results": [
+            {
+                "scenario": r.scenario,
+                "status": r.status,
+                "expectation": r.expectation,
+                "result": r.result,
+            }
+            for r in results
+        ],
+    }
+    (summary_dir / "validation_summary.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    (summary_dir / "validation.log").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

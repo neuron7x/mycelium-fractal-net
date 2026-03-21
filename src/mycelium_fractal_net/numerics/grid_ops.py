@@ -1,40 +1,8 @@
-"""
-Grid Operations for Reaction-Diffusion Simulations.
-
-Implements discretized spatial operators for 2D field simulations:
-- Discrete Laplacian (5-point stencil) with multiple boundary conditions
-- Gradient operators
-- Field statistics and validation
-
-Reference: MFN_MATH_MODEL.md Section 2.4 (Discrete Laplacian)
-
-Mathematical Formulation:
-    The continuous Laplacian ∇²u is discretized on a uniform 2D grid:
-
-    ∇²u ≈ (u[i+1,j] + u[i-1,j] + u[i,j+1] + u[i,j-1] - 4·u[i,j]) / dx²
-
-    With dx=1 (unit grid spacing), the stencil simplifies to:
-
-    ∇²u ≈ u[i+1,j] + u[i-1,j] + u[i,j+1] + u[i,j-1] - 4·u[i,j]
-
-Discretization Details:
-    - Spatial: Uniform grid, unit spacing (dx=dy=1)
-    - Stencil: 5-point (cross) stencil
-    - Order of accuracy: O(dx²) - second-order
-
-Boundary Conditions:
-    - Periodic: Uses np.roll (toroidal topology)
-    - Neumann: Zero-flux (mirror at boundary, dV/dn=0)
-    - Dirichlet: Fixed value at boundary (typically zero)
-
-Stability Constraint (CFL):
-    For explicit Euler time stepping:
-    dt · D · 4/dx² ≤ 1
-    With dx=1, dt=1: D_max = 0.25
-"""
+"""Grid operations for reaction-diffusion simulations."""
 
 from __future__ import annotations
 
+import os
 from enum import Enum
 from typing import Any, cast
 
@@ -43,128 +11,130 @@ from numpy.typing import NDArray
 
 from mycelium_fractal_net.core.exceptions import NumericalInstabilityError
 
+try:  # optional acceleration contour
+    from numba import njit
+except Exception:  # pragma: no cover
+    njit = None  # type: ignore[assignment]
+
 
 class BoundaryCondition(Enum):
-    """
-    Available boundary conditions for spatial discretization.
-
-    Reference: MFN_MATH_MODEL.md Section 2.4
-    """
-
     PERIODIC = "periodic"
-    """Periodic (wrap-around) boundaries using np.roll."""
-
     NEUMANN = "neumann"
-    """Zero-flux (Neumann) boundaries - gradient is zero at boundary."""
-
     DIRICHLET = "dirichlet"
-    """Fixed value (Dirichlet) boundaries - typically zero."""
+
+
+def _use_accel(use_accel: bool | None) -> bool:
+    if use_accel is not None:
+        return bool(use_accel)
+    return os.getenv('MFN_ENABLE_ACCEL_LAPLACIAN', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _laplacian_numpy_periodic(field: NDArray[np.floating]) -> NDArray[np.floating]:
+    up = np.roll(field, 1, axis=0)
+    down = np.roll(field, -1, axis=0)
+    left = np.roll(field, 1, axis=1)
+    right = np.roll(field, -1, axis=1)
+    return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
+
+
+def _laplacian_numpy_neumann(field: NDArray[np.floating]) -> NDArray[np.floating]:
+    up = np.empty_like(field)
+    up[1:, :] = field[:-1, :]
+    up[0, :] = field[0, :]
+
+    down = np.empty_like(field)
+    down[:-1, :] = field[1:, :]
+    down[-1, :] = field[-1, :]
+
+    left = np.empty_like(field)
+    left[:, 1:] = field[:, :-1]
+    left[:, 0] = field[:, 0]
+
+    right = np.empty_like(field)
+    right[:, :-1] = field[:, 1:]
+    right[:, -1] = field[:, -1]
+    return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
+
+
+def _laplacian_numpy_dirichlet(field: NDArray[np.floating]) -> NDArray[np.floating]:
+    up = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode='constant', constant_values=0)
+    down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode='constant', constant_values=0)
+    left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode='constant', constant_values=0)
+    right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode='constant', constant_values=0)
+    return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
+
+
+if njit is not None:
+    @njit(cache=True)
+    def _laplacian_periodic_jit(field):
+        rows, cols = field.shape
+        out = np.empty_like(field)
+        for i in range(rows):
+            up = (i - 1) % rows
+            down = (i + 1) % rows
+            for j in range(cols):
+                left = (j - 1) % cols
+                right = (j + 1) % cols
+                out[i, j] = field[up, j] + field[down, j] + field[i, left] + field[i, right] - 4.0 * field[i, j]
+        return out
+
+    @njit(cache=True)
+    def _laplacian_neumann_jit(field):
+        rows, cols = field.shape
+        out = np.empty_like(field)
+        for i in range(rows):
+            up = i if i == 0 else i - 1
+            down = i if i == rows - 1 else i + 1
+            for j in range(cols):
+                left = j if j == 0 else j - 1
+                right = j if j == cols - 1 else j + 1
+                out[i, j] = field[up, j] + field[down, j] + field[i, left] + field[i, right] - 4.0 * field[i, j]
+        return out
+
+    @njit(cache=True)
+    def _laplacian_dirichlet_jit(field):
+        rows, cols = field.shape
+        out = np.empty_like(field)
+        for i in range(rows):
+            for j in range(cols):
+                up = field[i - 1, j] if i > 0 else 0.0
+                down = field[i + 1, j] if i < rows - 1 else 0.0
+                left = field[i, j - 1] if j > 0 else 0.0
+                right = field[i, j + 1] if j < cols - 1 else 0.0
+                out[i, j] = up + down + left + right - 4.0 * field[i, j]
+        return out
+else:  # pragma: no cover
+    _laplacian_periodic_jit = None
+    _laplacian_neumann_jit = None
+    _laplacian_dirichlet_jit = None
+
+
+def laplacian_backend(use_accel: bool | None = None) -> str:
+    if _use_accel(use_accel) and njit is not None:
+        return 'numba-jit'
+    return 'numpy-reference'
 
 
 def compute_laplacian(
     field: NDArray[np.floating],
     boundary: BoundaryCondition = BoundaryCondition.PERIODIC,
     check_stability: bool = True,
+    use_accel: bool | None = None,
 ) -> NDArray[np.floating]:
-    """
-    Compute discrete 2D Laplacian using 5-point stencil.
+    field = np.asarray(field, dtype=np.float64)
+    if field.ndim != 2:
+        raise ValueError(f'field must be 2D, got ndim={field.ndim}')
 
-    Implements discretization from MFN_MATH_MODEL.md Section 2.4:
-
-        ∇²u_{i,j} ≈ u_{i+1,j} + u_{i-1,j} + u_{i,j+1} + u_{i,j-1} - 4·u_{i,j}
-
-    Discretization scheme:
-        - Explicit finite difference
-        - 5-point cross stencil
-        - Second-order accuracy O(dx²)
-        - Unit grid spacing (dx=1)
-
-    Parameters
-    ----------
-    field : NDArray[np.floating]
-        Input field of shape (N, M), typically (N, N) square grid.
-    boundary : BoundaryCondition
-        Boundary condition type (periodic, neumann, dirichlet).
-    check_stability : bool
-        Whether to check for NaN/Inf after computation.
-
-    Returns
-    -------
-    NDArray[np.floating]
-        Laplacian of shape (N, M), same as input.
-
-    Raises
-    ------
-    NumericalInstabilityError
-        If NaN or Inf values are detected (when check_stability=True).
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> field = np.zeros((10, 10))
-    >>> field[5, 5] = 1.0  # Point source
-    >>> lap = compute_laplacian(field)
-    >>> print(f"Laplacian at center: {lap[5, 5]:.2f}")  # -4.0
-
-    Notes
-    -----
-    - For diffusion equation ∂u/∂t = D·∇²u, use:
-      u_new = u + dt * D * compute_laplacian(u)
-    - Stability requires dt * D * 4 ≤ 1 (CFL condition)
-    """
+    accel = _use_accel(use_accel) and njit is not None
     if boundary == BoundaryCondition.PERIODIC:
-        # Periodic boundaries via np.roll (most efficient)
-        up = np.roll(field, 1, axis=0)
-        down = np.roll(field, -1, axis=0)
-        left = np.roll(field, 1, axis=1)
-        right = np.roll(field, -1, axis=1)
-
+        laplacian = _laplacian_periodic_jit(field) if accel else _laplacian_numpy_periodic(field)
     elif boundary == BoundaryCondition.NEUMANN:
-        # Zero-flux (Neumann): boundary value equals interior neighbor
-        # This enforces dV/dn = 0 at all boundaries
-        up = np.empty_like(field)
-        up[1:, :] = field[:-1, :]
-        up[0, :] = field[0, :]  # First row: zero gradient
+        laplacian = _laplacian_neumann_jit(field) if accel else _laplacian_numpy_neumann(field)
+    else:
+        laplacian = _laplacian_dirichlet_jit(field) if accel else _laplacian_numpy_dirichlet(field)
 
-        down = np.empty_like(field)
-        down[:-1, :] = field[1:, :]
-        down[-1, :] = field[-1, :]  # Last row: zero gradient
-
-        left = np.empty_like(field)
-        left[:, 1:] = field[:, :-1]
-        left[:, 0] = field[:, 0]  # First column: zero gradient
-
-        right = np.empty_like(field)
-        right[:, :-1] = field[:, 1:]
-        right[:, -1] = field[:, -1]  # Last column: zero gradient
-
-    else:  # DIRICHLET
-        # Fixed value at boundaries (zero by default)
-        up = np.pad(field[:-1, :], ((1, 0), (0, 0)), mode="constant", constant_values=0)
-        down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant", constant_values=0)
-        left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant", constant_values=0)
-        right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant", constant_values=0)
-
-    laplacian = up + down + left + right - 4.0 * field
-
-    # Stability check
     if check_stability:
-        nan_count = int(np.sum(np.isnan(laplacian)))
-        inf_count = int(np.sum(np.isinf(laplacian)))
-
-        if nan_count > 0:
-            raise NumericalInstabilityError(
-                "NaN values in Laplacian computation",
-                field_name="laplacian",
-                nan_count=nan_count,
-            )
-        if inf_count > 0:
-            raise NumericalInstabilityError(
-                "Inf values in Laplacian computation",
-                field_name="laplacian",
-                inf_count=inf_count,
-            )
-
+        validate_field_stability(laplacian, field_name='laplacian')
     return cast(NDArray[np.floating[Any]], laplacian)
 
 
@@ -172,140 +142,60 @@ def compute_gradient(
     field: NDArray[np.floating],
     boundary: BoundaryCondition = BoundaryCondition.PERIODIC,
 ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
-    """
-    Compute spatial gradient using central differences.
-
-    Implements central difference approximation:
-        ∂u/∂x ≈ (u[i+1,j] - u[i-1,j]) / 2
-        ∂u/∂y ≈ (u[i,j+1] - u[i,j-1]) / 2
-
-    Discretization scheme:
-        - Central difference
-        - Second-order accuracy O(dx²)
-        - Unit grid spacing
-
-    Parameters
-    ----------
-    field : NDArray[np.floating]
-        Input field of shape (N, M).
-    boundary : BoundaryCondition
-        Boundary condition type.
-
-    Returns
-    -------
-    tuple[NDArray, NDArray]
-        (grad_x, grad_y) gradient components.
-    """
     if boundary == BoundaryCondition.PERIODIC:
         grad_x = (np.roll(field, -1, axis=0) - np.roll(field, 1, axis=0)) / 2.0
         grad_y = (np.roll(field, -1, axis=1) - np.roll(field, 1, axis=1)) / 2.0
     else:
-        # Use forward/backward difference at boundaries by default.
-        # For Neumann boundaries, override edges to enforce zero-flux.
         grad_x = np.zeros_like(field)
         grad_y = np.zeros_like(field)
-
-        # Interior: central difference
         grad_x[1:-1, :] = (field[2:, :] - field[:-2, :]) / 2.0
         grad_y[:, 1:-1] = (field[:, 2:] - field[:, :-2]) / 2.0
-
         if boundary == BoundaryCondition.NEUMANN:
-            # Zero-gradient at boundaries
             grad_x[0, :] = 0.0
             grad_x[-1, :] = 0.0
             grad_y[:, 0] = 0.0
             grad_y[:, -1] = 0.0
         else:
-            # Dirichlet: forward/backward difference at boundaries
             grad_x[0, :] = field[1, :] - field[0, :]
             grad_x[-1, :] = field[-1, :] - field[-2, :]
             grad_y[:, 0] = field[:, 1] - field[:, 0]
             grad_y[:, -1] = field[:, -1] - field[:, -2]
-
-    return (
-        cast(NDArray[np.floating[Any]], grad_x),
-        cast(NDArray[np.floating[Any]], grad_y),
-    )
+    return cast(NDArray[np.floating[Any]], grad_x), cast(NDArray[np.floating[Any]], grad_y)
 
 
-def compute_field_statistics(
-    field: NDArray[np.floating],
-) -> dict[str, float]:
-    """
-    Compute statistical summary of field values.
-
-    Useful for monitoring stability and validating simulation state.
-    Reference: MFN_MATH_MODEL.md Section 4.3 (Clamping and Bounds)
-
-    Parameters
-    ----------
-    field : NDArray[np.floating]
-        Input field of shape (N, M).
-
-    Returns
-    -------
-    dict[str, float]
-        Statistics including min, max, mean, std, and NaN/Inf counts.
-    """
+def compute_field_statistics(field: NDArray[np.floating]) -> dict[str, float]:
     return {
-        "min": float(np.min(field)),
-        "max": float(np.max(field)),
-        "mean": float(np.mean(field)),
-        "std": float(np.std(field)),
-        "nan_count": int(np.sum(np.isnan(field))),
-        "inf_count": int(np.sum(np.isinf(field))),
-        "finite_fraction": float(np.mean(np.isfinite(field))),
+        'min': float(np.min(field)),
+        'max': float(np.max(field)),
+        'mean': float(np.mean(field)),
+        'std': float(np.std(field)),
+        'nan_count': int(np.sum(np.isnan(field))),
+        'inf_count': int(np.sum(np.isinf(field))),
+        'finite_fraction': float(np.mean(np.isfinite(field))),
     }
 
 
 def validate_field_stability(
     field: NDArray[np.floating],
-    field_name: str = "field",
+    field_name: str = 'field',
     step: int | None = None,
 ) -> bool:
-    """
-    Validate field contains no NaN or Inf values.
-
-    Reference: MFN_MATH_MODEL.md Section 2.9 (Validation Invariants)
-
-    Parameters
-    ----------
-    field : NDArray[np.floating]
-        Field to validate.
-    field_name : str
-        Name for error reporting.
-    step : int | None
-        Current simulation step for error reporting.
-
-    Returns
-    -------
-    bool
-        True if field is stable (no NaN/Inf).
-
-    Raises
-    ------
-    NumericalInstabilityError
-        If NaN or Inf values are detected.
-    """
     nan_count = int(np.sum(np.isnan(field)))
     inf_count = int(np.sum(np.isinf(field)))
-
     if nan_count > 0:
         raise NumericalInstabilityError(
-            f"NaN values detected in {field_name}",
+            f'NaN values detected in {field_name}',
             step=step,
             field_name=field_name,
             nan_count=nan_count,
         )
-
     if inf_count > 0:
         raise NumericalInstabilityError(
-            f"Inf values detected in {field_name}",
+            f'Inf values detected in {field_name}',
             step=step,
             field_name=field_name,
             inf_count=inf_count,
         )
-
     return True
 
 
@@ -314,25 +204,6 @@ def validate_field_bounds(
     min_value: float,
     max_value: float,
 ) -> bool:
-    """
-    Validate all field values are within specified bounds.
-
-    Reference: MFN_MATH_MODEL.md Section 4.3 (Clamping and Bounds)
-
-    Parameters
-    ----------
-    field : NDArray[np.floating]
-        Field to validate.
-    min_value : float
-        Minimum allowed value.
-    max_value : float
-        Maximum allowed value.
-
-    Returns
-    -------
-    bool
-        True if all values are within bounds.
-    """
     return bool(np.all((field >= min_value) & (field <= max_value)))
 
 
@@ -341,28 +212,19 @@ def clamp_field(
     min_value: float,
     max_value: float,
 ) -> tuple[NDArray[np.floating], int]:
-    """
-    Clamp field values to specified range and count clamping events.
-
-    Reference: MFN_MATH_MODEL.md Section 4.3 (Clamping and Bounds)
-
-    Parameters
-    ----------
-    field : NDArray[np.floating]
-        Field to clamp (modified in place).
-    min_value : float
-        Minimum allowed value.
-    max_value : float
-        Maximum allowed value.
-
-    Returns
-    -------
-    tuple[NDArray, int]
-        Clamped field and count of values that were clamped.
-    """
     needs_clamping = (field < min_value) | (field > max_value)
     clamp_count = int(np.sum(needs_clamping))
-
     clamped = np.clip(field, min_value, max_value)
-
     return cast(NDArray[np.floating[Any]], clamped), clamp_count
+
+
+__all__ = [
+    'BoundaryCondition',
+    'compute_laplacian',
+    'laplacian_backend',
+    'compute_gradient',
+    'compute_field_statistics',
+    'validate_field_stability',
+    'validate_field_bounds',
+    'clamp_field',
+]

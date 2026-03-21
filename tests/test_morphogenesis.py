@@ -10,7 +10,9 @@ References:
 """
 
 import numpy as np
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
 
 from mycelium_fractal_net import (
     TURING_THRESHOLD,

@@ -1,7 +1,10 @@
 """Tests for Turing morphogenesis and physics verification."""
 
 import numpy as np
+import pytest
 import sympy as sp
+
+pytest.importorskip("torch")
 
 from mycelium_fractal_net import (
     BODY_TEMPERATURE_K,

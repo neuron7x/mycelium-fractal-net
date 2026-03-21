@@ -1,0 +1,62 @@
+MYCELIUM FRACTAL NET v4.1.0 — NEUROMODULATION INTEGRATION (v9)
+
+ЗРОБЛЕНО
+- Додано opt-in neuromodulation contour без зламу baseline surface.
+- Додано canonical package: src/mycelium_fractal_net/neurochem/
+  - state.py
+  - kinetics.py
+  - mwc.py
+  - profiles.py
+  - calibration.py
+- Додано типи:
+  - NeuromodulationSpec
+  - GABAATonicSpec
+  - SerotonergicPlasticitySpec
+  - ObservationNoiseSpec
+- SimulationSpec підтримує nested neuromodulation з backward compatibility.
+- ReactionDiffusionEngine лишається canonical owner simulation step.
+- Додано explicit neuromodulation state-machine:
+  - occupancy_resting
+  - occupancy_active
+  - occupancy_desensitized
+  - effective_inhibition
+  - effective_gain
+  - plasticity_index
+  - observation_noise_gain
+- Розділено intrinsic field jitter та observation noise.
+- Descriptor піднято до mfn-morphology-v2.
+- Додано connectivity analytics:
+  - connectivity_divergence
+  - hierarchy_flattening
+  - modularity_proxy / modularity_shift
+  - global_coherence_shift
+- Detect/compare/forecast перебудовані під plasticity-aware / regime-sensitive logic.
+- Додано calibration task registry.
+- Додано neurochem scientific controls.
+- Додано criticality showcase bundle.
+- Додано artifact attestation.
+- CLI/API розширені nested neuromodulation surface без зламу старих payloads.
+
+ВЕРИФІКОВАНО
+- PYTHONPATH=src pytest -q -o addopts='' \
+  tests/test_neuromodulation_completion.py \
+  tests/test_schema_roundtrip_completion.py \
+  tests/test_integration_api_cli.py \
+  tests/test_api_server_completion.py
+  => 28 passed
+- scripts/export_openapi.py => PASS
+- scripts/check_openapi_contract.py => PASS
+- validation/neurochem_controls.py => PASS
+- scripts/criticality_sweep.py => PASS
+- scripts/attest_artifacts.py => PASS
+
+КЛЮЧОВІ АРТЕФАКТИ
+- artifacts/evidence/neurochem_controls/neurochem_controls_summary.json
+- artifacts/showcase/criticality_sweep/criticality_sweep_summary.json
+- artifacts/release/attestation.json
+
+ЧЕСНО НЕ ДОВЕДЕНО ОДНИМ МОНІТНИМ АРТЕФАКТОМ
+- Повний monolithic full-repo pytest transcript.
+- Повний refactor numerics/update_rules.py до повністю thin shim.
+- Повне вбудування neurochem controls у historical validation runner замість окремого validation/neurochem_controls.py.
+- Повне оновлення всіх historical release summary файлів під новий neuromod cycle.
