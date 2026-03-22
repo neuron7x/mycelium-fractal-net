@@ -205,6 +205,30 @@ def sim_010_spec_present(seq: Any) -> bool:
     return seq.spec is not None
 
 
+@rule(
+    id="SIM-011",
+    claim="MWC R-state fraction is bounded and monotonically increasing with agonist concentration",
+    math="R(c) in [0, 1] and dR/dc >= 0 for all c >= 0",
+    ref="Monod, Wyman & Changeux 1965, doi:10.1016/S0022-2836(65)80285-6",
+    stage="simulate",
+    severity="error",
+    category="numerical",
+    falsifiable_by="R_fraction outside [0,1] or non-monotonic dose-response",
+    rationale="MWC model must be thermodynamically consistent; non-monotonicity indicates parameter error",
+)
+def sim_011_mwc_monotonicity(seq: Any) -> tuple[bool, Any, Any]:
+    from mycelium_fractal_net.neurochem.mwc import mwc_dose_response
+
+    concentrations = np.array([0.0, 0.1, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0, 500.0])
+    response = mwc_dose_response(concentrations)
+    if not (np.all(response >= 0.0) and np.all(response <= 1.0)):
+        return False, f"R out of bounds: [{response.min()}, {response.max()}]", "[0, 1]"
+    diffs = np.diff(response)
+    if np.any(diffs < -1e-10):
+        return False, f"Non-monotonic: min_diff={diffs.min():.6e}", ">= 0"
+    return True, f"R=[{response[0]:.4f}..{response[-1]:.4f}]", "[0, 1] monotonic"
+
+
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE: EXTRACT — descriptor integrity
 # ═══════════════════════════════════════════════════════════════════
@@ -741,6 +765,7 @@ def validate_causal_consistency(
         sim_006_history_field_consistency,
         sim_007_cfl_stability,
         sim_010_spec_present,
+        sim_011_mwc_monotonicity,
     ]:
         results.append(r.evaluate(sequence))
     if getattr(sequence, "neuromodulation_state", None) is not None:

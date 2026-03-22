@@ -62,7 +62,7 @@ All 7 import contracts must pass. Coverage must stay ≥ 80%.
 
 - All CI jobs must pass (lint, typecheck, test matrix, coverage, security, import contracts).
 - At least one maintainer approval required.
-- Causal validation rules must not regress (41 rules, 0 errors).
+- Causal validation rules must not regress (42 rules, 0 errors).
 
 ## Code Standards
 

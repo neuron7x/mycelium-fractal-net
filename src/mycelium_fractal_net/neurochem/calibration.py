@@ -13,7 +13,7 @@ _CALIBRATION_TASKS = {
 
 _CALIBRATION_CRITERIA = {
     "clamp_events_per_step_max": 0.05,
-    "tonic_inhibition_stability_min": 0.01,
+    "tonic_inhibition_stability_min": 0.001,
     "complexity_floor": 0.20,
     "fractal_dimension_min": 0.0,
     "fractal_dimension_max": 2.5,

@@ -76,9 +76,9 @@ PROFILE_REGISTRY: dict[str, dict] = {
         "tonic_inhibition_scale": 1.10,
         "gabaa_tonic": {
             "profile": "gabaa_tonic_muscimol_alpha1beta3",
-            "agonist_concentration_um": 0.85,
-            "resting_affinity_um": 0.45,
-            "active_affinity_um": 0.35,
+            "agonist_concentration_um": 10.0,
+            "resting_affinity_um": 0.30,
+            "active_affinity_um": 0.25,
             "desensitization_rate_hz": 0.05,
             "recovery_rate_hz": 0.02,
             "shunt_strength": 0.42,

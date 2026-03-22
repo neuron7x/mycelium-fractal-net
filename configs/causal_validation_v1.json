@@ -25,6 +25,7 @@
     "SIM-008": {"stage": "simulate", "category": "numerical", "severity": "error", "description": "Occupancy fractions sum to 1.0"},
     "SIM-009": {"stage": "simulate", "category": "numerical", "severity": "error", "description": "Effective inhibition non-negative"},
     "SIM-010": {"stage": "simulate", "category": "provenance", "severity": "warn", "description": "SimulationSpec attached for traceability"},
+    "SIM-011": {"stage": "simulate", "category": "numerical", "severity": "error", "description": "MWC R-state fraction bounded [0,1] and monotonically increasing"},
     "EXT-001": {"stage": "extract", "category": "numerical", "severity": "fatal", "description": "Embedding non-empty and finite"},
     "EXT-002": {"stage": "extract", "category": "provenance", "severity": "error", "description": "Descriptor version set"},
     "EXT-003": {"stage": "extract", "category": "causal", "severity": "warn", "description": "Instability index consistent with field CV", "threshold": 0.01},
