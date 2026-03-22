@@ -117,11 +117,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 include-package-data = true
 package-dir = {"" = "src"}
-py-modules = ["api", "mycelium_fractal_net_v4_1"]
-
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["mycelium_fractal_net*", "analytics", "experiments"]
+include = ["mycelium_fractal_net*"]
 exclude = ["tests*", "docs*", "examples*"]
 
 [tool.uv]

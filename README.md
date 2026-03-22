@@ -302,8 +302,11 @@ See [Contributing](CONTRIBUTING.md) for development workflow and code standards.
 | Document | Description |
 |----------|-------------|
 | [Architecture](docs/ARCHITECTURE.md) | Layer definitions, module boundaries, dependency policies |
+| [Public API Contract](docs/PUBLIC_API_CONTRACT.md) | Stable / deprecated / frozen / internal surface classification |
+| [Quality Gate](docs/QUALITY_GATE.md) | Definition of Done — 17 mandatory gates for PR and release |
 | [Causal Validation](docs/CAUSAL_VALIDATION.md) | 41-rule catalog, failure semantics, release criteria |
 | [API Reference](docs/API.md) | REST endpoints, request/response schemas, security |
+| [Release Governance](docs/RELEASE_GOVERNANCE.md) | Release criteria, change classification, performance budgets |
 | [Benchmarks](docs/BENCHMARKS.md) | Performance methodology, throughput, scalability |
 | [Data Model](docs/DATA_MODEL.md) | Core type system and data flow |
 | [Validation Report](docs/MFN_VALIDATION_REPORT.md) | Scientific validation methodology and results |
