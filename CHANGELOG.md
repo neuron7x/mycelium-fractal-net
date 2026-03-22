@@ -8,24 +8,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- CI pipeline rewritten: 9-job GitHub Actions with Python 3.10–3.13 matrix, coverage gating, security scanning, import contract verification, and benchmark tracking.
+- CI pipeline: 5 workflows (ci.yml 8 jobs, release.yml, security.yml, benchmarks.yml, ci-reusable.yml) with Python 3.10–3.13 matrix, coverage gating (80%), security scanning, import contracts, benchmark tracking.
 - Ruff lint rules expanded from 3 to 24 categories (bugbear, bandit, simplify, print detection, complexity, and more).
 - mypy `ignore_errors` removed from all modules — type errors are now visible and trackable.
-- Coverage report enforces `fail_under = 80` with branch coverage and precision.
+- Coverage: 78.93% → 82.21% branch (+62 targeted tests across cli_display, cli_doctor, compat, config, features, grid_ops, insight_architect).
 - Pre-commit hooks expanded from 6 to 16 (bandit, import-linter, mypy, check-yaml/toml/json, no-commit-to-branch, debug-statements).
 - All `assert` statements in production code replaced with explicit `RuntimeError` / `ValueError` raises.
 - `print()` calls in core modules replaced with `logging.getLogger(__name__)` or `sys.stdout.write()`.
 - Optional dependency loader narrowed from `except Exception` to `except ImportError`.
+- All silent downgrades (`except: pass`) replaced with `logging.warning()`.
 - Makefile modernized: all targets use `uv run`, new `lint`, `typecheck`, `security`, `coverage` targets.
 - pytest `--strict-markers --strict-config` enforced.
+- benchmark_core.py: CPU-first (no torch dependency), ML benchmarks gated behind `_has_torch()`.
+- All 87 decision thresholds (detect + compare + forecast) loaded from `configs/detection_thresholds_v1.json` via `detection_config.py`.
 
 ### Added
+- `detection_config.py` — config-driven threshold loader with schema validation, fallback defaults, `CONFIG_HASH` for provenance.
+- Causal gate enhancements: `provenance_hash`, `engine_version`, `mode` field, `strict_release` / `strict_api` modes, replay consistency.
 - `SECURITY.md` — vulnerability disclosure policy with response timeline.
 - `CONTRIBUTING.md` — development workflow, code standards, PR process.
-- `.github/workflows/ci-reusable.yml` — reusable workflow for showcase, attestation, and scientific controls.
+- `RELEASE_CANDIDATE_CHECKLIST.md` — 10-gate release sign-off matrix.
+- `docs/RELEASE_GOVERNANCE.md` — 12-gate release criteria, change classification, performance budgets, reproducibility sheet.
+- 5 CI/CD workflows: ci (8 jobs), release, security (weekly), benchmarks, ci-reusable.
 - Bandit configuration in `pyproject.toml`.
-- Coverage `exclude_lines` for pragmas, `TYPE_CHECKING`, and overloads.
-- Ruff per-file ignores for tests, scripts, CLI, experiments, and benchmarks.
+- E2E release pipeline test (simulate → extract → detect → forecast → compare → causal gate → report).
+- Manifest tampering negative tests (SHA256 mismatch, forged hash, missing/extra artifact, verdict tampering).
+- Property tests: replay determinism (5 operations), perturbation stability (5 seeds), causal mode semantics.
+- Negative tests: NaN/Inf rejection, out-of-bounds causal failure, config schema validation.
+- Config governance tests: schema validation, weight sums, required sections, loaded values match file.
+- Release governance file existence checks (14 required files).
+- New CPU-only benchmarks: pipeline_e2e, causal_gate latency, memory_simulation.
 
 ## [4.1.0] — 2026-03-22
 

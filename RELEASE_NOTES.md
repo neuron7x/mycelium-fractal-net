@@ -9,7 +9,9 @@
 
 - **Typed Analytics** — 30 frozen dataclasses replace untyped dictionaries throughout the type system. All public APIs have complete type signatures.
 
-- **Hardened CI/CD** — 9-job GitHub Actions pipeline with Python 3.10–3.13 matrix testing, coverage gating (80%), security scanning (bandit + pip-audit), and import boundary verification.
+- **Hardened CI/CD** — 5 GitHub Actions workflows (ci with 8 jobs, release, security, benchmarks, ci-reusable) with Python 3.10–3.13 matrix testing, coverage gating (82%+), security scanning (bandit + pip-audit + gitleaks), and import boundary verification.
+
+- **Config Governance** — All 87 decision thresholds externalized to `configs/detection_thresholds_v1.json` with schema validation. Zero magic numbers in decision paths. Every causal verdict carries a `provenance_hash` for traceability.
 
 - **Neuromodulation** — GABA-A tonic inhibition, serotonergic plasticity, and MWC allosteric model with occupancy conservation. Six canonical profiles. Backward-compatible opt-in.
 

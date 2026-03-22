@@ -14,13 +14,16 @@
 
 | Metric | Value |
 |--------|-------|
-| Tests passed | 1,588 |
+| Tests passed | 1,689 |
 | Tests skipped | 6 |
-| Tests failed | 1 (missing CI workflow — expected) |
-| Coverage (branch) | 78.90% |
+| Tests failed | 0 |
+| Coverage (branch) | 82.21% |
 | Causal rules | 41 |
 | Import contracts | 7/7 KEPT |
 | Docs drift | OK |
+| Config-governed thresholds | 87 |
+| CI workflows | 5 |
+| Silent downgrades | 0 |
 
 ## Release Readiness Gates
 
