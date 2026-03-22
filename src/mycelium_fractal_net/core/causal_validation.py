@@ -29,6 +29,7 @@ from mycelium_fractal_net.core.reaction_diffusion_config import (
 from mycelium_fractal_net.types.causal import (
     CausalDecision,
     CausalRuleResult,
+    CausalRuleSpec,
     CausalSeverity,
     CausalValidationResult,
     ViolationCategory,
@@ -53,10 +54,263 @@ def _rule(
         severity=severity,
         passed=passed,
         message=message,
+        spec=SPECS.get(rule_id),
         observed=observed,
         expected=expected,
         evidence=evidence,
     )
+
+
+# ═══════════════════════════════════════════════════════════
+# Rule specifications — each rule as a scientific claim
+# ═══════════════════════════════════════════════════════════
+
+SPECS = {
+    "SIM-001": CausalRuleSpec(
+        claim="Field values must be real numbers representable in IEEE 754",
+        math="∀ i,j: u(i,j) ∈ ℝ, |u(i,j)| < ∞",
+        reference="IEEE 754-2019",
+        falsifiable_by="Any NaN or Inf in the field array",
+        rationale="NaN/Inf propagates silently through all downstream computations, producing meaningless results",
+    ),
+    "SIM-002": CausalRuleSpec(
+        claim="Membrane potential cannot fall below hyperpolarization limit",
+        math="V(i,j) ≥ V_min = -95 mV",
+        reference="Hodgkin & Huxley 1952, doi:10.1113/jphysiol.1952.sp004764",
+        falsifiable_by="Field value below -95 mV after clamping",
+        rationale="Below -95 mV is non-physiological; indicates numerical blow-up or missing clamp",
+    ),
+    "SIM-003": CausalRuleSpec(
+        claim="Membrane potential cannot exceed action potential peak",
+        math="V(i,j) ≤ V_max = +40 mV",
+        reference="Hodgkin & Huxley 1952, doi:10.1113/jphysiol.1952.sp004764",
+        falsifiable_by="Field value above +40 mV after clamping",
+        rationale="Above +40 mV exceeds Na+ reversal potential; indicates numerical instability",
+    ),
+    "SIM-004": CausalRuleSpec(
+        claim="History spatial dimensions must match final field",
+        math="history.shape[1:] == field.shape",
+        falsifiable_by="Shape mismatch between history frames and field",
+        rationale="Mismatched shapes corrupt temporal feature extraction and forecasting",
+    ),
+    "SIM-005": CausalRuleSpec(
+        claim="History must contain only finite values across all timesteps",
+        math="∀ t,i,j: history(t,i,j) ∈ ℝ",
+        falsifiable_by="NaN or Inf in any history frame",
+        rationale="Corrupted history produces invalid temporal features and misleading Lyapunov exponents",
+    ),
+    "SIM-006": CausalRuleSpec(
+        claim="Last history frame should approximate the final field state",
+        math="‖history[-1] - field‖ < ε",
+        falsifiable_by="Large discrepancy between last history frame and field",
+        rationale="Divergence suggests observation noise or post-processing altered the field after recording",
+    ),
+    "SIM-007": CausalRuleSpec(
+        claim="Diffusion coefficient must satisfy CFL stability condition",
+        math="α ≤ 1/(4·dt/dx²) = 0.25 for dt=dx=1",
+        reference="Courant, Friedrichs & Lewy 1928, doi:10.1007/BF01448839",
+        falsifiable_by="Alpha exceeding 0.25 without substep splitting",
+        rationale="CFL violation causes exponential blow-up in explicit Euler PDE integration",
+    ),
+    "SIM-008": CausalRuleSpec(
+        claim="Receptor occupancy fractions must sum to unity (conservation of mass)",
+        math="p_resting + p_active + p_desensitized = 1.0",
+        reference="Colquhoun & Hawkes 1977, doi:10.1098/rspb.1977.0085",
+        falsifiable_by="Occupancy sum deviating from 1.0 by more than 1e-4",
+        rationale="Mass conservation violation means receptors are being created or destroyed — non-physical",
+    ),
+    "SIM-009": CausalRuleSpec(
+        claim="Effective inhibition is non-negative (shunting conductance)",
+        math="g_inh ≥ 0",
+        reference="Koch 1999, Biophysics of Computation, Ch. 2",
+        falsifiable_by="Negative effective inhibition value",
+        rationale="Negative shunting conductance is non-physical and would amplify instead of inhibit",
+    ),
+    "SIM-010": CausalRuleSpec(
+        claim="Simulation provenance requires attached specification for reproducibility",
+        rationale="Without spec, the simulation cannot be reproduced or audited",
+    ),
+    "EXT-001": CausalRuleSpec(
+        claim="Morphology embedding must be a finite non-empty real vector",
+        math="e ∈ ℝⁿ, n > 0, ‖e‖ < ∞",
+        falsifiable_by="Empty embedding or NaN/Inf in embedding components",
+        rationale="Downstream distance/cosine computations produce undefined results on invalid embeddings",
+    ),
+    "EXT-002": CausalRuleSpec(
+        claim="Descriptor must carry version for schema evolution",
+        rationale="Unversioned descriptors cannot be compared across software releases",
+    ),
+    "EXT-003": CausalRuleSpec(
+        claim="Instability index must be consistent with field coefficient of variation",
+        math="instability_index ≈ σ(field) / |μ(field)|",
+        falsifiable_by="Instability index diverging from direct field CV computation",
+        rationale="Inconsistency indicates a bug in feature extraction or stale cached descriptor",
+    ),
+    "EXT-004": CausalRuleSpec(
+        claim="Stability feature group must contain all required keys",
+        rationale="Missing stability keys cause KeyError in detection scoring functions",
+    ),
+    "EXT-005": CausalRuleSpec(
+        claim="Complexity feature group must contain all required keys",
+        rationale="Missing complexity keys corrupt regime classification scoring",
+    ),
+    "EXT-006": CausalRuleSpec(
+        claim="Connectivity feature group must contain all required keys",
+        rationale="Connectivity features drive topology drift analysis in comparison",
+    ),
+    "DET-001": CausalRuleSpec(
+        claim="Anomaly score is a probability-like quantity bounded to [0, 1]",
+        math="0 ≤ score ≤ 1",
+        falsifiable_by="Score outside unit interval",
+        rationale="Unbounded scores break threshold comparisons and confidence calibration",
+    ),
+    "DET-002": CausalRuleSpec(
+        claim="Anomaly label must be from the closed vocabulary",
+        math="label ∈ {nominal, watch, anomalous}",
+        falsifiable_by="Label not in allowed set",
+        rationale="Unknown labels cannot be processed by downstream consumers",
+    ),
+    "DET-003": CausalRuleSpec(
+        claim="Regime label must be from the closed vocabulary",
+        math="regime ∈ {stable, transitional, critical, reorganized, pathological_noise}",
+        falsifiable_by="Regime label not in allowed set",
+    ),
+    "DET-004": CausalRuleSpec(
+        claim="Confidence is a probability bounded to [0, 1]",
+        math="0 ≤ confidence ≤ 1",
+        falsifiable_by="Confidence outside unit interval",
+    ),
+    "DET-005": CausalRuleSpec(
+        claim="Contributing features must reference actual evidence keys",
+        falsifiable_by="Feature name in contributing list not found in evidence dict",
+        rationale="Phantom features mislead the user about what drove the decision",
+    ),
+    "DET-006": CausalRuleSpec(
+        claim="Pathological noise regime requires observation noise evidence",
+        math="regime=pathological_noise → noise_gain ≥ 0.1",
+        falsifiable_by="Pathological noise classification without elevated noise signal",
+        rationale="Classifying as noise-dominated without noise evidence is a causal error",
+    ),
+    "DET-007": CausalRuleSpec(
+        claim="Reorganized regime requires plasticity evidence",
+        math="regime=reorganized → plasticity_index ≥ 0.05",
+        reference="Turrigiano 2008, doi:10.1016/j.cell.2008.01.001 (homeostatic plasticity)",
+        falsifiable_by="Reorganization classification without plasticity signal",
+        rationale="Structural reorganization without plasticity is indistinguishable from noise",
+    ),
+    "DET-008": CausalRuleSpec(
+        claim="Watch label indicates proximity to decision boundary",
+        math="|score - threshold| < margin_max",
+        falsifiable_by="Watch label far from threshold boundary",
+        rationale="Watch is a transitional state; if far from boundary, label should be nominal or anomalous",
+    ),
+    "FOR-001": CausalRuleSpec(
+        claim="Forecast horizon must be at least one step",
+        math="horizon ≥ 1",
+        falsifiable_by="Zero or negative horizon",
+    ),
+    "FOR-002": CausalRuleSpec(
+        claim="All predicted states must be finite real-valued arrays",
+        math="∀ t: predicted(t) ∈ ℝ^(N×N)",
+        falsifiable_by="NaN or Inf in any predicted frame",
+        rationale="Non-finite predictions invalidate structural error and trajectory analysis",
+    ),
+    "FOR-003": CausalRuleSpec(
+        claim="Predicted states should remain within biophysical bounds",
+        math="V_min ≤ predicted(t,i,j) ≤ V_max",
+        reference="Hodgkin & Huxley 1952",
+        falsifiable_by="Predicted field value outside [-95, +40] mV",
+        rationale="Forecast beyond biophysical bounds indicates extrapolation failure",
+    ),
+    "FOR-004": CausalRuleSpec(
+        claim="Forecast must include uncertainty quantification",
+        reference="Lakshminarayanan et al. 2017, doi:10.48550/arXiv.1612.01474",
+        falsifiable_by="Empty uncertainty envelope",
+        rationale="Point forecasts without uncertainty are scientifically incomplete",
+    ),
+    "FOR-005": CausalRuleSpec(
+        claim="Benchmark metrics must include structural error and damping",
+        rationale="Without these, forecast quality cannot be assessed or compared across runs",
+    ),
+    "FOR-006": CausalRuleSpec(
+        claim="Forecast structural error should be bounded (no wild divergence)",
+        math="structural_error ≤ 1.0",
+        falsifiable_by="Structural error exceeding 1.0",
+        rationale="Error > 1.0 means the forecast diverged more than the signal itself",
+    ),
+    "FOR-007": CausalRuleSpec(
+        claim="Adaptive damping must be in the stable regime",
+        math="0.80 ≤ damping ≤ 0.95",
+        falsifiable_by="Damping outside [0.80, 0.95]",
+        rationale="Damping < 0.80 causes excessive smoothing; > 0.95 causes oscillation",
+    ),
+    "CMP-001": CausalRuleSpec(
+        claim="Embedding distance is a metric (non-negative)",
+        math="d(a, b) ≥ 0, d(a, a) = 0",
+        falsifiable_by="Negative distance value",
+        rationale="Negative distance violates metric space axioms and corrupts similarity classification",
+    ),
+    "CMP-002": CausalRuleSpec(
+        claim="Cosine similarity is bounded by definition",
+        math="-1 ≤ cos(a, b) ≤ 1",
+        falsifiable_by="Cosine outside [-1, 1]",
+        rationale="Values outside bounds indicate numerical error in dot product or normalization",
+    ),
+    "CMP-003": CausalRuleSpec(
+        claim="Comparison label must be from the closed vocabulary",
+        math="label ∈ {near-identical, similar, related, divergent}",
+        falsifiable_by="Unknown comparison label",
+    ),
+    "CMP-004": CausalRuleSpec(
+        claim="Near-identical label requires low embedding distance",
+        math="label=near-identical → d < 0.5",
+        falsifiable_by="Near-identical classification with distance ≥ 0.5",
+        rationale="Labeling distant embeddings as identical misleads downstream consumers",
+    ),
+    "CMP-005": CausalRuleSpec(
+        claim="Divergent label requires low cosine similarity",
+        math="label=divergent → cos < 0.95",
+        falsifiable_by="Divergent classification with cosine ≥ 0.95",
+    ),
+    "CMP-006": CausalRuleSpec(
+        claim="Topology and reorganization labels must be consistent mapping",
+        math="nominal→stable, flattened-hierarchy→transitional, pathological-drift→pathological_noise, reorganized→reorganized",
+        falsifiable_by="Topology label mapping to wrong reorganization label",
+        rationale="Inconsistent labels produce contradictory interpretation in reports",
+    ),
+    "XST-001": CausalRuleSpec(
+        claim="Stable regime should not produce anomalous detection",
+        math="regime=stable ∧ label=anomalous → contradiction",
+        falsifiable_by="Stable regime coexisting with anomalous label",
+        rationale="If the regime is stable, the system is in a known good state — anomalous label is a false positive",
+    ),
+    "XST-002": CausalRuleSpec(
+        claim="Disabled neuromodulation implies zero plasticity evidence",
+        math="neuromod=disabled → plasticity_index < ε",
+        falsifiable_by="Non-zero plasticity when neuromodulation is off",
+        rationale="Plasticity without neuromodulation is a data integrity error",
+    ),
+    "XST-003": CausalRuleSpec(
+        claim="Noise profile with reorganized regime requires structural evidence",
+        math="profile=noise ∧ regime=reorganized → connectivity ≥ 0.10",
+        falsifiable_by="Noise profile producing reorganized regime without connectivity signal",
+        rationale="Reorganization claim from noise profile without structural evidence is a causal error",
+    ),
+    "PTB-001": CausalRuleSpec(
+        claim="Detection label must be stable under infinitesimal perturbation",
+        math="‖δ‖ = 10⁻⁶ → label(x) = label(x + δ)",
+        reference="Goodfellow et al. 2015, doi:10.48550/arXiv.1412.6572 (adversarial robustness)",
+        falsifiable_by="Label flip under 1e-6 additive noise",
+        rationale="Label instability under negligible noise indicates the decision is on a knife-edge",
+    ),
+    "PTB-002": CausalRuleSpec(
+        claim="Regime label must be stable under infinitesimal perturbation",
+        math="‖δ‖ = 10⁻⁶ → regime(x) = regime(x + δ)",
+        reference="Goodfellow et al. 2015",
+        falsifiable_by="Regime flip under 1e-6 additive noise",
+        rationale="Regime instability under negligible noise means the classification is not robust",
+    ),
+}
 
 
 # ═══════════════════════════════════════════════════════════
