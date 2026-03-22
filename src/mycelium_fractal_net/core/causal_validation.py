@@ -852,8 +852,10 @@ if __name__ == "__main__":
     elif "--json" in sys.argv:
         from mycelium_fractal_net.core.rule_registry import manifest_dict
 
-        print(json.dumps(manifest_dict(), indent=2))
+        sys.stdout.write(json.dumps(manifest_dict(), indent=2) + "\n")
     else:
-        print("Usage:")
-        print("  python -m mycelium_fractal_net.core.causal_validation --manifest")
-        print("  python -m mycelium_fractal_net.core.causal_validation --json")
+        sys.stderr.write(
+            "Usage:\n"
+            "  python -m mycelium_fractal_net.core.causal_validation --manifest\n"
+            "  python -m mycelium_fractal_net.core.causal_validation --json\n"
+        )

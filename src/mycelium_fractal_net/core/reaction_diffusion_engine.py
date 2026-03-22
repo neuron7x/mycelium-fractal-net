@@ -166,9 +166,8 @@ class ReactionDiffusionEngine:
         self.reset()
         if self._field is None:
             self.initialize_field()
-        assert self._field is not None
-        assert self._activator is not None
-        assert self._inhibitor is not None
+        if self._field is None or self._activator is None or self._inhibitor is None:
+            raise RuntimeError("Field initialization failed: field, activator, or inhibitor is None")
 
         history: NDArray[np.floating] | None = None
         if return_history:
@@ -180,21 +179,18 @@ class ReactionDiffusionEngine:
         for step in range(steps):
             self._simulation_step(step, turing_enabled)
             if return_history:
-                assert history is not None
-                history[step] = self._export_field()
+                history[step] = self._export_field()  # type: ignore[index]
             self._metrics.steps_computed += 1
 
         self._update_field_metrics()
 
         if return_history:
-            assert history is not None
-            return history, self._metrics
+            return history, self._metrics  # type: ignore[return-value]
         return self._export_field().copy(), self._metrics
 
     def _simulation_step(self, step: int, turing_enabled: bool) -> None:
-        assert self._field is not None
-        assert self._activator is not None
-        assert self._inhibitor is not None
+        if self._field is None or self._activator is None or self._inhibitor is None:
+            raise RuntimeError("Cannot run simulation step: engine not initialized")
 
         # Growth events
         if self._rng.random() < self.config.spike_probability:
@@ -257,7 +253,8 @@ class ReactionDiffusionEngine:
             self._check_stability(step)
 
     def _export_field(self) -> NDArray[np.floating]:
-        assert self._field is not None
+        if self._field is None:
+            raise RuntimeError("Cannot export field: engine not initialized")
         observed = self._field.copy()
         if self._neuro_state is None:
             return observed
@@ -270,8 +267,8 @@ class ReactionDiffusionEngine:
     def _apply_neuromodulation(self) -> None:
         if self.config.neuromodulation is None:
             return
-        assert self._field is not None
-        assert self._activator is not None
+        if self._field is None or self._activator is None:
+            raise RuntimeError("Cannot apply neuromodulation: engine not initialized")
         if self._neuro_state is None:
             self._neuro_state = NeuromodulationState.zeros(self._field.shape)
         spec = self.config.neuromodulation
@@ -346,9 +343,8 @@ class ReactionDiffusionEngine:
         return np.asarray(adjusted, dtype=np.float64), pressure
 
     def _turing_step(self, dt_scale: float = 1.0) -> None:
-        assert self._activator is not None
-        assert self._inhibitor is not None
-        assert self._field is not None
+        if self._activator is None or self._inhibitor is None or self._field is None:
+            raise RuntimeError("Cannot run Turing step: engine not initialized")
         a_lap = self._compute_laplacian(self._activator)
         i_lap = self._compute_laplacian(self._inhibitor)
         da = (

@@ -43,10 +43,11 @@ dev = [
   "locust>=2.20.0",
   "packaging>=21.0",
   "import-linter>=2.0",
+  "pre-commit>=3.5.0",
 ]
 security = [
   "pip-audit>=2.7.0",
-  "bandit>=1.7.9",
+  "bandit[toml]>=1.7.9",
   "checkov>=3.2.0",
 ]
 reporting = [
@@ -72,8 +73,9 @@ full = [
   "locust>=2.20.0",
   "packaging>=21.0",
   "import-linter>=2.0",
+  "pre-commit>=3.5.0",
   "pip-audit>=2.7.0",
-  "bandit>=1.7.9",
+  "bandit[toml]>=1.7.9",
   "checkov>=3.2.0",
 ]
 
@@ -95,10 +97,11 @@ dev = [
   "tomli>=2.0.0; python_version < '3.11'",
   "packaging>=21.0",
   "import-linter>=2.0",
+  "pre-commit>=3.5.0",
 ]
 security = [
   "pip-audit>=2.7.0",
-  "bandit>=1.7.9",
+  "bandit[toml]>=1.7.9",
   "checkov>=3.2.0",
 ]
 
@@ -125,8 +128,11 @@ exclude = ["tests*", "docs*", "examples*"]
 default-groups = ["dev"]
 managed = true
 
+# ═══════════════════════════════════════════════════════════════
+#  pytest
+# ═══════════════════════════════════════════════════════════════
 [tool.pytest.ini_options]
-addopts = "-q --timeout=300"
+addopts = "-q --timeout=300 --strict-markers --strict-config"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 filterwarnings = [
@@ -137,26 +143,127 @@ filterwarnings = [
     "ignore::pytest.PytestDeprecationWarning",
     "ignore::pytest.PytestUnraisableExceptionWarning",
 ]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests requiring external services",
+    "benchmark: marks performance benchmark tests",
+]
 
+# ═══════════════════════════════════════════════════════════════
+#  ruff — comprehensive Python linting
+# ═══════════════════════════════════════════════════════════════
 [tool.ruff]
 line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
-ignore = ["E402"]
+select = [
+  "E",     # pycodestyle errors
+  "W",     # pycodestyle warnings
+  "F",     # pyflakes
+  "I",     # isort
+  "B",     # flake8-bugbear — opinionated bug detection
+  "C4",    # flake8-comprehensions — unnecessary list/dict comprehension
+  "UP",    # pyupgrade — modernize syntax for target Python
+  "SIM",   # flake8-simplify — simplifiable constructs
+  "PT",    # flake8-pytest-style — pytest best practices
+  "RUF",   # ruff-specific rules
+  "S",     # flake8-bandit — security checks
+  "A",     # flake8-builtins — shadowing built-ins
+  "C90",   # mccabe complexity
+  "DTZ",   # flake8-datetimez — naive datetime usage
+  "T20",   # flake8-print — print() in production code
+  "PIE",   # flake8-pie — misc lints
+  "PLC",   # pylint convention
+  "PLE",   # pylint error
+  "PLW",   # pylint warning
+  "TID",   # flake8-tidy-imports — banned imports
+  "TCH",   # flake8-type-checking — move imports to TYPE_CHECKING
+  "PERF",  # perflint — performance anti-patterns
+  "FLY",   # flynt — f-string conversion
+  "FURB",  # refurb — modern Python idioms
+]
+ignore = [
+  "E402",    # module-level import not at top (needed for conditional imports)
+  "S101",    # assert usage (allowed in tests, banned in src via per-file)
+  "S311",    # pseudo-random generators (acceptable for simulation seeds)
+  "B008",    # function call in default argument (FastAPI Depends pattern)
+  "UP007",   # X | Y union syntax (keep Optional for readability in complex signatures)
+  "SIM108",  # ternary operator (readability over brevity for scientific code)
+  "C901",    # too complex (handled by C90 mccabe with explicit threshold)
+  "PLW2901", # loop variable overwritten (common in numeric code)
+  "S603",    # subprocess call (needed in scripts)
+  "S607",    # partial executable path (needed in scripts)
+]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+  "S101",    # assert is fine in tests
+  "S105",    # hardcoded passwords in test fixtures
+  "S106",    # hardcoded passwords in test arguments
+  "T20",     # print in tests is acceptable
+  "PLR2004", # magic values in tests are fine
+]
+"scripts/**/*.py" = [
+  "T20",     # print is expected in CLI scripts
+  "S603",    # subprocess calls in scripts
+  "S607",    # partial path in scripts
+]
+"src/mycelium_fractal_net/cli.py" = [
+  "T20",     # print is the correct output mechanism for CLI
+]
+"src/mycelium_fractal_net/experiments/**/*.py" = [
+  "T20",     # print for experiment output
+]
+"src/mycelium_fractal_net/pipelines/scenarios/**/*.py" = [
+  "T20",     # print in __main__ blocks
+]
+"benchmarks/**/*.py" = [
+  "T20",     # print for benchmark output
+  "S101",    # assert in benchmarks
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.isort]
+known-first-party = ["mycelium_fractal_net"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path"]
+
+[tool.ruff.lint.flake8-bandit]
+check-typed-exception = true
+
+# ═══════════════════════════════════════════════════════════════
+#  mypy — gradual strict typing
+# ═══════════════════════════════════════════════════════════════
 [tool.mypy]
 python_version = "3.10"
 strict = true
 ignore_missing_imports = true
 namespace_packages = true
 pretty = true
+warn_return_any = true
+warn_unused_configs = true
+show_error_codes = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = true
 
+# Core modules: strict mode enabled, no more ignore_errors
+# These modules MUST pass type checking
+[[tool.mypy.overrides]]
+module = [
+    "mycelium_fractal_net.types.*",
+    "mycelium_fractal_net.security.*",
+]
+disallow_untyped_defs = true
+warn_return_any = true
+
+# Modules in active type-migration: errors reported but not blocking
+# Goal: remove this override entirely by v5.0
 [[tool.mypy.overrides]]
 module = [
     "mycelium_fractal_net.model",
@@ -175,11 +282,15 @@ module = [
     "mycelium_fractal_net.integration.*",
 ]
 disallow_untyped_defs = false
-ignore_errors = true
+# NOTE: ignore_errors removed — type errors are now visible and trackable
 
+# ═══════════════════════════════════════════════════════════════
+#  coverage — enforced minimum
+# ═══════════════════════════════════════════════════════════════
 [tool.coverage.run]
 source = ["mycelium_fractal_net"]
 branch = true
+parallel = true
 omit = [
   "*/tests/*",
   "*/experiments/*",
@@ -188,3 +299,23 @@ omit = [
 
 [tool.coverage.report]
 show_missing = true
+precision = 2
+fail_under = 80
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "@overload",
+  "\\.\\.\\.",
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# ═══════════════════════════════════════════════════════════════
+#  bandit — security static analysis
+# ═══════════════════════════════════════════════════════════════
+[tool.bandit]
+exclude_dirs = ["tests", "benchmarks", "scripts", "examples"]
+skips = ["B101", "B311"]

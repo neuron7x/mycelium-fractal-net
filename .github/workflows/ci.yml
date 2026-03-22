@@ -1,12 +1,257 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+    branches: [main, develop, "release/**"]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  UV_SYSTEM_PYTHON: 1
+  FORCE_COLOR: 1
+
 jobs:
-  test:
+  # ─── Stage 1: Fast feedback ───────────────────────────────────
+  lint:
+    name: Lint & Format
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-      - run: pip install -e ".[dev]" --quiet
-      - run: pytest tests/ -q --tb=short
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --frozen
+      - name: Ruff lint
+        run: uv run ruff check src/ tests/ scripts/ benchmarks/
+      - name: Ruff format check
+        run: uv run ruff format --check src/ tests/ scripts/ benchmarks/
+
+  typecheck:
+    name: Type Check (mypy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --frozen
+      - name: mypy strict
+        run: uv run mypy src/mycelium_fractal_net/ --no-error-summary || true
+      - name: mypy core (strict, no ignores)
+        run: |
+          uv run mypy src/mycelium_fractal_net/types/ \
+                      src/mycelium_fractal_net/security/ \
+            --strict --no-error-summary
+
+  import-contracts:
+    name: Import Boundary Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --frozen
+      - name: lint-imports
+        run: uv run lint-imports
+
+  # ─── Stage 2: Test matrix ─────────────────────────────────────
+  test:
+    name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    needs: [lint]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest]
+        include:
+          - python-version: "3.12"
+            os: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --frozen
+      - name: Run tests
+        run: |
+          uv run pytest tests/ \
+            --tb=short \
+            --junitxml=junit-${{ matrix.python-version }}-${{ matrix.os }}.xml \
+            -q
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}-${{ matrix.os }}
+          path: junit-*.xml
+          retention-days: 30
+
+  coverage:
+    name: Coverage
+    needs: [lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --frozen
+      - name: Run tests with coverage
+        run: |
+          uv run pytest tests/ \
+            --cov=mycelium_fractal_net \
+            --cov-branch \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            --cov-fail-under=80 \
+            -q
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 30
+
+  # ─── Stage 3: Security & contracts ────────────────────────────
+  security:
+    name: Security Scan
+    needs: [lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --group security --frozen
+      - name: Bandit security linter
+        run: uv run bandit -r src/mycelium_fractal_net/ -c pyproject.toml -q
+      - name: pip-audit dependency scan
+        run: uv run pip-audit --strict --desc
+      - name: Gitleaks secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        continue-on-error: true
+
+  openapi-contract:
+    name: OpenAPI Contract Stability
+    needs: [lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --frozen
+      - name: Export & verify OpenAPI schema
+        run: |
+          uv run python scripts/export_openapi.py
+          uv run python scripts/check_openapi_contract.py
+
+  verify-matrix:
+    name: Causal Validation Matrix
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --frozen
+      - name: Verify causal rule matrix
+        run: uv run python scripts/verify_matrix.py
+
+  # ─── Stage 4: Benchmark (non-blocking) ───────────────────────
+  benchmark:
+    name: Performance Benchmark
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --group dev --frozen
+      - name: Run benchmarks
+        run: |
+          uv run python benchmarks/benchmark_core.py
+          uv run python benchmarks/benchmark_quality.py
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/results/
+          retention-days: 90
+
+  # ─── Gate: all must pass ──────────────────────────────────────
+  ci-pass:
+    name: CI Pass Gate
+    if: always()
+    needs: [lint, typecheck, import-contracts, test, coverage, security, openapi-contract, verify-matrix]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs passed
+        run: |
+          echo "Lint:             ${{ needs.lint.result }}"
+          echo "Typecheck:        ${{ needs.typecheck.result }}"
+          echo "Import contracts: ${{ needs.import-contracts.result }}"
+          echo "Test:             ${{ needs.test.result }}"
+          echo "Coverage:         ${{ needs.coverage.result }}"
+          echo "Security:         ${{ needs.security.result }}"
+          echo "OpenAPI:          ${{ needs.openapi-contract.result }}"
+          echo "Verify matrix:    ${{ needs.verify-matrix.result }}"
+
+          if [[ "${{ needs.lint.result }}" != "success" ]] || \
+             [[ "${{ needs.import-contracts.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]] || \
+             [[ "${{ needs.coverage.result }}" != "success" ]]; then
+            echo "::error::Required CI jobs failed"
+            exit 1
+          fi

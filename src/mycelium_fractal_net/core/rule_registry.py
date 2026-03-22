@@ -25,7 +25,8 @@ Usage:
 from __future__ import annotations
 
 import json
-from typing import Any, Callable
+import sys
+from typing import IO, Any, Callable
 
 from mycelium_fractal_net.types.causal import (
     CausalRuleResult,
@@ -140,31 +141,40 @@ def manifest_dict() -> dict[str, Any]:
     }
 
 
-def print_manifest() -> None:
-    """Print the living specification document to stdout."""
+def print_manifest(file: IO[str] | None = None) -> None:
+    """Write the living specification document to a stream.
+
+    Args:
+        file: Output stream. Defaults to ``sys.stdout``.
+    """
+    out = file or sys.stdout
     reg = sorted(_REGISTRY.items())
     current_stage = ""
-    print()
-    print("╔══════════════════════════════════════════════════════════════╗")
-    print("║  MFN Causal Rule Manifest — Living Specification Document  ║")
-    print("╚══════════════════════════════════════════════════════════════╝")
-    print(f"\n  {len(reg)} rules registered\n")
 
+    def w(line: str = "") -> None:
+        out.write(line + "\n")
+
+    w()
+    w("╔══════════════════════════════════════════════════════════════╗")
+    w("║  MFN Causal Rule Manifest — Living Specification Document  ║")
+    w("╚══════════════════════════════════════════════════════════════╝")
+    w(f"\n  {len(reg)} rules registered\n")
+
+    sev_tag = {"fatal": "FATAL", "error": "ERROR", "warn": " WARN", "info": " INFO"}
     for rid, r in reg:
         if r.stage != current_stage:
             current_stage = r.stage
-            print(f"  ── {current_stage.upper()} {'─' * (50 - len(current_stage))}")
-            print()
+            w(f"  ── {current_stage.upper()} {'─' * (50 - len(current_stage))}")
+            w()
 
-        sev_tag = {"fatal": "FATAL", "error": "ERROR", "warn": " WARN", "info": " INFO"}
-        print(f"  [{rid}] {sev_tag.get(r.severity.value, r.severity.value)}")
-        print(f"    Claim:  {r.spec.claim}")
+        w(f"  [{rid}] {sev_tag.get(r.severity.value, r.severity.value)}")
+        w(f"    Claim:  {r.spec.claim}")
         if r.spec.math:
-            print(f"    Math:   {r.spec.math}")
+            w(f"    Math:   {r.spec.math}")
         if r.spec.reference:
-            print(f"    Ref:    {r.spec.reference}")
+            w(f"    Ref:    {r.spec.reference}")
         if r.spec.falsifiable_by:
-            print(f"    Falsif: {r.spec.falsifiable_by}")
+            w(f"    Falsif: {r.spec.falsifiable_by}")
         if r.spec.rationale:
-            print(f"    Why:    {r.spec.rationale}")
-        print()
+            w(f"    Why:    {r.spec.rationale}")
+        w()

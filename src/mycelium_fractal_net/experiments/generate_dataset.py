@@ -43,6 +43,8 @@ from mycelium_fractal_net.core import (
 )
 from mycelium_fractal_net.core.exceptions import NumericalInstabilityError
 
+logger = logging.getLogger(__name__)
+
 
 def _get_mfn_version() -> str:
     """Get MyceliumFractalNet version dynamically."""
@@ -564,22 +566,25 @@ def main() -> None:
         output_path=args.output,
     )
 
-    # Print summary
-    print("\n=== Dataset Generation Summary ===")
-    print(f"Total samples requested: {stats['total_samples']}")
-    print(f"Successful: {stats['successful']}")
-    print(f"Failed: {stats['failed']}")
-    print(f"Success rate: {stats['success_rate']:.1%}")
+    # Log summary
+    logger.info("=== Dataset Generation Summary ===")
+    logger.info("Total samples requested: %d", stats["total_samples"])
+    logger.info("Successful: %d", stats["successful"])
+    logger.info("Failed: %d", stats["failed"])
+    logger.info("Success rate: %.1f%%", stats["success_rate"] * 100)
     if stats["output_path"]:
-        print(f"Output: {stats['output_path']}")
+        logger.info("Output: %s", stats["output_path"])
 
     if stats["successful"] > 0:
-        print("\n=== Feature Ranges ===")
+        logger.info("=== Feature Ranges ===")
         for key in ["D_box", "V_mean", "f_active"]:
             if f"{key}_mean" in stats:
-                print(
-                    f"{key}: [{stats[f'{key}_min']:.3f}, {stats[f'{key}_max']:.3f}] "
-                    f"(mean: {stats[f'{key}_mean']:.3f})"
+                logger.info(
+                    "%s: [%.3f, %.3f] (mean: %.3f)",
+                    key,
+                    stats[f"{key}_min"],
+                    stats[f"{key}_max"],
+                    stats[f"{key}_mean"],
                 )
 
 

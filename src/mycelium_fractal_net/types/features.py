@@ -37,7 +37,10 @@ FEATURE_NAMES: list[str] = [
     "cluster_size_std",
 ]
 
-assert len(FEATURE_NAMES) == FEATURE_COUNT
+if len(FEATURE_NAMES) != FEATURE_COUNT:
+    raise ValueError(
+        f"FEATURE_NAMES has {len(FEATURE_NAMES)} entries but FEATURE_COUNT is {FEATURE_COUNT}"
+    )
 
 # Canonical key sets for each feature group.
 # Unknown keys cause a warning (not an error) for forward compatibility.

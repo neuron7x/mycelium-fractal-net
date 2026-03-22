@@ -27,9 +27,12 @@ Physics parameters (from empirical validation):
 from __future__ import annotations
 
 import argparse
+import logging
 import math
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 import sympy as sp
@@ -1319,6 +1322,6 @@ def run_validation_cli() -> None:
 
     metrics = run_validation(cfg)
 
-    print("=== MyceliumFractalNet v4.1 :: validation ===")
+    logger.info("=== MyceliumFractalNet v4.1 :: validation ===")
     for k, v in metrics.items():
-        print(f"{k:24s}: {v: .6f}")
+        logger.info("%24s: % .6f", k, v)
