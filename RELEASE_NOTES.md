@@ -5,7 +5,7 @@
 
 ## Highlights
 
-- **Causal Validation Gate** — 42 falsifiable rules verify that every pipeline conclusion follows from data. Perturbation stability tested with 3 noise seeds. Reports are blocked if causal consistency fails.
+- **Causal Validation Gate** — 44 falsifiable rules verify that every pipeline conclusion follows from data. Perturbation stability tested with 3 noise seeds. Reports are blocked if causal consistency fails.
 
 - **Typed Analytics** — 30 frozen dataclasses replace untyped dictionaries throughout the type system. All public APIs have complete type signatures.
 

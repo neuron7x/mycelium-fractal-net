@@ -13,7 +13,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/tests-1731_passed-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/coverage-82%25-green?style=flat-square" alt="Coverage" />
-  <img src="https://img.shields.io/badge/causal_rules-42-blue?style=flat-square" alt="Causal Rules" />
+  <img src="https://img.shields.io/badge/causal_rules-44-blue?style=flat-square" alt="Causal Rules" />
   <img src="https://img.shields.io/badge/import_contracts-7/7-blue?style=flat-square" alt="Import Contracts" />
   <img src="https://img.shields.io/badge/Python-≥3.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="License" /></a>
@@ -36,7 +36,7 @@ seq.forecast(4)    # → ForecastResult(horizon=4, structural_error=0.039)
 seq.compare(seq)   # → ComparisonResult(label=near-identical, distance=0.0)
 ```
 
-Every result passes through a **Causal Validation Gate** — 42 rules across 7 pipeline stages. If a conclusion does not follow from the data, the system blocks it.
+Every result passes through a **Causal Validation Gate** — 44 rules across 7 pipeline stages. If a conclusion does not follow from the data, the system blocks it.
 
 ---
 
@@ -78,7 +78,7 @@ SimulationSpec
      ├──→ compare  ──→ ComparisonResult(distance + topology drift)
      │
      ▼
-  Causal Validation Gate ──→ 42 rules across 7 stages
+  Causal Validation Gate ──→ 44 rules across 7 stages
      │
      ▼
   report ──→ Signed artifact bundle (JSON, HTML, causal_validation.json)
@@ -218,7 +218,7 @@ Every report includes `causal_validation.json` — a machine-readable proof that
 CausalValidation(decision=pass, rules=33/33, errors=0, warnings=0)
 ```
 
-42 rules organized across 7 stages:
+44 rules organized across 7 stages:
 
 | Stage | Rules | What is verified |
 |-------|-------|-----------------|
@@ -227,7 +227,7 @@ CausalValidation(decision=pass, rules=33/33, errors=0, warnings=0)
 | **DET** | 8 | Score bounds, label vocabulary, confidence range, evidence consistency |
 | **FOR** | 6 | Horizon validity, prediction bounds, uncertainty envelope, damping range |
 | **CMP** | 6 | Distance non-negativity, cosine bounds, label-metric consistency |
-| **XST** | 3 | Cross-stage logical coherence (regime ↔ anomaly, neuromod ↔ plasticity) |
+| **XST** | 5 | Cross-stage logical coherence (regime ↔ anomaly, neuromod ↔ plasticity) |
 | **PTB** | 2 | Label stability under ε=10⁻⁶ perturbation (3 noise seeds) |
 
 **Failure modes:** `PASS` → report published · `DEGRADED` → warnings logged, report published · `FAIL` → report blocked, no artifacts emitted.
@@ -270,7 +270,7 @@ Available profiles: `baseline_nominal` · `gabaa_tonic_muscimol_alpha1beta3` · 
 | Source lines | ~31,000 |
 | Test modules | 108 |
 | Frozen dataclasses | 30 |
-| Causal rules | 42 |
+| Causal rules | 44 |
 | Import contracts | 7/7 enforced |
 | Named constants | 62 (zero magic numbers in detection) |
 | CI jobs | 9 (lint, typecheck, import-contracts, test matrix, coverage, security, OpenAPI, validation, benchmark) |

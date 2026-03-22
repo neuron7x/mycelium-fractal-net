@@ -55,6 +55,8 @@
     "XST-001": {"stage": "cross_stage", "category": "causal", "severity": "warn", "description": "Stable regime should not produce anomalous label"},
     "XST-002": {"stage": "cross_stage", "category": "causal", "severity": "warn", "description": "Disabled neuromod implies zero plasticity", "threshold": 0.01},
     "XST-003": {"stage": "cross_stage", "category": "causal", "severity": "warn", "description": "Noise profile reorganized requires connectivity evidence", "threshold": 0.10},
+    "XST-004": {"stage": "cross_stage", "category": "causal", "severity": "warn", "description": "Reorganized/critical regime requires plasticity evidence"},
+    "XST-005": {"stage": "cross_stage", "category": "causal", "severity": "warn", "description": "Without neuromodulation, regime cannot be reorganized"},
     "PTB-001": {"stage": "perturbation", "category": "causal", "severity": "info", "description": "Anomaly label stable under 1e-6 noise perturbation"},
     "PTB-002": {"stage": "perturbation", "category": "causal", "severity": "info", "description": "Regime label stable under 1e-6 noise perturbation"}
   },

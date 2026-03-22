@@ -674,6 +674,45 @@ def xst_003(seq: Any, det: Any) -> Any:
     return c >= 0.10, c, 0.10
 
 
+@rule(
+    id="XST-004",
+    claim="Reorganized/critical regime requires plasticity evidence from neurochem layer",
+    math="regime in {reorganized, critical} -> plasticity_index > REORGANIZED_PLASTICITY_FLOOR",
+    stage="cross_stage",
+    severity="warn",
+    category="causal",
+    falsifiable_by="Regime=reorganized with plasticity_index=0",
+    rationale="Detection should not claim reorganization without neuromodulation-level evidence",
+)
+def xst_004(seq: Any, det: Any) -> Any:
+    if det.regime.label not in ("reorganized", "critical"):
+        return True
+    ns = getattr(seq, "neuromodulation_state", None)
+    if ns is not None:
+        p = float(np.mean(ns.plasticity_index))
+        return p > 0.001, p, 0.001
+    p = det.evidence.get("plasticity_index", 0.0)
+    return p > 0.001, p, 0.001
+
+
+@rule(
+    id="XST-005",
+    claim="Without neuromodulation, regime cannot be reorganized",
+    math="neuromodulation=None -> regime != reorganized",
+    stage="cross_stage",
+    severity="warn",
+    category="causal",
+    falsifiable_by="neuromodulation=None and regime=reorganized",
+    rationale="Reorganization is a neuromodulation-driven phenomenon; without it, label is spurious",
+)
+def xst_005(seq: Any, det: Any) -> bool:
+    if seq.spec is None or seq.spec.neuromodulation is None:
+        return det.regime.label != "reorganized"
+    if not getattr(seq.spec.neuromodulation, "enabled", False):
+        return det.regime.label != "reorganized"
+    return True
+
+
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE: PERTURBATION — robustness under noise
 # ═══════════════════════════════════════════════════════════════════
@@ -822,7 +861,7 @@ def validate_causal_consistency(
 
     # cross-stage
     if detection is not None:
-        for r in [xst_001, xst_002, xst_003]:
+        for r in [xst_001, xst_002, xst_003, xst_004, xst_005]:
             results.append(r.evaluate(sequence, detection))
         stages += 1
 

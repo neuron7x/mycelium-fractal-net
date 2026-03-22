@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.1.0] — 2026-03-22
 
 ### Added
-- **Causal Validation Gate** — 42 falsifiable rules verifying cause-effect consistency across 7 pipeline stages (SIM, EXT, DET, FOR, CMP, XST, PTB).
+- **Causal Validation Gate** — 44 falsifiable rules verifying cause-effect consistency across 7 pipeline stages (SIM, EXT, DET, FOR, CMP, XST, PTB).
 - **Perturbation stability** — automatic label stability check under ε=10⁻⁶ noise with 3 independent seeds.
 - **Typed analytics** — 30 frozen dataclasses replacing untyped `dict[str, float]` throughout the type system.
 - **Descriptor cache** — LRU by `runtime_hash`, eliminating redundant 14× recomputation per pipeline run.
