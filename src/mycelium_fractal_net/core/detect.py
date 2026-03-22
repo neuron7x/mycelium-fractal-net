@@ -1,14 +1,11 @@
 """Anomaly detection and regime shift classification.
 
-Detection thresholds and scoring weights derived from calibration
-against 6 canonical scenarios: baseline_nominal, gabaa_tonic_muscimol,
-serotonergic_reorganization, balanced_criticality,
-observation_noise_pathological, high_inhibition_recovery.
+Detection thresholds and scoring weights loaded from
+``configs/detection_thresholds_v1.json`` via ``detection_config.py``.
+Hardcoded fallbacks ensure the engine never fails at import time.
 
 All scoring weights within each function sum to 1.0.
 See docs/MFN_MATH_MODEL.md Section 5 (Detection Theory).
-
-Versioned config: configs/detection_thresholds_v1.json
 """
 
 from __future__ import annotations
@@ -16,12 +13,70 @@ from __future__ import annotations
 from mycelium_fractal_net.analytics.change_points import detect_change_points
 from mycelium_fractal_net.analytics.drift import morphology_drift
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
+from mycelium_fractal_net.core.detection_config import (
+    ANOMALY_CONFIDENCE_BASE as _ANOMALY_CONFIDENCE_BASE,
+    ANOMALY_CONFIDENCE_MAX as _ANOMALY_CONFIDENCE_MAX,
+    ANOMALY_CONFIDENCE_SCALE as _ANOMALY_CONFIDENCE_SCALE,
+    ANOMALY_W_CHANGE as _ANOMALY_W_CHANGE,
+    ANOMALY_W_COLLAPSE as _ANOMALY_W_COLLAPSE,
+    ANOMALY_W_CONNECTIVITY as _ANOMALY_W_CONNECTIVITY,
+    ANOMALY_W_INSTABILITY as _ANOMALY_W_INSTABILITY,
+    ANOMALY_W_NOISE as _ANOMALY_W_NOISE,
+    ANOMALY_W_PLASTICITY as _ANOMALY_W_PLASTICITY,
+    ANOMALY_W_TRANSITION as _ANOMALY_W_TRANSITION,
+    ANOMALY_W_VOLATILITY as _ANOMALY_W_VOLATILITY,
+    CONNECTIVITY_AMPLIFICATION as _CONNECTIVITY_AMPLIFICATION,
+    CRITICALITY_AMPLIFICATION as _CRITICALITY_AMPLIFICATION,
+    DETECTION_CONFIG_VERSION,
+    DYNAMIC_ANOMALY_BASELINE as _DYNAMIC_ANOMALY_BASELINE,
+    HIERARCHY_BASELINE as _HIERARCHY_BASELINE,
+    HIERARCHY_RANGE as _HIERARCHY_RANGE,
+    INSTABILITY_W_COLLAPSE as _INSTABILITY_W_COLLAPSE,
+    INSTABILITY_W_INDEX as _INSTABILITY_W_INDEX,
+    INSTABILITY_W_NOISE as _INSTABILITY_W_NOISE,
+    INSTABILITY_W_TRANSITION as _INSTABILITY_W_TRANSITION,
+    INSTABILITY_W_VOLATILITY as _INSTABILITY_W_VOLATILITY,
+    NOISE_GAIN_AMPLIFICATION as _NOISE_GAIN_AMPLIFICATION,
+    PATHOLOGICAL_NOISE_THRESHOLD as _PATHOLOGICAL_NOISE_THRESHOLD,
+    PROFILE_HINT_CRITICALITY as _PROFILE_HINT_CRITICALITY,
+    PROFILE_HINT_SEROTONERGIC as _PROFILE_HINT_SEROTONERGIC,
+    REGIME_CONFIDENCE_BASE as _REGIME_CONFIDENCE_BASE,
+    REGIME_CONFIDENCE_MAX as _REGIME_CONFIDENCE_MAX,
+    REGIME_CONFIDENCE_SCALE as _REGIME_CONFIDENCE_SCALE,
+    REGIME_CRITICAL_W_CHANGE as _REGIME_CRITICAL_W_CHANGE,
+    REGIME_CRITICAL_W_HIERARCHY as _REGIME_CRITICAL_W_HIERARCHY,
+    REGIME_CRITICAL_W_PLASTICITY as _REGIME_CRITICAL_W_PLASTICITY,
+    REGIME_CRITICAL_W_PRESSURE as _REGIME_CRITICAL_W_PRESSURE,
+    REGIME_PATHNOISE_FLOOR_GAP as _REGIME_PATHNOISE_FLOOR_GAP,
+    REGIME_PATHNOISE_W_CHANGE as _REGIME_PATHNOISE_W_CHANGE,
+    REGIME_PATHNOISE_W_LOW_COMPLEX as _REGIME_PATHNOISE_W_LOW_COMPLEX,
+    REGIME_PATHNOISE_W_LOW_CONN as _REGIME_PATHNOISE_W_LOW_CONN,
+    REGIME_PATHNOISE_W_NOISE as _REGIME_PATHNOISE_W_NOISE,
+    REGIME_REORGANIZED_W_CHANGE as _REGIME_REORGANIZED_W_CHANGE,
+    REGIME_REORGANIZED_W_COMPLEXITY as _REGIME_REORGANIZED_W_COMPLEXITY,
+    REGIME_REORGANIZED_W_CONNECTIVITY as _REGIME_REORGANIZED_W_CONNECTIVITY,
+    REGIME_REORGANIZED_W_PLASTICITY as _REGIME_REORGANIZED_W_PLASTICITY,
+    REGIME_TRANSITIONAL_W_CHANGE as _REGIME_TRANSITIONAL_W_CHANGE,
+    REGIME_TRANSITIONAL_W_CONNECTIVITY as _REGIME_TRANSITIONAL_W_CONNECTIVITY,
+    REGIME_TRANSITIONAL_W_PRESSURE as _REGIME_TRANSITIONAL_W_PRESSURE,
+    REORGANIZED_COMPLEXITY_THRESHOLD as _REORGANIZED_COMPLEXITY_THRESHOLD,
+    REORGANIZED_PLASTICITY_FLOOR as _REORGANIZED_PLASTICITY_FLOOR,
+    REORGANIZED_TOPOLOGY_THRESHOLD as _REORGANIZED_TOPOLOGY_THRESHOLD,
+    STABLE_CEILING as _STABLE_CEILING,
+    STRUCTURE_FLOOR as _STRUCTURE_FLOOR,
+    TEMPORAL_LZC_NORMALIZER as _TEMPORAL_LZC_NORMALIZER,
+    THRESHOLD_CEILING as _THRESHOLD_CEILING,
+    THRESHOLD_CONNECTIVITY_WEIGHT as _THRESHOLD_CONNECTIVITY_WEIGHT,
+    THRESHOLD_FLOOR as _THRESHOLD_FLOOR,
+    THRESHOLD_NOISE_PENALTY as _THRESHOLD_NOISE_PENALTY,
+    THRESHOLD_PLASTICITY_WEIGHT as _THRESHOLD_PLASTICITY_WEIGHT,
+    THRESHOLD_REORGANIZED_OFFSET as _THRESHOLD_REORGANIZED_OFFSET,
+    WATCH_THRESHOLD_FLOOR as _WATCH_THRESHOLD_FLOOR,
+    WATCH_THRESHOLD_GAP as _WATCH_THRESHOLD_GAP,
+)
 from mycelium_fractal_net.types.detection import AnomalyEvent, RegimeState
 from mycelium_fractal_net.types.features import MorphologyDescriptor
 from mycelium_fractal_net.types.field import FieldSequence
-
-# Detection config version — must match configs/detection_thresholds_v1.json
-DETECTION_CONFIG_VERSION = "mfn-detection-config-v1"
 
 # === Regime classification ===
 _ALLOWED_REGIMES = (
@@ -32,99 +87,9 @@ _ALLOWED_REGIMES = (
     "pathological_noise",
 )
 
-# --- Evidence normalization constants ---
-# Temporal LZC upper bound from calibration across canonical scenarios
-_TEMPORAL_LZC_NORMALIZER: float = 3.0
-# Connectivity divergence amplification to [0, 1] range
-_CONNECTIVITY_AMPLIFICATION: float = 4.0
-# Hierarchy flattening: baseline and normalization range
-_HIERARCHY_BASELINE: float = 0.70
-_HIERARCHY_RANGE: float = 0.30
-# Criticality pressure amplification (near_transition_score is typically < 0.02)
-_CRITICALITY_AMPLIFICATION: float = 50.0
-# Observation noise gain amplification (raw gain is typically < 0.001)
-_NOISE_GAIN_AMPLIFICATION: float = 1000.0
-
-# --- Regime thresholds ---
-_DYNAMIC_ANOMALY_BASELINE: float = 0.45
-_REORGANIZED_COMPLEXITY_THRESHOLD: float = 0.55
-_REORGANIZED_TOPOLOGY_THRESHOLD: float = 0.14
-_REORGANIZED_PLASTICITY_FLOOR: float = 0.08
-_PATHOLOGICAL_NOISE_THRESHOLD: float = 0.55
-_STRUCTURE_FLOOR: float = 0.10
-
-# --- Dynamic threshold adjustment ---
-_THRESHOLD_PLASTICITY_WEIGHT: float = 0.18
-_THRESHOLD_CONNECTIVITY_WEIGHT: float = 0.08
-_THRESHOLD_NOISE_PENALTY: float = 0.12
+# Dynamic threshold offsets not in config — derived constants
 _THRESHOLD_CRITICAL_OFFSET: float = -0.03
-_THRESHOLD_REORGANIZED_OFFSET: float = 0.05
 _THRESHOLD_PATHOLOGICAL_OFFSET: float = -0.08
-_THRESHOLD_FLOOR: float = 0.25
-_THRESHOLD_CEILING: float = 0.85
-
-# --- Instability scoring weights (sum = 1.00) ---
-_INSTABILITY_W_INDEX: float = 0.26
-_INSTABILITY_W_TRANSITION: float = 0.24
-_INSTABILITY_W_COLLAPSE: float = 0.22
-_INSTABILITY_W_VOLATILITY: float = 0.16
-_INSTABILITY_W_NOISE: float = 0.12
-
-# --- Regime scoring weights ---
-# Critical (sum of explicit = 0.84, remainder from other factors)
-_REGIME_CRITICAL_W_PRESSURE: float = 0.34
-_REGIME_CRITICAL_W_CHANGE: float = 0.16
-_REGIME_CRITICAL_W_HIERARCHY: float = 0.16
-_REGIME_CRITICAL_W_PLASTICITY: float = 0.18
-
-# Reorganized (sum = 0.80, remainder from profile hint up to 0.30)
-_REGIME_REORGANIZED_W_COMPLEXITY: float = 0.22
-_REGIME_REORGANIZED_W_CONNECTIVITY: float = 0.18
-_REGIME_REORGANIZED_W_PLASTICITY: float = 0.30
-_REGIME_REORGANIZED_W_CHANGE: float = 0.10
-
-# Pathological noise
-_REGIME_PATHNOISE_W_NOISE: float = 0.45
-_REGIME_PATHNOISE_W_CHANGE: float = 0.20
-_REGIME_PATHNOISE_W_LOW_CONN: float = 0.15
-_REGIME_PATHNOISE_W_LOW_COMPLEX: float = 0.10
-_REGIME_PATHNOISE_FLOOR_GAP: float = 0.2
-
-# Transitional
-_REGIME_TRANSITIONAL_W_CHANGE: float = 0.32
-_REGIME_TRANSITIONAL_W_PRESSURE: float = 0.18
-_REGIME_TRANSITIONAL_W_CONNECTIVITY: float = 0.14
-
-# Stable ceiling: regime is stable if no other regime exceeds this
-_STABLE_CEILING: float = 0.70
-
-# Confidence
-_REGIME_CONFIDENCE_BASE: float = 0.55
-_REGIME_CONFIDENCE_SCALE: float = 0.4
-_REGIME_CONFIDENCE_MAX: float = 0.99
-
-# --- Anomaly scoring weights (sum = 1.00) ---
-_ANOMALY_W_INSTABILITY: float = 0.16
-_ANOMALY_W_TRANSITION: float = 0.14
-_ANOMALY_W_COLLAPSE: float = 0.18
-_ANOMALY_W_CHANGE: float = 0.14
-_ANOMALY_W_VOLATILITY: float = 0.12
-_ANOMALY_W_NOISE: float = 0.14
-_ANOMALY_W_CONNECTIVITY: float = 0.06
-_ANOMALY_W_PLASTICITY: float = 0.06
-
-# Anomaly label thresholds
-_WATCH_THRESHOLD_FLOOR: float = 0.30
-_WATCH_THRESHOLD_GAP: float = 0.18
-
-# Anomaly confidence
-_ANOMALY_CONFIDENCE_BASE: float = 0.60
-_ANOMALY_CONFIDENCE_SCALE: float = 0.6
-_ANOMALY_CONFIDENCE_MAX: float = 0.99
-
-# --- Profile hint boosts ---
-_PROFILE_HINT_SEROTONERGIC: float = 0.30
-_PROFILE_HINT_CRITICALITY: float = 0.10
 
 
 def _regime_evidence(sequence: FieldSequence) -> dict[str, float]:

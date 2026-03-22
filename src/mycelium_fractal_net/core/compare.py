@@ -1,7 +1,7 @@
 """Morphology comparison with topology drift analysis.
 
-Comparison thresholds calibrated against canonical scenarios.
-See configs/detection_thresholds_v1.json for version-tracked values.
+Comparison thresholds loaded from ``configs/detection_thresholds_v1.json``
+via ``detection_config.py``. Hardcoded fallbacks ensure import-time safety.
 """
 
 from __future__ import annotations
@@ -10,28 +10,24 @@ import numpy as np
 
 from mycelium_fractal_net.analytics.drift import morphology_drift
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
+from mycelium_fractal_net.core.detection_config import (
+    CONNECTIVITY_FLAT_CEILING as _CONNECTIVITY_FLAT_CEILING,
+    CONNECTIVITY_LOW as _CONNECTIVITY_LOW,
+    CONNECTIVITY_REORG_THRESHOLD as _CONNECTIVITY_REORG_THRESHOLD,
+    COSINE_NEAR_IDENTICAL as _COSINE_NEAR_IDENTICAL,
+    COSINE_RELATED as _COSINE_RELATED,
+    COSINE_SIMILAR as _COSINE_SIMILAR,
+    DISTANCE_NEAR_IDENTICAL as _DISTANCE_NEAR_IDENTICAL,
+    HIERARCHY_FLAT_THRESHOLD as _HIERARCHY_FLAT_THRESHOLD,
+    MODULARITY_LOW as _MODULARITY_LOW,
+    MODULARITY_REORG_THRESHOLD as _MODULARITY_REORG_THRESHOLD,
+    NOISE_PATHOLOGICAL_HIGH as _NOISE_PATHOLOGICAL_HIGH,
+    NOISE_PATHOLOGICAL_LOW as _NOISE_PATHOLOGICAL_LOW,
+    TOP_CHANGED_FEATURES as _TOP_CHANGED_FEATURES,
+)
 from mycelium_fractal_net.types.features import MorphologyDescriptor
 from mycelium_fractal_net.types.field import FieldSequence
 from mycelium_fractal_net.types.forecast import ComparisonResult
-
-# === Similarity thresholds ===
-_COSINE_NEAR_IDENTICAL: float = 0.995
-_COSINE_SIMILAR: float = 0.97
-_COSINE_RELATED: float = 0.90
-_DISTANCE_NEAR_IDENTICAL: float = 0.25
-
-# === Topology drift thresholds ===
-_NOISE_PATHOLOGICAL_HIGH: float = 0.0008
-_NOISE_PATHOLOGICAL_LOW: float = 0.0005
-_CONNECTIVITY_LOW: float = 0.05
-_MODULARITY_LOW: float = 0.08
-_HIERARCHY_FLAT_THRESHOLD: float = 0.04
-_CONNECTIVITY_FLAT_CEILING: float = 0.08
-_CONNECTIVITY_REORG_THRESHOLD: float = 0.05
-_MODULARITY_REORG_THRESHOLD: float = 0.08
-
-# === Feature ranking ===
-_TOP_CHANGED_FEATURES: int = 12
 
 
 def _topology_label(drift: dict[str, float]) -> str:
