@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-1689_passed-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-1708_passed-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/coverage-82%25-green?style=flat-square" alt="Coverage" />
   <img src="https://img.shields.io/badge/causal_rules-41-blue?style=flat-square" alt="Causal Rules" />
   <img src="https://img.shields.io/badge/import_contracts-7/7-blue?style=flat-square" alt="Import Contracts" />
@@ -265,7 +265,7 @@ Available profiles: `baseline_nominal` · `gabaa_tonic_muscimol_alpha1beta3` · 
 
 | Metric | Value |
 |--------|-------|
-| Tests | 1,689 passed, 6 skipped |
+| Tests | 1,708 passed, 6 skipped |
 | Coverage | 82% (branch) |
 | Source lines | ~31,000 |
 | Test modules | 108 |
@@ -311,6 +311,9 @@ See [Contributing](CONTRIBUTING.md) for development workflow and code standards.
 | [Data Model](docs/DATA_MODEL.md) | Core type system and data flow |
 | [Validation Report](docs/MFN_VALIDATION_REPORT.md) | Scientific validation methodology and results |
 | [ADRs](docs/adr/) | 6 architectural decision records |
+| [Versioning Policy](docs/VERSIONING_POLICY.md) | Semantic versioning rules for SDK, CLI, API, artifacts |
+| [Deprecation Policy](docs/DEPRECATION_POLICY.md) | Deprecation standard, timeline, current deprecations |
+| [Dependency Policy](docs/DEPENDENCY_POLICY.md) | Criteria for adding dependencies, tier system, audit |
 | [Security Policy](SECURITY.md) | Vulnerability disclosure, response timeline |
 | [Known Limitations](KNOWN_LIMITATIONS.md) | Scale limits, frozen surfaces, current constraints |
 | [Changelog](CHANGELOG.md) | Version history in Keep a Changelog format |
