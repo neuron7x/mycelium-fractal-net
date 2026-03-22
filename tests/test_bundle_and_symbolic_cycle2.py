@@ -28,9 +28,7 @@ def test_verify_bundle_valid_tampered_and_missing_cases(tmp_path: Path) -> None:
                 "bundle_artifacts": [
                     {
                         "path": "artifact.txt",
-                        "sha256": __import__("hashlib")
-                        .sha256(artifact.read_bytes())
-                        .hexdigest(),
+                        "sha256": __import__("hashlib").sha256(artifact.read_bytes()).hexdigest(),
                     }
                 ]
             },
@@ -54,10 +52,7 @@ def test_verify_bundle_valid_tampered_and_missing_cases(tmp_path: Path) -> None:
     artifact.unlink()
     missing = verify_bundle(manifest)
     assert missing["ok"] is False
-    assert any(
-        "missing:artifact.txt" in failure
-        for failure in missing["manifests"][0]["failures"]
-    )
+    assert any("missing:artifact.txt" in failure for failure in missing["manifests"][0]["failures"])
 
 
 def test_verify_artifact_signature_detects_tamper(tmp_path: Path) -> None:
@@ -73,9 +68,7 @@ def test_symbolic_context_export_is_deterministic_and_compact(tmp_path: Path) ->
     seq = simulate_history(
         __import__("mycelium_fractal_net").SimulationSpec(grid_size=8, steps=6, seed=11)
     )
-    report = build_analysis_report(
-        seq, tmp_path, horizon=3, export_symbolic_context=True
-    )
+    report = build_analysis_report(seq, tmp_path, horizon=3, export_symbolic_context=True)
     run_dir = tmp_path / report.run_id
     symbolic_path = run_dir / "symbolic_context.json"
     assert symbolic_path.exists()

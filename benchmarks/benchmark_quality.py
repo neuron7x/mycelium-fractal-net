@@ -29,17 +29,13 @@ def _clip01(value: float) -> float:
 
 
 def _raw_stats_baseline_score(sequence) -> float:
-    history = (
-        sequence.history if sequence.history is not None else sequence.field[None, :, :]
-    )
+    history = sequence.history if sequence.history is not None else sequence.field[None, :, :]
     final = history[-1]
     return _clip01(float(np.std(final) / (abs(np.mean(final)) + 1e-9)) * 0.25)
 
 
 def _naive_regime_baseline(sequence) -> float:
-    history = (
-        sequence.history if sequence.history is not None else sequence.field[None, :, :]
-    )
+    history = sequence.history if sequence.history is not None else sequence.field[None, :, :]
     if history.shape[0] < 2:
         return 0.0
     mean_abs_delta = float(np.mean(np.abs(np.diff(history, axis=0))))
@@ -47,9 +43,7 @@ def _naive_regime_baseline(sequence) -> float:
 
 
 def _persistence_forecast_score(sequence) -> float:
-    history = (
-        sequence.history if sequence.history is not None else sequence.field[None, :, :]
-    )
+    history = sequence.history if sequence.history is not None else sequence.field[None, :, :]
     forecast = forecast_next(sequence, horizon=4)
     validate_forecast_payload(forecast.to_dict())
     predicted = np.asarray(forecast.predicted_states[-1], dtype=np.float64)
@@ -61,9 +55,7 @@ def _persistence_forecast_score(sequence) -> float:
 
 
 def _texture_descriptor(sequence) -> np.ndarray:
-    history = (
-        sequence.history if sequence.history is not None else sequence.field[None, :, :]
-    )
+    history = sequence.history if sequence.history is not None else sequence.field[None, :, :]
     frame = history[-1]
     gx = np.diff(frame, axis=1)
     gy = np.diff(frame, axis=0)
@@ -104,9 +96,7 @@ def main() -> int:
     regime_engine = float(regime.confidence)
     regime_baseline = _naive_regime_baseline(regime_case)
 
-    forecast_baseline_score, engine_error, baseline_error = _persistence_forecast_score(
-        synthetic
-    )
+    forecast_baseline_score, engine_error, baseline_error = _persistence_forecast_score(synthetic)
     forecast_engine = _clip01(
         1.0 - float(fc_payload["benchmark_metrics"]["forecast_structural_error"]) * 25.0
     )
@@ -168,8 +158,7 @@ def main() -> int:
     json_path = results_dir / "benchmark_quality.json"
     csv_path = results_dir / "benchmark_quality.csv"
     json_path.write_text(
-        json.dumps({"results": [asdict(r) for r in rows], "summary": summary}, indent=2)
-        + "\n",
+        json.dumps({"results": [asdict(r) for r in rows], "summary": summary}, indent=2) + "\n",
         encoding="utf-8",
     )
     with csv_path.open("w", newline="", encoding="utf-8") as f:

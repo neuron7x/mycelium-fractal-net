@@ -93,13 +93,9 @@ class BenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(
-            f"Forward pass latency: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
-        )
+        print(f"Forward pass latency: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
         if not result.passed:
-            print(
-                f"  WARNING: Latency {avg_latency_ms:.2f}ms exceeds {target_ms}ms target"
-            )
+            print(f"  WARNING: Latency {avg_latency_ms:.2f}ms exceeds {target_ms}ms target")
 
         self.results.append(result)
         return result
@@ -142,9 +138,7 @@ class BenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(
-            f"Forward pass (batch=128): {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
-        )
+        print(f"Forward pass (batch=128): {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
 
         self.results.append(result)
         return result
@@ -225,9 +219,7 @@ class BenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(
-            f"Fractal dimension estimation: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
-        )
+        print(f"Fractal dimension estimation: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
 
         self.results.append(result)
         return result
@@ -398,9 +390,7 @@ class BenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(
-            f"Model initialization: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
-        )
+        print(f"Model initialization: {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
 
         self.results.append(result)
         return result

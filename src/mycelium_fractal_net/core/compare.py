@@ -51,10 +51,7 @@ def _topology_label(drift: dict[str, float]) -> str:
         and modularity < _MODULARITY_LOW
     ):
         return "flattened-hierarchy"
-    if (
-        connectivity >= _CONNECTIVITY_REORG_THRESHOLD
-        or modularity >= _MODULARITY_REORG_THRESHOLD
-    ):
+    if connectivity >= _CONNECTIVITY_REORG_THRESHOLD or modularity >= _MODULARITY_REORG_THRESHOLD:
         return "reorganized"
     return "nominal"
 
@@ -70,12 +67,8 @@ _REORGANIZATION_MAP = {
 def compare(
     a: FieldSequence | MorphologyDescriptor, b: FieldSequence | MorphologyDescriptor
 ) -> ComparisonResult:
-    left = (
-        a if isinstance(a, MorphologyDescriptor) else compute_morphology_descriptor(a)
-    )
-    right = (
-        b if isinstance(b, MorphologyDescriptor) else compute_morphology_descriptor(b)
-    )
+    left = a if isinstance(a, MorphologyDescriptor) else compute_morphology_descriptor(a)
+    right = b if isinstance(b, MorphologyDescriptor) else compute_morphology_descriptor(b)
     left_vec = left.to_embedding_array()
     right_vec = right.to_embedding_array()
     distance = float(np.linalg.norm(left_vec - right_vec))
@@ -91,9 +84,9 @@ def compare(
             "right": float(right_flat[key]),
             "abs_delta": abs(float(left_flat[key]) - float(right_flat[key])),
         }
-        for key in sorted(
-            keys, key=lambda k: abs(left_flat[k] - right_flat[k]), reverse=True
-        )[:_TOP_CHANGED_FEATURES]
+        for key in sorted(keys, key=lambda k: abs(left_flat[k] - right_flat[k]), reverse=True)[
+            :_TOP_CHANGED_FEATURES
+        ]
     ]
     drift = morphology_drift(left, right)
     drift.update(
@@ -135,9 +128,7 @@ def compare(
     nearest_structural_analog = (
         "self-similar"
         if label == "near-identical"
-        else (
-            "reference-family" if label in {"similar", "related"} else "no-close-analog"
-        )
+        else ("reference-family" if label in {"similar", "related"} else "no-close-analog")
     )
     topo_label = _topology_label(drift)
     reorg_label = _REORGANIZATION_MAP.get(topo_label, topo_label)

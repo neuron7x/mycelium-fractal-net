@@ -50,9 +50,7 @@ def compute_excitability_offset_v(
     rest_offset_mv: float,
     plasticity_scale: float,
 ) -> NDArray[np.float64]:
-    centered_activator = np.asarray(activator, dtype=np.float64) - float(
-        np.mean(activator)
-    )
+    centered_activator = np.asarray(activator, dtype=np.float64) - float(np.mean(activator))
     excitability_drive = np.clip(0.5 + 2.0 * centered_activator, 0.0, 1.0)
     occupancy_bias = (
         0.60 * state.occupancy_active
@@ -64,10 +62,7 @@ def compute_excitability_offset_v(
     ) * occupancy_bias * (0.50 + 0.50 * excitability_drive)
     if plasticity_scale > 1.0:
         local_offset_mv += (
-            float(rest_offset_mv)
-            * 0.10
-            * (float(plasticity_scale) - 1.0)
-            * state.plasticity_index
+            float(rest_offset_mv) * 0.10 * (float(plasticity_scale) - 1.0) * state.plasticity_index
         )
     local_offset_mv = np.clip(local_offset_mv, -2.0, 2.0)
     return np.asarray(local_offset_mv / 1000.0, dtype=np.float64)
@@ -106,9 +101,7 @@ def step_neuromodulation_state(
 
         bind_rate = _rate(float(gabaa.get("k_on", 0.18)), dt_seconds, 0.18)
         unbind_rate = _rate(float(gabaa.get("k_off", 0.06)), dt_seconds, 0.06)
-        des_rate = _rate(
-            float(gabaa.get("desensitization_rate_hz", 0.0)), dt_seconds, 0.02
-        )
+        des_rate = _rate(float(gabaa.get("desensitization_rate_hz", 0.0)), dt_seconds, 0.02)
         rec_rate = _rate(float(gabaa.get("recovery_rate_hz", 0.0)), dt_seconds, 0.02)
 
         available_rest = np.clip(1.0 - occ_active - occ_des, 0.0, 1.0)
@@ -121,9 +114,7 @@ def step_neuromodulation_state(
         occ_rest = occ_rest - bind_flux
         occ_active = occ_active + bind_flux
 
-        unbind_propensity = np.clip(
-            unbind_rate * (1.0 - ligand_active * activity_drive), 0.0, 1.0
-        )
+        unbind_propensity = np.clip(unbind_rate * (1.0 - ligand_active * activity_drive), 0.0, 1.0)
         unbind_flux = occ_active * unbind_propensity
         occ_active = occ_active - unbind_flux
         occ_rest = occ_rest + unbind_flux
@@ -138,9 +129,7 @@ def step_neuromodulation_state(
         occ_des = occ_des - rec_flux
         occ_rest = occ_rest + rec_flux
 
-        occ_rest, occ_active, occ_des = _normalize_triplet(
-            occ_rest, occ_active, occ_des
-        )
+        occ_rest, occ_active, occ_des = _normalize_triplet(occ_rest, occ_active, occ_des)
     else:
         occ_rest = np.ones(shape, dtype=np.float64)
         occ_active = np.zeros(shape, dtype=np.float64)
@@ -172,11 +161,9 @@ def step_neuromodulation_state(
         target_noise = np.full(
             shape, max(0.0, float(observation_noise.get("std", 0.0))), dtype=np.float64
         )
-        smoothing = float(
-            np.clip(observation_noise.get("temporal_smoothing", 0.0), 0.0, 1.0)
-        )
-        observation_noise_gain = (
-            state.observation_noise_gain * smoothing + target_noise * (1.0 - smoothing)
+        smoothing = float(np.clip(observation_noise.get("temporal_smoothing", 0.0), 0.0, 1.0))
+        observation_noise_gain = state.observation_noise_gain * smoothing + target_noise * (
+            1.0 - smoothing
         )
     else:
         observation_noise_gain = np.zeros(shape, dtype=np.float64)

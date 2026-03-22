@@ -502,6 +502,4 @@ class TestCryptoToggle:
 
         for endpoint, body in endpoints:
             response = crypto_disabled_client.post(endpoint, json=body)
-            assert (
-                response.status_code == 503
-            ), f"Endpoint {endpoint} should be disabled"
+            assert response.status_code == 503, f"Endpoint {endpoint} should be disabled"

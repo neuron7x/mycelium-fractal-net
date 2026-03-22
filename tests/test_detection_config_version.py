@@ -29,9 +29,7 @@ def test_anomaly_weights_sum_to_one() -> None:
     config = json.loads(config_path.read_text())
     weights = config["anomaly_weights"]
     total = sum(weights.values())
-    assert total == pytest.approx(
-        1.0, abs=1e-10
-    ), f"Anomaly weights sum to {total}, not 1.0"
+    assert total == pytest.approx(1.0, abs=1e-10), f"Anomaly weights sum to {total}, not 1.0"
 
 
 def test_instability_weights_sum_to_one() -> None:
@@ -39,9 +37,7 @@ def test_instability_weights_sum_to_one() -> None:
     config = json.loads(config_path.read_text())
     weights = config["instability_weights"]
     total = sum(weights.values())
-    assert total == pytest.approx(
-        1.0, abs=1e-10
-    ), f"Instability weights sum to {total}, not 1.0"
+    assert total == pytest.approx(1.0, abs=1e-10), f"Instability weights sum to {total}, not 1.0"
 
 
 def test_constants_match_config_json() -> None:
@@ -63,13 +59,8 @@ def test_constants_match_config_json() -> None:
     # Regime thresholds
     rt = config["regime_thresholds"]
     assert detect._DYNAMIC_ANOMALY_BASELINE == rt["dynamic_anomaly_baseline"]
-    assert (
-        detect._REORGANIZED_COMPLEXITY_THRESHOLD
-        == rt["reorganized_complexity_threshold"]
-    )
-    assert (
-        detect._REORGANIZED_TOPOLOGY_THRESHOLD == rt["reorganized_topology_threshold"]
-    )
+    assert detect._REORGANIZED_COMPLEXITY_THRESHOLD == rt["reorganized_complexity_threshold"]
+    assert detect._REORGANIZED_TOPOLOGY_THRESHOLD == rt["reorganized_topology_threshold"]
     assert detect._REORGANIZED_PLASTICITY_FLOOR == rt["reorganized_plasticity_floor"]
     assert detect._PATHOLOGICAL_NOISE_THRESHOLD == rt["pathological_noise_threshold"]
     assert detect._STRUCTURE_FLOOR == rt["structure_floor"]

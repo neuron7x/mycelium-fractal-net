@@ -37,9 +37,7 @@ def main() -> int:
         log_path = OUT / f"pytest_group_{idx}.log"
         with log_path.open("w", encoding="utf-8") as fh:
             fh.write(f"$ {' '.join(cmd)}\n\n")
-            proc = subprocess.run(
-                cmd, cwd=ROOT, stdout=fh, stderr=subprocess.STDOUT, text=True
-            )
+            proc = subprocess.run(cmd, cwd=ROOT, stdout=fh, stderr=subprocess.STDOUT, text=True)
         elapsed = time.time() - started
         summary.append(
             {
@@ -52,9 +50,7 @@ def main() -> int:
         )
         overall_ok &= proc.returncode == 0
     payload = {"ok": overall_ok, "groups": summary}
-    (OUT / "pytest.log").write_text(
-        json.dumps(payload, indent=2) + "\n", encoding="utf-8"
-    )
+    (OUT / "pytest.log").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(payload, indent=2))
     return 0 if overall_ok else 1
 

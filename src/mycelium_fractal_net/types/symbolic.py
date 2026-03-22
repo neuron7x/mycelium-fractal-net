@@ -30,8 +30,6 @@ class SymbolicContext:
                 str(k): (float(v) if isinstance(v, (int, float)) else str(v))
                 for k, v in self.compare_summary.items()
             },
-            "manifest_hashes": {
-                str(k): str(v) for k, v in self.manifest_hashes.items()
-            },
+            "manifest_hashes": {str(k): str(v) for k, v in self.manifest_hashes.items()},
             "metadata": dict(self.metadata),
         }

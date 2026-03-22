@@ -37,22 +37,16 @@ def _stability_metrics(sequence: FieldSequence) -> StabilityMetrics:
 
 
 def _complexity_metrics(sequence: FieldSequence) -> ComplexityMetrics:
-    history = (
-        sequence.history if sequence.history is not None else sequence.field[None, :, :]
-    )
+    history = sequence.history if sequence.history is not None else sequence.field[None, :, :]
     mean_series = np.mean(history, axis=(1, 2))
     if len(mean_series) < 2:
         temporal_lzc = 0.0
         temporal_hfd = 0.0
         multiscale_entropy_short = 0.0
     else:
-        bits = "".join(
-            "1" if value > np.mean(mean_series) else "0" for value in mean_series
-        )
+        bits = "".join("1" if value > np.mean(mean_series) else "0" for value in mean_series)
         unique_substrings = {
-            bits[i:j]
-            for i in range(len(bits))
-            for j in range(i + 1, min(len(bits), i + 5) + 1)
+            bits[i:j] for i in range(len(bits)) for j in range(i + 1, min(len(bits), i + 5) + 1)
         }
         temporal_lzc = float(len(unique_substrings) / max(1, len(bits)))
         diffs = np.abs(np.diff(mean_series))
@@ -62,9 +56,7 @@ def _complexity_metrics(sequence: FieldSequence) -> ComplexityMetrics:
             if len(mean_series) >= 4 and len(mean_series) % 2 == 0
             else mean_series
         )
-        multiscale_entropy_short = float(
-            np.std(coarse) / (abs(np.mean(coarse)) + 1e-12)
-        )
+        multiscale_entropy_short = float(np.std(coarse) / (abs(np.mean(coarse)) + 1e-12))
     return ComplexityMetrics(
         temporal_lzc=temporal_lzc,
         temporal_hfd=temporal_hfd,
@@ -84,19 +76,13 @@ def _neuromodulation_metrics(sequence: FieldSequence) -> NeuromodulationFeatures
     else:
         meta = dict(sequence.metadata or {})
         state = dict(meta.get("neuromodulation_state") or {})
-        plasticity = float(
-            state.get("plasticity_index", meta.get("plasticity_index_mean", 0.0))
-        )
+        plasticity = float(state.get("plasticity_index", meta.get("plasticity_index_mean", 0.0)))
         inhibition = float(
-            state.get(
-                "effective_inhibition", meta.get("effective_inhibition_mean", 0.0)
-            )
+            state.get("effective_inhibition", meta.get("effective_inhibition_mean", 0.0))
         )
         gain = float(state.get("effective_gain", meta.get("effective_gain_mean", 0.0)))
         obs = float(
-            state.get(
-                "observation_noise_gain", meta.get("observation_noise_gain_mean", 0.0)
-            )
+            state.get("observation_noise_gain", meta.get("observation_noise_gain_mean", 0.0))
         )
     return NeuromodulationFeatures(
         enabled=1.0 if (spec is not None and spec.enabled) else 0.0,

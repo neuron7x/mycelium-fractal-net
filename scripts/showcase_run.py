@@ -23,9 +23,7 @@ def _run_release_prep() -> None:
 
 
 def main() -> int:
-    spec = mfn.SimulationSpec(
-        grid_size=32, steps=24, seed=42, alpha=0.16, spike_probability=0.22
-    )
+    spec = mfn.SimulationSpec(grid_size=32, steps=24, seed=42, alpha=0.16, spike_probability=0.22)
     seq = mfn.simulate_history(spec)
     descriptor = mfn.extract(seq)
     detection = mfn.detect(seq)
@@ -35,11 +33,7 @@ def main() -> int:
     _run_release_prep()
 
     criticality = (
-        ROOT
-        / "artifacts"
-        / "showcase"
-        / "criticality_sweep"
-        / "criticality_sweep_summary.json"
+        ROOT / "artifacts" / "showcase" / "criticality_sweep" / "criticality_sweep_summary.json"
     )
     bundle = {
         "product": "Morphology-aware Field Intelligence Engine",
@@ -49,9 +43,7 @@ def main() -> int:
         "forecast_method": forecast.method,
         "comparison_label": comparison.label,
         "report_dir": str((OUT / "runs" / report.run_id).resolve()),
-        "release_bundle": str(
-            (ROOT / "artifacts" / "release" / "index.html").resolve()
-        ),
+        "release_bundle": str((ROOT / "artifacts" / "release" / "index.html").resolve()),
         "criticality_sweep": str(criticality.resolve()) if criticality.exists() else "",
         "bundle_artifacts": [],
         "crypto_audit_log": "crypto_audit.jsonl",

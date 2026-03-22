@@ -20,9 +20,7 @@ ETALON_SHA = CONTRACTS / "showcase_run.etalon.sha256"
 
 
 def _stable_payload() -> dict[str, object]:
-    spec = SimulationSpec(
-        grid_size=32, steps=24, seed=42, alpha=0.16, spike_probability=0.22
-    )
+    spec = SimulationSpec(grid_size=32, steps=24, seed=42, alpha=0.16, spike_probability=0.22)
     seq = mfn.simulate_history(spec)
     descriptor = mfn.extract(seq)
     detection = mfn.detect(seq)
@@ -33,16 +31,12 @@ def _stable_payload() -> dict[str, object]:
         "spec": spec.to_dict(),
         "descriptor_version": descriptor.version,
         "anomaly_label": detection.label,
-        "regime_label": (
-            detection.regime.label if detection.regime is not None else None
-        ),
+        "regime_label": (detection.regime.label if detection.regime is not None else None),
         "forecast_method": forecast.method,
         "comparison_label": comparison.label,
         "comparison_topology_label": comparison.topology_label,
         "comparison_reorganization_label": comparison.reorganization_label,
-        "forecast_benchmark_metrics": {
-            k: float(v) for k, v in forecast.benchmark_metrics.items()
-        },
+        "forecast_benchmark_metrics": {k: float(v) for k, v in forecast.benchmark_metrics.items()},
     }
 
 

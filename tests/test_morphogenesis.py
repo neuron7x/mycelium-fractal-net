@@ -147,9 +147,7 @@ class TestFractalDimensionConvergence:
         d1 = estimate_fractal_dimension(binary1)
         d2 = estimate_fractal_dimension(binary2)
 
-        assert (
-            abs(d1 - d2) < 1e-10
-        ), f"Fractal dimension not reproducible: D1={d1}, D2={d2}"
+        assert abs(d1 - d2) < 1e-10, f"Fractal dimension not reproducible: D1={d1}, D2={d2}"
 
     def test_fractal_dimension_scale_invariance(self) -> None:
         """Test fractal dimension is approximately scale-invariant.
@@ -186,9 +184,7 @@ class TestFieldConnectivity:
         rng = np.random.default_rng(42)
 
         # Initial mean is around -70 mV
-        field, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         mean_mv = field.mean() * 1000.0
         # Should stay roughly around -70 mV (within 20 mV)
@@ -198,31 +194,21 @@ class TestFieldConnectivity:
         """Test that field has positive spatial correlation (continuity)."""
         rng = np.random.default_rng(42)
 
-        field, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         # Check correlation between adjacent cells
-        horizontal_corr = np.corrcoef(field[:, :-1].flatten(), field[:, 1:].flatten())[
-            0, 1
-        ]
-        vertical_corr = np.corrcoef(field[:-1, :].flatten(), field[1:, :].flatten())[
-            0, 1
-        ]
+        horizontal_corr = np.corrcoef(field[:, :-1].flatten(), field[:, 1:].flatten())[0, 1]
+        vertical_corr = np.corrcoef(field[:-1, :].flatten(), field[1:, :].flatten())[0, 1]
 
         # Adjacent cells should be positively correlated (diffusion causes this)
-        assert (
-            horizontal_corr > 0.8
-        ), f"Horizontal correlation {horizontal_corr:.3f} too low"
+        assert horizontal_corr > 0.8, f"Horizontal correlation {horizontal_corr:.3f} too low"
         assert vertical_corr > 0.8, f"Vertical correlation {vertical_corr:.3f} too low"
 
     def test_field_boundary_no_artifacts(self) -> None:
         """Test that periodic boundary conditions don't create obvious artifacts."""
         rng = np.random.default_rng(42)
 
-        field, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         # Compare edge values with interior - should be similar magnitude
         edge_mean = np.mean(
@@ -256,9 +242,7 @@ class TestGrowthDynamics:
 
         # Check rough linear scaling (allowing for stochasticity)
         # Higher probability should give more events
-        assert (
-            events_list[-1] > events_list[0]
-        ), "Growth should increase with probability"
+        assert events_list[-1] > events_list[0], "Growth should increase with probability"
 
     def test_diffusion_coefficient_effect(self) -> None:
         """Test diffusion coefficient affects field smoothness."""
@@ -299,12 +283,8 @@ class TestGrowthDynamics:
 
         # Check bounds
         field_mv = field * 1000.0
-        assert (
-            field_mv.min() >= -95.0 - 0.1
-        ), f"Min {field_mv.min():.2f} mV out of bounds"
-        assert (
-            field_mv.max() <= 40.0 + 0.1
-        ), f"Max {field_mv.max():.2f} mV out of bounds"
+        assert field_mv.min() >= -95.0 - 0.1, f"Min {field_mv.min():.2f} mV out of bounds"
+        assert field_mv.max() <= 40.0 + 0.1, f"Max {field_mv.max():.2f} mV out of bounds"
 
 
 class TestModelWithMorphogenesis:
@@ -326,9 +306,7 @@ class TestModelWithMorphogenesis:
         max_pot = field.max()
 
         # Create input tensor
-        x = torch.tensor(
-            [[d, mean_pot * 100, std_pot * 100, max_pot * 100]], dtype=torch.float32
-        )
+        x = torch.tensor([[d, mean_pot * 100, std_pot * 100, max_pot * 100]], dtype=torch.float32)
 
         out = model(x)
 
@@ -395,15 +373,11 @@ class TestMorphogenesisValidation:
         rng = np.random.default_rng(42)
 
         # Run simulation
-        field1, _ = simulate_mycelium_field(
-            rng, grid_size=64, steps=100, turing_enabled=True
-        )
+        field1, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
 
         # Run longer
         rng2 = np.random.default_rng(42)
-        field2, _ = simulate_mycelium_field(
-            rng2, grid_size=64, steps=200, turing_enabled=True
-        )
+        field2, _ = simulate_mycelium_field(rng2, grid_size=64, steps=200, turing_enabled=True)
 
         # Fields should be different but stats similar (quasi-steady state)
         std1 = field1.std()
@@ -411,9 +385,7 @@ class TestMorphogenesisValidation:
 
         # Standard deviations should be in same order of magnitude
         ratio = std2 / (std1 + 1e-10)
-        assert (
-            0.1 < ratio < 10
-        ), f"Field variance ratio {ratio:.3f} indicates instability"
+        assert 0.1 < ratio < 10, f"Field variance ratio {ratio:.3f} indicates instability"
 
     def test_physiological_membrane_potential_range(self) -> None:
         """Test that membrane potentials stay in physiological range.

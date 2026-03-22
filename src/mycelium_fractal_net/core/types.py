@@ -85,9 +85,7 @@ class SimulationConfig:
 
     def __post_init__(self) -> None:
         # Normalize: accept typed NeuromodulationSpec or dict
-        if self.neuromodulation is not None and hasattr(
-            self.neuromodulation, "to_dict"
-        ):
+        if self.neuromodulation is not None and hasattr(self.neuromodulation, "to_dict"):
             self.neuromodulation = self.neuromodulation.to_dict()
         if not (4 <= self.grid_size <= 512):
             raise ValueError("grid_size must be in [4, 512]")
@@ -188,9 +186,7 @@ class SimulationConfig:
             try:
                 return int(value)
             except (TypeError, ValueError) as exc:
-                raise ValueError(
-                    f"seed must be an integer when provided, got {value!r}"
-                ) from exc
+                raise ValueError(f"seed must be an integer when provided, got {value!r}") from exc
 
         return cls(
             grid_size=int(data.get("grid_size", 64)),

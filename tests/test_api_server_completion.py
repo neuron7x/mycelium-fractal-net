@@ -14,9 +14,7 @@ def test_api_server_health_and_metrics() -> None:
     assert payload["engine_version"] == "4.1.0"
     assert payload["api_version"] == "v1"
     assert payload["uptime"] >= 0.0
-    client.post(
-        "/v1/simulate", json={"grid_size": 16, "steps": 8, "with_history": True}
-    )
+    client.post("/v1/simulate", json={"grid_size": 16, "steps": 8, "with_history": True})
     body = client.get("/metrics").json()
     assert body["simulation_requests"] >= 1
     assert "runtime_latency" in body

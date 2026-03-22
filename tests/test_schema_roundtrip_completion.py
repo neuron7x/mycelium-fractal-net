@@ -18,7 +18,5 @@ def test_field_sequence_and_descriptor_roundtrip() -> None:
     restored_seq = FieldSequence.from_dict(seq.to_dict(include_arrays=True))
     assert restored_seq.grid_size == seq.grid_size
     desc = mfn.extract(seq)
-    restored_desc = MorphologyDescriptor.from_dict(
-        json.loads(json.dumps(desc.to_dict()))
-    )
+    restored_desc = MorphologyDescriptor.from_dict(json.loads(json.dumps(desc.to_dict())))
     assert restored_desc.version == desc.version

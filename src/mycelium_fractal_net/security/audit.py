@@ -132,9 +132,7 @@ class AuditEvent:
 
         if self.details:
             # Redact sensitive fields in details
-            redact_fields = list(
-                DEFAULT_SENSITIVE_FIELDS.union(set(self.sensitive_fields))
-            )
+            redact_fields = list(DEFAULT_SENSITIVE_FIELDS.union(set(self.sensitive_fields)))
             data["details"] = _redact_dict(self.details, redact_fields)
 
         return data
@@ -252,9 +250,7 @@ class AuditLogger:
             if env in ("prod", "production", "staging"):
                 formatter = logging.Formatter("%(message)s")
             else:
-                formatter = logging.Formatter(
-                    "%(asctime)s AUDIT %(levelname)s: %(message)s"
-                )
+                formatter = logging.Formatter("%(asctime)s AUDIT %(levelname)s: %(message)s")
 
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)

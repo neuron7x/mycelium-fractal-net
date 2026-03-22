@@ -120,9 +120,7 @@ class FieldHistory:
         if self.data.shape[0] < 1:
             raise ValueError(f"time steps must be >= 1, got {self.data.shape[0]}")
         if self.data.shape[1] < 2 or self.data.shape[2] < 2:
-            raise ValueError(
-                f"spatial dimensions must be >= 2, got {self.data.shape[1:]}"
-            )
+            raise ValueError(f"spatial dimensions must be >= 2, got {self.data.shape[1:]}")
         if not np.isfinite(self.data).all():
             raise ValueError("data contains NaN or Inf values")
 
@@ -203,9 +201,7 @@ class GABAATonicSpec:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "GABAATonicSpec":
-        return cls(
-            **{name: data[name] for name in cls.__dataclass_fields__ if name in data}
-        )
+        return cls(**{name: data[name] for name in cls.__dataclass_fields__ if name in data})
 
 
 @dataclass(frozen=True)
@@ -227,9 +223,7 @@ class SerotonergicPlasticitySpec:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "SerotonergicPlasticitySpec":
-        return cls(
-            **{name: data[name] for name in cls.__dataclass_fields__ if name in data}
-        )
+        return cls(**{name: data[name] for name in cls.__dataclass_fields__ if name in data})
 
 
 @dataclass(frozen=True)
@@ -249,9 +243,7 @@ class ObservationNoiseSpec:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ObservationNoiseSpec":
-        return cls(
-            **{name: data[name] for name in cls.__dataclass_fields__ if name in data}
-        )
+        return cls(**{name: data[name] for name in cls.__dataclass_fields__ if name in data})
 
 
 @dataclass(frozen=True)
@@ -274,9 +266,7 @@ class NeuromodulationSpec:
         if self.dt_seconds <= 0.0:
             raise ValueError("neuromodulation.dt_seconds must be > 0")
         if not (0.0 <= self.intrinsic_field_jitter_var <= 0.01):
-            raise ValueError(
-                "neuromodulation.intrinsic_field_jitter_var must be in [0, 0.01]"
-            )
+            raise ValueError("neuromodulation.intrinsic_field_jitter_var must be in [0, 0.01]")
         if self.tonic_inhibition_scale < 0.0:
             raise ValueError("neuromodulation.tonic_inhibition_scale must be >= 0")
         if self.profile_id == "baseline_nominal" and self.profile:
@@ -323,16 +313,10 @@ class NeuromodulationSpec:
             "baseline_activation_offset_mv": float(self.baseline_activation_offset_mv),
             "tonic_inhibition_scale": float(self.tonic_inhibition_scale),
             "gain_fluidity_coeff": float(self.gain_fluidity_coeff),
-            "gabaa_tonic": (
-                None if self.gabaa_tonic is None else self.gabaa_tonic.to_dict()
-            ),
-            "serotonergic": (
-                None if self.serotonergic is None else self.serotonergic.to_dict()
-            ),
+            "gabaa_tonic": (None if self.gabaa_tonic is None else self.gabaa_tonic.to_dict()),
+            "serotonergic": (None if self.serotonergic is None else self.serotonergic.to_dict()),
             "observation_noise": (
-                None
-                if self.observation_noise is None
-                else self.observation_noise.to_dict()
+                None if self.observation_noise is None else self.observation_noise.to_dict()
             ),
         }
 
@@ -350,9 +334,7 @@ class NeuromodulationSpec:
         )
 
         clean = dict(data)
-        profile_name = str(
-            clean.get("profile", clean.get("profile_id", "baseline_nominal"))
-        )
+        profile_name = str(clean.get("profile", clean.get("profile_id", "baseline_nominal")))
         if profile_name in PROFILE_REGISTRY:
             merged = get_profile(profile_name)
             for key, value in clean.items():
@@ -376,9 +358,7 @@ class NeuromodulationSpec:
             if clean.get("observation_noise") is None
             else ObservationNoiseSpec.from_dict(clean["observation_noise"])
         )
-        return cls(
-            **{name: clean[name] for name in cls.__dataclass_fields__ if name in clean}
-        )
+        return cls(**{name: clean[name] for name in cls.__dataclass_fields__ if name in clean})
 
 
 @dataclass(frozen=True)
@@ -451,11 +431,7 @@ class SimulationSpec:
         else:
             seed = int(seed_value)
         neuromod_raw = data.get("neuromodulation")
-        neuromod = (
-            None
-            if neuromod_raw is None
-            else NeuromodulationSpec.from_dict(neuromod_raw)
-        )
+        neuromod = None if neuromod_raw is None else NeuromodulationSpec.from_dict(neuromod_raw)
         return cls(
             grid_size=int(data.get("grid_size", 64)),
             steps=int(data.get("steps", 64)),
@@ -489,9 +465,7 @@ class NeuromodulationStateSnapshot:
 
     def __post_init__(self) -> None:
         # Occupancy must sum to ~1.0 (within floating point tolerance)
-        total = (
-            self.occupancy_resting + self.occupancy_active + self.occupancy_desensitized
-        )
+        total = self.occupancy_resting + self.occupancy_active + self.occupancy_desensitized
         if abs(total - 1.0) > 1e-4:
             raise ValueError(
                 f"Occupancy fractions must sum to ~1.0, got {total:.6f} "
@@ -499,21 +473,15 @@ class NeuromodulationStateSnapshot:
                 f"desensitized={self.occupancy_desensitized})"
             )
         if not (0.0 <= self.occupancy_resting <= 1.0):
-            raise ValueError(
-                f"occupancy_resting must be in [0, 1], got {self.occupancy_resting}"
-            )
+            raise ValueError(f"occupancy_resting must be in [0, 1], got {self.occupancy_resting}")
         if not (0.0 <= self.occupancy_active <= 1.0):
-            raise ValueError(
-                f"occupancy_active must be in [0, 1], got {self.occupancy_active}"
-            )
+            raise ValueError(f"occupancy_active must be in [0, 1], got {self.occupancy_active}")
         if not (0.0 <= self.occupancy_desensitized <= 1.0):
             raise ValueError(
                 f"occupancy_desensitized must be in [0, 1], got {self.occupancy_desensitized}"
             )
         if self.effective_inhibition < 0.0:
-            raise ValueError(
-                f"effective_inhibition must be >= 0, got {self.effective_inhibition}"
-            )
+            raise ValueError(f"effective_inhibition must be >= 0, got {self.effective_inhibition}")
 
     def to_dict(self) -> dict[str, float]:
         return {name: getattr(self, name) for name in self.__dataclass_fields__}
@@ -580,9 +548,7 @@ class FieldSequence:
             return int(self.history.shape[0])
         if self.spec is not None:
             return int(self.spec.steps)
-        if isinstance(self.metadata, dict) and isinstance(
-            self.metadata.get("steps"), (int, float)
-        ):
+        if isinstance(self.metadata, dict) and isinstance(self.metadata.get("steps"), (int, float)):
             return int(self.metadata["steps"])
         return 1
 
@@ -609,7 +575,9 @@ class FieldSequence:
 
     def extract(self) -> "MorphologyDescriptor":
         """Extract morphology descriptor. Shorthand for mfn.extract(self)."""
-        from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
+        from mycelium_fractal_net.analytics.morphology import (
+            compute_morphology_descriptor,
+        )
 
         return compute_morphology_descriptor(self)
 
@@ -670,9 +638,7 @@ class FieldSequence:
             )
         field = np.asarray(data["field"], dtype=np.float64)
         history_raw = data.get("history")
-        history = (
-            None if history_raw is None else np.asarray(history_raw, dtype=np.float64)
-        )
+        history = None if history_raw is None else np.asarray(history_raw, dtype=np.float64)
         spec_raw = data.get("spec")
         spec = None if spec_raw is None else SimulationSpec.from_dict(spec_raw)
         return cls(

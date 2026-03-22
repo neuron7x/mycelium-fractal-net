@@ -21,11 +21,7 @@ def _scenario_result(name: str) -> dict:
     regime = detect_regime_shift(seq)
     steps = max(
         1,
-        int(
-            seq.metadata.get(
-                "steps_computed", len(seq.history) if seq.history is not None else 1
-            )
-        ),
+        int(seq.metadata.get("steps_computed", len(seq.history) if seq.history is not None else 1)),
     )
     clamping_events = int(seq.metadata.get("clamping_events", 0))
     occupancy_resting = float(seq.metadata.get("occupancy_resting_mean", 1.0))
@@ -52,19 +48,12 @@ def _scenario_result(name: str) -> dict:
             + 2.0 * desc.neuromodulation.get("plasticity_index", 0.0)
             + desc.connectivity.get("connectivity_divergence", 0.0)
         ),
-        "connectivity_divergence": float(
-            desc.connectivity.get("connectivity_divergence", 0.0)
-        ),
+        "connectivity_divergence": float(desc.connectivity.get("connectivity_divergence", 0.0)),
         "plasticity_index": float(desc.neuromodulation.get("plasticity_index", 0.0)),
-        "observation_noise_gain": float(
-            desc.neuromodulation.get("observation_noise_gain", 0.0)
-        ),
-        "effective_inhibition": float(
-            desc.neuromodulation.get("effective_inhibition", 0.0)
-        ),
+        "observation_noise_gain": float(desc.neuromodulation.get("observation_noise_gain", 0.0)),
+        "effective_inhibition": float(desc.neuromodulation.get("effective_inhibition", 0.0)),
         "effective_gain": float(desc.neuromodulation.get("effective_gain", 0.0)),
-        "gain_sign_consistency": float(desc.neuromodulation.get("effective_gain", 0.0))
-        >= -1.0,
+        "gain_sign_consistency": float(desc.neuromodulation.get("effective_gain", 0.0)) >= -1.0,
         "occupancy_resting_mean": occupancy_resting,
         "occupancy_active_mean": occupancy_active,
         "occupancy_desensitized_mean": occupancy_desensitized,
@@ -72,15 +61,12 @@ def _scenario_result(name: str) -> dict:
         "occupancy_bounds": bool(
             seq.metadata.get(
                 "occupancy_bounds_ok",
-                occupancy_mass_error
-                <= ACCEPTANCE_THRESHOLDS["occupancy_mass_error_max"],
+                occupancy_mass_error <= ACCEPTANCE_THRESHOLDS["occupancy_mass_error_max"],
             )
         ),
         "desensitization_recovery": float(occupancy_resting - occupancy_desensitized),
         "baseline_compatible": bool(seq.metadata.get("reproducible", False)),
-        "excitability_offset_mean_v": float(
-            seq.metadata.get("excitability_offset_mean_v", 0.0)
-        ),
+        "excitability_offset_mean_v": float(seq.metadata.get("excitability_offset_mean_v", 0.0)),
     }
 
 
@@ -108,13 +94,11 @@ def run_neurochem_controls(
     if not baseline["baseline_compatible"]:
         failures.append("baseline_compatibility_failed")
     if not (
-        baseline["clamp_events_per_step"]
-        <= ACCEPTANCE_THRESHOLDS["clamp_events_per_step_max"]
+        baseline["clamp_events_per_step"] <= ACCEPTANCE_THRESHOLDS["clamp_events_per_step_max"]
     ):
         failures.append("baseline_clamp_events_above_threshold")
     if not (
-        gabaa["effective_inhibition"]
-        >= ACCEPTANCE_THRESHOLDS["tonic_inhibition_stability_min"]
+        gabaa["effective_inhibition"] >= ACCEPTANCE_THRESHOLDS["tonic_inhibition_stability_min"]
     ):
         failures.append("tonic_inhibition_below_threshold")
     if not (gabaa["volatility"] <= baseline["volatility"] + 1e-9):
@@ -153,8 +137,7 @@ def run_neurochem_controls(
         failures.append("reorganization_without_structured_complexity_gain")
     if not (
         reorg["plasticity_index"]
-        >= noise["plasticity_index"]
-        + ACCEPTANCE_THRESHOLDS["noise_vs_reorganization_gap_min"]
+        >= noise["plasticity_index"] + ACCEPTANCE_THRESHOLDS["noise_vs_reorganization_gap_min"]
     ):
         failures.append("noise_not_separated_from_reorganization")
     if noise["regime_label"] == "reorganized":

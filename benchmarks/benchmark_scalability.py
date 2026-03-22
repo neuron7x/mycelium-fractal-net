@@ -216,9 +216,7 @@ class ScalabilityBenchmarkSuite:
         num_workers = 2 if profile != "full" else 4
         num_tasks = 4 if profile != "full" else 16
         steps = 20 if profile != "full" else 50
-        params_list = [
-            {"seed": i * 100, "grid_size": 32, "steps": steps} for i in range(num_tasks)
-        ]
+        params_list = [{"seed": i * 100, "grid_size": 32, "steps": steps} for i in range(num_tasks)]
 
         gc.collect()
         tracemalloc.start()
@@ -259,15 +257,11 @@ class ScalabilityBenchmarkSuite:
         field = rng.normal(size=(128, 128)).astype(np.float64)
 
         start = time.perf_counter()
-        reference = compute_laplacian(
-            field, boundary=BoundaryCondition.PERIODIC, use_accel=False
-        )
+        reference = compute_laplacian(field, boundary=BoundaryCondition.PERIODIC, use_accel=False)
         reference_elapsed = time.perf_counter() - start
 
         start = time.perf_counter()
-        accelerated = compute_laplacian(
-            field, boundary=BoundaryCondition.PERIODIC, use_accel=True
-        )
+        accelerated = compute_laplacian(field, boundary=BoundaryCondition.PERIODIC, use_accel=True)
         accelerated_elapsed = time.perf_counter() - start
 
         passed = bool(np.allclose(reference, accelerated, rtol=0.0, atol=1e-12))
@@ -407,9 +401,7 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(
-            f"Fractal dimension (256x256): {elapsed:.3f}s, dim={dim:.3f} (target: <{target_s}s)"
-        )
+        print(f"Fractal dimension (256x256): {elapsed:.3f}s, dim={dim:.3f} (target: <{target_s}s)")
 
         self.results.append(bench_result)
         return bench_result
@@ -445,9 +437,7 @@ class ScalabilityBenchmarkSuite:
             timestamp=datetime.now().isoformat(),
         )
 
-        print(
-            f"Lyapunov (500x64x64): {elapsed:.3f}s, λ={lyap:.3f} (target: <{target_s}s)"
-        )
+        print(f"Lyapunov (500x64x64): {elapsed:.3f}s, λ={lyap:.3f} (target: <{target_s}s)")
 
         self.results.append(bench_result)
         return bench_result

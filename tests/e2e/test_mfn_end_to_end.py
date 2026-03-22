@@ -91,9 +91,7 @@ class TestFullPipelineDemo:
 
         # Verify feature ranges (sanity checks)
         assert 0.0 <= features.values["D_box"] <= 2.5, "D_box out of expected range"
-        assert (
-            0.0 <= features.values["f_active"] <= 1.0
-        ), "f_active out of expected range"
+        assert 0.0 <= features.values["f_active"] <= 1.0, "f_active out of expected range"
 
         # Stage 5: Build DatasetConfig and generate small dataset
         ds_config = make_dataset_config_demo()

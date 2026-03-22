@@ -87,12 +87,8 @@ def create_evolution_animation(result, output_path=None, fps=10):
     # Sample frames to target ~100 frames max for reasonable file size
     # For 200 steps: every 2nd frame. For 50 steps: every frame
     max_frames = 100
-    frames = range(
-        0, len(result.field_history), max(1, len(result.field_history) // max_frames)
-    )
-    anim = FuncAnimation(
-        fig, update, frames=frames, interval=1000 // fps, blit=True, repeat=True
-    )
+    frames = range(0, len(result.field_history), max(1, len(result.field_history) // max_frames))
+    anim = FuncAnimation(fig, update, frames=frames, interval=1000 // fps, blit=True, repeat=True)
 
     # Save or show
     if output_path:
@@ -238,15 +234,9 @@ def create_multi_view(result, output_path=None):
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Visualize MFN field evolution")
-    parser.add_argument(
-        "--grid-size", type=int, default=64, help="Grid size (default: 64)"
-    )
-    parser.add_argument(
-        "--steps", type=int, default=100, help="Simulation steps (default: 100)"
-    )
-    parser.add_argument(
-        "--seed", type=int, default=42, help="Random seed (default: 42)"
-    )
+    parser.add_argument("--grid-size", type=int, default=64, help="Grid size (default: 64)")
+    parser.add_argument("--steps", type=int, default=100, help="Simulation steps (default: 100)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
     parser.add_argument(
         "--output", type=str, help="Output path for animation (.gif) or figure (.png)"
     )
@@ -287,9 +277,7 @@ def main():
     print("✓ Simulation complete")
     print(f"  Growth events: {result.growth_events}")
     print(f"  Turing activations: {result.turing_activations}")
-    print(
-        f"  Potential range: [{result.field_final.min():.1f}, {result.field_final.max():.1f}] mV"
-    )
+    print(f"  Potential range: [{result.field_final.min():.1f}, {result.field_final.max():.1f}] mV")
     print()
 
     # Create visualization

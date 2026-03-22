@@ -219,9 +219,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             # Record duration
             duration = time.perf_counter() - start_time
             if REQUEST_LATENCY is not None:
-                REQUEST_LATENCY.labels(endpoint=endpoint, method=method).observe(
-                    duration
-                )
+                REQUEST_LATENCY.labels(endpoint=endpoint, method=method).observe(duration)
 
             # Decrement in-progress
             if REQUESTS_IN_PROGRESS is not None:
@@ -229,9 +227,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
             # Increment request counter
             if REQUEST_COUNTER is not None:
-                REQUEST_COUNTER.labels(
-                    endpoint=endpoint, method=method, status=status_code
-                ).inc()
+                REQUEST_COUNTER.labels(endpoint=endpoint, method=method, status=status_code).inc()
 
         return response
 

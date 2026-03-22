@@ -86,9 +86,7 @@ class TestAuthorizationEnforcement:
 
         for path, method, body in endpoints:
             response = secured_client.post(path, json=body)
-            assert (
-                response.status_code == 401
-            ), f"Endpoint {path} should require authentication"
+            assert response.status_code == 401, f"Endpoint {path} should require authentication"
 
     def test_authenticated_access_allowed(self, secured_client: TestClient) -> None:
         """Authenticated requests should be allowed."""
@@ -218,9 +216,7 @@ class TestSecurityHeaders:
 class TestAPISecurityCompliance:
     """Integration tests for API security compliance."""
 
-    def test_no_sensitive_data_in_error_responses(
-        self, secured_client: TestClient
-    ) -> None:
+    def test_no_sensitive_data_in_error_responses(self, secured_client: TestClient) -> None:
         """Error responses should not leak sensitive information."""
         response = secured_client.post(
             "/nernst",

@@ -228,9 +228,7 @@ class TestAssociatedData:
         aad = b"context:user123"
 
         ciphertext = encrypt_aes_gcm(plaintext, key, associated_data=aad)
-        decrypted = decrypt_aes_gcm(
-            ciphertext, key, associated_data=aad, return_bytes=True
-        )
+        decrypted = decrypt_aes_gcm(ciphertext, key, associated_data=aad, return_bytes=True)
 
         assert decrypted == plaintext
 

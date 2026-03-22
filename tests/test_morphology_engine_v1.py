@@ -17,9 +17,7 @@ def test_public_root_exports() -> None:
         assert mfn.SimulationConfig is not None
         assert mfn.SimulationResult is not None
     except ImportError:
-        pytest.skip(
-            "Torch-dependent exports (SimulationConfig/SimulationResult) unavailable"
-        )
+        pytest.skip("Torch-dependent exports (SimulationConfig/SimulationResult) unavailable")
     assert mfn.BODY_TEMPERATURE_K == 310.0
 
 

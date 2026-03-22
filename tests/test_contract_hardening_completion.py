@@ -39,18 +39,16 @@ def test_docs_drift_check_script_passes() -> None:
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     report = json.loads(
-        (
-            root / "artifacts" / "evidence" / "wave_8" / "docs_drift_report.json"
-        ).read_text(encoding="utf-8")
+        (root / "artifacts" / "evidence" / "wave_8" / "docs_drift_report.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert report["ok"] is True
 
 
 def test_ci_workflow_contains_showcase_generation_and_attestation_chain() -> None:
     root = Path(__file__).resolve().parents[1]
-    workflow = (root / ".github" / "workflows" / "ci-reusable.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow = (root / ".github" / "workflows" / "ci-reusable.yml").read_text(encoding="utf-8")
     assert "name: SHOWCASE_GENERATION" in workflow
     assert "name: NEUROCHEM_CONTRACTS" in workflow
     assert "name: SCIENTIFIC_CONTROLS" in workflow
@@ -72,9 +70,7 @@ def test_release_manifest_carries_provenance_reference() -> None:
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     manifest = json.loads(
-        (root / "artifacts" / "release" / "release_manifest.json").read_text(
-            encoding="utf-8"
-        )
+        (root / "artifacts" / "release" / "release_manifest.json").read_text(encoding="utf-8")
     )
     assert manifest["release_assets"]["attestation"] == "attestation.json"
     assert manifest["provenance"]["attestation_path"] == "attestation.json"

@@ -276,9 +276,7 @@ class TestBoundaryConditions:
         expected_down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant")
         expected_left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant")
         expected_right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant")
-        expected = (
-            expected_up + expected_down + expected_left + expected_right - 4 * field
-        )
+        expected = expected_up + expected_down + expected_left + expected_right - 4 * field
 
         assert np.allclose(laplacian, expected)
 
@@ -369,9 +367,7 @@ class TestStabilitySmoke:
             ReactionDiffusionConfig(grid_size=16, alpha=0.10, random_seed=42),
             ReactionDiffusionConfig(grid_size=32, alpha=0.18, random_seed=42),
             ReactionDiffusionConfig(grid_size=64, alpha=0.20, random_seed=42),
-            ReactionDiffusionConfig(
-                grid_size=32, alpha=0.24, random_seed=42
-            ),  # Near limit
+            ReactionDiffusionConfig(grid_size=32, alpha=0.24, random_seed=42),  # Near limit
         ]
 
         for config in configs:

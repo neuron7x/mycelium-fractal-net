@@ -6,8 +6,6 @@ security headers, API boundary enforcement.
 
 from __future__ import annotations
 
-import math
-
 import pytest
 
 from mycelium_fractal_net.security.hardening import (
@@ -74,18 +72,14 @@ class TestErrorScrubbing:
         assert ".py:42" not in result
         assert "[internal]" in result
 
-    def test_prod_mode_scrubs_memory_addresses(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_prod_mode_scrubs_memory_addresses(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("MFN_ENV", "prod")
         detail = "Object at 0x7f4a3c2b1d00 is invalid"
         result = scrub_error_response(detail)
         assert "0x7f4a" not in result
         assert "[redacted]" in result
 
-    def test_prod_mode_truncates_long_messages(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_prod_mode_truncates_long_messages(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("MFN_ENV", "prod")
         detail = "x" * 500
         result = scrub_error_response(detail)

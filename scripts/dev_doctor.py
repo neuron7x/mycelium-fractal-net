@@ -64,9 +64,7 @@ def main() -> int:
         "uv": uv_path,
         "uv_lock_exists": (ROOT / "uv.lock").exists(),
         "uv_lock_hash": _lock_hash(),
-        "entrypoints": {
-            name: shutil.which(name) for name in ["mfn", "mfn-api", "mfn-validate"]
-        },
+        "entrypoints": {name: shutil.which(name) for name in ["mfn", "mfn-api", "mfn-validate"]},
         "imports": [_module_status(name) for name in MODULES],
         "commands": {
             "python_import": _run(
@@ -88,17 +86,14 @@ def main() -> int:
         },
     }
     payload["install_modes"] = {
-        "pip_editable": (venv / "pyvenv.cfg").exists()
-        and bool(payload["entrypoints"].get("mfn")),
+        "pip_editable": (venv / "pyvenv.cfg").exists() and bool(payload["entrypoints"].get("mfn")),
         "uv_managed": bool(uv_path) and payload["uv_lock_exists"],
     }
     (OUT / "dependency_matrix.json").write_text(
         json.dumps(payload, indent=2) + "\n", encoding="utf-8"
     )
     print(json.dumps(payload, indent=2))
-    ok = all(item["ok"] for item in payload["imports"]) and any(
-        payload["install_modes"].values()
-    )
+    ok = all(item["ok"] for item in payload["imports"]) and any(payload["install_modes"].values())
     return 0 if ok else 1
 
 

@@ -18,7 +18,6 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-
 # === Constants ===
 
 MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024  # 10 MB
@@ -97,9 +96,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     - Cache-Control: no-store for API responses
     """
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -129,9 +126,7 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.max_bytes = max_bytes
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         content_length = request.headers.get("content-length")
         if content_length is not None:
             try:
@@ -163,27 +158,21 @@ def enforce_api_boundaries(params: dict[str, Any]) -> dict[str, Any]:
     if "grid_size" in params:
         gs = int(params["grid_size"])
         if gs > MAX_GRID_SIZE_API:
-            raise ValueError(
-                f"grid_size {gs} exceeds API limit {MAX_GRID_SIZE_API}"
-            )
+            raise ValueError(f"grid_size {gs} exceeds API limit {MAX_GRID_SIZE_API}")
         if gs < 4:
             raise ValueError("grid_size must be >= 4")
 
     if "steps" in params:
         steps = int(params["steps"])
         if steps > MAX_STEPS_API:
-            raise ValueError(
-                f"steps {steps} exceeds API limit {MAX_STEPS_API}"
-            )
+            raise ValueError(f"steps {steps} exceeds API limit {MAX_STEPS_API}")
         if steps < 1:
             raise ValueError("steps must be >= 1")
 
     if "horizon" in params:
         h = int(params["horizon"])
         if h > MAX_HORIZON_API:
-            raise ValueError(
-                f"horizon {h} exceeds API limit {MAX_HORIZON_API}"
-            )
+            raise ValueError(f"horizon {h} exceeds API limit {MAX_HORIZON_API}")
 
     return params
 

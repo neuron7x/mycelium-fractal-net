@@ -364,9 +364,7 @@ class WebhookPublisher(BasePublisher):
                     },
                 )
 
-        await self._retry_operation(
-            _perform_publish, f"Webhook POST {self.webhook_url}"
-        )
+        await self._retry_operation(_perform_publish, f"Webhook POST {self.webhook_url}")
 
 
 class KafkaPublisherAdapter(BasePublisher):
@@ -431,9 +429,7 @@ class KafkaPublisherAdapter(BasePublisher):
 
         self._connection_timestamp = time.time()
         self.status = PublisherStatus.CONNECTED
-        logger.info(
-            f"Kafka publisher connected to {self.bootstrap_servers}, topic: {self.topic}"
-        )
+        logger.info(f"Kafka publisher connected to {self.bootstrap_servers}, topic: {self.topic}")
 
     async def disconnect(self) -> None:
         """Close Kafka producer connection."""
@@ -473,9 +469,7 @@ class KafkaPublisherAdapter(BasePublisher):
             future = self._producer.send(self.topic, value=data)
             # Wait for acknowledgment in thread pool to avoid blocking event loop
             loop = asyncio.get_event_loop()
-            record_metadata = await loop.run_in_executor(
-                None, future.get, self.config.timeout
-            )
+            record_metadata = await loop.run_in_executor(None, future.get, self.config.timeout)
 
             self.metrics.successful_publishes += 1
             self.metrics.total_bytes_published += payload_size

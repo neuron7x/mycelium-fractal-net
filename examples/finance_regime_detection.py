@@ -171,12 +171,7 @@ def map_returns_to_field(
         with torch.no_grad():
             processed = preprocessor(tensor)
         processed_returns = (
-            processed.squeeze(0)
-            .squeeze(0)
-            .detach()
-            .cpu()
-            .numpy()
-            .astype(returns.dtype, copy=False)
+            processed.squeeze(0).squeeze(0).detach().cpu().numpy().astype(returns.dtype, copy=False)
         )
 
     returns_for_mapping = processed_returns
@@ -218,11 +213,7 @@ def apply_cfde_preprocessing(
     Applies Fractal1DPreprocessor and returns numpy array matching input dtype.
     """
     preprocessor = Fractal1DPreprocessor(preset=preset)
-    tensor = (
-        torch.tensor(returns, dtype=torch.float32, device=device)
-        .unsqueeze(0)
-        .unsqueeze(0)
-    )
+    tensor = torch.tensor(returns, dtype=torch.float32, device=device).unsqueeze(0).unsqueeze(0)
     with torch.no_grad():
         processed = preprocessor(tensor)
     return processed.squeeze(0).squeeze(0).cpu().numpy().astype(np.float64)
@@ -348,9 +339,7 @@ def run_finance_demo(
 
     if verbose:
         print(f"   Field shape: {field.shape}")
-        print(
-            f"   Field range: [{field.min() * 1000:.2f}, {field.max() * 1000:.2f}] mV"
-        )
+        print(f"   Field range: [{field.min() * 1000:.2f}, {field.max() * 1000:.2f}] mV")
         print(f"   Field mean: {field.mean() * 1000:.2f} mV")
         print(f"   Field std: {field.std() * 1000:.4f} mV")
 
@@ -385,9 +374,7 @@ def run_finance_demo(
 
     if verbose:
         print(f"   Lyapunov exponent: {lyapunov:.4f}")
-        stability_str = (
-            "STABLE (contractive)" if lyapunov < 0 else "UNSTABLE (expansive)"
-        )
+        stability_str = "STABLE (contractive)" if lyapunov < 0 else "UNSTABLE (expansive)"
         print(f"   System stability: {stability_str}")
 
     # Step 6: Classify regime

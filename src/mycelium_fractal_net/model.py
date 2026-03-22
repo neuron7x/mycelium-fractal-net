@@ -49,9 +49,7 @@ FARADAY_CONSTANT: float = 96485.33212  # C/mol
 BODY_TEMPERATURE_K: float = 310.0  # K (~37°C)
 
 # === Nernst RT/zF at 37°C (z=1), natural log (ln) ===
-NERNST_RTFZ_MV: float = (
-    R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT
-) * 1000.0
+NERNST_RTFZ_MV: float = (R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT) * 1000.0
 
 # === Ion concentration clamp minimum (for numerical stability) ===
 ION_CLAMP_MIN: float = 1e-6
@@ -114,11 +112,7 @@ def compute_nernst_potential(
         raise ValueError("Concentrations must be positive for Nernst potential.")
 
     ratio = c_out / c_in
-    return (
-        (R_GAS_CONSTANT * temperature_k)
-        / (z_valence * FARADAY_CONSTANT)
-        * math.log(ratio)
-    )
+    return (R_GAS_CONSTANT * temperature_k) / (z_valence * FARADAY_CONSTANT) * math.log(ratio)
 
 
 def _symbolic_nernst_example() -> float:
@@ -554,9 +548,7 @@ class STDPPlasticity(nn.Module):
     def _validate_amplitude(self, a: float, name: str) -> None:
         """Validate amplitude is within stable range."""
         if not (self.A_MIN <= a <= self.A_MAX):
-            raise ValueError(
-                f"{name}={a} outside stable range [{self.A_MIN}, {self.A_MAX}]"
-            )
+            raise ValueError(f"{name}={a} outside stable range [{self.A_MIN}, {self.A_MAX}]")
 
     def compute_weight_update(
         self,
@@ -888,9 +880,7 @@ class HierarchicalKrumAggregator:
         # longer provides its Byzantine-robust guarantee. Guard early to avoid
         # silently running an invalid configuration.
         if n <= 2 * num_byzantine + 2:
-            raise ValueError(
-                "Insufficient gradients for Krum: need more than 2f + 2 points"
-            )
+            raise ValueError("Insufficient gradients for Krum: need more than 2f + 2 points")
 
         # Stack gradients for distance computation
         flat_grads = torch.stack([g.flatten() for g in gradients])
@@ -1166,9 +1156,9 @@ def _build_dataset(cfg: ValidationConfig) -> Tuple[TensorDataset, Dict[str, floa
     stats_arr[:, 1:] *= 10.0
 
     # Target: linear combination of statistics
-    target_arr = (
-        0.5 * stats_arr[:, 0] + 0.2 * stats_arr[:, 1] - 0.1 * stats_arr[:, 2]
-    ).reshape(-1, 1)
+    target_arr = (0.5 * stats_arr[:, 0] + 0.2 * stats_arr[:, 1] - 0.1 * stats_arr[:, 2]).reshape(
+        -1, 1
+    )
 
     x_tensor = torch.from_numpy(stats_arr)
     y_tensor = torch.from_numpy(target_arr.astype(np.float32))
@@ -1282,9 +1272,7 @@ def run_validation_cli() -> None:
     )
     from mycelium_fractal_net.integration.schemas import ValidateRequest
 
-    parser = argparse.ArgumentParser(
-        description="MyceliumFractalNet v4.1 validation CLI"
-    )
+    parser = argparse.ArgumentParser(description="MyceliumFractalNet v4.1 validation CLI")
     parser.add_argument(
         "--mode",
         type=str,

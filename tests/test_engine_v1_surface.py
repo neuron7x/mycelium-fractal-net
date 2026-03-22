@@ -25,17 +25,13 @@ def test_sdk_surface_end_to_end(tmp_path: Path) -> None:
 
 def test_api_v1_surface_end_to_end(tmp_path: Path) -> None:
     client = TestClient(app)
-    sim = client.post(
-        "/v1/simulate", json={"grid_size": 16, "steps": 8, "with_history": True}
-    )
+    sim = client.post("/v1/simulate", json={"grid_size": 16, "steps": 8, "with_history": True})
     assert sim.status_code == 200
     payload = sim.json()
 
     extract = client.post("/v1/extract", json={"history": payload["history"]})
     detect = client.post("/v1/detect", json={"history": payload["history"]})
-    forecast = client.post(
-        "/v1/forecast", json={"history": payload["history"], "horizon": 4}
-    )
+    forecast = client.post("/v1/forecast", json={"history": payload["history"], "horizon": 4})
     compare = client.post(
         "/v1/compare",
         json={

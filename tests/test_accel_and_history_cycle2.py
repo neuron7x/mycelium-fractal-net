@@ -95,9 +95,5 @@ def test_memmap_history_roundtrip(tmp_path: Path) -> None:
     memmap_path = Path(str(seq.metadata["history_memmap_path"]))
     assert memmap_path.exists()
     loaded = np.load(memmap_path, mmap_mode="r")
-    np.testing.assert_allclose(
-        np.asarray(seq.history), np.asarray(loaded), rtol=0.0, atol=0.0
-    )
-    np.testing.assert_allclose(
-        seq.field, np.asarray(seq.history)[-1], rtol=0.0, atol=0.0
-    )
+    np.testing.assert_allclose(np.asarray(seq.history), np.asarray(loaded), rtol=0.0, atol=0.0)
+    np.testing.assert_allclose(seq.field, np.asarray(seq.history)[-1], rtol=0.0, atol=0.0)

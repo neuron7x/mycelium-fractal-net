@@ -97,9 +97,7 @@ def detect_result(result: SimulationResult) -> DetectionResult:
     dimension_deviation = _clamp01(abs(d_box - 1.65) / 0.45)
     activity_imbalance = _clamp01(abs(f_active - 0.22) / 0.30)
     volatility_pressure = _clamp01(max(0.0, v_std - 20.0) / 40.0)
-    clamp_pressure = _clamp01(
-        result.clamping_events / max(1.0, result.num_steps * 0.25)
-    )
+    clamp_pressure = _clamp01(result.clamping_events / max(1.0, result.num_steps * 0.25))
     stabilization_gap = _clamp01(1.0 - min(1.0, t_stable / max(1.0, result.num_steps)))
 
     components = {
@@ -216,9 +214,7 @@ def forecast_result(result: SimulationResult, horizon: int = 8) -> ForecastResul
     )
 
 
-def compare_results(
-    left: SimulationResult, right: SimulationResult
-) -> ComparisonResult:
+def compare_results(left: SimulationResult, right: SimulationResult) -> ComparisonResult:
     left_features = _feature_dict(left)
     right_features = _feature_dict(right)
 
@@ -236,9 +232,7 @@ def compare_results(
             "feature": key,
             "left": round(float(left_features[key]), 6),
             "right": round(float(right_features[key]), 6),
-            "abs_delta": round(
-                abs(float(left_features[key]) - float(right_features[key])), 6
-            ),
+            "abs_delta": round(abs(float(left_features[key]) - float(right_features[key])), 6),
         }
         for key in sorted(
             keys,

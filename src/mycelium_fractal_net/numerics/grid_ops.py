@@ -146,21 +146,11 @@ def compute_laplacian(
 
     accel = _use_accel(use_accel) and njit is not None
     if boundary == BoundaryCondition.PERIODIC:
-        laplacian = (
-            _laplacian_periodic_jit(field)
-            if accel
-            else _laplacian_numpy_periodic(field)
-        )
+        laplacian = _laplacian_periodic_jit(field) if accel else _laplacian_numpy_periodic(field)
     elif boundary == BoundaryCondition.NEUMANN:
-        laplacian = (
-            _laplacian_neumann_jit(field) if accel else _laplacian_numpy_neumann(field)
-        )
+        laplacian = _laplacian_neumann_jit(field) if accel else _laplacian_numpy_neumann(field)
     else:
-        laplacian = (
-            _laplacian_dirichlet_jit(field)
-            if accel
-            else _laplacian_numpy_dirichlet(field)
-        )
+        laplacian = _laplacian_dirichlet_jit(field) if accel else _laplacian_numpy_dirichlet(field)
 
     if check_stability:
         validate_field_stability(laplacian, field_name="laplacian")
@@ -189,9 +179,7 @@ def compute_gradient(
             grad_x[-1, :] = field[-1, :] - field[-2, :]
             grad_y[:, 0] = field[:, 1] - field[:, 0]
             grad_y[:, -1] = field[:, -1] - field[:, -2]
-    return cast(NDArray[np.floating[Any]], grad_x), cast(
-        NDArray[np.floating[Any]], grad_y
-    )
+    return cast(NDArray[np.floating[Any]], grad_x), cast(NDArray[np.floating[Any]], grad_y)
 
 
 def compute_field_statistics(field: NDArray[np.floating]) -> dict[str, float]:

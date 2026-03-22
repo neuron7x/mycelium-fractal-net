@@ -151,9 +151,7 @@ def _spec_from_payload(req: SimulationPayload) -> SimulationSpec:
             enabled=bool(neuromod.get("enabled", False)),
             dt_seconds=float(neuromod.get("dt_seconds", 1.0)),
             intrinsic_field_jitter=bool(neuromod.get("intrinsic_field_jitter", False)),
-            intrinsic_field_jitter_var=float(
-                neuromod.get("intrinsic_field_jitter_var", 0.0005)
-            ),
+            intrinsic_field_jitter_var=float(neuromod.get("intrinsic_field_jitter_var", 0.0005)),
             gabaa_tonic=(
                 None
                 if neuromod.get("gabaa_tonic") is None
@@ -185,11 +183,7 @@ def _sequence_from_payload(payload: FieldPayload) -> FieldSequence:
         return FieldSequence(field=fld, history=None, spec=None, metadata={})
     if payload.spec is not None:
         spec = _spec_from_payload(payload.spec)
-        return (
-            simulate_history(spec)
-            if payload.spec.with_history
-            else simulate_final(spec)
-        )
+        return simulate_history(spec) if payload.spec.with_history else simulate_final(spec)
     raise HTTPException(status_code=400, detail="Provide history, field, or spec")
 
 
@@ -207,9 +201,7 @@ def build_v1_router() -> APIRouter:
     @router.post("/extract")
     async def extract_endpoint(payload: FieldPayload) -> dict[str, Any]:
         start = time.perf_counter()
-        result = compute_morphology_descriptor(
-            _sequence_from_payload(payload)
-        ).to_dict()
+        result = compute_morphology_descriptor(_sequence_from_payload(payload)).to_dict()
         _observe("extract", time.perf_counter() - start)
         return result
 
@@ -280,9 +272,7 @@ def register_canonical_routes(app: FastAPI) -> None:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
-        title="Morphology-aware Field Intelligence Engine", version=__version__
-    )
+    app = FastAPI(title="Morphology-aware Field Intelligence Engine", version=__version__)
     register_canonical_routes(app)
     return app
 

@@ -137,15 +137,13 @@ def _regime_evidence(sequence: FieldSequence) -> dict[str, float]:
     )
     connectivity_divergence = min(
         1.0,
-        descriptor.connectivity.get("connectivity_divergence", 0.0)
-        * _CONNECTIVITY_AMPLIFICATION,
+        descriptor.connectivity.get("connectivity_divergence", 0.0) * _CONNECTIVITY_AMPLIFICATION,
     )
     hierarchy_flattening = min(
         1.0,
         max(
             0.0,
-            descriptor.connectivity.get("hierarchy_flattening", 0.0)
-            - _HIERARCHY_BASELINE,
+            descriptor.connectivity.get("hierarchy_flattening", 0.0) - _HIERARCHY_BASELINE,
         )
         / _HIERARCHY_RANGE,
     )
@@ -158,9 +156,7 @@ def _regime_evidence(sequence: FieldSequence) -> dict[str, float]:
         "complexity_gain": float(complexity_gain),
         "connectivity_divergence": float(connectivity_divergence),
         "hierarchy_flattening": float(hierarchy_flattening),
-        "plasticity_index": float(
-            descriptor.neuromodulation.get("plasticity_index", 0.0)
-        ),
+        "plasticity_index": float(descriptor.neuromodulation.get("plasticity_index", 0.0)),
         "observation_noise_gain": float(
             min(
                 1.0,
@@ -168,9 +164,7 @@ def _regime_evidence(sequence: FieldSequence) -> dict[str, float]:
                 * _NOISE_GAIN_AMPLIFICATION,
             )
         ),
-        "effective_inhibition": float(
-            descriptor.neuromodulation.get("effective_inhibition", 0.0)
-        ),
+        "effective_inhibition": float(descriptor.neuromodulation.get("effective_inhibition", 0.0)),
     }
 
 
@@ -225,9 +219,7 @@ def score_instability(sequence: FieldSequence) -> float:
         "near_transition_score": descriptor.stability["near_transition_score"],
         "collapse_risk_score": descriptor.stability["collapse_risk_score"],
         "volatility": descriptor.temporal.get("volatility", 0.0),
-        "observation_noise_gain": descriptor.neuromodulation.get(
-            "observation_noise_gain", 0.0
-        ),
+        "observation_noise_gain": descriptor.neuromodulation.get("observation_noise_gain", 0.0),
     }
     return float(
         max(
@@ -299,9 +291,7 @@ def detect_regime_shift(sequence: FieldSequence) -> RegimeState:
             key=lambda key: (regime_scores[key], -_ALLOWED_REGIMES.index(key)),
         )
     label_score = float(max(0.0, min(1.0, regime_scores[label])))
-    contributing = [
-        k for k, _ in sorted(evidence.items(), key=lambda kv: kv[1], reverse=True)[:5]
-    ]
+    contributing = [k for k, _ in sorted(evidence.items(), key=lambda kv: kv[1], reverse=True)[:5]]
     confidence = float(
         min(
             _REGIME_CONFIDENCE_MAX,
@@ -333,9 +323,7 @@ def detect_anomaly(sequence: FieldSequence) -> AnomalyEvent:
         "connectivity_divergence": float(
             descriptor.connectivity.get("connectivity_divergence", 0.0)
         ),
-        "plasticity_index": float(
-            descriptor.neuromodulation.get("plasticity_index", 0.0)
-        ),
+        "plasticity_index": float(descriptor.neuromodulation.get("plasticity_index", 0.0)),
     }
     raw_score = (
         _ANOMALY_W_INSTABILITY * evidence["instability_index"]
@@ -355,17 +343,13 @@ def detect_anomaly(sequence: FieldSequence) -> AnomalyEvent:
     elif regime.label == "reorganized":
         label = "watch"
     else:
-        watch_threshold = max(
-            _WATCH_THRESHOLD_FLOOR, dynamic_threshold - _WATCH_THRESHOLD_GAP
-        )
+        watch_threshold = max(_WATCH_THRESHOLD_FLOOR, dynamic_threshold - _WATCH_THRESHOLD_GAP)
         label = (
             "anomalous"
             if score >= dynamic_threshold
             else "watch" if score >= watch_threshold else "nominal"
         )
-    contributing = [
-        k for k, _ in sorted(evidence.items(), key=lambda kv: kv[1], reverse=True)[:5]
-    ]
+    contributing = [k for k, _ in sorted(evidence.items(), key=lambda kv: kv[1], reverse=True)[:5]]
     confidence = float(
         min(
             _ANOMALY_CONFIDENCE_MAX,

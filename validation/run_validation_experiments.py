@@ -100,9 +100,7 @@ class ValidationExperimentRunner:
 
         initial_var = variances[0]
         final_var = variances[-1]
-        reduction_pct = (
-            (initial_var - final_var) / initial_var * 100 if initial_var > 0 else 0
-        )
+        reduction_pct = (initial_var - final_var) / initial_var * 100 if initial_var > 0 else 0
 
         is_finite = np.isfinite(field).all()
         is_bounded = field.min() >= -0.095 and field.max() <= 0.040
@@ -115,7 +113,9 @@ class ValidationExperimentRunner:
         print(f"  Reduction: {reduction_pct:.1f}%")
         print(f"  Status: {status}")
 
-        result_str = f"Variance reduced from {initial_var:.2e} to {final_var:.2e} ({reduction_pct:.0f}%)"
+        result_str = (
+            f"Variance reduced from {initial_var:.2e} to {final_var:.2e} ({reduction_pct:.0f}%)"
+        )
         return ExperimentResult(
             scenario="Stability Under Pure Diffusion",
             expectation="Field variance should decrease (diffusion homogenizes)",
@@ -176,9 +176,7 @@ class ValidationExperimentRunner:
         rng1 = np.random.default_rng(42)
         rng2 = np.random.default_rng(42)
 
-        field_with, _ = simulate_mycelium_field(
-            rng1, grid_size=64, steps=200, turing_enabled=True
-        )
+        field_with, _ = simulate_mycelium_field(rng1, grid_size=64, steps=200, turing_enabled=True)
         field_without, _ = simulate_mycelium_field(
             rng2, grid_size=64, steps=200, turing_enabled=False
         )
@@ -393,9 +391,7 @@ class ValidationExperimentRunner:
 
             status_char = "✓" if passed else "✗"
             exp_mv = ion_data["expected_mv"]
-            print(
-                f"  {status_char} {ion_data['ion']}: {e_mv:.1f} mV (expected {exp_mv:.1f} mV)"
-            )
+            print(f"  {status_char} {ion_data['ion']}: {e_mv:.1f} mV (expected {exp_mv:.1f} mV)")
 
         # Also verify RT/zF constant
         rtfz = (R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT) * 1000
@@ -412,11 +408,7 @@ class ValidationExperimentRunner:
         return ExperimentResult(
             scenario="Nernst Equation Physical Accuracy",
             expectation="Computed potentials within ±5mV of literature values",
-            result=(
-                "All ions within tolerance"
-                if all_pass
-                else "Some ions outside tolerance"
-            ),
+            result=("All ions within tolerance" if all_pass else "Some ions outside tolerance"),
             status=status,
             details={"ion_results": ion_results, "rtfz_mv": rtfz},
         )
@@ -510,9 +502,7 @@ class ValidationExperimentRunner:
         dimensions = []
         for seed in range(self.num_seeds):
             rng = np.random.default_rng(seed + 100)
-            field, _ = simulate_mycelium_field(
-                rng, grid_size=64, steps=100, turing_enabled=True
-            )
+            field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, turing_enabled=True)
             threshold = np.percentile(field, 50)
             binary = field > threshold
 
@@ -656,9 +646,7 @@ class ValidationExperimentRunner:
             expected_str = "+" if expect_positive else "-"
             status_char = "✓" if correct else "✗"
             ratio = c_out / c_in
-            print(
-                f"  {status_char} z={z}, ratio={ratio:.1f} → E={sign_str} (exp {expected_str})"
-            )
+            print(f"  {status_char} z={z}, ratio={ratio:.1f} → E={sign_str} (exp {expected_str})")
 
         status = "PASS" if all_correct else "FAIL"
         print(f"  Status: {status} (would falsify if FAIL)")
@@ -769,16 +757,12 @@ class ValidationExperimentRunner:
             },
         }
 
-        regime_features: dict[str, list[tuple[float, float]]] = {
-            name: [] for name in regimes
-        }
+        regime_features: dict[str, list[tuple[float, float]]] = {name: [] for name in regimes}
 
         for regime_name, params in regimes.items():
             for seed in range(5):
                 rng = np.random.default_rng(seed * 100)
-                field, _ = simulate_mycelium_field(
-                    rng, grid_size=64, steps=100, **params
-                )
+                field, _ = simulate_mycelium_field(rng, grid_size=64, steps=100, **params)
 
                 threshold = np.percentile(field, 50)
                 binary = field > threshold
@@ -804,9 +788,7 @@ class ValidationExperimentRunner:
             std_vals = [f[1] for f in features]
             d_mean, d_std = np.mean(d_vals), np.std(d_vals)
             s_mean, s_std = np.mean(std_vals), np.std(std_vals)
-            print(
-                f"    {regime_name}: D={d_mean:.3f}±{d_std:.3f}, std={s_mean:.2f}±{s_std:.2f}"
-            )
+            print(f"    {regime_name}: D={d_mean:.3f}±{d_std:.3f}, std={s_mean:.2f}±{s_std:.2f}")
 
         print(f"  D variance across regimes: {d_variance:.4f}")
         print(f"  Std variance across regimes: {std_variance:.4f}")
@@ -920,9 +902,7 @@ the MyceliumFractalNet mathematical models. {summary_text}
             or "Fractal Dimension" in r.scenario
             or "Reproducibility" in r.scenario
         ]
-        for i, result in enumerate(
-            [r for r in invariants if r not in control_scenarios][:5], 1
-        ):
+        for i, result in enumerate([r for r in invariants if r not in control_scenarios][:5], 1):
             status_icon = "✅" if result.status == "PASS" else "❌"
             report += f"""### 2.{i} {result.scenario}
 
@@ -1016,9 +996,7 @@ the MyceliumFractalNet mathematical models. {summary_text}
                 if len(result.expectation) > 40
                 else result.expectation
             )
-            res = (
-                result.result[:30] + "..." if len(result.result) > 30 else result.result
-            )
+            res = result.result[:30] + "..." if len(result.result) > 30 else result.result
             report += f"| {result.scenario} | {exp} | {res} | {status_icon} |\n"
 
         validity_text = (
@@ -1127,9 +1105,7 @@ python validation/run_validation_experiments.py
 
         # Update report if requested
         if update_report:
-            report_path = (
-                Path(__file__).parent.parent / "docs" / "MFN_VALIDATION_REPORT.md"
-            )
+            report_path = Path(__file__).parent.parent / "docs" / "MFN_VALIDATION_REPORT.md"
             self.generate_report(report_path)
 
         return self.results
@@ -1143,11 +1119,7 @@ def main() -> int:
     passed = sum(1 for r in results if r.status == "PASS")
     failed = sum(1 for r in results if r.status == "FAIL")
     summary_dir = (
-        Path(__file__).resolve().parents[1]
-        / "artifacts"
-        / "evidence"
-        / "wave_7"
-        / "validation"
+        Path(__file__).resolve().parents[1] / "artifacts" / "evidence" / "wave_7" / "validation"
     )
     summary_dir.mkdir(parents=True, exist_ok=True)
     payload = {

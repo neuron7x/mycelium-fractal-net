@@ -74,9 +74,7 @@ def _persist_history_memmap(
     )
     target_dir.mkdir(parents=True, exist_ok=True)
     path = target_dir / "history.memmap.npy"
-    mm = np.lib.format.open_memmap(
-        path, mode="w+", dtype=np.float64, shape=history.shape
-    )
+    mm = np.lib.format.open_memmap(path, mode="w+", dtype=np.float64, shape=history.shape)
     mm[:] = history.astype(np.float64, copy=False)
     mm.flush()
     readonly = np.load(path, mmap_mode="r+")
@@ -110,9 +108,7 @@ def simulate_history(
     if history is None:
         raise RuntimeError("simulation did not return history")
     if history_backend == "memmap":
-        history_memmap, memmap_path = _persist_history_memmap(
-            history, history_dir=history_dir
-        )
+        history_memmap, memmap_path = _persist_history_memmap(history, history_dir=history_dir)
         metadata.update(
             {
                 "history_backend": "memmap",
@@ -265,7 +261,5 @@ def simulate_scenario(name: str) -> FieldSequence:
         ),
     }
     if name not in scenario_specs:
-        raise ValueError(
-            f"Unknown scenario {name!r}. Available: {sorted(scenario_specs)}"
-        )
+        raise ValueError(f"Unknown scenario {name!r}. Available: {sorted(scenario_specs)}")
     return simulate_history(scenario_specs[name])

@@ -100,12 +100,7 @@ class TestTypesInit:
 
     def test_lazy_field_types(self) -> None:
         from mycelium_fractal_net.types import (
-            BoundaryCondition,
-            FieldHistory,
-            FieldSequence,
-            FieldState,
             GridShape,
-            SimulationSpec,
         )
 
         assert GridShape(rows=4, cols=4).is_square
@@ -114,17 +109,13 @@ class TestTypesInit:
         from mycelium_fractal_net.types import (
             FEATURE_COUNT,
             FEATURE_NAMES,
-            FeatureVector,
-            MorphologyDescriptor,
         )
 
         assert len(FEATURE_NAMES) == FEATURE_COUNT
 
     def test_lazy_detection_types(self) -> None:
         from mycelium_fractal_net.types import (
-            AnomalyEvent,
             DetectionEvidence,
-            RegimeState,
         )
 
         e = DetectionEvidence(change_score=0.5)
@@ -132,17 +123,14 @@ class TestTypesInit:
 
     def test_lazy_analytics_types(self) -> None:
         from mycelium_fractal_net.types import (
-            ComplexityMetrics,
-            ConnectivityFeatures,
             StabilityMetrics,
-            TemporalFeatures,
         )
 
         s = StabilityMetrics(instability_index=0.1)
         assert s.instability_index == 0.1
 
     def test_lazy_forecast_types(self) -> None:
-        from mycelium_fractal_net.types import ComparisonResult, ForecastResult
+        from mycelium_fractal_net.types import ForecastResult
 
         assert ForecastResult is not None
 
@@ -152,12 +140,12 @@ class TestTypesInit:
         assert AnalysisReport is not None
 
     def test_lazy_scenario_types(self) -> None:
-        from mycelium_fractal_net.types import ScenarioConfig, ScenarioType
+        from mycelium_fractal_net.types import ScenarioType
 
         assert ScenarioType is not None
 
     def test_lazy_dataset_types(self) -> None:
-        from mycelium_fractal_net.types import DatasetMeta, DatasetRow, DatasetStats
+        from mycelium_fractal_net.types import DatasetRow
 
         assert DatasetRow is not None
 

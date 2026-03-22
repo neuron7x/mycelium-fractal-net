@@ -96,9 +96,7 @@ PROFILE_REGISTRY: dict[str, dict] = {
         },
     },
     "gabaa_tonic_extrasynaptic_delta_high_affinity": {
-        **_baseline_profile(
-            "gabaa_tonic_extrasynaptic_delta_high_affinity", enabled=True
-        ),
+        **_baseline_profile("gabaa_tonic_extrasynaptic_delta_high_affinity", enabled=True),
         "tonic_inhibition_scale": 1.25,
         "gabaa_tonic": {
             "profile": "gabaa_tonic_extrasynaptic_delta_high_affinity",
@@ -192,9 +190,7 @@ def validate_profile_registry(registry: dict[str, dict] | None = None) -> None:
     for name, profile in registry.items():
         _validate_required(name, profile, _REQUIRED_TOP_LEVEL)
         if profile["gabaa_tonic"] is not None:
-            _validate_required(
-                f"{name}.gabaa_tonic", profile["gabaa_tonic"], _REQUIRED_GABAA
-            )
+            _validate_required(f"{name}.gabaa_tonic", profile["gabaa_tonic"], _REQUIRED_GABAA)
         if profile["serotonergic"] is not None:
             _validate_required(
                 f"{name}.serotonergic", profile["serotonergic"], _REQUIRED_SEROTONERGIC

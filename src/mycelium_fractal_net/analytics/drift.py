@@ -17,12 +17,8 @@ def morphology_drift(
     denom = float(np.linalg.norm(ref) + 1e-12)
     normalized_distance = float(distance / denom)
     cosine_denom = float(np.linalg.norm(ref) * np.linalg.norm(cand))
-    cosine_similarity = (
-        float(np.dot(ref, cand) / cosine_denom) if cosine_denom > 0 else 1.0
-    )
-    drift_score = float(
-        min(1.0, 0.65 * normalized_distance + 0.35 * (1.0 - cosine_similarity))
-    )
+    cosine_similarity = float(np.dot(ref, cand) / cosine_denom) if cosine_denom > 0 else 1.0
+    drift_score = float(min(1.0, 0.65 * normalized_distance + 0.35 * (1.0 - cosine_similarity)))
     return {
         "distance": distance,
         "normalized_distance": normalized_distance,

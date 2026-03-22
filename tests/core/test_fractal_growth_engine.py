@@ -379,9 +379,7 @@ class TestStabilitySmoke:
             binary = rng.random((64, 64)) > threshold
             dim = engine.estimate_dimension(binary)
 
-            assert (
-                0 <= dim <= 2.5
-            ), f"Invalid dimension {dim:.3f} for threshold={threshold}"
+            assert 0 <= dim <= 2.5, f"Invalid dimension {dim:.3f} for threshold={threshold}"
 
 
 class TestPerformance:

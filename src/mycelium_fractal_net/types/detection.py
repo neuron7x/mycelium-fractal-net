@@ -61,7 +61,9 @@ class RegimeState:
     contributing_features: list[str] = field(default_factory=list)
 
     def __repr__(self) -> str:
-        return f"RegimeState({self.label}, score={self.score:.3f}, confidence={self.confidence:.2f})"
+        return (
+            f"RegimeState({self.label}, score={self.score:.3f}, confidence={self.confidence:.2f})"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         payload = {

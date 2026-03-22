@@ -232,9 +232,7 @@ class TestRateLimiter:
         from mycelium_fractal_net.integration.api_config import RateLimitConfig
         from mycelium_fractal_net.integration.rate_limiter import RateLimiter
 
-        initial_config = RateLimitConfig(
-            max_requests=3, window_seconds=30, enabled=True
-        )
+        initial_config = RateLimitConfig(max_requests=3, window_seconds=30, enabled=True)
         limiter = RateLimiter(initial_config)
 
         class MockRequest:
@@ -377,9 +375,7 @@ class TestRateLimitMiddleware:
         # - retry_after: seconds to wait
         pass  # Format validation is done in rate_limit_exceeded_behavior test
 
-    def test_middleware_refreshes_dynamic_config(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_middleware_refreshes_dynamic_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Middleware should adopt updated rate limit config at runtime."""
         from mycelium_fractal_net.integration.api_config import RateLimitConfig
         from mycelium_fractal_net.integration.rate_limiter import RateLimitMiddleware
@@ -490,10 +486,7 @@ class TestRateLimitConfig:
         assert "/health" in config.per_endpoint_limits
         assert "/validate" in config.per_endpoint_limits
         # Health should have higher limit than validate
-        assert (
-            config.per_endpoint_limits["/health"]
-            > config.per_endpoint_limits["/validate"]
-        )
+        assert config.per_endpoint_limits["/health"] > config.per_endpoint_limits["/validate"]
 
     def test_metrics_endpoint_limit_is_customizable(self) -> None:
         """Custom metrics endpoints should be tracked for rate limiting."""

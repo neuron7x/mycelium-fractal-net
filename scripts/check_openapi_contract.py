@@ -28,12 +28,9 @@ def _resolve_ref(schema: dict[str, Any], ref: str) -> Any:
 def _contains_neuromodulation(node: object, schema: dict[str, Any]) -> bool:
     if isinstance(node, dict):
         if "$ref" in node:
-            return _contains_neuromodulation(
-                _resolve_ref(schema, str(node["$ref"])), schema
-            )
+            return _contains_neuromodulation(_resolve_ref(schema, str(node["$ref"])), schema)
         return any(
-            k == "neuromodulation" or _contains_neuromodulation(v, schema)
-            for k, v in node.items()
+            k == "neuromodulation" or _contains_neuromodulation(v, schema) for k, v in node.items()
         )
     if isinstance(node, list):
         return any(_contains_neuromodulation(v, schema) for v in node)

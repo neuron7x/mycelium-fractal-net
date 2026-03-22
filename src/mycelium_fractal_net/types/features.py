@@ -142,9 +142,7 @@ class MorphologyDescriptor:
             if hasattr(val, "to_dict") and not isinstance(val, dict):
                 object.__setattr__(self, group_name, val.to_dict())
             else:
-                object.__setattr__(
-                    self, group_name, {k: float(v) for k, v in val.items()}
-                )
+                object.__setattr__(self, group_name, {k: float(v) for k, v in val.items()})
         object.__setattr__(self, "embedding", tuple(float(v) for v in self.embedding))
         object.__setattr__(self, "metadata", dict(self.metadata))
         if not self.embedding:
@@ -159,9 +157,7 @@ class MorphologyDescriptor:
         if self.connectivity:
             _validate_feature_keys("connectivity", self.connectivity, CONNECTIVITY_KEYS)
         if self.neuromodulation:
-            _validate_feature_keys(
-                "neuromodulation", self.neuromodulation, NEUROMODULATION_KEYS
-            )
+            _validate_feature_keys("neuromodulation", self.neuromodulation, NEUROMODULATION_KEYS)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -192,9 +188,7 @@ class MorphologyDescriptor:
         payload.update({f"stability_{k}": v for k, v in self.stability.items()})
         payload.update({f"complexity_{k}": v for k, v in self.complexity.items()})
         payload.update({f"connectivity_{k}": v for k, v in self.connectivity.items()})
-        payload.update(
-            {f"neuromodulation_{k}": v for k, v in self.neuromodulation.items()}
-        )
+        payload.update({f"neuromodulation_{k}": v for k, v in self.neuromodulation.items()})
         payload.update({f"embedding_{i:02d}": v for i, v in enumerate(self.embedding)})
         return payload
 

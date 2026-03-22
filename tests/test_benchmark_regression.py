@@ -16,9 +16,7 @@ from pathlib import Path
 import mycelium_fractal_net as mfn
 
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE = json.loads((ROOT / "configs" / "benchmark_baseline.json").read_text())[
-    "benchmarks"
-]
+BASELINE = json.loads((ROOT / "configs" / "benchmark_baseline.json").read_text())["benchmarks"]
 
 # Allow 5x margin for CI variability (fullcheck runs parallel stages)
 MARGIN = 5.0
