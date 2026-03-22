@@ -423,12 +423,34 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--port", type=int, default=8000)
     p.set_defaults(func=cmd_api)
 
+    p = sub.add_parser("analyze", help="analyze external data through MFN pipeline")
+    p.add_argument("--input", type=str, required=True, help="path to .npy or .csv file")
+    p.add_argument(
+        "--no-normalize", action="store_true", help="reject out-of-range data instead of rescaling"
+    )
+    p.set_defaults(func=cmd_analyze)
+
     sub.add_parser("doctor", help="system health check").set_defaults(func=cmd_doctor)
     sub.add_parser("info", help="system info and metrics").set_defaults(func=cmd_info)
     sub.add_parser("scenarios", help="list available simulation scenarios").set_defaults(
         func=cmd_scenarios
     )
     return parser
+
+
+def cmd_analyze(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.adapters import FieldAdapter
+    from mycelium_fractal_net.cli_display import format_detection, format_simulation
+
+    seq = FieldAdapter.load(args.input, normalize=not args.no_normalize)
+    if _wants_json(args):
+        payload = seq.to_dict()
+        payload["command"] = "analyze"
+        payload["source"] = args.input
+        return _dump_json(payload, getattr(args, "output", None))
+    print(format_simulation(seq))
+    print(format_detection(seq.detect()))
+    return 0
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
