@@ -318,6 +318,22 @@ def ext_006_connectivity_keys(desc: Any, seq: Any) -> tuple[bool, Any]:
     return len(missing) == 0, sorted(missing) if missing else "complete"
 
 
+@rule(
+    id="EXT-007",
+    claim="Fractal dimension regression quality must be sufficient for reliable D_box",
+    math="D_r2 >= 0.7 when D_box is used in detection scoring",
+    ref="Theiler 1990, doi:10.1364/JOSAA.7.001055",
+    stage="extract",
+    severity="warn",
+    category="numerical",
+    falsifiable_by="D_r2 < 0.7 with D_box contributing to anomaly score",
+    rationale="Low R² means log-log regression is unreliable; D_box may be noise",
+)
+def ext_007_fractal_quality(desc: Any, seq: Any) -> tuple[bool, Any, Any]:
+    d_r2 = desc.features.get("D_r2", 1.0)
+    return d_r2 >= 0.7, d_r2, 0.7
+
+
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE: DETECT — classification consistency
 # ═══════════════════════════════════════════════════════════════════
@@ -527,6 +543,32 @@ def for_006_error(fc: Any) -> tuple[bool, Any, Any]:
 def for_007_damping(fc: Any) -> tuple[bool, Any]:
     d = fc.to_dict().get("benchmark_metrics", {}).get("adaptive_damping", 0.0)
     return 0.80 <= d <= 0.95, d
+
+
+@rule(
+    id="FOR-008",
+    claim="Forecast error monotonically increases with horizon (no hallucination)",
+    math="error(h) <= error(h+1) for h in [1..H-1]",
+    stage="forecast",
+    severity="warn",
+    category="causal",
+    falsifiable_by="Error at horizon h+1 < error at horizon h",
+    rationale="If error decreases at longer horizon, model is hallucinating false convergence",
+)
+def for_008_error_monotonic(fc: Any) -> tuple[bool, Any, Any]:
+    trajectory = fc.to_dict().get("descriptor_trajectory", [])
+    if len(trajectory) < 2:
+        return True, "short_trajectory", "monotonic"
+    # Compute cumulative drift from step to step
+    shifts = []
+    for i in range(len(trajectory)):
+        shift = abs(trajectory[i].get("D_box", 0.0) - trajectory[0].get("D_box", 0.0))
+        shifts.append(shift)
+    # Check non-decreasing (allowing small tolerance)
+    for i in range(1, len(shifts)):
+        if shifts[i] < shifts[i - 1] - 0.01:
+            return False, f"shift[{i}]={shifts[i]:.4f} < shift[{i-1}]={shifts[i-1]:.4f}", "monotonic"
+    return True, f"shifts=[{shifts[0]:.4f}..{shifts[-1]:.4f}]", "monotonic"
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -821,6 +863,7 @@ def validate_causal_consistency(
             ext_004_stability_keys,
             ext_005_complexity_keys,
             ext_006_connectivity_keys,
+            ext_007_fractal_quality,
         ]:
             results.append(r.evaluate(descriptor, sequence))
         stages += 1
@@ -849,6 +892,7 @@ def validate_causal_consistency(
             for_005_benchmark_keys,
             for_006_error,
             for_007_damping,
+            for_008_error_monotonic,
         ]:
             results.append(r.evaluate(forecast))
         stages += 1

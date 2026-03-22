@@ -343,6 +343,6 @@ class TestReleaseGovernanceFiles:
         path = self.ROOT / "docs" / "contracts" / "claims_manifest.json"
         data = json.loads(path.read_text())
         assert data["schema"] == "mfn-claims-manifest-v1"
-        assert data["metrics"]["causal_rules"] == 44
+        assert data["metrics"]["causal_rules"] == 46
         assert data["metrics"]["embedding_dims"] == 57
         assert data["metrics"]["feature_groups_active"] == 6

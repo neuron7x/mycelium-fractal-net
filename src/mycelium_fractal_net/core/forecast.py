@@ -54,13 +54,42 @@ def _adaptive_damping(sequence: FieldSequence) -> float:
 
 
 def _project_from_window(window: np.ndarray, horizon: int, damping: float) -> np.ndarray:
+    """AR(1) projection: x_{t+1} = mean + phi * (x_t - mean) + residual decay.
+
+    Estimates the AR(1) coefficient phi from the window, then projects
+    forward with exponential damping on the innovation term.
+    Falls back to mean-reversion for very short windows.
+    """
     if window.shape[0] < 2:
         return np.repeat(window[-1][None, :, :], horizon, axis=0)
+
+    # Estimate AR(1) parameters per-cell: x_t = mu + phi * (x_{t-1} - mu)
+    mean_field = np.mean(window, axis=0)
+    centered = window - mean_field
+
+    if window.shape[0] >= 3:
+        # OLS estimate of phi: phi = sum(x_t * x_{t-1}) / sum(x_{t-1}^2)
+        numerator = np.sum(centered[1:] * centered[:-1], axis=0)
+        denominator = np.sum(centered[:-1] ** 2, axis=0) + 1e-12
+        phi = np.clip(numerator / denominator, -0.99, 0.99)
+    else:
+        # Fallback: use damping as phi proxy
+        phi = np.full_like(mean_field, damping)
+
+    # Also compute mean innovation (trend) for short-term accuracy
     delta = np.mean(np.diff(window, axis=0), axis=0)
+
     current = window[-1].astype(np.float64).copy()
     frames = []
     for step in range(1, horizon + 1):
-        current = np.clip(current + delta * (damping ** (step - 1)), FIELD_CLIP_MIN, FIELD_CLIP_MAX)
+        decay = damping ** (step - 1)
+        # AR(1) mean-reversion + damped trend
+        ar1_pull = mean_field + phi * (current - mean_field)
+        trend_push = current + delta * decay
+        # Blend: AR(1) dominates at longer horizons, trend at short
+        blend = min(1.0, step / max(1, horizon))
+        current = (1.0 - blend) * trend_push + blend * ar1_pull
+        current = np.clip(current, FIELD_CLIP_MIN, FIELD_CLIP_MAX)
         frames.append(current.copy())
     return np.stack(frames, axis=0)
 

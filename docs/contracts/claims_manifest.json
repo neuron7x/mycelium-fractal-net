@@ -2,7 +2,7 @@
   "schema": "mfn-claims-manifest-v1",
   "engine_version": "4.1.0",
   "metrics": {
-    "causal_rules": 44,
+    "causal_rules": 46,
     "causal_stages": 7,
     "import_contracts": 7,
     "embedding_dims": 57,
@@ -22,8 +22,8 @@
     "api_endpoints": 8
   },
   "notes": {
-    "test_count": "Run pytest to get current count \u2014 not hardcoded",
-    "coverage": "Run pytest --cov to get current value \u2014 not hardcoded",
-    "benchmark_throughput": "Run benchmarks/benchmark_core.py \u2014 hardware-dependent"
+    "test_count": "Run pytest to get current count",
+    "coverage": "Run pytest --cov to get current value",
+    "benchmark_throughput": "Run benchmarks/benchmark_core.py"
   }
 }
