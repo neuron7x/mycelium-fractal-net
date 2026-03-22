@@ -11,7 +11,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/neuron7x/mycelium-fractal-net/actions"><img src="https://img.shields.io/github/actions/workflow/status/neuron7x/mycelium-fractal-net/ci.yml?branch=main&style=flat-square&label=CI" alt="CI" /></a>
   <img src="https://img.shields.io/badge/tests-1228_passed-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/coverage-82%25-green?style=flat-square" alt="Coverage" />
   <img src="https://img.shields.io/badge/causal_rules-41-blue?style=flat-square" alt="Causal Rules" />
