@@ -1,23 +1,30 @@
+"""Artifact signing and verification using Ed25519 via the ``cryptography`` library.
+
+Replaces the custom Ed25519 implementation (crypto/signatures.py, 592 LOC)
+with the audited, maintained ``cryptography.hazmat`` backend.
+"""
+
 from __future__ import annotations
 
 import hashlib
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey,
+    Ed25519PublicKey,
+)
 
-def _get_crypto() -> tuple[Any, Any, Any, Any]:
-    from importlib import import_module
 
-    sig_mod = import_module("mycelium_fractal_net.crypto.signatures")
-    return (
-        sig_mod,
-        sig_mod.SignatureKeyPair,
-        sig_mod.sign_message,
-        sig_mod.verify_signature,
-    )
+@dataclass
+class _KeyPair:
+    private_key: Ed25519PrivateKey
+    public_key: Ed25519PublicKey
+    public_key_bytes: bytes
 
 
 def sha256_file(path: Path) -> str:
@@ -28,18 +35,37 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def _derive_keypair_from_seed(seed_text: str) -> Any:
-    signature_impl, SignatureKeyPair, _, _ = _get_crypto()
-    seed = hashlib.sha256(seed_text.encode("utf-8")).digest()
-    h = signature_impl._sha512(seed)
-    h_bytes = list(h[:32])
-    h_bytes[0] &= 248
-    h_bytes[31] &= 127
-    h_bytes[31] |= 64
-    a = int.from_bytes(bytes(h_bytes), "little")
-    base = signature_impl._get_base_point()
-    public_key = signature_impl._point_to_bytes(signature_impl._scalar_mult(a, base))
-    return SignatureKeyPair(private_key=seed, public_key=public_key)
+def _derive_keypair_from_seed(seed_text: str) -> _KeyPair:
+    """Derive Ed25519 keypair from a deterministic seed string.
+
+    Uses SHA256 of the seed as the 32-byte private key material.
+    This is compatible with the ``cryptography`` library's
+    ``Ed25519PrivateKey.from_private_bytes()``.
+    """
+    seed_bytes = hashlib.sha256(seed_text.encode("utf-8")).digest()
+    private_key = Ed25519PrivateKey.from_private_bytes(seed_bytes)
+    public_key = private_key.public_key()
+    public_key_bytes = public_key.public_bytes_raw()
+    return _KeyPair(
+        private_key=private_key,
+        public_key=public_key,
+        public_key_bytes=public_key_bytes,
+    )
+
+
+def _sign_message(message: bytes, private_key: Ed25519PrivateKey) -> bytes:
+    """Sign a message with Ed25519."""
+    return private_key.sign(message)
+
+
+def _verify_signature(message: bytes, signature: bytes, public_key_bytes: bytes) -> bool:
+    """Verify an Ed25519 signature."""
+    try:
+        public_key = Ed25519PublicKey.from_public_bytes(public_key_bytes)
+        public_key.verify(signature, message)
+        return True
+    except Exception:
+        return False
 
 
 def _crypto_config_seed(config_path: str | Path) -> str:
@@ -63,17 +89,16 @@ def sign_artifact(
     audit_log: str | Path | None = None,
 ) -> Path:
     artifact_path = Path(path)
-    _, _, sign_message_fn, _ = _get_crypto()
     keypair = _derive_keypair_from_seed(_crypto_config_seed(config_path))
     digest = sha256_file(artifact_path)
-    signature = sign_message_fn(digest.encode("utf-8"), keypair.private_key)
+    signature = _sign_message(digest.encode("utf-8"), keypair.private_key)
     payload = {
         "schema_version": "mfn-artifact-signature-v1",
         "algorithm": "Ed25519",
         "path": artifact_path.name,
         "sha256": digest,
         "signature_hex": signature.hex(),
-        "public_key_hex": keypair.public_key.hex(),
+        "public_key_hex": keypair.public_key_bytes.hex(),
         "signed_at": datetime.now(timezone.utc).isoformat(),
     }
     sig_path = artifact_path.with_suffix(artifact_path.suffix + ".sig.json")
@@ -105,9 +130,8 @@ def verify_artifact_signature(
         else artifact_path.with_suffix(artifact_path.suffix + ".sig.json")
     )
     payload = json.loads(sig_path.read_text(encoding="utf-8"))
-    _, _, _, verify_signature_fn = _get_crypto()
     digest = sha256_file(artifact_path)
-    ok = digest == payload["sha256"] and verify_signature_fn(
+    ok = digest == payload["sha256"] and _verify_signature(
         digest.encode("utf-8"),
         bytes.fromhex(payload["signature_hex"]),
         bytes.fromhex(payload["public_key_hex"]),
