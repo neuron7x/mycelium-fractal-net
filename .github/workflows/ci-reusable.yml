@@ -18,7 +18,7 @@ jobs:
     name: VERIFY_CORE
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -33,7 +33,7 @@ jobs:
     name: VERIFY_ML
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -44,7 +44,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -56,7 +56,7 @@ jobs:
     name: BENCHMARK_CORE_ML
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -67,7 +67,7 @@ jobs:
   benchmark_quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [verify, validate, benchmark_core, benchmark_quality]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -99,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [showcase_generation]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -120,7 +120,7 @@ jobs:
     name: NEUROCHEM_CONTRACTS
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -132,7 +132,7 @@ jobs:
     name: SCIENTIFIC_CONTROLS
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -144,7 +144,7 @@ jobs:
     name: OPENAPI_EXPORT
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -163,7 +163,7 @@ jobs:
     name: DOCS_DRIFT
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
@@ -176,7 +176,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [showcase_generation, baseline_parity, neurochem_contracts, scientific_controls, openapi_export, docs_drift]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
