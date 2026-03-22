@@ -40,6 +40,10 @@ def _dump_json(payload: dict[str, Any], output: str | None) -> int:
     return 0
 
 
+def _wants_json(args: argparse.Namespace) -> bool:
+    return getattr(args, "json_output", False) or getattr(args, "output", None) is not None
+
+
 def _load_npy(path: str) -> FieldSequence:
     arr = np.load(Path(path))
     if arr.ndim == 3:
@@ -160,54 +164,73 @@ def _pair_from_args(args: argparse.Namespace) -> tuple[FieldSequence, FieldSeque
 
 
 def cmd_simulate(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.cli_display import format_simulation
+
     seq = (
         simulate_history(_spec_from_args(args))
         if args.with_history
         else simulate_final(_spec_from_args(args))
     )
-    payload = seq.to_dict(include_arrays=args.include_arrays)
-    payload["command"] = "simulate"
-    return _dump_json(payload, args.output)
+    if _wants_json(args):
+        payload = seq.to_dict(include_arrays=args.include_arrays)
+        payload["command"] = "simulate"
+        return _dump_json(payload, args.output)
+    print(format_simulation(seq))
+    return 0
 
 
 def cmd_extract(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.cli_display import format_descriptor
+
     seq = _sequence_from_args(args)
     descriptor = compute_morphology_descriptor(seq)
-    return _dump_json(
-        {
-            "command": "extract",
-            "descriptor": descriptor.to_dict(),
-            "features": descriptor.features,
-        },
-        args.output,
-    )
+    if _wants_json(args):
+        return _dump_json(
+            {"command": "extract", "descriptor": descriptor.to_dict(), "features": descriptor.features},
+            args.output,
+        )
+    print(format_descriptor(descriptor))
+    return 0
 
 
 def cmd_detect(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.cli_display import format_detection
+
     seq = _sequence_from_args(args)
     detection = detect_anomaly(seq)
-    payload = detection.to_dict()
-    payload.setdefault("anomaly_label", payload["label"])
-    payload.setdefault("anomaly_score", payload["score"])
-    if payload.get("regime"):
-        payload.setdefault("regime_label", payload["regime"]["label"])
-    return _dump_json({"command": "detect", "detection": payload}, args.output)
+    if _wants_json(args):
+        payload = detection.to_dict()
+        payload.setdefault("anomaly_label", payload["label"])
+        payload.setdefault("anomaly_score", payload["score"])
+        if payload.get("regime"):
+            payload.setdefault("regime_label", payload["regime"]["label"])
+        return _dump_json({"command": "detect", "detection": payload}, args.output)
+    print(format_detection(detection))
+    return 0
 
 
 def cmd_forecast(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.cli_display import format_forecast
+
     seq = _sequence_from_args(args, require_history=True)
     result = forecast_next(seq, horizon=args.horizon)
-    return _dump_json(
-        {"command": "forecast", "forecast": result.to_dict()}, args.output
-    )
+    if _wants_json(args):
+        return _dump_json({"command": "forecast", "forecast": result.to_dict()}, args.output)
+    print(format_forecast(result))
+    return 0
 
 
 def cmd_compare(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.cli_display import format_comparison
+
     left, right = _pair_from_args(args)
     result = compare_sequences(left, right)
-    payload = result.to_dict()
-    payload.setdefault("similarity_label", payload["label"])
-    return _dump_json({"command": "compare", "comparison": payload}, args.output)
+    if _wants_json(args):
+        payload = result.to_dict()
+        payload.setdefault("similarity_label", payload["label"])
+        return _dump_json({"command": "compare", "comparison": payload}, args.output)
+    print(format_comparison(result))
+    return 0
 
 
 def cmd_report(args: argparse.Namespace) -> int:
@@ -337,6 +360,13 @@ def _add_spec(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="mfn", description="Morphology-aware Field Intelligence Engine CLI"
+    )
+    parser.add_argument(
+        "--json",
+        dest="json_output",
+        action="store_true",
+        default=False,
+        help="output raw JSON instead of formatted display",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

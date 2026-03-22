@@ -90,3 +90,26 @@ def test_constants_match_config_json() -> None:
     ph = config["profile_hints"]
     assert detect._PROFILE_HINT_SEROTONERGIC == ph["serotonergic"]
     assert detect._PROFILE_HINT_CRITICALITY == ph["criticality"]
+
+
+def test_compare_constants_match_config() -> None:
+    """Compare thresholds in code must match versioned config."""
+    from mycelium_fractal_net.core import compare
+
+    config_path = ROOT / "configs" / "detection_thresholds_v1.json"
+    config = json.loads(config_path.read_text())
+    cc = config["comparison"]
+
+    assert compare._COSINE_NEAR_IDENTICAL == cc["cosine_near_identical"]
+    assert compare._COSINE_SIMILAR == cc["cosine_similar"]
+    assert compare._COSINE_RELATED == cc["cosine_related"]
+    assert compare._DISTANCE_NEAR_IDENTICAL == cc["distance_near_identical"]
+    assert compare._NOISE_PATHOLOGICAL_HIGH == cc["noise_pathological_high"]
+    assert compare._NOISE_PATHOLOGICAL_LOW == cc["noise_pathological_low"]
+    assert compare._CONNECTIVITY_LOW == cc["connectivity_low"]
+    assert compare._MODULARITY_LOW == cc["modularity_low"]
+    assert compare._HIERARCHY_FLAT_THRESHOLD == cc["hierarchy_flat_threshold"]
+    assert compare._CONNECTIVITY_FLAT_CEILING == cc["connectivity_flat_ceiling"]
+    assert compare._CONNECTIVITY_REORG_THRESHOLD == cc["connectivity_reorg_threshold"]
+    assert compare._MODULARITY_REORG_THRESHOLD == cc["modularity_reorg_threshold"]
+    assert compare._TOP_CHANGED_FEATURES == cc["top_changed_features"]

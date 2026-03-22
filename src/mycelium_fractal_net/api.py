@@ -175,14 +175,22 @@ if _cors_origins:
         ],
     )
 
+# Security hardening middleware (Anthropic-level defense-in-depth)
+from mycelium_fractal_net.security.hardening import (
+    RequestSizeLimitMiddleware,
+    SecurityHeadersMiddleware,
+)
+
 # Add production middleware (order matters: last added = first executed)
-# Desired execution order: RequestID → RequestLogging → Metrics → RateLimit → APIKey
+# Desired execution order: SecurityHeaders → RequestID → RequestLogging → Metrics → RateLimit → APIKey → SizeLimit
 # Add in reverse so Starlette wraps them correctly.
+app.add_middleware(RequestSizeLimitMiddleware)
 app.add_middleware(APIKeyMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(MetricsMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Initialize WebSocket connection manager
 ws_manager = WSConnectionManager(

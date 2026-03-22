@@ -554,6 +554,20 @@ class FieldSequence:
 
         object.__setattr__(self, "metadata", dict(self.metadata or {}))
 
+    def __repr__(self) -> str:
+        n = self.field.shape[0]
+        steps = self.num_steps
+        v_min = float(np.min(self.field)) * 1000
+        v_max = float(np.max(self.field)) * 1000
+        seed = self.spec.seed if self.spec else "?"
+        neuro = ""
+        if self.spec and self.spec.neuromodulation and self.spec.neuromodulation.enabled:
+            neuro = f", neuromod={self.spec.neuromodulation.profile}"
+        return (
+            f"FieldSequence({n}x{n}, {steps} steps, "
+            f"[{v_min:.1f}, {v_max:.1f}] mV, seed={seed}{neuro})"
+        )
+
     @property
     def grid_size(self) -> int:
         if self.field.shape[0] != self.field.shape[1]:
@@ -590,6 +604,34 @@ class FieldSequence:
     @property
     def temporal_state(self) -> FieldHistory | None:
         return None if self.history is None else FieldHistory(self.history)
+
+    # ─── Fluent pipeline interface ───────────────────────────
+
+    def extract(self) -> "MorphologyDescriptor":
+        """Extract morphology descriptor. Shorthand for mfn.extract(self)."""
+        from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
+
+        return compute_morphology_descriptor(self)
+
+    def detect(self) -> "AnomalyEvent":
+        """Detect anomalies. Shorthand for mfn.detect(self)."""
+        from mycelium_fractal_net.core.detect import detect_anomaly
+
+        return detect_anomaly(self)
+
+    def forecast(self, horizon: int = 8) -> "ForecastResult":
+        """Forecast future states. Shorthand for mfn.forecast(self, horizon)."""
+        from mycelium_fractal_net.core.forecast import forecast_next
+
+        return forecast_next(self, horizon=horizon)
+
+    def compare(self, other: "FieldSequence") -> "ComparisonResult":
+        """Compare with another sequence. Shorthand for mfn.compare(self, other)."""
+        from mycelium_fractal_net.core.compare import compare
+
+        return compare(self, other)
+
+    # ─────────────────────────────────────────────────────────
 
     def to_dict(self, include_arrays: bool = False) -> dict[str, Any]:
         spec_dict = None if self.spec is None else self.spec.to_dict()

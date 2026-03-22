@@ -118,6 +118,15 @@ class MorphologyDescriptor:
     neuromodulation: dict[str, float] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def __repr__(self) -> str:
+        d_box = self.features.get("D_box", 0.0)
+        ii = self.stability.get("instability_index", 0.0)
+        dims = len(self.embedding)
+        return (
+            f"MorphologyDescriptor(v={self.version}, "
+            f"D_box={d_box:.3f}, instability={ii:.3f}, {dims} dims)"
+        )
+
     def __post_init__(self) -> None:
         # Normalize: if typed object passed, convert to dict for storage
         for group_name in (

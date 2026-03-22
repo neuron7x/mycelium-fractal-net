@@ -60,6 +60,9 @@ class RegimeState:
     evidence: dict[str, float] = field(default_factory=dict)
     contributing_features: list[str] = field(default_factory=list)
 
+    def __repr__(self) -> str:
+        return f"RegimeState({self.label}, score={self.score:.3f}, confidence={self.confidence:.2f})"
+
     def to_dict(self) -> dict[str, Any]:
         payload = {
             "schema_version": "mfn-regime-state-v1",
@@ -82,6 +85,13 @@ class AnomalyEvent:
     evidence: dict[str, float] = field(default_factory=dict)
     contributing_features: list[str] = field(default_factory=list)
     regime: RegimeState | None = None
+
+    def __repr__(self) -> str:
+        regime_str = f", regime={self.regime.label}" if self.regime else ""
+        return (
+            f"AnomalyEvent({self.label}, score={self.score:.3f}, "
+            f"confidence={self.confidence:.2f}{regime_str})"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
