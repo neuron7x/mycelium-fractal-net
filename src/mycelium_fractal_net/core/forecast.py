@@ -3,6 +3,17 @@ from __future__ import annotations
 import numpy as np
 
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
+from mycelium_fractal_net.core.detection_config import (
+    DAMPING_BASE,
+    DAMPING_MAX,
+    FIELD_CLIP_MAX,
+    FIELD_CLIP_MIN,
+    FLUIDITY_COEFF_DEFAULT,
+    STRUCTURAL_ERROR_WEIGHT,
+    UNCERTAINTY_W_CONNECTIVITY,
+    UNCERTAINTY_W_DESENSITIZATION,
+    UNCERTAINTY_W_PLASTICITY,
+)
 from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
 from mycelium_fractal_net.types.forecast import (
     ForecastResult,
@@ -28,7 +39,7 @@ def _history_windows(history: np.ndarray) -> list[np.ndarray]:
 def _adaptive_damping(sequence: FieldSequence) -> float:
     descriptor = compute_morphology_descriptor(sequence)
     plasticity_index = float(descriptor.neuromodulation.get("plasticity_index", 0.0))
-    fluidity_coeff = 0.05
+    fluidity_coeff = FLUIDITY_COEFF_DEFAULT
     if sequence.spec is not None and sequence.spec.neuromodulation is not None:
         fluidity_coeff = max(
             fluidity_coeff, float(sequence.spec.neuromodulation.gain_fluidity_coeff)
@@ -38,8 +49,8 @@ def _adaptive_damping(sequence: FieldSequence) -> float:
                 fluidity_coeff,
                 float(sequence.spec.neuromodulation.serotonergic.gain_fluidity_coeff),
             )
-    damping = 0.85 + fluidity_coeff * plasticity_index
-    return float(np.clip(damping, 0.85, 0.92))
+    damping = DAMPING_BASE + fluidity_coeff * plasticity_index
+    return float(np.clip(damping, DAMPING_BASE, DAMPING_MAX))
 
 
 def _project_from_window(window: np.ndarray, horizon: int, damping: float) -> np.ndarray:
@@ -49,7 +60,7 @@ def _project_from_window(window: np.ndarray, horizon: int, damping: float) -> np
     current = window[-1].astype(np.float64).copy()
     frames = []
     for step in range(1, horizon + 1):
-        current = np.clip(current + delta * (damping ** (step - 1)), -0.095, 0.040)
+        current = np.clip(current + delta * (damping ** (step - 1)), FIELD_CLIP_MIN, FIELD_CLIP_MAX)
         frames.append(current.copy())
     return np.stack(frames, axis=0)
 
@@ -86,7 +97,10 @@ def _roll_forward(
     )
     mean_projection = np.mean(projections, axis=0)
     uncertainty_scale = (
-        1.0 + 0.35 * plasticity_index + 0.50 * connectivity_divergence + 0.25 * des_lag
+        1.0
+        + UNCERTAINTY_W_PLASTICITY * plasticity_index
+        + UNCERTAINTY_W_CONNECTIVITY * connectivity_divergence
+        + UNCERTAINTY_W_DESENSITIZATION * des_lag
     )
     envelope = UncertaintyEnvelope(
         ensemble_std_mV=float(np.std(projections[:, -1]) * 1000.0 * uncertainty_scale),
@@ -128,7 +142,7 @@ def forecast_next(sequence: FieldSequence, horizon: int = 8) -> ForecastResult:
     last_step = trajectory[-1]
     descriptor_shift = float(abs(last_step.D_box - descriptor.features.get("D_box", 0.0)))
     activity_shift = float(abs(last_step.f_active - descriptor.features.get("f_active", 0.0)))
-    forecast_structural_error = float(0.5 * (descriptor_shift + activity_shift))
+    forecast_structural_error = float(STRUCTURAL_ERROR_WEIGHT * (descriptor_shift + activity_shift))
     benchmark_metrics = {
         "descriptor_shift": descriptor_shift,
         "activity_shift": activity_shift,

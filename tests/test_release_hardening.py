@@ -212,6 +212,25 @@ class TestConfigGovernance:
         assert "schema_version" in data
         assert data["schema_version"] == "mfn-detection-config-v1"
 
+    def test_detection_config_has_required_sections(self) -> None:
+        path = self.ROOT / "configs" / "detection_thresholds_v1.json"
+        data = json.loads(path.read_text())
+        required = [
+            "evidence_normalization", "regime_thresholds", "regime_weights",
+            "anomaly_weights", "instability_weights", "confidence",
+            "comparison", "forecast",
+        ]
+        for section in required:
+            assert section in data, f"Missing required section: {section}"
+            assert isinstance(data[section], dict), f"{section} must be dict"
+
+    def test_detection_config_schema_validation(self) -> None:
+        from mycelium_fractal_net.core.detection_config import _validate_schema
+        path = self.ROOT / "configs" / "detection_thresholds_v1.json"
+        data = json.loads(path.read_text())
+        warnings = _validate_schema(data)
+        assert len(warnings) == 0, f"Schema validation warnings: {warnings}"
+
     def test_causal_config_valid_json(self) -> None:
         path = self.ROOT / "configs" / "causal_validation_v1.json"
         data = json.loads(path.read_text())
@@ -229,11 +248,9 @@ class TestConfigGovernance:
     def test_detection_config_weights_sum_to_one(self) -> None:
         path = self.ROOT / "configs" / "detection_thresholds_v1.json"
         data = json.loads(path.read_text())
-        # Anomaly weights should sum to ~1.0
         aw = data["anomaly_weights"]
         total = sum(aw.values())
         assert abs(total - 1.0) < 0.01, f"Anomaly weights sum to {total}, expected ~1.0"
-        # Instability weights should sum to ~1.0
         iw = data["instability_weights"]
         total_i = sum(iw.values())
         assert abs(total_i - 1.0) < 0.01, f"Instability weights sum to {total_i}"
@@ -244,6 +261,34 @@ class TestConfigGovernance:
         h1 = hashlib.sha256(content).hexdigest()
         h2 = hashlib.sha256(content).hexdigest()
         assert h1 == h2
+
+    def test_config_loaded_matches_file(self) -> None:
+        """Verify detection_config.py actually loaded values from the JSON file."""
+        from mycelium_fractal_net.core.detection_config import (
+            DYNAMIC_ANOMALY_BASELINE,
+            COSINE_NEAR_IDENTICAL,
+            DAMPING_BASE,
+            CONFIG_HASH,
+        )
+        path = self.ROOT / "configs" / "detection_thresholds_v1.json"
+        data = json.loads(path.read_text())
+        assert DYNAMIC_ANOMALY_BASELINE == data["regime_thresholds"]["dynamic_anomaly_baseline"]
+        assert COSINE_NEAR_IDENTICAL == data["comparison"]["cosine_near_identical"]
+        assert DAMPING_BASE == data["forecast"]["damping_base"]
+        assert CONFIG_HASH != "default", "Config was not loaded from file"
+
+    def test_forecast_config_present(self) -> None:
+        path = self.ROOT / "configs" / "detection_thresholds_v1.json"
+        data = json.loads(path.read_text())
+        fc = data["forecast"]
+        required_keys = [
+            "damping_base", "damping_max", "fluidity_coeff_default",
+            "field_clip_min", "field_clip_max",
+            "uncertainty_w_plasticity", "uncertainty_w_connectivity",
+            "uncertainty_w_desensitization", "structural_error_weight",
+        ]
+        for key in required_keys:
+            assert key in fc, f"Missing forecast config key: {key}"
 
 
 # ═══════════════════════════════════════════════════════════════

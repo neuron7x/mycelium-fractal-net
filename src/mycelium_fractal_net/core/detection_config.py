@@ -30,17 +30,66 @@ _DETECTION_CONFIG_PATH = _CONFIG_DIR / "detection_thresholds_v1.json"
 DETECTION_CONFIG_VERSION = "mfn-detection-config-v1"
 
 
+_REQUIRED_SECTIONS = (
+    "evidence_normalization",
+    "regime_thresholds",
+    "regime_weights",
+    "anomaly_weights",
+    "instability_weights",
+    "confidence",
+    "comparison",
+)
+
+
+class ConfigValidationError(ValueError):
+    """Raised when detection config fails schema validation."""
+
+
+def _validate_schema(data: dict[str, Any]) -> list[str]:
+    """Validate config structure, types, required fields. Returns list of warnings."""
+    warnings: list[str] = []
+
+    if data.get("schema_version") != DETECTION_CONFIG_VERSION:
+        warnings.append(
+            f"schema_version mismatch: expected {DETECTION_CONFIG_VERSION}, "
+            f"got {data.get('schema_version')}"
+        )
+
+    for section in _REQUIRED_SECTIONS:
+        if section not in data:
+            warnings.append(f"missing required section: {section}")
+        elif not isinstance(data[section], dict):
+            warnings.append(f"section {section} must be a dict, got {type(data[section]).__name__}")
+
+    # Validate weight sums
+    for weight_section in ("anomaly_weights", "instability_weights"):
+        if weight_section in data and isinstance(data[weight_section], dict):
+            total = sum(float(v) for v in data[weight_section].values())
+            if abs(total - 1.0) > 0.02:
+                warnings.append(f"{weight_section} sum={total:.3f}, expected ~1.0")
+
+    # Validate value ranges
+    for section_name, section_data in data.items():
+        if not isinstance(section_data, dict):
+            continue
+        for key, value in section_data.items():
+            if isinstance(value, dict):
+                continue  # nested sections (regime_weights)
+            if isinstance(value, (int, float)):
+                if not (-1e6 < value < 1e6):
+                    warnings.append(f"{section_name}.{key}={value} outside reasonable range")
+
+    return warnings
+
+
 def _load_config() -> dict[str, Any]:
-    """Load detection config from JSON. Returns empty dict on failure."""
+    """Load and validate detection config from JSON. Returns empty dict on failure."""
     try:
         if _DETECTION_CONFIG_PATH.exists():
             data = json.loads(_DETECTION_CONFIG_PATH.read_text(encoding="utf-8"))
-            if data.get("schema_version") != DETECTION_CONFIG_VERSION:
-                logger.warning(
-                    "Detection config schema mismatch: expected %s, got %s",
-                    DETECTION_CONFIG_VERSION,
-                    data.get("schema_version"),
-                )
+            warnings = _validate_schema(data)
+            for w in warnings:
+                logger.warning("Detection config: %s", w)
             return data
     except Exception:
         logger.warning("Failed to load detection config from %s", _DETECTION_CONFIG_PATH)
@@ -217,3 +266,26 @@ CONNECTIVITY_FLAT_CEILING: float = _get_comparison("connectivity_flat_ceiling", 
 CONNECTIVITY_REORG_THRESHOLD: float = _get_comparison("connectivity_reorg_threshold", 0.05)
 MODULARITY_REORG_THRESHOLD: float = _get_comparison("modularity_reorg_threshold", 0.08)
 TOP_CHANGED_FEATURES: int = int(_get_comparison("top_changed_features", 12))
+
+
+def _get_forecast(key: str, default: float) -> float:
+    """Get a forecast constant."""
+    try:
+        return float(_CFG.get("forecast", {}).get(key, default))
+    except (TypeError, ValueError):
+        return default
+
+
+# ═══════════════════════════════════════════════════════════════
+#  Forecast constants
+# ═══════════════════════════════════════════════════════════════
+
+DAMPING_BASE: float = _get_forecast("damping_base", 0.85)
+DAMPING_MAX: float = _get_forecast("damping_max", 0.92)
+FLUIDITY_COEFF_DEFAULT: float = _get_forecast("fluidity_coeff_default", 0.05)
+FIELD_CLIP_MIN: float = _get_forecast("field_clip_min", -0.095)
+FIELD_CLIP_MAX: float = _get_forecast("field_clip_max", 0.040)
+UNCERTAINTY_W_PLASTICITY: float = _get_forecast("uncertainty_w_plasticity", 0.35)
+UNCERTAINTY_W_CONNECTIVITY: float = _get_forecast("uncertainty_w_connectivity", 0.50)
+UNCERTAINTY_W_DESENSITIZATION: float = _get_forecast("uncertainty_w_desensitization", 0.25)
+STRUCTURAL_ERROR_WEIGHT: float = _get_forecast("structural_error_weight", 0.5)

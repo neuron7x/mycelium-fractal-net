@@ -74,5 +74,16 @@
     "connectivity_reorg_threshold": 0.05,
     "modularity_reorg_threshold": 0.08,
     "top_changed_features": 12
+  },
+  "forecast": {
+    "damping_base": 0.85,
+    "damping_max": 0.92,
+    "fluidity_coeff_default": 0.05,
+    "field_clip_min": -0.095,
+    "field_clip_max": 0.040,
+    "uncertainty_w_plasticity": 0.35,
+    "uncertainty_w_connectivity": 0.50,
+    "uncertainty_w_desensitization": 0.25,
+    "structural_error_weight": 0.5
   }
 }
