@@ -1,21 +1,12 @@
 name: CI
-
-concurrency:
-  group: ci-${{ (github.event.pull_request && github.event.pull_request.number) || github.ref }}
-  cancel-in-progress: true
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-  merge_group:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
+on: [push, pull_request]
 jobs:
-  ci:
-    uses: ./.github/workflows/ci-reusable.yml
-    secrets: inherit
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]" --quiet
+      - run: pytest tests/ -q --tb=short
