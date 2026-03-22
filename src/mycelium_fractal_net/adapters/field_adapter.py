@@ -78,9 +78,11 @@ class FieldAdapter:
             raise FileNotFoundError(f"Data file not found: {path}")
 
         if path.suffix == ".npy":
-            return np.load(path).astype(np.float64)
+            arr: NDArray[np.float64] = np.load(path).astype(np.float64)
+            return arr
         elif path.suffix == ".csv":
-            return np.loadtxt(path, delimiter=",", dtype=np.float64)
+            arr = np.loadtxt(path, delimiter=",", dtype=np.float64)
+            return np.asarray(arr, dtype=np.float64)
         else:
             raise ValueError(f"Unsupported file format: {path.suffix}. Use .npy or .csv")
 

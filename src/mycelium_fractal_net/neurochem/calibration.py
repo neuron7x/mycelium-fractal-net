@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Any
 
 from mycelium_fractal_net.neurochem.profiles import get_profile
 

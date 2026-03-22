@@ -76,7 +76,7 @@ def run_doctor() -> str:
         import mycelium_fractal_net as mfn
 
         start = time.perf_counter()
-        seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=4, seed=1))
+        seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=4, seed=1))  # type: ignore[attr-defined]
         elapsed = (time.perf_counter() - start) * 1000
         lines.append(f"  ✓ Simulation smoke test {dim(f'{elapsed:.0f}ms')}")
     except Exception as e:
