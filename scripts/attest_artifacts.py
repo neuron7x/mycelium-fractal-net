@@ -46,9 +46,7 @@ def main() -> int:
         "docs/contracts/showcase_run.etalon.json",
         "docs/contracts/showcase_run.etalon.sha256",
     ]
-    artifacts = [
-        item for item in (_maybe(rel) for rel in target_paths) if item is not None
-    ]
+    artifacts = [item for item in (_maybe(rel) for rel in target_paths) if item is not None]
     lock_path = ROOT / "uv.lock"
     payload = {
         "attestation_version": "mfn-attestation-v2",
@@ -63,9 +61,7 @@ def main() -> int:
         },
         "artifacts": artifacts,
     }
-    (REL / "attestation.json").write_text(
-        json.dumps(payload, indent=2) + "\n", encoding="utf-8"
-    )
+    (REL / "attestation.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(payload, indent=2))
     return 0
 

@@ -69,9 +69,7 @@ def _extract_request_id(request: Request) -> Optional[str]:
     return request.headers.get("X-Request-ID")
 
 
-async def validation_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handle Pydantic validation errors.
 
@@ -124,9 +122,7 @@ async def validation_exception_handler(
     )
 
 
-async def pydantic_validation_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def pydantic_validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handle Pydantic ValidationError (not FastAPI RequestValidationError).
 

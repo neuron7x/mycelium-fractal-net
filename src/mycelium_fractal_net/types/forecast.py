@@ -68,9 +68,7 @@ class _StrictForecastPayload(BaseModel):
         "benchmark_metrics",
     )
     @classmethod
-    def _validate_non_empty_numeric_mapping(
-        cls, value: dict[str, float]
-    ) -> dict[str, float]:
+    def _validate_non_empty_numeric_mapping(cls, value: dict[str, float]) -> dict[str, float]:
         if not value:
             raise ValueError("mapping must be non-empty")
         return {str(k): float(v) for k, v in value.items()}
@@ -84,25 +82,17 @@ class _StrictForecastPayload(BaseModel):
 
     @field_validator("predicted_states")
     @classmethod
-    def _validate_predicted_states(
-        cls, value: list[list[list[float]]]
-    ) -> list[list[list[float]]]:
+    def _validate_predicted_states(cls, value: list[list[list[float]]]) -> list[list[list[float]]]:
         return [[[float(cell) for cell in row] for row in frame] for frame in value]
 
     @field_validator("benchmark_metrics")
     @classmethod
-    def _validate_required_benchmark_metrics(
-        cls, value: dict[str, float]
-    ) -> dict[str, float]:
+    def _validate_required_benchmark_metrics(cls, value: dict[str, float]) -> dict[str, float]:
         missing = [
-            key
-            for key in ("forecast_structural_error", "adaptive_damping")
-            if key not in value
+            key for key in ("forecast_structural_error", "adaptive_damping") if key not in value
         ]
         if missing:
-            raise ValueError(
-                f"benchmark_metrics missing required keys: {', '.join(missing)}"
-            )
+            raise ValueError(f"benchmark_metrics missing required keys: {', '.join(missing)}")
         return value
 
 
@@ -138,9 +128,7 @@ class ForecastResult:
             "horizon": int(self.horizon),
             "method": self.method,
             "uncertainty_envelope": dict(self.uncertainty_envelope),
-            "descriptor_trajectory": [
-                dict(step) for step in self.descriptor_trajectory
-            ],
+            "descriptor_trajectory": [dict(step) for step in self.descriptor_trajectory],
             "predicted_states": self.predicted_states,
             "predicted_state_summary": dict(self.predicted_state_summary),
             "evaluation_metrics": dict(self.evaluation_metrics),
@@ -153,10 +141,7 @@ class ForecastResult:
 
     def __repr__(self) -> str:
         se = self.benchmark_metrics.get("forecast_structural_error", 0.0)
-        return (
-            f"ForecastResult(h={self.horizon}, method={self.method}, "
-            f"error={se:.3f})"
-        )
+        return f"ForecastResult(h={self.horizon}, method={self.method}, " f"error={se:.3f})"
 
     def to_dict(self) -> dict[str, Any]:
         return self.validate()
@@ -193,10 +178,7 @@ class ComparisonResult:
             "label": self.label,
             "nearest_structural_analog": self.nearest_structural_analog,
             "changed_dimensions": [
-                {
-                    k: (float(v) if isinstance(v, (int, float)) else v)
-                    for k, v in item.items()
-                }
+                {k: (float(v) if isinstance(v, (int, float)) else v) for k, v in item.items()}
                 for item in self.changed_dimensions
             ],
             "drift_summary": {k: float(v) for k, v in self.drift_summary.items()},

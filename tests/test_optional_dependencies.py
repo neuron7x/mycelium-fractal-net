@@ -37,9 +37,7 @@ def test_optional_dependency_extras_defined() -> None:
     assert "numba>=0.60.0" in full_set
 
 
-def _run_blocked_torch_script(
-    tmp_path: Path, source: str
-) -> subprocess.CompletedProcess[str]:
+def _run_blocked_torch_script(tmp_path: Path, source: str) -> subprocess.CompletedProcess[str]:
     script = tmp_path / "blocked_torch_case.py"
     script.write_text(source, encoding="utf-8")
     return subprocess.run(

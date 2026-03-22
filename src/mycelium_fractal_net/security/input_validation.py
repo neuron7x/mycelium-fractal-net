@@ -58,9 +58,7 @@ SQL_INJECTION_PATTERNS: List[Pattern[str]] = [
     re.compile(r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER)\b)", re.IGNORECASE),
     re.compile(r"(--|;|/\*|\*/|@@|@)", re.IGNORECASE),
     re.compile(r"(\b(OR|AND)\b\s+\d+\s*=\s*\d+)", re.IGNORECASE),
-    re.compile(
-        r"(\b(OR|AND)\b\s+['\"]?\w+['\"]?\s*=\s*['\"]?\w+['\"]?)", re.IGNORECASE
-    ),
+    re.compile(r"(\b(OR|AND)\b\s+['\"]?\w+['\"]?\s*=\s*['\"]?\w+['\"]?)", re.IGNORECASE),
 ]
 
 XSS_PATTERNS: List[Pattern[str]] = [

@@ -486,9 +486,7 @@ async def stream_features(websocket: WebSocket) -> None:
             if msg_type == WSMessageType.INIT.value:
                 try:
                     init_req = WSInitRequest(**data.get("payload", {}))
-                    ws_manager.connections[connection_id].client_info = (
-                        init_req.client_info
-                    )
+                    ws_manager.connections[connection_id].client_info = init_req.client_info
                     await websocket.send_json(
                         {
                             "type": WSMessageType.INIT.value,
@@ -584,9 +582,7 @@ async def stream_features(websocket: WebSocket) -> None:
                         # Start streaming task
                         ctx = ServiceContext(mode=ExecutionMode.API)
                         stream_task = asyncio.create_task(
-                            _stream_features_task(
-                                connection_id, stream_id, params, ctx, ws_manager
-                            )
+                            _stream_features_task(connection_id, stream_id, params, ctx, ws_manager)
                         )
                     else:
                         await websocket.send_json(
@@ -680,9 +676,7 @@ async def simulation_live(websocket: WebSocket) -> None:
             if msg_type == WSMessageType.INIT.value:
                 try:
                     init_req = WSInitRequest(**data.get("payload", {}))
-                    ws_manager.connections[connection_id].client_info = (
-                        init_req.client_info
-                    )
+                    ws_manager.connections[connection_id].client_info = init_req.client_info
                     await websocket.send_json(
                         {
                             "type": WSMessageType.INIT.value,
@@ -958,11 +952,7 @@ def _sequence_from_payload(payload: V1FieldPayload) -> FieldSequence:
         return FieldSequence(field=fld, history=None, spec=None, metadata={})
     if payload.spec is not None:
         spec = _spec_from_v1(payload.spec)
-        return (
-            simulate_history(spec)
-            if payload.spec.with_history
-            else simulate_final(spec)
-        )
+        return simulate_history(spec) if payload.spec.with_history else simulate_final(spec)
     raise HTTPException(status_code=400, detail="Provide history, field, or spec")
 
 
@@ -1036,9 +1026,7 @@ async def v1_report(payload: V1ReportRequest) -> dict:
                 metadata=seq.metadata,
             )
         )
-    report = build_analysis_report(
-        seq, output_root=payload.output_root, horizon=payload.horizon
-    )
+    report = build_analysis_report(seq, output_root=payload.output_root, horizon=payload.horizon)
     return report.to_dict()
 
 

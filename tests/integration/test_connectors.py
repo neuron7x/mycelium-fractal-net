@@ -30,9 +30,7 @@ try:
 except ImportError:
     AIOHTTP_AVAILABLE = False
 
-skip_if_no_aiohttp = pytest.mark.skipif(
-    not AIOHTTP_AVAILABLE, reason="aiohttp is not installed"
-)
+skip_if_no_aiohttp = pytest.mark.skipif(not AIOHTTP_AVAILABLE, reason="aiohttp is not installed")
 
 
 class TestConnectorConfig:
@@ -130,9 +128,7 @@ class TestRESTConnector:
 
         # First two calls fail, third succeeds
         mock_response_fail = MagicMock()
-        mock_response_fail.raise_for_status = MagicMock(
-            side_effect=Exception("Network error")
-        )
+        mock_response_fail.raise_for_status = MagicMock(side_effect=Exception("Network error"))
 
         mock_response_success = MagicMock()
         mock_response_success.status = 200

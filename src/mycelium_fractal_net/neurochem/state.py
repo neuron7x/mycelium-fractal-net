@@ -33,9 +33,7 @@ class NeuromodulationState:
 
     @property
     def occupancy_total(self) -> NDArray[np.float64]:
-        return (
-            self.occupancy_resting + self.occupancy_active + self.occupancy_desensitized
-        )
+        return self.occupancy_resting + self.occupancy_active + self.occupancy_desensitized
 
     def occupancy_mass_error_max(self) -> float:
         return float(np.max(np.abs(self.occupancy_total - 1.0)))

@@ -188,9 +188,7 @@ class TestNoCircularImports:
     def test_core_imports_without_errors(self) -> None:
         """Test all core modules can be imported without circular import errors."""
         # Clear any cached imports
-        modules_to_clear = [
-            m for m in sys.modules if m.startswith("mycelium_fractal_net")
-        ]
+        modules_to_clear = [m for m in sys.modules if m.startswith("mycelium_fractal_net")]
         for m in modules_to_clear:
             del sys.modules[m]
 

@@ -115,12 +115,8 @@ class ReactionDiffusionConfig:
                 max_bound=float(GRID_SIZE_MAX),
                 parameter_name="grid_size",
             )
-        _validate_diffusion_coefficient(
-            "d_activator", self.d_activator, D_ACTIVATOR_MIN
-        )
-        _validate_diffusion_coefficient(
-            "d_inhibitor", self.d_inhibitor, D_INHIBITOR_MIN
-        )
+        _validate_diffusion_coefficient("d_activator", self.d_activator, D_ACTIVATOR_MIN)
+        _validate_diffusion_coefficient("d_inhibitor", self.d_inhibitor, D_INHIBITOR_MIN)
         _validate_diffusion_coefficient("alpha", self.alpha, ALPHA_MIN)
         if not (R_ACTIVATOR_MIN <= self.r_activator <= R_ACTIVATOR_MAX):
             raise ValueOutOfRangeError(

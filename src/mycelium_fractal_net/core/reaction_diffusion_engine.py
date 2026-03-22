@@ -301,33 +301,21 @@ class ReactionDiffusionEngine:
         centered = self._field - INITIAL_POTENTIAL_MEAN
         gain = np.clip(1.0 + self._neuro_state.effective_gain, 0.70, 1.30)
         shunt = np.clip(1.0 - self._neuro_state.effective_inhibition, 0.05, 1.0)
-        self._field = (
-            INITIAL_POTENTIAL_MEAN + excitability_offset + centered * gain * shunt
-        )
-        self._metrics.plasticity_index_mean = float(
-            np.mean(self._neuro_state.plasticity_index)
-        )
+        self._field = INITIAL_POTENTIAL_MEAN + excitability_offset + centered * gain * shunt
+        self._metrics.plasticity_index_mean = float(np.mean(self._neuro_state.plasticity_index))
         self._metrics.effective_inhibition_mean = float(
             np.mean(self._neuro_state.effective_inhibition)
         )
-        self._metrics.effective_gain_mean = float(
-            np.mean(self._neuro_state.effective_gain)
-        )
+        self._metrics.effective_gain_mean = float(np.mean(self._neuro_state.effective_gain))
         self._metrics.observation_noise_gain_mean = float(
             np.mean(self._neuro_state.observation_noise_gain)
         )
-        self._metrics.occupancy_resting_mean = float(
-            np.mean(self._neuro_state.occupancy_resting)
-        )
-        self._metrics.occupancy_active_mean = float(
-            np.mean(self._neuro_state.occupancy_active)
-        )
+        self._metrics.occupancy_resting_mean = float(np.mean(self._neuro_state.occupancy_resting))
+        self._metrics.occupancy_active_mean = float(np.mean(self._neuro_state.occupancy_active))
         self._metrics.occupancy_desensitized_mean = float(
             np.mean(self._neuro_state.occupancy_desensitized)
         )
-        self._metrics.occupancy_mass_error_max = (
-            self._neuro_state.occupancy_mass_error_max()
-        )
+        self._metrics.occupancy_mass_error_max = self._neuro_state.occupancy_mass_error_max()
         self._metrics.excitability_offset_mean_v = float(np.mean(excitability_offset))
 
     def _compute_alpha_guard_substeps(self) -> tuple[int, float]:
@@ -365,8 +353,7 @@ class ReactionDiffusionEngine:
         i_lap = self._compute_laplacian(self._inhibitor)
         da = (
             self.config.d_activator * a_lap
-            + self.config.r_activator
-            * (self._activator * (1 - self._activator) - self._inhibitor)
+            + self.config.r_activator * (self._activator * (1 - self._activator) - self._inhibitor)
         ) * float(dt_scale)
         di = (
             self.config.d_inhibitor * i_lap
@@ -435,30 +422,22 @@ class ReactionDiffusionEngine:
         if self._inhibitor is not None:
             self._metrics.inhibitor_mean = float(np.mean(self._inhibitor))
         if self._neuro_state is not None:
-            self._metrics.plasticity_index_mean = float(
-                np.mean(self._neuro_state.plasticity_index)
-            )
+            self._metrics.plasticity_index_mean = float(np.mean(self._neuro_state.plasticity_index))
             self._metrics.effective_inhibition_mean = float(
                 np.mean(self._neuro_state.effective_inhibition)
             )
-            self._metrics.effective_gain_mean = float(
-                np.mean(self._neuro_state.effective_gain)
-            )
+            self._metrics.effective_gain_mean = float(np.mean(self._neuro_state.effective_gain))
             self._metrics.observation_noise_gain_mean = float(
                 np.mean(self._neuro_state.observation_noise_gain)
             )
             self._metrics.occupancy_resting_mean = float(
                 np.mean(self._neuro_state.occupancy_resting)
             )
-            self._metrics.occupancy_active_mean = float(
-                np.mean(self._neuro_state.occupancy_active)
-            )
+            self._metrics.occupancy_active_mean = float(np.mean(self._neuro_state.occupancy_active))
             self._metrics.occupancy_desensitized_mean = float(
                 np.mean(self._neuro_state.occupancy_desensitized)
             )
-            self._metrics.occupancy_mass_error_max = (
-                self._neuro_state.occupancy_mass_error_max()
-            )
+            self._metrics.occupancy_mass_error_max = self._neuro_state.occupancy_mass_error_max()
 
     def validate_cfl_condition(self) -> bool:
         max_d = max(self.config.d_activator, self.config.d_inhibitor, self.config.alpha)

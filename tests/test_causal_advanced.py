@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import time
 
-import numpy as np
 import pytest
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
 from mycelium_fractal_net.types.causal import CausalDecision
-
 
 # ═══════════════════════════════════════════════════
 # Overhead measurement
@@ -104,7 +102,9 @@ class TestCausalProperties:
         """Any valid SimulationSpec should not produce causal errors."""
         seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=8, seed=seed))
         result = validate_causal_consistency(seq)
-        assert result.error_count == 0, f"seed={seed}: {[v.message for v in result.violations if not v.passed]}"
+        assert (
+            result.error_count == 0
+        ), f"seed={seed}: {[v.message for v in result.violations if not v.passed]}"
 
     @pytest.mark.parametrize("grid_size", [4, 8, 16, 32, 64])
     def test_all_grid_sizes_pass(self, grid_size: int) -> None:

@@ -64,8 +64,7 @@ def test_register_error_handlers_registers_expected_handlers(
     app_with_handlers: FastAPI,
 ):
     assert (
-        app_with_handlers.exception_handlers[RequestValidationError]
-        is validation_exception_handler
+        app_with_handlers.exception_handlers[RequestValidationError] is validation_exception_handler
     )
     assert (
         app_with_handlers.exception_handlers[ValidationError]

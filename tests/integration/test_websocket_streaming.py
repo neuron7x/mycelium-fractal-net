@@ -80,9 +80,7 @@ def ws_client_with_auth():
 class TestWebSocketStreamFeatures:
     """Tests for /ws/stream_features endpoint."""
 
-    @pytest.mark.skip(
-        reason="Streaming tests timeout with TestClient - require async test setup"
-    )
+    @pytest.mark.skip(reason="Streaming tests timeout with TestClient - require async test setup")
     def test_stream_features_basic_flow(self, ws_client):
         """Test basic connection and subscription flow."""
         with ws_client.websocket_connect("/ws/stream_features") as websocket:
@@ -157,9 +155,7 @@ class TestWebSocketStreamFeatures:
                     # Received one update, that's enough - unsubscribe now
                     break
 
-            assert (
-                feature_updates_received > 0
-            ), "Should receive at least one feature update"
+            assert feature_updates_received > 0, "Should receive at least one feature update"
 
             # Step 5: Unsubscribe before closing
             websocket.send_json(
@@ -272,9 +268,7 @@ class TestWebSocketStreamFeatures:
 class TestWebSocketSimulationLive:
     """Tests for /ws/simulation_live endpoint."""
 
-    @pytest.mark.skip(
-        reason="Streaming tests timeout with TestClient - require async test setup"
-    )
+    @pytest.mark.skip(reason="Streaming tests timeout with TestClient - require async test setup")
     def test_simulation_live_basic_flow(self, ws_client):
         """Test basic simulation streaming."""
         with ws_client.websocket_connect("/ws/simulation_live") as websocket:
@@ -491,10 +485,7 @@ class TestWebSocketConnectionManager:
             backpressure_strategy=BackpressureStrategy.DROP_OLDEST,
             max_queue_size=10,
         )
-        assert (
-            manager_drop_oldest.backpressure_strategy
-            == BackpressureStrategy.DROP_OLDEST
-        )
+        assert manager_drop_oldest.backpressure_strategy == BackpressureStrategy.DROP_OLDEST
 
         # Test compress
         manager_compress = WSConnectionManager(
@@ -615,9 +606,6 @@ class TestWebSocketConnectionManager:
             invalid_timestamp = "not-a-number"
 
             assert (
-                manager.authenticate(
-                    connection_id, "test-ws-key-12345", invalid_timestamp
-                )
-                is False
+                manager.authenticate(connection_id, "test-ws-key-12345", invalid_timestamp) is False
             )
             assert manager.connections[connection_id].authenticated is False

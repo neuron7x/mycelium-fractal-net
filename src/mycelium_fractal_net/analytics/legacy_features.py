@@ -593,9 +593,7 @@ def compute_structural_features(
     f_active = float(np.mean(binary_low))
 
     # Cluster detection function
-    count_fn = (
-        _count_clusters_4conn if config.connectivity == 4 else _count_clusters_8conn
-    )
+    count_fn = _count_clusters_4conn if config.connectivity == 4 else _count_clusters_8conn
 
     # Cluster counts at each threshold
     n_low, sizes_low = count_fn(binary_low)
@@ -650,9 +648,7 @@ def compute_features(
         # History (T, N, N)
         history = field_snapshots
         if history.shape[0] == 0:
-            raise ValueError(
-                "field_snapshots history must contain at least one snapshot"
-            )
+            raise ValueError("field_snapshots history must contain at least one snapshot")
         field = history[-1]  # Use final state for static features
     else:
         raise ValueError(
@@ -667,9 +663,7 @@ def compute_features(
     D_box, D_r2 = compute_fractal_features(field, config)
     V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(field)
     dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
-    f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(
-        field, config
-    )
+    f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(field, config)
 
     return FeatureVector(
         D_box=D_box,

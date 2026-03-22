@@ -34,16 +34,12 @@ class AnalysisReport:
             "descriptor": self.descriptor.to_dict(),
             "detection": self.detection.to_dict(),
             "forecast": None if self.forecast is None else self.forecast.to_dict(),
-            "comparison": (
-                None if self.comparison is None else self.comparison.to_dict()
-            ),
+            "comparison": (None if self.comparison is None else self.comparison.to_dict()),
             "artifacts": dict(self.artifacts),
             "metadata": dict(self.metadata),
         }
 
-    def to_symbolic_context(
-        self, manifest_hashes: dict[str, str] | None = None
-    ) -> SymbolicContext:
+    def to_symbolic_context(self, manifest_hashes: dict[str, str] | None = None) -> SymbolicContext:
         summary = dict(self.metadata.get("summary", {}))
         forecast_summary = {}
         if self.forecast is not None:
@@ -51,9 +47,7 @@ class AnalysisReport:
                 "method": self.forecast.method,
                 "horizon": float(self.forecast.horizon),
                 "forecast_structural_error": float(
-                    self.forecast.benchmark_metrics.get(
-                        "forecast_structural_error", 0.0
-                    )
+                    self.forecast.benchmark_metrics.get("forecast_structural_error", 0.0)
                 ),
                 "adaptive_damping": float(
                     self.forecast.benchmark_metrics.get("adaptive_damping", 0.0)
@@ -79,16 +73,12 @@ class AnalysisReport:
                     )
                 ),
                 "field_std_mV": float(
-                    summary.get(
-                        "field_std_mV", self.sequence.to_dict().get("field_std_mV", 0.0)
-                    )
+                    summary.get("field_std_mV", self.sequence.to_dict().get("field_std_mV", 0.0))
                 ),
             },
             regime_labels={
                 "anomaly_label": self.detection.label,
-                "regime_label": (
-                    self.detection.regime.label if self.detection.regime else "n/a"
-                ),
+                "regime_label": (self.detection.regime.label if self.detection.regime else "n/a"),
                 "comparison_label": (
                     self.comparison.label if self.comparison is not None else "n/a"
                 ),

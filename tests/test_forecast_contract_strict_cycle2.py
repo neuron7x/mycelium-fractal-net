@@ -99,10 +99,7 @@ def test_benchmark_quality_fails_when_forecast_contract_is_invalid(
 
     class InvalidForecast:
         predicted_states = [
-            [
-                [0.0 for _ in range(sequence.grid_size)]
-                for _ in range(sequence.grid_size)
-            ]
+            [[0.0 for _ in range(sequence.grid_size)] for _ in range(sequence.grid_size)]
         ]
 
         def to_dict(self) -> dict[str, object]:
@@ -124,10 +121,7 @@ def test_benchmark_quality_does_not_backfill_missing_keys_with_zero(
 
     class InvalidForecast:
         predicted_states = [
-            [
-                [0.0 for _ in range(sequence.grid_size)]
-                for _ in range(sequence.grid_size)
-            ]
+            [[0.0 for _ in range(sequence.grid_size)] for _ in range(sequence.grid_size)]
         ]
 
         def to_dict(self) -> dict[str, object]:

@@ -77,9 +77,7 @@ def sign_artifact(
         "signed_at": datetime.now(timezone.utc).isoformat(),
     }
     sig_path = artifact_path.with_suffix(artifact_path.suffix + ".sig.json")
-    sig_path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    sig_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if audit_log is not None:
         _append_audit_event(
             Path(audit_log),
@@ -216,9 +214,7 @@ def verify_bundle(root_or_manifest: str | Path) -> dict[str, Any]:
     for manifest in manifests:
         manifest_ok, failures = manifest_entries_ok(manifest)
         ok = ok and manifest_ok
-        results.append(
-            {"manifest": str(manifest), "ok": manifest_ok, "failures": failures}
-        )
+        results.append({"manifest": str(manifest), "ok": manifest_ok, "failures": failures})
     return {"ok": ok, "manifests": results}
 
 

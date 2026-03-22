@@ -123,9 +123,7 @@ def simulate(
     """
     if not isinstance(spec, SimulationSpec):
         raise TypeError(f"spec must be SimulationSpec, got {type(spec).__name__}")
-    return simulate_history(
-        spec, history_backend=history_backend, history_dir=history_dir
-    )
+    return simulate_history(spec, history_backend=history_backend, history_dir=history_dir)
 
 
 def extract(sequence: FieldSequence) -> MorphologyDescriptor:
@@ -152,9 +150,7 @@ def extract(sequence: FieldSequence) -> MorphologyDescriptor:
     0.012...
     """
     if not isinstance(sequence, FieldSequence):
-        raise TypeError(
-            f"sequence must be FieldSequence, got {type(sequence).__name__}"
-        )
+        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
     return extract_operation(sequence)
 
 
@@ -184,9 +180,7 @@ def detect(sequence: FieldSequence) -> AnomalyEvent:
     'stable'
     """
     if not isinstance(sequence, FieldSequence):
-        raise TypeError(
-            f"sequence must be FieldSequence, got {type(sequence).__name__}"
-        )
+        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
     return detect_anomaly(sequence)
 
 
@@ -215,9 +209,7 @@ def forecast(sequence: FieldSequence, horizon: int = 8) -> ForecastResult:
     4
     """
     if not isinstance(sequence, FieldSequence):
-        raise TypeError(
-            f"sequence must be FieldSequence, got {type(sequence).__name__}"
-        )
+        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
     return forecast_next(sequence, horizon=horizon)
 
 
@@ -253,9 +245,7 @@ def compare(
     return _compare(a, b)
 
 
-def report(
-    sequence: FieldSequence, output_root: str, horizon: int = 8
-) -> AnalysisReport:
+def report(sequence: FieldSequence, output_root: str, horizon: int = 8) -> AnalysisReport:
     """Generate a full analysis report with artifacts.
 
     Orchestrates extraction, detection, forecasting, comparison, and
@@ -282,9 +272,7 @@ def report(
     'nominal'
     """
     if not isinstance(sequence, FieldSequence):
-        raise TypeError(
-            f"sequence must be FieldSequence, got {type(sequence).__name__}"
-        )
+        raise TypeError(f"sequence must be FieldSequence, got {type(sequence).__name__}")
     return report_operation(sequence, output_root=output_root, horizon=horizon)
 
 

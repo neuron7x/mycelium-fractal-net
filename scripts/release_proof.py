@@ -77,21 +77,12 @@ def main() -> int:
             shutil.copy2(src, RELEASE / "benchmark_pack" / name)
 
     val_summary = (
-        ROOT
-        / "artifacts"
-        / "evidence"
-        / "wave_7"
-        / "validation"
-        / "validation_summary.json"
+        ROOT / "artifacts" / "evidence" / "wave_7" / "validation" / "validation_summary.json"
     )
     if val_summary.exists():
-        shutil.copy2(
-            val_summary, RELEASE / "validation_pack" / "validation_summary.json"
-        )
+        shutil.copy2(val_summary, RELEASE / "validation_pack" / "validation_summary.json")
 
-    _copytree(
-        ROOT / "artifacts" / "release" / "scenarios", RELEASE / "example_scenarios"
-    )
+    _copytree(ROOT / "artifacts" / "release" / "scenarios", RELEASE / "example_scenarios")
     example_runs = ROOT / "artifacts" / "runs"
     if example_runs.exists():
         latest = sorted(example_runs.iterdir())[-1]
@@ -111,9 +102,7 @@ def main() -> int:
     for path in sorted(EVIDENCE.rglob("*")):
         if path.is_file():
             lines.append(f"- `{path.relative_to(ROOT)}`")
-    (RELEASE / "final_evidence_index.md").write_text(
-        "\n".join(lines) + "\n", encoding="utf-8"
-    )
+    (RELEASE / "final_evidence_index.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     (RELEASE / "final_status.txt").write_text("READY_TO_RELEASE\n", encoding="utf-8")
     print(json.dumps(checklist, indent=2))
     return 0

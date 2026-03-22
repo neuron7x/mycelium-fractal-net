@@ -148,13 +148,9 @@ class ConfigSampler:
             steps = int(rng.integers(self.steps_range[0], self.steps_range[1] + 1))
             alpha = float(rng.uniform(self.alpha_range[0], self.alpha_range[1]))
             turing_enabled = bool(rng.choice(self.turing_values))
-            spike_prob = float(
-                rng.uniform(self.spike_prob_range[0], self.spike_prob_range[1])
-            )
+            spike_prob = float(rng.uniform(self.spike_prob_range[0], self.spike_prob_range[1]))
             turing_threshold = float(
-                rng.uniform(
-                    self.turing_threshold_range[0], self.turing_threshold_range[1]
-                )
+                rng.uniform(self.turing_threshold_range[0], self.turing_threshold_range[1])
             )
 
             # Generate reproducible seed for this simulation
@@ -407,9 +403,7 @@ def generate_dataset(
         try:
             features = compute_features(history, feature_config)
         except Exception as e:
-            logger.warning(
-                f"Feature extraction failed for sim_id={params['sim_id']}: {e}"
-            )
+            logger.warning(f"Feature extraction failed for sim_id={params['sim_id']}: {e}")
             n_failed += 1
             continue
 
@@ -445,9 +439,7 @@ def generate_dataset(
                 stats[f"{fname}_max"] = float(np.max(values))
                 stats[f"{fname}_mean"] = float(np.mean(values))
 
-    logger.info(
-        f"Dataset generation complete: {n_success}/{requested_samples} successful"
-    )
+    logger.info(f"Dataset generation complete: {n_success}/{requested_samples} successful")
 
     return stats
 

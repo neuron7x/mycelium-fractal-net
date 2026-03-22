@@ -9,8 +9,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
 from mycelium_fractal_net.types.causal import CAUSAL_SCHEMA_VERSION
@@ -54,7 +52,9 @@ def test_all_config_rules_in_code() -> None:
     # Some rules are conditional (only fire for specific regimes/profiles)
     # Baseline won't trigger: DET-006/007/008, CMP-005, FOR-003, SIM-008/009, XST-001/003
     missing_in_code = config_ids - code_ids
-    assert len(missing_in_code) <= 12, f"Too many config rules not triggered: {sorted(missing_in_code)}"
+    assert (
+        len(missing_in_code) <= 12
+    ), f"Too many config rules not triggered: {sorted(missing_in_code)}"
 
 
 def test_severity_levels_match() -> None:

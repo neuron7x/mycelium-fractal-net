@@ -21,11 +21,7 @@ def run(output_root: str | Path = "artifacts/scenarios") -> dict[str, str]:
     dataset_path = dataset_dir / "field_history.npy"
     np.save(
         dataset_path,
-        (
-            sequence.history
-            if sequence.history is not None
-            else sequence.field[None, :, :]
-        ),
+        (sequence.history if sequence.history is not None else sequence.field[None, :, :]),
     )
     expected = {
         "scenario": "synthetic_morphology",

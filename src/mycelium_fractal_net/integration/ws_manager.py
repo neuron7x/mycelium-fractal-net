@@ -207,9 +207,7 @@ class WSConnectionManager:
             },
         )
 
-    def authenticate(
-        self, connection_id: str, api_key: str | None, timestamp: float
-    ) -> bool:
+    def authenticate(self, connection_id: str, api_key: str | None, timestamp: float) -> bool:
         """
         Authenticate a WebSocket connection.
 
@@ -425,10 +423,7 @@ class WSConnectionManager:
 
         try:
             # Handle backpressure if queue is full
-            if (
-                apply_backpressure
-                and len(connection.message_queue) >= self.max_queue_size
-            ):
+            if apply_backpressure and len(connection.message_queue) >= self.max_queue_size:
                 await self._handle_backpressure(connection, message)
             else:
                 connection.message_queue.append(message)
@@ -636,9 +631,7 @@ class WSConnectionManager:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get connection manager statistics."""
-        total_subscriptions = sum(
-            len(subs) for subs in self.stream_subscriptions.values()
-        )
+        total_subscriptions = sum(len(subs) for subs in self.stream_subscriptions.values())
         return {
             "total_connections": len(self.connections),
             "authenticated_connections": sum(

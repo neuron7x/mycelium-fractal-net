@@ -117,9 +117,7 @@ class ConnectorMetrics:
             "last_error": self.last_error,
             "last_error_timestamp": self.last_error_timestamp,
             "success_rate": (
-                self.successful_requests / self.total_requests
-                if self.total_requests > 0
-                else 0.0
+                self.successful_requests / self.total_requests if self.total_requests > 0 else 0.0
             ),
         }
 
@@ -365,9 +363,7 @@ class RESTConnector(BaseConnector):
                 # Read response body once
                 response_body = await response.read()
                 response_size = len(response_body)
-                response_data: Dict[str, Any] = json.loads(
-                    response_body.decode("utf-8")
-                )
+                response_data: Dict[str, Any] = json.loads(response_body.decode("utf-8"))
 
                 self.metrics.successful_requests += 1
                 self.metrics.total_bytes_fetched += response_size
@@ -580,9 +576,7 @@ class KafkaConnectorAdapter(BaseConnector):
 
         self._connection_timestamp = time.time()
         self.status = ConnectorStatus.CONNECTED
-        logger.info(
-            f"Kafka connector connected to {self.bootstrap_servers}, topics: {self.topics}"
-        )
+        logger.info(f"Kafka connector connected to {self.bootstrap_servers}, topics: {self.topics}")
 
     async def disconnect(self) -> None:
         """Close Kafka consumer connection."""
@@ -624,9 +618,7 @@ class KafkaConnectorAdapter(BaseConnector):
 
             messages: List[Dict[str, Any]] = []
             if self._consumer is not None:
-                records = self._consumer.poll(
-                    timeout_ms=timeout_ms, max_records=max_messages
-                )
+                records = self._consumer.poll(timeout_ms=timeout_ms, max_records=max_messages)
             else:
                 records = {}
 
@@ -652,9 +644,7 @@ class KafkaConnectorAdapter(BaseConnector):
 
             return messages
 
-        result: List[Dict[str, Any]] = await self._retry_operation(
-            _poll_messages, "Kafka poll"
-        )
+        result: List[Dict[str, Any]] = await self._retry_operation(_poll_messages, "Kafka poll")
         return result
 
 

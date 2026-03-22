@@ -132,9 +132,7 @@ class STDPPlasticity(nn.Module):
     def _validate_amplitude(self, a: float, name: str) -> None:
         """Validate amplitude is within stable range."""
         if not (self.A_MIN <= a <= self.A_MAX):
-            raise ValueError(
-                f"{name}={a} outside stable range [{self.A_MIN}, {self.A_MAX}]"
-            )
+            raise ValueError(f"{name}={a} outside stable range [{self.A_MIN}, {self.A_MAX}]")
 
     def compute_weight_update(
         self,

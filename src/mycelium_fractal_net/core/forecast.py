@@ -42,9 +42,7 @@ def _adaptive_damping(sequence: FieldSequence) -> float:
     return float(np.clip(damping, 0.85, 0.92))
 
 
-def _project_from_window(
-    window: np.ndarray, horizon: int, damping: float
-) -> np.ndarray:
+def _project_from_window(window: np.ndarray, horizon: int, damping: float) -> np.ndarray:
     if window.shape[0] < 2:
         return np.repeat(window[-1][None, :, :], horizon, axis=0)
     delta = np.mean(np.diff(window, axis=0), axis=0)
@@ -62,9 +60,7 @@ def _desensitization_lag(sequence: FieldSequence) -> float:
         return 0.0
     return max(
         0.0,
-        float(
-            spec.gabaa_tonic.desensitization_rate_hz - spec.gabaa_tonic.recovery_rate_hz
-        ),
+        float(spec.gabaa_tonic.desensitization_rate_hz - spec.gabaa_tonic.recovery_rate_hz),
     )
 
 
@@ -74,9 +70,7 @@ def _roll_forward(
     damping = _adaptive_damping(sequence)
     descriptor = compute_morphology_descriptor(sequence)
     plasticity_index = float(descriptor.neuromodulation.get("plasticity_index", 0.0))
-    connectivity_divergence = float(
-        descriptor.connectivity.get("connectivity_divergence", 0.0)
-    )
+    connectivity_divergence = float(descriptor.connectivity.get("connectivity_divergence", 0.0))
     des_lag = _desensitization_lag(sequence)
     if sequence.history is None or sequence.history.shape[0] < 2:
         stack = np.repeat(sequence.field[None, :, :], horizon, axis=0)
@@ -97,9 +91,7 @@ def _roll_forward(
     envelope = UncertaintyEnvelope(
         ensemble_std_mV=float(np.std(projections[:, -1]) * 1000.0 * uncertainty_scale),
         ensemble_range_mV=float(
-            (np.max(projections[:, -1]) - np.min(projections[:, -1]))
-            * 1000.0
-            * uncertainty_scale
+            (np.max(projections[:, -1]) - np.min(projections[:, -1])) * 1000.0 * uncertainty_scale
         ),
         plasticity_index=plasticity_index,
         connectivity_divergence=connectivity_divergence,
@@ -127,23 +119,15 @@ def forecast_next(sequence: FieldSequence, horizon: int = 8) -> ForecastResult:
                 D_box=descriptor.features.get("D_box", 0.0),
                 f_active=descriptor.features.get("f_active", 0.0),
                 volatility=descriptor.temporal.get("volatility", 0.0),
-                connectivity_divergence=descriptor.connectivity.get(
-                    "connectivity_divergence", 0.0
-                ),
-                plasticity_index=descriptor.neuromodulation.get(
-                    "plasticity_index", 0.0
-                ),
+                connectivity_divergence=descriptor.connectivity.get("connectivity_divergence", 0.0),
+                plasticity_index=descriptor.neuromodulation.get("plasticity_index", 0.0),
                 field_mean_mV=float(np.mean(frame) * 1000.0),
             )
         )
     descriptor = compute_morphology_descriptor(sequence)
     last_step = trajectory[-1]
-    descriptor_shift = float(
-        abs(last_step.D_box - descriptor.features.get("D_box", 0.0))
-    )
-    activity_shift = float(
-        abs(last_step.f_active - descriptor.features.get("f_active", 0.0))
-    )
+    descriptor_shift = float(abs(last_step.D_box - descriptor.features.get("D_box", 0.0)))
+    activity_shift = float(abs(last_step.f_active - descriptor.features.get("f_active", 0.0)))
     forecast_structural_error = float(0.5 * (descriptor_shift + activity_shift))
     benchmark_metrics = {
         "descriptor_shift": descriptor_shift,
@@ -183,9 +167,7 @@ def forecast_regime(sequence: FieldSequence, horizon: int = 8) -> ForecastResult
     return forecast_next(sequence, horizon=horizon)
 
 
-def counterfactual(
-    sequence: FieldSequence, modified_spec: SimulationSpec
-) -> ForecastResult:
+def counterfactual(sequence: FieldSequence, modified_spec: SimulationSpec) -> ForecastResult:
     candidate = FieldSequence(
         field=sequence.field,
         history=sequence.history,

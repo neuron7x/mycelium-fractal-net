@@ -30,13 +30,9 @@ def main() -> int:
             "D_box": float(desc.features.get("D_box", 0.0)),
             "LZC": float(desc.complexity.get("temporal_lzc", 0.0)),
             "modularity": float(desc.connectivity.get("modularity_proxy", 0.0)),
-            "connectivity_divergence": float(
-                desc.connectivity.get("connectivity_divergence", 0.0)
-            ),
+            "connectivity_divergence": float(desc.connectivity.get("connectivity_divergence", 0.0)),
             "clamp_pressure": float(desc.stability.get("collapse_risk_score", 0.0)),
-            "forecast_uncertainty": float(
-                fc.uncertainty_envelope.get("ensemble_std_mV", 0.0)
-            ),
+            "forecast_uncertainty": float(fc.uncertainty_envelope.get("ensemble_std_mV", 0.0)),
             "regime_label": det.regime.label if det.regime else "n/a",
             "report_dir": str((OUT / "runs" / report.run_id).resolve()),
         }

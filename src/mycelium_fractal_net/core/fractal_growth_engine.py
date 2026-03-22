@@ -339,9 +339,7 @@ class FractalGrowthEngine:
         self.reset()
 
         n_points = self.config.num_points if num_points is None else num_points
-        n_transforms = (
-            self.config.num_transforms if num_transforms is None else num_transforms
-        )
+        n_transforms = self.config.num_transforms if num_transforms is None else num_transforms
 
         if not (NUM_POINTS_MIN <= n_points <= NUM_POINTS_MAX):
             raise ValueOutOfRangeError(
@@ -367,9 +365,7 @@ class FractalGrowthEngine:
             )
 
         # Generate random contractive affine transformations
-        scales = self._rng.uniform(
-            self.config.scale_min, self.config.scale_max, size=n_transforms
-        )
+        scales = self._rng.uniform(self.config.scale_min, self.config.scale_max, size=n_transforms)
         angles = self._rng.uniform(0, 2 * np.pi, size=n_transforms)
         translations = self._rng.uniform(
             -self.config.translation_range,

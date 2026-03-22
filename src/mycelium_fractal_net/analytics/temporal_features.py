@@ -20,9 +20,7 @@ def compute_temporal_features(history: NDArray[np.float64] | None) -> dict[str, 
     delta_mean_abs = float(np.mean(np.abs(deltas)))
     delta_max_abs = float(np.max(np.abs(deltas)))
     volatility = float(np.mean(np.std(deltas, axis=(1, 2))))
-    trajectory_energy = float(
-        np.mean(np.linalg.norm(deltas.reshape(deltas.shape[0], -1), axis=1))
-    )
+    trajectory_energy = float(np.mean(np.linalg.norm(deltas.reshape(deltas.shape[0], -1), axis=1)))
     temporal_smoothness = float(1.0 / (1.0 + delta_mean_abs * 200.0))
     value_min = float(np.min(hist))
     value_max = float(np.max(hist))

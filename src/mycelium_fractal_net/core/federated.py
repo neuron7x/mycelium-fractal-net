@@ -193,9 +193,7 @@ class HierarchicalKrumAggregator:
         # layer enforces this; the core implementation should mirror that
         # contract instead of silently proceeding with an invalid configuration.
         if n <= 2 * num_byzantine + 2:
-            raise ValueError(
-                "Insufficient gradients for Krum: need more than 2f + 2 points"
-            )
+            raise ValueError("Insufficient gradients for Krum: need more than 2f + 2 points")
 
         flat_grads = torch.stack([g.reshape(-1) for g in gradients])
         # Krum scoring uses squared Euclidean distances. Use the Gram-matrix
@@ -254,9 +252,7 @@ class HierarchicalKrumAggregator:
         # This keeps large-model aggregation bounded while preserving a strong
         # outlier resistance profile for v1 local execution.
         if flat_dim >= 50_000 and n_clients >= 4:
-            stacked = torch.stack([g.reshape(-1) for g in client_gradients]).to(
-                dtype=torch.float32
-            )
+            stacked = torch.stack([g.reshape(-1) for g in client_gradients]).to(dtype=torch.float32)
             median = torch.median(stacked, dim=0).values
             deviations = ((stacked - median) * (stacked - median)).sum(dim=1)
             keep = max(1, n_clients - self._estimate_byzantine_count(n_clients))

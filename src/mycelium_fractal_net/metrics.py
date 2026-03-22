@@ -66,9 +66,7 @@ def snr(clean: ArrayLike, noisy: ArrayLike) -> float:
     return _snr_from_arrays(clean_np, noisy_np)
 
 
-def psnr(
-    clean: ArrayLike, test: ArrayLike, data_range: Optional[float] = None
-) -> float:
+def psnr(clean: ArrayLike, test: ArrayLike, data_range: Optional[float] = None) -> float:
     clean_np, test_np = _to_numpy(clean), _to_numpy(test)
     _validate_inputs(clean_np, test_np)
     err = _mse_from_arrays(clean_np, test_np)

@@ -137,9 +137,7 @@ class SecretManager:
 
         if value is None or (not allow_empty and value == ""):
             if required:
-                raise SecretRetrievalError(
-                    f"Secret '{key}' is required but was not found"
-                )
+                raise SecretRetrievalError(f"Secret '{key}' is required but was not found")
             return None
 
         return value
@@ -193,9 +191,7 @@ class SecretManager:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _fetch_secret_value(
-        self, *, key: str, file_env_key: Optional[str] = None
-    ) -> Optional[str]:
+    def _fetch_secret_value(self, *, key: str, file_env_key: Optional[str] = None) -> Optional[str]:
         backend = self.config.backend
         if backend == SecretsBackend.ENV:
             return self._from_env(key=key, file_env_key=file_env_key)
@@ -276,9 +272,7 @@ class SecretManager:
                     )
                 return {str(k): str(v) for k, v in data.items()}
             except json.JSONDecodeError as exc:
-                raise SecretRetrievalError(
-                    f"Invalid JSON in secrets file {path}: {exc}"
-                ) from exc
+                raise SecretRetrievalError(f"Invalid JSON in secrets file {path}: {exc}") from exc
 
         # .env style fallback
         secrets: Dict[str, str] = {}
@@ -287,9 +281,7 @@ class SecretManager:
             if not stripped or stripped.startswith("#"):
                 continue
             if "=" not in stripped:
-                raise SecretRetrievalError(
-                    f"Invalid line in secrets file {path}: '{stripped}'"
-                )
+                raise SecretRetrievalError(f"Invalid line in secrets file {path}: '{stripped}'")
             k, v = stripped.split("=", 1)
             secrets[k.strip()] = v.strip()
         return secrets
@@ -351,9 +343,7 @@ class SecretManager:
         try:
             import hvac
         except Exception as exc:  # pragma: no cover - optional dependency
-            raise SecretRetrievalError(
-                "hvac is required for Vault integration"
-            ) from exc
+            raise SecretRetrievalError("hvac is required for Vault integration") from exc
 
         client = hvac.Client(url=self.config.vault_url, token=token)
         if not client.is_authenticated():  # pragma: no cover - network dependent
@@ -362,9 +352,7 @@ class SecretManager:
         response = client.secrets.kv.v2.read_secret_version(path=self.config.vault_path)
         data = response.get("data", {}).get("data")
         if not isinstance(data, dict):
-            raise SecretRetrievalError(
-                "Vault secret payload is not a key/value mapping"
-            )
+            raise SecretRetrievalError("Vault secret payload is not a key/value mapping")
         return {str(k): str(v) for k, v in data.items()}
 
 

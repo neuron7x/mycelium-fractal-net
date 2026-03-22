@@ -19,9 +19,7 @@ def compute_connectivity_features(sequence: FieldSequence) -> dict[str, float]:
 
     row_strength = np.mean(active, axis=1)
     col_strength = np.mean(active, axis=0)
-    hierarchy_flattening = float(
-        1.0 - (np.std(row_strength) + np.std(col_strength)) / 2.0
-    )
+    hierarchy_flattening = float(1.0 - (np.std(row_strength) + np.std(col_strength)) / 2.0)
 
     modularity_proxy = float(
         np.mean(np.abs(np.diff(row_strength))) + np.mean(np.abs(np.diff(col_strength)))

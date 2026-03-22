@@ -114,9 +114,7 @@ class TestMembraneStability:
             return np.ones_like(v) * 100
 
         v0 = np.array([0.0])
-        v_final, metrics = engine.integrate_ode(
-            v0, explosive_growth, steps=100, clamp=True
-        )
+        v_final, metrics = engine.integrate_ode(v0, explosive_growth, steps=100, clamp=True)
 
         # Should be clamped to max
         assert float(v_final[0]) <= config.potential_max_v
@@ -269,9 +267,7 @@ class TestNumericsModuleStability:
         params = UpdateParameters()
 
         for _ in range(50):
-            activator, inhibitor = activator_inhibitor_update(
-                activator, inhibitor, params
-            )
+            activator, inhibitor = activator_inhibitor_update(activator, inhibitor, params)
 
             # Check bounds
             assert np.all(activator >= 0)

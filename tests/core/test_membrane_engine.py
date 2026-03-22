@@ -194,12 +194,8 @@ class TestNernstPotentialArray:
         assert np.all(np.isfinite(e))
 
         # Check metrics updated
-        assert engine.metrics.potential_min_v == pytest.approx(
-            float(np.min(e)), abs=1e-10
-        )
-        assert engine.metrics.potential_max_v == pytest.approx(
-            float(np.max(e)), abs=1e-10
-        )
+        assert engine.metrics.potential_min_v == pytest.approx(float(np.min(e)), abs=1e-10)
+        assert engine.metrics.potential_max_v == pytest.approx(float(np.max(e)), abs=1e-10)
 
 
 class TestODEIntegration:

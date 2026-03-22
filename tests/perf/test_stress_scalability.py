@@ -23,9 +23,8 @@ import gc
 import time
 import tracemalloc
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
-
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -75,9 +74,7 @@ MIN_SAMPLES_PER_SECOND = 5  # Minimum simulation throughput
 # ============================================================================
 
 
-def measure_memory_and_time(
-    func: callable, *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def measure_memory_and_time(func: callable, *args: Any, **kwargs: Any) -> dict[str, Any]:
     """
     Measure memory usage and execution time of a function.
 
@@ -307,9 +304,7 @@ class TestConcurrentProcessing:
         """Simulations should be thread-safe with different seeds."""
         num_workers = 4
         num_tasks = 8
-        params_list = [
-            {"seed": i * 100, "grid_size": 32, "steps": 32} for i in range(num_tasks)
-        ]
+        params_list = [{"seed": i * 100, "grid_size": 32, "steps": 32} for i in range(num_tasks)]
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             results = list(executor.map(run_simulation_task, params_list))
@@ -325,9 +320,7 @@ class TestConcurrentProcessing:
         """Concurrent simulations should maintain reasonable throughput."""
         num_workers = 2
         num_tasks = 10
-        params_list = [
-            {"seed": i * 50, "grid_size": 32, "steps": 50} for i in range(num_tasks)
-        ]
+        params_list = [{"seed": i * 50, "grid_size": 32, "steps": 50} for i in range(num_tasks)]
 
         start = time.perf_counter()
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
@@ -555,16 +548,12 @@ class TestScalabilityBenchmarks:
                     "memory_mb": metrics["peak_memory_mb"],
                 }
             )
-            print(
-                f"Grid {gs}x{gs}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB"
-            )
+            print(f"Grid {gs}x{gs}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB")
 
         # Print scaling ratios
         for i in range(1, len(results)):
             time_ratio = results[i]["time_s"] / results[i - 1]["time_s"]
-            mem_ratio = results[i]["memory_mb"] / max(
-                results[i - 1]["memory_mb"], 0.001
-            )
+            mem_ratio = results[i]["memory_mb"] / max(results[i - 1]["memory_mb"], 0.001)
             print(
                 f"Scaling {results[i - 1]['grid_size']} -> {results[i]['grid_size']}: "
                 f"time {time_ratio:.2f}x, memory {mem_ratio:.2f}x"
@@ -585,9 +574,7 @@ class TestScalabilityBenchmarks:
                     "memory_mb": metrics["peak_memory_mb"],
                 }
             )
-            print(
-                f"Steps {steps}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB"
-            )
+            print(f"Steps {steps}: {metrics['elapsed_s']:.3f}s, {metrics['peak_memory_mb']:.2f}MB")
 
 
 class TestMemmapScalePath:
@@ -595,9 +582,7 @@ class TestMemmapScalePath:
 
     def test_memmap_history_backend_smoke(self, tmp_path) -> None:
         seq = simulate_history(
-            __import__("mycelium_fractal_net").SimulationSpec(
-                grid_size=64, steps=32, seed=42
-            ),
+            __import__("mycelium_fractal_net").SimulationSpec(grid_size=64, steps=32, seed=42),
             history_backend="memmap",
             history_dir=tmp_path,
         )

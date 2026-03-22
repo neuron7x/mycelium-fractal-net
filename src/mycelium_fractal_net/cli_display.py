@@ -114,9 +114,13 @@ def _label_color(label: str) -> str:
 
 def format_detection(event: Any) -> str:
     lines = [section("Detection")]
-    lines.append(f"  Anomaly:  {_label_color(event.label)}  score={event.score:.3f}  conf={event.confidence:.2f}")
+    lines.append(
+        f"  Anomaly:  {_label_color(event.label)}  score={event.score:.3f}  conf={event.confidence:.2f}"
+    )
     if event.regime:
-        lines.append(f"  Regime:   {_label_color(event.regime.label)}  score={event.regime.score:.3f}")
+        lines.append(
+            f"  Regime:   {_label_color(event.regime.label)}  score={event.regime.score:.3f}"
+        )
     top = event.contributing_features[:3]
     if top:
         lines.append(f"  Drivers:  {', '.join(top)}")

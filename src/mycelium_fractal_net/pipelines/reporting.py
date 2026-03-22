@@ -28,10 +28,10 @@ from mycelium_fractal_net.artifact_bundle import (
     sign_artifacts,
     verify_artifact_signature,
 )
+from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
 from mycelium_fractal_net.core.compare import compare
 from mycelium_fractal_net.core.detect import detect_anomaly
 from mycelium_fractal_net.core.forecast import forecast_next
-from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
 from mycelium_fractal_net.types.field import FieldSequence
 from mycelium_fractal_net.types.report import AnalysisReport
 
@@ -40,9 +40,7 @@ SCHEMA_VERSION = "mfn-artifact-manifest-v2"
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -51,9 +49,7 @@ def _write_text(path: Path, text: str) -> None:
 
 
 def _ensure_history(sequence: FieldSequence) -> np.ndarray:
-    return (
-        sequence.history if sequence.history is not None else sequence.field[None, :, :]
-    )
+    return sequence.history if sequence.history is not None else sequence.field[None, :, :]
 
 
 def _sha256_file(path: Path) -> str:
@@ -64,9 +60,7 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _artifact_manifest(
-    run_dir: Path, artifact_list: list[str]
-) -> dict[str, dict[str, Any]]:
+def _artifact_manifest(run_dir: Path, artifact_list: list[str]) -> dict[str, dict[str, Any]]:
     manifest: dict[str, dict[str, Any]] = {}
     for name in artifact_list:
         path = run_dir / name
@@ -88,9 +82,7 @@ def _config_hash(sequence: FieldSequence) -> str:
             "seed": sequence.metadata.get("seed", 42),
         }
     )
-    return hashlib.sha256(
-        json.dumps(spec_dict, sort_keys=True).encode("utf-8")
-    ).hexdigest()[:16]
+    return hashlib.sha256(json.dumps(spec_dict, sort_keys=True).encode("utf-8")).hexdigest()[:16]
 
 
 def _git_sha(root: Path) -> str:
@@ -208,9 +200,7 @@ def _build_report_html(
                 "label": detection.get("label"),
                 "score": f'{float(detection.get("score", 0.0)):.4f}',
                 "confidence": f'{float(detection.get("confidence", 0.0)):.4f}',
-                "top_features": ", ".join(
-                    detection.get("top_contributing_features", [])
-                ),
+                "top_features": ", ".join(detection.get("top_contributing_features", [])),
             },
         ),
         (
@@ -300,9 +290,7 @@ def build_analysis_report(
 
     project_root = Path(__file__).resolve().parents[3]
     timestamp_now = datetime.now(timezone.utc)
-    seed = int(
-        sequence.metadata.get("seed", sequence.spec.seed if sequence.spec else 42)
-    )
+    seed = int(sequence.metadata.get("seed", sequence.spec.seed if sequence.spec else 42))
     run_id = timestamp_now.strftime("run_%Y%m%dT%H%M%S_%fZ") + f"_s{seed}"
     run_dir = Path(output_root) / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -453,9 +441,7 @@ def build_analysis_report(
     ]
     _write_text(
         run_dir / "trajectory.svg",
-        _svg_line(
-            trajectory_values, "Forecast mean potential trajectory", "field_mean_mV"
-        ),
+        _svg_line(trajectory_values, "Forecast mean potential trajectory", "field_mean_mV"),
     )
     _write_json(run_dir / "summary.json", summary)
     _write_text(

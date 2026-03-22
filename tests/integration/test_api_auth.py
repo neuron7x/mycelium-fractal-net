@@ -149,9 +149,7 @@ class TestAuthenticationMiddleware:
         data = response.json()
         assert "potential_mV" in data
 
-    def test_all_protected_endpoints_require_auth(
-        self, auth_enabled_client: TestClient
-    ) -> None:
+    def test_all_protected_endpoints_require_auth(self, auth_enabled_client: TestClient) -> None:
         """All non-public endpoints should require authentication."""
         protected_endpoints = [
             (
@@ -184,9 +182,7 @@ class TestAuthenticationMiddleware:
 
             assert response.status_code == 401, f"Endpoint {path} should require auth"
 
-    def test_dev_mode_allows_requests_without_key(
-        self, auth_disabled_client: TestClient
-    ) -> None:
+    def test_dev_mode_allows_requests_without_key(self, auth_disabled_client: TestClient) -> None:
         """Test that dev mode auth config is correctly set up.
 
         Note: Due to middleware being configured at app import time,
