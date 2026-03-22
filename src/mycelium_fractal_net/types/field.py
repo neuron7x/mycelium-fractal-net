@@ -527,18 +527,27 @@ class FieldSequence:
 
         object.__setattr__(self, "metadata", dict(self.metadata or {}))
 
+    @property
+    def field_min_mV(self) -> float:
+        return float(np.min(self.field)) * 1000
+
+    @property
+    def field_max_mV(self) -> float:
+        return float(np.max(self.field)) * 1000
+
+    @property
+    def field_mean_mV(self) -> float:
+        return float(np.mean(self.field)) * 1000
+
     def __repr__(self) -> str:
         n = self.field.shape[0]
-        steps = self.num_steps
-        v_min = float(np.min(self.field)) * 1000
-        v_max = float(np.max(self.field)) * 1000
         seed = self.spec.seed if self.spec else "?"
         neuro = ""
         if self.spec and self.spec.neuromodulation and self.spec.neuromodulation.enabled:
             neuro = f", neuromod={self.spec.neuromodulation.profile}"
         return (
-            f"FieldSequence({n}x{n}, {steps} steps, "
-            f"[{v_min:.1f}, {v_max:.1f}] mV, seed={seed}{neuro})"
+            f"FieldSequence({n}x{n}, {self.num_steps} steps, "
+            f"[{self.field_min_mV:.1f}, {self.field_max_mV:.1f}] mV, seed={seed}{neuro})"
         )
 
     @property

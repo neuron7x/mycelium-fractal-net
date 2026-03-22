@@ -90,10 +90,10 @@ def format_simulation(seq: Any) -> str:
         if spec.neuromodulation and spec.neuromodulation.enabled:
             lines.append(f"  Neuromod: {magenta(spec.neuromodulation.profile)}")
 
-    v_min = float(seq.field.min()) * 1000
-    v_max = float(seq.field.max()) * 1000
-    v_mean = float(seq.field.mean()) * 1000
-    lines.append(f"  Field:    [{v_min:.1f}, {v_max:.1f}] mV  mean={v_mean:.1f} mV")
+    lines.append(
+        f"  Field:    [{seq.field_min_mV:.1f}, {seq.field_max_mV:.1f}] mV  "
+        f"mean={seq.field_mean_mV:.1f} mV"
+    )
     lines.append(f"  History:  {'yes' if seq.has_history else 'no'}")
     lines.append(f"  Hash:     {dim(seq.runtime_hash)}")
     return "\n".join(lines)
