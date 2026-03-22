@@ -11,12 +11,15 @@ Reference: docs/ARCHITECTURE.md
 from __future__ import annotations
 
 import pytest
-
-pytest.importorskip("torch")
 from fastapi.testclient import TestClient
 
 from mycelium_fractal_net.api import app
-from mycelium_fractal_net import ValidationConfig, run_validation
+
+try:
+    from mycelium_fractal_net import ValidationConfig, run_validation
+    _HAS_TORCH = True
+except Exception:
+    _HAS_TORCH = False
 from mycelium_fractal_net.integration import (
     ExecutionMode,
     FederatedAggregateRequest,
@@ -50,6 +53,7 @@ SAMPLE_GRADIENTS_2D = [[1.0, 2.0], [1.1, 2.1], [1.2, 2.2]]
 class TestCLIAPIConsistency:
     """Tests for consistency between CLI and API validation results."""
 
+    @pytest.mark.skipif(not _HAS_TORCH, reason="torch required for ValidationConfig")
     def test_validate_cli_vs_api_consistency(self, client: TestClient) -> None:
         """CLI validate vs HTTP /validate should give consistent metrics for same seed."""
         seed = 42
@@ -88,6 +92,7 @@ class TestCLIAPIConsistency:
             api_metrics["nernst_symbolic_mV"], rel=1e-5
         )
 
+    @pytest.mark.skipif(not _HAS_TORCH, reason="torch required for validation adapter")
     def test_validate_adapter_consistency(self) -> None:
         """Validate adapter should return consistent results."""
         seed = 42
@@ -155,6 +160,7 @@ class TestAPIEndpoints:
         # K+ potential should be ~-89 mV
         assert data["potential_mV"] == pytest.approx(-89.0, abs=1.0)
 
+    @pytest.mark.skipif(not _HAS_TORCH, reason="torch required for federated")
     def test_federated_aggregate_endpoint_marshaling(self, client: TestClient) -> None:
         """Test /federated/aggregate endpoint marshals data correctly."""
         response = client.post(
@@ -174,6 +180,7 @@ class TestAPIEndpoints:
         assert data["num_input_gradients"] == 4
         assert len(data["aggregated_gradient"]) == 3
 
+    @pytest.mark.skipif(not _HAS_TORCH, reason="torch required for federated")
     def test_federated_empty_gradients(self, client: TestClient) -> None:
         """Test /federated/aggregate handles empty gradients."""
         response = client.post(
@@ -186,6 +193,7 @@ class TestAPIEndpoints:
         )
         assert response.status_code == 400
 
+    @pytest.mark.skipif(not _HAS_TORCH, reason="torch required for federated")
     def test_federated_inconsistent_gradient_lengths(self, client: TestClient) -> None:
         """Test /federated/aggregate rejects inconsistent gradient sizes."""
         response = client.post(
@@ -237,6 +245,7 @@ class TestAdapters:
 
         assert response.potential_mV == pytest.approx(-89.0, abs=1.0)
 
+    @pytest.mark.skipif(not _HAS_TORCH, reason="torch required for federated")
     def test_federated_adapter(self) -> None:
         """Test federated aggregation adapter converts correctly."""
         request = FederatedAggregateRequest(
@@ -251,6 +260,7 @@ class TestAdapters:
         assert response.num_input_gradients == 3
         assert len(response.aggregated_gradient) == 2
 
+    @pytest.mark.skipif(not _HAS_TORCH, reason="torch required for federated")
     def test_federated_adapter_rejects_inconsistent_gradients(self) -> None:
         """Test federated adapter fails on mismatched gradient lengths."""
         request = FederatedAggregateRequest(

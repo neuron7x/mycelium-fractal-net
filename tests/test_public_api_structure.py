@@ -14,7 +14,13 @@ import inspect
 import numpy as np
 import pytest
 
-torch = pytest.importorskip("torch")
+
+def _has_torch() -> bool:
+    try:
+        import torch  # noqa: F401
+        return True
+    except ImportError:
+        return False
 
 
 class TestPublicAPIExistence:
@@ -37,6 +43,7 @@ class TestPublicAPIExistence:
         assert callable(generate_fractal_ifs)
         assert callable(compute_lyapunov_exponent)
 
+    @pytest.mark.skipif(not _has_torch(), reason="torch required")
     def test_federated_learning_importable(self) -> None:
         """Test federated learning functions are importable."""
         from mycelium_fractal_net import (
@@ -47,6 +54,7 @@ class TestPublicAPIExistence:
         assert callable(aggregate_gradients_krum)
         assert isinstance(HierarchicalKrumAggregator, type)
 
+    @pytest.mark.skipif(not _has_torch(), reason="torch required")
     def test_neural_network_importable(self) -> None:
         """Test neural network classes are importable."""
         from mycelium_fractal_net import (
@@ -59,6 +67,7 @@ class TestPublicAPIExistence:
         assert isinstance(STDPPlasticity, type)
         assert isinstance(SparseAttention, type)
 
+    @pytest.mark.skipif(not _has_torch(), reason="torch required")
     def test_validation_importable(self) -> None:
         """Test validation functions are importable."""
         from mycelium_fractal_net import (
@@ -142,6 +151,7 @@ class TestDomainModuleImports:
         assert isinstance(FractalConfig, type)
         assert isinstance(FractalGrowthEngine, type)
 
+    @pytest.mark.skipif(not _has_torch(), reason="torch required")
     def test_stdp_module(self) -> None:
         """Test stdp module exports."""
         from mycelium_fractal_net.core.stdp import (
@@ -158,6 +168,7 @@ class TestDomainModuleImports:
         assert abs(STDP_A_PLUS - 0.01) < 0.001
         assert abs(STDP_A_MINUS - 0.012) < 0.001
 
+    @pytest.mark.skipif(not _has_torch(), reason="torch required")
     def test_federated_module(self) -> None:
         """Test federated module exports."""
         from mycelium_fractal_net.core.federated import (
@@ -221,6 +232,7 @@ class TestAPISignatures:
 
         assert "binary_field" in params
 
+    @pytest.mark.skipif(not _has_torch(), reason="torch required")
     def test_aggregate_gradients_krum_signature(self) -> None:
         """Test aggregate_gradients_krum has expected parameters."""
         from mycelium_fractal_net import aggregate_gradients_krum
@@ -281,11 +293,12 @@ class TestREADMEExamples:
         # D should be reasonable (between 0 and 2 for 2D binary field)
         assert 0 <= D <= 2.5
 
+    @pytest.mark.skipif(not _has_torch(), reason="torch required")
     def test_federated_example(self) -> None:
         """Test federated learning example."""
+        import torch
         from mycelium_fractal_net import aggregate_gradients_krum
 
-        # Create synthetic gradients
         gradients = [torch.randn(100) for _ in range(20)]
 
         aggregated = aggregate_gradients_krum(gradients, num_clusters=5)
