@@ -613,6 +613,25 @@ class FieldSequence:
 
         return compare(self, other)
 
+    def explain(self) -> Any:
+        """Explain every pipeline decision with reasoning chains.
+
+        Returns a PipelineExplanation with human-readable narratives
+        for detection, regime classification, and causal verification.
+
+        >>> seq.explain().narrate()  # full human-readable explanation
+        >>> seq.explain().detection.margin_to_flip  # how close to a different label
+        """
+        from mycelium_fractal_net.core.causal_validation import (
+            validate_causal_consistency,
+        )
+        from mycelium_fractal_net.core.detect import detect_anomaly
+        from mycelium_fractal_net.core.explainability import explain_pipeline
+
+        event = detect_anomaly(self)
+        causal = validate_causal_consistency(self, detection=event)
+        return explain_pipeline(event, causal=causal)
+
     # ─────────────────────────────────────────────────────────
 
     def to_dict(self, include_arrays: bool = False) -> dict[str, Any]:
