@@ -151,6 +151,13 @@ class ForecastResult:
     def validate(self) -> dict[str, Any]:
         return validate_forecast_payload(self._raw_payload())
 
+    def __repr__(self) -> str:
+        se = self.benchmark_metrics.get("forecast_structural_error", 0.0)
+        return (
+            f"ForecastResult(h={self.horizon}, method={self.method}, "
+            f"error={se:.3f})"
+        )
+
     def to_dict(self) -> dict[str, Any]:
         return self.validate()
 
@@ -168,6 +175,12 @@ class ComparisonResult:
     topology_label: str = "nominal"
     reorganization_label: str = "stable"
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __repr__(self) -> str:
+        return (
+            f"ComparisonResult({self.label}, d={self.distance:.4f}, "
+            f"cos={self.cosine_similarity:.3f}, topo={self.topology_label})"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         payload = {

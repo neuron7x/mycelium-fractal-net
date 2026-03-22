@@ -59,5 +59,20 @@
   "profile_hints": {
     "serotonergic": 0.30,
     "criticality": 0.10
+  },
+  "comparison": {
+    "cosine_near_identical": 0.995,
+    "cosine_similar": 0.97,
+    "cosine_related": 0.90,
+    "distance_near_identical": 0.25,
+    "noise_pathological_high": 0.0008,
+    "noise_pathological_low": 0.0005,
+    "connectivity_low": 0.05,
+    "modularity_low": 0.08,
+    "hierarchy_flat_threshold": 0.04,
+    "connectivity_flat_ceiling": 0.08,
+    "connectivity_reorg_threshold": 0.05,
+    "modularity_reorg_threshold": 0.08,
+    "top_changed_features": 12
   }
 }

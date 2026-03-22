@@ -9,7 +9,7 @@ def test_manifest_and_required_artifacts(tmp_path) -> None:
     seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=8, seed=42))
     report = mfn.report(seq, output_root=str(tmp_path), horizon=4)
     run_dir = tmp_path / report.run_id
-    core_artifacts = {
+    required = {
         "config.json",
         "field.npy",
         "history.npy",
@@ -18,10 +18,17 @@ def test_manifest_and_required_artifacts(tmp_path) -> None:
         "forecast.json",
         "comparison.json",
         "report.md",
+        "manifest.json",
+        "causal_validation.json",
     }
     on_disk = {p.name for p in run_dir.iterdir()}
-    assert core_artifacts.issubset(on_disk)
-    assert "manifest.json" in on_disk
+    assert required.issubset(on_disk), f"Missing: {required - on_disk}"
     manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["run_id"] == report.run_id
-    assert core_artifacts == set(manifest["artifact_list"])
+    assert required == set(manifest["artifact_list"])
+
+    # Verify causal validation passed
+    causal = json.loads((run_dir / "causal_validation.json").read_text(encoding="utf-8"))
+    assert causal["ok"] is True
+    assert causal["decision"] in ("pass", "degraded")
+    assert causal["error_count"] == 0

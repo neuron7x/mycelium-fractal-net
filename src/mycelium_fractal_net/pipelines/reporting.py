@@ -31,6 +31,7 @@ from mycelium_fractal_net.artifact_bundle import (
 from mycelium_fractal_net.core.compare import compare
 from mycelium_fractal_net.core.detect import detect_anomaly
 from mycelium_fractal_net.core.forecast import forecast_next
+from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
 from mycelium_fractal_net.types.field import FieldSequence
 from mycelium_fractal_net.types.report import AnalysisReport
 
@@ -324,7 +325,8 @@ def build_analysis_report(
     _write_json(run_dir / "forecast.json", forecast_dict)
     _write_json(run_dir / "comparison.json", comparison_dict)
 
-    artifact_list = [
+    # Core artifacts: created before manifest. Manifest/causal are added after.
+    core_artifacts = [
         "config.json",
         "field.npy",
         "history.npy",
@@ -334,6 +336,8 @@ def build_analysis_report(
         "comparison.json",
         "report.md",
     ]
+    # Full artifact list including self-referential ones
+    artifact_list = core_artifacts + ["manifest.json", "causal_validation.json"]
 
     summary = {
         "grid_size": sequence.grid_size,
@@ -494,7 +498,7 @@ def build_analysis_report(
     }
     manifest = {
         **initial_manifest,
-        "artifact_manifest": _artifact_manifest(run_dir, artifact_list),
+        "artifact_manifest": _artifact_manifest(run_dir, core_artifacts),
         "optional_artifact_manifest": _artifact_manifest(
             run_dir, list(optional_artifacts.values())
         ),
@@ -512,4 +516,23 @@ def build_analysis_report(
     for signed_path in signed_paths:
         if not verify_artifact_signature(signed_path, audit_log=audit_log):
             raise RuntimeError(f"Signature verification failed for {signed_path.name}")
+
+    # Causal Validation Gate — verify every conclusion follows from data & invariants
+    causal_result = validate_causal_consistency(
+        sequence=sequence,
+        descriptor=report.descriptor,
+        detection=report.detection,
+        forecast=report.forecast,
+        comparison=report.comparison,
+    )
+    _write_json(run_dir / "causal_validation.json", causal_result.to_dict())
+
+    # Strict mode: block publication only on error/fatal violations (not warnings)
+    if causal_result.error_count > 0:
+        errors = [r for r in causal_result.violations if r.severity.value in ("error", "fatal")]
+        raise RuntimeError(
+            f"Causal validation failed ({causal_result.decision.value}): "
+            f"{len(errors)} error(s). First: [{errors[0].rule_id}] {errors[0].message}"
+        )
+
     return report

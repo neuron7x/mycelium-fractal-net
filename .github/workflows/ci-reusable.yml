@@ -26,6 +26,8 @@ jobs:
       - run: uv sync --group dev
       - run: uv run python scripts/dev_doctor.py
       - run: uv run pytest tests/ -q --timeout=300
+      - name: CAUSAL_VALIDATION
+        run: uv run pytest tests/test_causal_invariants.py tests/test_causal_config_sync.py -v --timeout=120
       - run: uv run lint-imports
       - run: uv run python scripts/verify_matrix.py
 
