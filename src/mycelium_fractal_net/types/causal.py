@@ -41,6 +41,36 @@ class ViolationCategory(str, Enum):
 
 
 @dataclass(frozen=True)
+class CausalRuleSpec:
+    """Scientific specification of a causal rule.
+
+    Each rule is simultaneously:
+    - An executable test (evaluated at runtime)
+    - A mathematical claim (falsifiable statement)
+    - A scientific reference (traceable to literature)
+    - A human explanation (why this rule exists)
+    """
+
+    claim: str  # What this rule asserts about reality
+    math: str = ""  # Mathematical formulation
+    reference: str = ""  # DOI, paper, or textbook citation
+    falsifiable_by: str = ""  # What observation would disprove this
+    rationale: str = ""  # Why this rule matters for system integrity
+
+    def to_dict(self) -> dict[str, Any]:
+        d: dict[str, str] = {"claim": self.claim}
+        if self.math:
+            d["math"] = self.math
+        if self.reference:
+            d["reference"] = self.reference
+        if self.falsifiable_by:
+            d["falsifiable_by"] = self.falsifiable_by
+        if self.rationale:
+            d["rationale"] = self.rationale
+        return d
+
+
+@dataclass(frozen=True)
 class CausalRuleResult:
     """Result of a single causal rule evaluation."""
 
@@ -50,12 +80,13 @@ class CausalRuleResult:
     severity: CausalSeverity
     passed: bool
     message: str
+    spec: CausalRuleSpec | None = None
     observed: float | str | bool | None = None
     expected: float | str | bool | None = None
     evidence: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "rule_id": self.rule_id,
             "stage": self.stage,
             "category": self.category.value,
@@ -66,6 +97,9 @@ class CausalRuleResult:
             "expected": self.expected,
             "evidence": dict(self.evidence),
         }
+        if self.spec:
+            d["spec"] = self.spec.to_dict()
+        return d
 
 
 @dataclass(frozen=True)
