@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib import import_module
+from typing import Any
 
 from .engine import run_mycelium_simulation, run_mycelium_simulation_with_history
 from .exceptions import NumericalInstabilityError, StabilityError, ValueOutOfRangeError
@@ -30,7 +31,7 @@ _OPTIONAL_ATTRS = {
 }
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if name in _OPTIONAL_ATTRS:
         module = import_module(_OPTIONAL_ATTRS[name])
         value = getattr(module, name)

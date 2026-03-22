@@ -1,5 +1,9 @@
 """Canonical MFN type exports (lazy)."""
 
+from __future__ import annotations
+
+from typing import Any
+
 __all__ = [
     "SimulationConfig",
     "SimulationResult",
@@ -42,7 +46,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if name in {
         "SimulationConfig",
         "SimulationResult",

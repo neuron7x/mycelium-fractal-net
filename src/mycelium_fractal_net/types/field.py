@@ -9,10 +9,15 @@ import json
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Tuple
+from typing import TYPE_CHECKING, Any, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.detection import AnomalyEvent
+    from mycelium_fractal_net.types.features import MorphologyDescriptor
+    from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
 
 
 class BoundaryCondition(str, Enum):
@@ -429,7 +434,7 @@ class SimulationSpec:
         if seed_value in (None, ""):
             seed: int | None = None
         else:
-            seed = int(seed_value)
+            seed = int(seed_value)  # type: ignore[arg-type]
         neuromod_raw = data.get("neuromodulation")
         neuromod = None if neuromod_raw is None else NeuromodulationSpec.from_dict(neuromod_raw)
         return cls(

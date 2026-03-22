@@ -83,8 +83,8 @@ class AnalysisReport:
                     self.comparison.label if self.comparison is not None else "n/a"
                 ),
             },
-            forecast_summary=forecast_summary,
-            compare_summary=compare_summary,
+            forecast_summary=forecast_summary,  # type: ignore[arg-type]
+            compare_summary=compare_summary,  # type: ignore[arg-type]
             manifest_hashes=dict(manifest_hashes or {}),
             metadata={
                 "runtime_hash": self.sequence.runtime_hash,

@@ -229,6 +229,10 @@ src/mycelium_fractal_net/
 
 ---
 
+## Release pipeline
+
+The simulation API accepts `neuromodulation=None` for baseline mode. The full release pipeline runs `scripts/showcase_run.py` for showcase generation, `scripts/baseline_parity.py` for baseline parity verification, and `scripts/attest_artifacts.py` for Ed25519 attestation. Final output: `artifacts/release/release_manifest.json`.
+
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md) — layering, contracts, boundaries

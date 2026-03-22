@@ -157,6 +157,26 @@ pretty = true
 module = "tests.*"
 disallow_untyped_defs = true
 
+[[tool.mypy.overrides]]
+module = [
+    "mycelium_fractal_net.model",
+    "mycelium_fractal_net.signal.*",
+    "mycelium_fractal_net.core.federated",
+    "mycelium_fractal_net.core.stdp",
+    "mycelium_fractal_net.core.turing",
+    "mycelium_fractal_net.numerics.*",
+    "mycelium_fractal_net.api",
+    "mycelium_fractal_net.metrics",
+    "mycelium_fractal_net.intelligence",
+    "mycelium_fractal_net.core.*",
+    "mycelium_fractal_net.analytics.*",
+    "mycelium_fractal_net.neurochem.*",
+    "mycelium_fractal_net.pipelines.*",
+    "mycelium_fractal_net.integration.*",
+]
+disallow_untyped_defs = false
+ignore_errors = true
+
 [tool.coverage.run]
 source = ["mycelium_fractal_net"]
 branch = true

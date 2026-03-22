@@ -127,9 +127,11 @@ from .publishers import (
     PublisherConfig,
     PublisherMetrics,
     PublisherStatus,
-    WebhookPublisher,
 )
 from .publishers import RetryStrategy as PublisherRetryStrategy
+from .publishers import (
+    WebhookPublisher,
+)
 from .rate_limiter import (
     RateLimiter,
     RateLimitMiddleware,

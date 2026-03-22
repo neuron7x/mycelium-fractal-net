@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from importlib import import_module
 from importlib.metadata import PackageNotFoundError, version
+from typing import Any
 
 try:
     __version__ = version("mycelium-fractal-net")
@@ -341,7 +342,7 @@ _LAZY_ATTRS = {
 }
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if name in _LAZY_MODULES:
         module = import_module(_LAZY_MODULES[name])
         globals()[name] = module
