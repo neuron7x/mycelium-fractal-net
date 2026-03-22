@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -37,6 +37,12 @@ from mycelium_fractal_net.types.causal import (
     ViolationCategory,
 )
 
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.detection import AnomalyEvent
+    from mycelium_fractal_net.types.features import MorphologyDescriptor
+    from mycelium_fractal_net.types.field import FieldSequence
+    from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
+
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE: SIMULATE — biophysical field invariants
 # ═══════════════════════════════════════════════════════════════════
@@ -53,7 +59,7 @@ from mycelium_fractal_net.types.causal import (
     falsifiable_by="Any NaN or Inf in the field array",
     rationale="NaN/Inf propagates silently through all downstream computations",
 )
-def sim_001_field_finite(seq: Any) -> tuple[bool, Any, Any]:
+def sim_001_field_finite(seq: FieldSequence) -> tuple[bool, Any, Any]:
     ok = bool(np.isfinite(seq.field).all())
     return ok, not ok, True
 
@@ -69,7 +75,7 @@ def sim_001_field_finite(seq: Any) -> tuple[bool, Any, Any]:
     falsifiable_by="Field value below -95 mV after clamping",
     rationale="Below -95 mV is non-physiological; indicates numerical blow-up",
 )
-def sim_002_field_lower_bound(seq: Any) -> tuple[bool, Any, Any]:
+def sim_002_field_lower_bound(seq: FieldSequence) -> tuple[bool, Any, Any]:
     fmin = float(np.min(seq.field))
     return fmin >= FIELD_V_MIN - 1e-10, fmin, FIELD_V_MIN
 
@@ -85,7 +91,7 @@ def sim_002_field_lower_bound(seq: Any) -> tuple[bool, Any, Any]:
     falsifiable_by="Field value above +40 mV after clamping",
     rationale="Above +40 mV exceeds Na+ reversal potential; indicates instability",
 )
-def sim_003_field_upper_bound(seq: Any) -> tuple[bool, Any, Any]:
+def sim_003_field_upper_bound(seq: FieldSequence) -> tuple[bool, Any, Any]:
     fmax = float(np.max(seq.field))
     return fmax <= FIELD_V_MAX + 1e-10, fmax, FIELD_V_MAX
 
@@ -100,7 +106,7 @@ def sim_003_field_upper_bound(seq: Any) -> tuple[bool, Any, Any]:
     falsifiable_by="Shape mismatch between history frames and field",
     rationale="Mismatched shapes corrupt temporal feature extraction",
 )
-def sim_004_history_shape(seq: Any) -> tuple[bool, Any, Any]:
+def sim_004_history_shape(seq: FieldSequence) -> tuple[bool, Any, Any]:
     if seq.history is None:
         return True, "no history", "ok"
     ok = seq.history.shape[1:] == seq.field.shape
@@ -117,7 +123,7 @@ def sim_004_history_shape(seq: Any) -> tuple[bool, Any, Any]:
     falsifiable_by="NaN or Inf in any history frame",
     rationale="Corrupted history produces invalid Lyapunov exponents",
 )
-def sim_005_history_finite(seq: Any) -> bool:
+def sim_005_history_finite(seq: FieldSequence) -> bool:
     if seq.history is None:
         return True
     return bool(np.isfinite(seq.history).all())
@@ -133,7 +139,7 @@ def sim_005_history_finite(seq: Any) -> bool:
     falsifiable_by="Large discrepancy between last history frame and field",
     rationale="Divergence suggests post-processing altered the field after recording",
 )
-def sim_006_history_field_consistency(seq: Any) -> bool:
+def sim_006_history_field_consistency(seq: FieldSequence) -> bool:
     if seq.history is None:
         return True
     return bool(np.allclose(seq.history[-1], seq.field, atol=0.01))
@@ -150,7 +156,7 @@ def sim_006_history_field_consistency(seq: Any) -> bool:
     falsifiable_by="Alpha exceeding 0.25 without substep splitting",
     rationale="CFL violation causes exponential blow-up in explicit Euler PDE",
 )
-def sim_007_cfl_stability(seq: Any) -> tuple[bool, Any, Any]:
+def sim_007_cfl_stability(seq: FieldSequence) -> tuple[bool, Any, Any]:
     if seq.spec is None:
         return True, None, None
     return seq.spec.alpha <= MAX_STABLE_DIFFUSION, seq.spec.alpha, MAX_STABLE_DIFFUSION
@@ -167,7 +173,7 @@ def sim_007_cfl_stability(seq: Any) -> tuple[bool, Any, Any]:
     falsifiable_by="Occupancy sum deviating from 1.0 by more than 1e-4",
     rationale="Mass conservation violation means receptors created or destroyed",
 )
-def sim_008_occupancy_conservation(seq: Any) -> tuple[bool, Any, Any]:
+def sim_008_occupancy_conservation(seq: FieldSequence) -> tuple[bool, Any, Any]:
     ns = getattr(seq, "neuromodulation_state", None)
     if ns is None:
         return True, None, None
@@ -186,7 +192,7 @@ def sim_008_occupancy_conservation(seq: Any) -> tuple[bool, Any, Any]:
     falsifiable_by="Negative effective inhibition value",
     rationale="Negative conductance is non-physical; would amplify instead of inhibit",
 )
-def sim_009_inhibition_non_negative(seq: Any) -> tuple[bool, Any, Any]:
+def sim_009_inhibition_non_negative(seq: FieldSequence) -> tuple[bool, Any, Any]:
     ns = getattr(seq, "neuromodulation_state", None)
     if ns is None:
         return True, None, None
@@ -201,7 +207,7 @@ def sim_009_inhibition_non_negative(seq: Any) -> tuple[bool, Any, Any]:
     category="provenance",
     rationale="Without spec, the simulation cannot be reproduced or audited",
 )
-def sim_010_spec_present(seq: Any) -> bool:
+def sim_010_spec_present(seq: FieldSequence) -> bool:
     return seq.spec is not None
 
 
@@ -216,7 +222,7 @@ def sim_010_spec_present(seq: Any) -> bool:
     falsifiable_by="R_fraction outside [0,1] or non-monotonic dose-response",
     rationale="MWC model must be thermodynamically consistent; non-monotonicity indicates parameter error",
 )
-def sim_011_mwc_monotonicity(seq: Any) -> tuple[bool, Any, Any]:
+def sim_011_mwc_monotonicity(seq: FieldSequence) -> tuple[bool, Any, Any]:
     from mycelium_fractal_net.neurochem.mwc import mwc_dose_response
 
     concentrations = np.array([0.0, 0.1, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0, 500.0])
@@ -244,7 +250,7 @@ def sim_011_mwc_monotonicity(seq: Any) -> tuple[bool, Any, Any]:
     falsifiable_by="Empty embedding or NaN/Inf in components",
     rationale="Invalid embeddings produce undefined distance/cosine results",
 )
-def ext_001_embedding_finite(desc: Any, seq: Any) -> bool:
+def ext_001_embedding_finite(desc: MorphologyDescriptor, seq: FieldSequence) -> bool:
     emb = np.asarray(desc.embedding)
     return len(emb) > 0 and bool(np.isfinite(emb).all())
 
@@ -257,7 +263,7 @@ def ext_001_embedding_finite(desc: Any, seq: Any) -> bool:
     category="provenance",
     rationale="Unversioned descriptors cannot be compared across releases",
 )
-def ext_002_version_present(desc: Any, seq: Any) -> bool:
+def ext_002_version_present(desc: MorphologyDescriptor, seq: FieldSequence) -> bool:
     return bool(desc.version)
 
 
@@ -271,7 +277,7 @@ def ext_002_version_present(desc: Any, seq: Any) -> bool:
     falsifiable_by="Index diverging from direct field CV",
     rationale="Inconsistency indicates bug or stale cached descriptor",
 )
-def ext_003_instability_consistency(desc: Any, seq: Any) -> tuple[bool, Any, Any]:
+def ext_003_instability_consistency(desc: MorphologyDescriptor, seq: FieldSequence) -> tuple[bool, Any, Any]:
     cv = float(np.std(seq.field) / (abs(np.mean(seq.field)) + 1e-12))
     ii = desc.stability.get("instability_index", 0.0)
     return abs(cv - ii) < 0.01, abs(cv - ii), 0.01
@@ -285,7 +291,7 @@ def ext_003_instability_consistency(desc: Any, seq: Any) -> tuple[bool, Any, Any
     category="contract",
     rationale="Missing keys cause KeyError in detection scoring",
 )
-def ext_004_stability_keys(desc: Any, seq: Any) -> tuple[bool, Any]:
+def ext_004_stability_keys(desc: MorphologyDescriptor, seq: FieldSequence) -> tuple[bool, Any]:
     missing = {"instability_index", "near_transition_score", "collapse_risk_score"} - set(
         desc.stability
     )
@@ -300,7 +306,7 @@ def ext_004_stability_keys(desc: Any, seq: Any) -> tuple[bool, Any]:
     category="contract",
     rationale="Missing complexity keys corrupt regime classification",
 )
-def ext_005_complexity_keys(desc: Any, seq: Any) -> tuple[bool, Any]:
+def ext_005_complexity_keys(desc: MorphologyDescriptor, seq: FieldSequence) -> tuple[bool, Any]:
     missing = {"temporal_lzc", "temporal_hfd", "multiscale_entropy_short"} - set(desc.complexity)
     return len(missing) == 0, sorted(missing) if missing else "complete"
 
@@ -313,7 +319,7 @@ def ext_005_complexity_keys(desc: Any, seq: Any) -> tuple[bool, Any]:
     category="contract",
     rationale="Connectivity features drive topology drift analysis",
 )
-def ext_006_connectivity_keys(desc: Any, seq: Any) -> tuple[bool, Any]:
+def ext_006_connectivity_keys(desc: MorphologyDescriptor, seq: FieldSequence) -> tuple[bool, Any]:
     missing = {"connectivity_divergence", "hierarchy_flattening"} - set(desc.connectivity)
     return len(missing) == 0, sorted(missing) if missing else "complete"
 
@@ -329,7 +335,7 @@ def ext_006_connectivity_keys(desc: Any, seq: Any) -> tuple[bool, Any]:
     falsifiable_by="D_r2 < 0.7 with D_box contributing to anomaly score",
     rationale="Low R² means log-log regression is unreliable; D_box may be noise",
 )
-def ext_007_fractal_quality(desc: Any, seq: Any) -> tuple[bool, Any, Any]:
+def ext_007_fractal_quality(desc: MorphologyDescriptor, seq: FieldSequence) -> tuple[bool, Any, Any]:
     d_r2 = desc.features.get("D_r2", 1.0)
     return d_r2 >= 0.7, d_r2, 0.7
 
@@ -356,7 +362,7 @@ _VALID_REGIME = {
     severity="error",
     category="numerical",
 )
-def det_001_score_bounded(det: Any) -> tuple[bool, Any]:
+def det_001_score_bounded(det: AnomalyEvent) -> tuple[bool, Any]:
     return 0.0 <= det.score <= 1.0, det.score
 
 
@@ -368,7 +374,7 @@ def det_001_score_bounded(det: Any) -> tuple[bool, Any]:
     severity="error",
     category="contract",
 )
-def det_002_label_valid(det: Any) -> tuple[bool, Any]:
+def det_002_label_valid(det: AnomalyEvent) -> tuple[bool, Any]:
     return det.label in _VALID_ANOMALY, det.label
 
 
@@ -380,7 +386,7 @@ def det_002_label_valid(det: Any) -> tuple[bool, Any]:
     severity="error",
     category="contract",
 )
-def det_003_regime_valid(det: Any) -> tuple[bool, Any]:
+def det_003_regime_valid(det: AnomalyEvent) -> tuple[bool, Any]:
     return det.regime.label in _VALID_REGIME, det.regime.label
 
 
@@ -392,7 +398,7 @@ def det_003_regime_valid(det: Any) -> tuple[bool, Any]:
     severity="error",
     category="numerical",
 )
-def det_004_confidence_bounded(det: Any) -> tuple[bool, Any]:
+def det_004_confidence_bounded(det: AnomalyEvent) -> tuple[bool, Any]:
     return 0.0 <= det.confidence <= 1.0, det.confidence
 
 
@@ -404,7 +410,7 @@ def det_004_confidence_bounded(det: Any) -> tuple[bool, Any]:
     category="contract",
     rationale="Phantom features mislead about decision drivers",
 )
-def det_005_contributing_subset(det: Any) -> tuple[bool, Any]:
+def det_005_contributing_subset(det: AnomalyEvent) -> tuple[bool, Any]:
     extra = set(det.contributing_features) - set(det.evidence)
     return len(extra) == 0, sorted(extra) if extra else "ok"
 
@@ -418,7 +424,7 @@ def det_005_contributing_subset(det: Any) -> tuple[bool, Any]:
     category="causal",
     rationale="Noise classification without noise evidence is a causal error",
 )
-def det_006_pathological_causality(det: Any) -> Any:
+def det_006_pathological_causality(det: AnomalyEvent) -> Any:
     if det.regime.label != "pathological_noise":
         return True
     n = det.evidence.get("observation_noise_gain", 0.0)
@@ -435,7 +441,7 @@ def det_006_pathological_causality(det: Any) -> Any:
     category="causal",
     rationale="Reorganization without plasticity is indistinguishable from noise",
 )
-def det_007_reorganized_causality(det: Any) -> Any:
+def det_007_reorganized_causality(det: AnomalyEvent) -> Any:
     if det.regime.label != "reorganized":
         return True
     p = det.evidence.get("plasticity_index", 0.0)
@@ -451,7 +457,7 @@ def det_007_reorganized_causality(det: Any) -> Any:
     category="causal",
     rationale="Watch far from boundary should be nominal or anomalous",
 )
-def det_008_watch_near_threshold(det: Any) -> Any:
+def det_008_watch_near_threshold(det: AnomalyEvent) -> Any:
     if det.label != "watch":
         return True
     margin = abs(det.score - det.evidence.get("dynamic_threshold", 0.45))
@@ -471,7 +477,7 @@ def det_008_watch_near_threshold(det: Any) -> Any:
     severity="error",
     category="contract",
 )
-def for_001_horizon(fc: Any) -> tuple[bool, Any]:
+def for_001_horizon(fc: ForecastResult) -> tuple[bool, Any]:
     return fc.to_dict()["horizon"] >= 1, fc.to_dict()["horizon"]
 
 
@@ -484,7 +490,7 @@ def for_001_horizon(fc: Any) -> tuple[bool, Any]:
     category="numerical",
     rationale="Non-finite predictions invalidate trajectory analysis",
 )
-def for_002_finite(fc: Any) -> bool:
+def for_002_finite(fc: ForecastResult) -> bool:
     for f in fc.to_dict().get("predicted_states", []):
         if not bool(np.isfinite(np.asarray(f)).all()):
             return False
@@ -500,7 +506,7 @@ def for_002_finite(fc: Any) -> bool:
     category="contract",
     rationale="Point forecasts without uncertainty are scientifically incomplete",
 )
-def for_004_uncertainty(fc: Any) -> tuple[bool, Any]:
+def for_004_uncertainty(fc: ForecastResult) -> tuple[bool, Any]:
     env = fc.to_dict().get("uncertainty_envelope", {})
     return bool(env), len(env)
 
@@ -512,7 +518,7 @@ def for_004_uncertainty(fc: Any) -> tuple[bool, Any]:
     severity="error",
     category="contract",
 )
-def for_005_benchmark_keys(fc: Any) -> bool:
+def for_005_benchmark_keys(fc: ForecastResult) -> bool:
     bm = fc.to_dict().get("benchmark_metrics", {})
     return "forecast_structural_error" in bm and "adaptive_damping" in bm
 
@@ -526,7 +532,7 @@ def for_005_benchmark_keys(fc: Any) -> bool:
     category="causal",
     rationale="Error > 1.0 means forecast diverged more than the signal",
 )
-def for_006_error(fc: Any) -> tuple[bool, Any, Any]:
+def for_006_error(fc: ForecastResult) -> tuple[bool, Any, Any]:
     se = fc.to_dict().get("benchmark_metrics", {}).get("forecast_structural_error", 0.0)
     return se <= 1.0, se, 1.0
 
@@ -540,7 +546,7 @@ def for_006_error(fc: Any) -> tuple[bool, Any, Any]:
     category="numerical",
     rationale="< 0.80 excessive smoothing; > 0.95 oscillation",
 )
-def for_007_damping(fc: Any) -> tuple[bool, Any]:
+def for_007_damping(fc: ForecastResult) -> tuple[bool, Any]:
     d = fc.to_dict().get("benchmark_metrics", {}).get("adaptive_damping", 0.0)
     return 0.80 <= d <= 0.95, d
 
@@ -555,7 +561,7 @@ def for_007_damping(fc: Any) -> tuple[bool, Any]:
     falsifiable_by="Error at horizon h+1 < error at horizon h",
     rationale="If error decreases at longer horizon, model is hallucinating false convergence",
 )
-def for_008_error_monotonic(fc: Any) -> tuple[bool, Any, Any]:
+def for_008_error_monotonic(fc: ForecastResult) -> tuple[bool, Any, Any]:
     trajectory = fc.to_dict().get("descriptor_trajectory", [])
     if len(trajectory) < 2:
         return True, "short_trajectory", "monotonic"
@@ -592,7 +598,7 @@ _TOPO = {
     severity="error",
     category="numerical",
 )
-def cmp_001(c: Any) -> tuple[bool, Any]:
+def cmp_001(c: ComparisonResult) -> tuple[bool, Any]:
     return c.distance >= 0, c.distance
 
 
@@ -604,7 +610,7 @@ def cmp_001(c: Any) -> tuple[bool, Any]:
     severity="error",
     category="numerical",
 )
-def cmp_002(c: Any) -> tuple[bool, Any]:
+def cmp_002(c: ComparisonResult) -> tuple[bool, Any]:
     return -1 - 1e-6 <= c.cosine_similarity <= 1 + 1e-6, c.cosine_similarity
 
 
@@ -615,7 +621,7 @@ def cmp_002(c: Any) -> tuple[bool, Any]:
     severity="error",
     category="contract",
 )
-def cmp_003(c: Any) -> tuple[bool, Any]:
+def cmp_003(c: ComparisonResult) -> tuple[bool, Any]:
     return c.label in _VALID_CMP, c.label
 
 
@@ -627,7 +633,7 @@ def cmp_003(c: Any) -> tuple[bool, Any]:
     severity="warn",
     category="causal",
 )
-def cmp_004(c: Any) -> Any:
+def cmp_004(c: ComparisonResult) -> Any:
     return True if c.label != "near-identical" else (c.distance < 0.5, c.distance)
 
 
@@ -639,7 +645,7 @@ def cmp_004(c: Any) -> Any:
     severity="warn",
     category="causal",
 )
-def cmp_005(c: Any) -> Any:
+def cmp_005(c: ComparisonResult) -> Any:
     return True if c.label != "divergent" else (c.cosine_similarity < 0.95, c.cosine_similarity)
 
 
@@ -652,7 +658,7 @@ def cmp_005(c: Any) -> Any:
     category="causal",
     rationale="Inconsistent labels produce contradictory reports",
 )
-def cmp_006(c: Any) -> tuple[bool, Any, Any]:
+def cmp_006(c: ComparisonResult) -> tuple[bool, Any, Any]:
     exp = _TOPO.get(c.topology_label, c.topology_label)
     return (
         c.reorganization_label == exp,
@@ -675,7 +681,7 @@ def cmp_006(c: Any) -> tuple[bool, Any, Any]:
     category="causal",
     rationale="Stable is known good; anomalous is false positive",
 )
-def xst_001(seq: Any, det: Any) -> bool:
+def xst_001(seq: FieldSequence, det: AnomalyEvent) -> bool:
     return not (det.regime.label == "stable" and det.label == "anomalous")
 
 
@@ -688,7 +694,7 @@ def xst_001(seq: Any, det: Any) -> bool:
     category="causal",
     rationale="Plasticity without neuromod is data integrity error",
 )
-def xst_002(seq: Any, det: Any) -> Any:
+def xst_002(seq: FieldSequence, det: AnomalyEvent) -> Any:
     if seq.spec is None:
         return True
     nm = seq.spec.neuromodulation
@@ -707,7 +713,7 @@ def xst_002(seq: Any, det: Any) -> Any:
     category="causal",
     rationale="Reorganization from noise without structure is causal error",
 )
-def xst_003(seq: Any, det: Any) -> Any:
+def xst_003(seq: FieldSequence, det: AnomalyEvent) -> Any:
     if seq.spec is None or seq.spec.neuromodulation is None:
         return True
     if "noise" not in seq.spec.neuromodulation.profile or det.regime.label != "reorganized":
@@ -726,7 +732,7 @@ def xst_003(seq: Any, det: Any) -> Any:
     falsifiable_by="Regime=reorganized with plasticity_index=0",
     rationale="Detection should not claim reorganization without neuromodulation-level evidence",
 )
-def xst_004(seq: Any, det: Any) -> Any:
+def xst_004(seq: FieldSequence, det: AnomalyEvent) -> Any:
     if det.regime.label not in ("reorganized", "critical"):
         return True
     ns = getattr(seq, "neuromodulation_state", None)
@@ -747,7 +753,7 @@ def xst_004(seq: Any, det: Any) -> Any:
     falsifiable_by="neuromodulation=None and regime=reorganized",
     rationale="Reorganization is a neuromodulation-driven phenomenon; without it, label is spurious",
 )
-def xst_005(seq: Any, det: Any) -> bool:
+def xst_005(seq: FieldSequence, det: AnomalyEvent) -> bool:
     if seq.spec is None or seq.spec.neuromodulation is None:
         return det.regime.label != "reorganized"
     if not getattr(seq.spec.neuromodulation, "enabled", False):
@@ -770,7 +776,7 @@ def xst_005(seq: Any, det: Any) -> bool:
     category="causal",
     rationale="Instability under negligible noise = knife-edge decision",
 )
-def ptb_001(seq: Any, det: Any) -> bool:
+def ptb_001(seq: FieldSequence, det: AnomalyEvent) -> bool:
     from mycelium_fractal_net.core.detect import detect_anomaly
     from mycelium_fractal_net.types.field import FieldSequence
 
@@ -799,7 +805,7 @@ def ptb_001(seq: Any, det: Any) -> bool:
     category="causal",
     rationale="Regime instability under negligible noise = not robust",
 )
-def ptb_002(seq: Any, det: Any) -> bool:
+def ptb_002(seq: FieldSequence, det: AnomalyEvent) -> bool:
     from mycelium_fractal_net.core.detect import detect_anomaly
     from mycelium_fractal_net.types.field import FieldSequence
 
