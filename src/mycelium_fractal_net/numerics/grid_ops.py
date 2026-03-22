@@ -9,7 +9,7 @@ from typing import Any, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from mycelium_fractal_net.core.exceptions import NumericalInstabilityError
+from mycelium_fractal_net.types.exceptions import NumericalInstabilityError
 
 try:  # optional acceleration contour
     from numba import njit
