@@ -229,7 +229,7 @@ class TestRequestLoggingMiddleware:
             clear=False,
         ):
             reset_config()
-            import api as api_module
+            import mycelium_fractal_net.api as api_module
 
             api_reloaded = importlib.reload(api_module)
             client = TestClient(api_reloaded.app)
@@ -259,7 +259,7 @@ class TestRequestLoggingMiddleware:
 
         # Restore default configuration and app state for downstream tests
         reset_config()
-        import api as api_module
+        import mycelium_fractal_net.api as api_module
 
         importlib.reload(api_module)
 

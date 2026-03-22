@@ -399,7 +399,10 @@ DEPRECATED_SURFACES = {
 }
 
 
+# Public __all__: only stable v1 surface + commonly used engine types.
+# Frozen/ML surfaces accessible via lazy __getattr__ but NOT in __all__.
 __all__ = list(V1_SURFACE) + [
+    # Engine types (stable)
     "FeatureVector",
     "FractalConfig",
     "FractalGrowthEngine",
@@ -416,30 +419,11 @@ __all__ = list(V1_SURFACE) + [
     "SimulationResult",
     "StabilityError",
     "ValueOutOfRangeError",
+    # Legacy stable functions (CPU-only)
     "compute_fractal_features",
     "compute_lyapunov_exponent",
     "compute_nernst_potential",
     "estimate_fractal_dimension",
     "generate_fractal_ifs",
     "simulate_mycelium_field",
-    "HierarchicalKrumAggregator",
-    "aggregate_gradients_krum",
-    "STDPPlasticity",
-    "BODY_TEMPERATURE_K",
-    "FARADAY_CONSTANT",
-    "ION_CLAMP_MIN",
-    "MyceliumFractalNet",
-    "NERNST_RTFZ_MV",
-    "QUANTUM_JITTER_VAR",
-    "R_GAS_CONSTANT",
-    "SPARSE_TOPK",
-    "STDP_A_MINUS",
-    "STDP_A_PLUS",
-    "STDP_TAU_MINUS",
-    "STDP_TAU_PLUS",
-    "SparseAttention",
-    "TURING_THRESHOLD",
-    "ValidationConfig",
-    "run_validation",
-    "run_validation_cli",
 ]

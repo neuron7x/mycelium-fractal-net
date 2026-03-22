@@ -24,7 +24,7 @@ from mycelium_fractal_net.analytics.legacy_features import (
     compute_structural_features,
     compute_temporal_features,
 )
-from analytics.fractal_features import (
+from mycelium_fractal_net.analytics.legacy_features import (
     FEATURE_COUNT,
     _box_counting_dimension,
     _count_clusters_4conn,
