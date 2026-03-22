@@ -104,7 +104,7 @@ def _config_hash() -> str:
                 _DETECTION_CONFIG_PATH.read_bytes()
             ).hexdigest()[:16]
     except Exception:
-        pass
+        logger.warning("Failed to compute config hash for %s", _DETECTION_CONFIG_PATH)
     return "default"
 
 

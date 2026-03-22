@@ -48,8 +48,12 @@ def _extract_neuromod_snapshot(meta: dict) -> NeuromodulationStateSnapshot | Non
     if state and isinstance(state, dict):
         try:
             return NeuromodulationStateSnapshot.from_dict(state)
-        except (ValueError, KeyError):
-            pass
+        except (ValueError, KeyError) as exc:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Failed to build NeuromodulationStateSnapshot from engine metadata: %s", exc
+            )
     # Fall back to mean-level metrics
     if (
         meta.get("plasticity_index_mean", 0.0) != 0.0
