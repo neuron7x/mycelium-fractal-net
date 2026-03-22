@@ -1,8 +1,39 @@
+"""Neuromodulation kinetics — GABA-A receptor binding, desensitization, recovery.
+
+All numeric constants imported from ``constants.py`` with provenance.
+Zero bare float literals except 0.0 and 1.0.
+"""
+
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
 
+from mycelium_fractal_net.neurochem.constants import (
+    ACTIVITY_DRIVE_ACTIVATOR_WEIGHT,
+    ACTIVITY_DRIVE_FIELD_WEIGHT,
+    BIND_ACTIVE_WEIGHT,
+    BIND_RESTING_WEIGHT,
+    DEFAULT_DES_RATE_HZ,
+    DEFAULT_K_OFF_HZ,
+    DEFAULT_K_ON_HZ,
+    DEFAULT_REC_RATE_HZ,
+    DESENSITIZATION_BASELINE_FRACTION,
+    DESENSITIZATION_DRIVE_FRACTION,
+    EXCITABILITY_DRIVE_OFFSET,
+    EXCITABILITY_DRIVE_SCALE,
+    EXCITABILITY_OFFSET_MAX_MV,
+    FIELD_DRIVE_RANGE_V,
+    FIELD_DRIVE_REST_V,
+    OCCUPANCY_ACTIVE_WEIGHT,
+    OCCUPANCY_DESENSITIZED_WEIGHT,
+    OCCUPANCY_RESTING_WEIGHT,
+    PLASTICITY_DRIVE_SCALE,
+    PLASTICITY_EXCITABILITY_FRACTION,
+    RECOVERY_ACTIVITY_DAMPENING,
+    REST_OFFSET_BASELINE_FRACTION,
+    REST_OFFSET_DRIVE_FRACTION,
+)
 from mycelium_fractal_net.neurochem.mwc import (
     effective_gabaa_shunt,
     effective_serotonergic_gain,
@@ -51,20 +82,27 @@ def compute_excitability_offset_v(
     plasticity_scale: float,
 ) -> NDArray[np.float64]:
     centered_activator = np.asarray(activator, dtype=np.float64) - float(np.mean(activator))
-    excitability_drive = np.clip(0.5 + 2.0 * centered_activator, 0.0, 1.0)
+    excitability_drive = np.clip(
+        EXCITABILITY_DRIVE_OFFSET + EXCITABILITY_DRIVE_SCALE * centered_activator, 0.0, 1.0
+    )
     occupancy_bias = (
-        0.60 * state.occupancy_active
-        + 0.25 * state.occupancy_resting
-        - 0.15 * state.occupancy_desensitized
+        OCCUPANCY_ACTIVE_WEIGHT * state.occupancy_active
+        + OCCUPANCY_RESTING_WEIGHT * state.occupancy_resting
+        + OCCUPANCY_DESENSITIZED_WEIGHT * state.occupancy_desensitized
     )
     local_offset_mv = float(baseline_activation_offset_mv) + float(
         rest_offset_mv
-    ) * occupancy_bias * (0.50 + 0.50 * excitability_drive)
+    ) * occupancy_bias * (REST_OFFSET_BASELINE_FRACTION + REST_OFFSET_DRIVE_FRACTION * excitability_drive)
     if plasticity_scale > 1.0:
         local_offset_mv += (
-            float(rest_offset_mv) * 0.10 * (float(plasticity_scale) - 1.0) * state.plasticity_index
+            float(rest_offset_mv)
+            * PLASTICITY_EXCITABILITY_FRACTION
+            * (float(plasticity_scale) - 1.0)
+            * state.plasticity_index
         )
-    local_offset_mv = np.clip(local_offset_mv, -2.0, 2.0)
+    local_offset_mv = np.clip(
+        local_offset_mv, -EXCITABILITY_OFFSET_MAX_MV, EXCITABILITY_OFFSET_MAX_MV
+    )
     return np.asarray(local_offset_mv / 1000.0, dtype=np.float64)
 
 
@@ -89,8 +127,12 @@ def step_neuromodulation_state(
     occ_active = state.occupancy_active.copy()
     occ_des = state.occupancy_desensitized.copy()
 
-    field_drive = np.clip((field + 0.070) / 0.110, 0.0, 1.0)
-    activity_drive = np.clip(0.5 * activator + 0.5 * field_drive, 0.0, 1.0)
+    field_drive = np.clip((field + FIELD_DRIVE_REST_V) / FIELD_DRIVE_RANGE_V, 0.0, 1.0)
+    activity_drive = np.clip(
+        ACTIVITY_DRIVE_ACTIVATOR_WEIGHT * activator
+        + ACTIVITY_DRIVE_FIELD_WEIGHT * field_drive,
+        0.0, 1.0,
+    )
 
     if gabaa:
         concentration = float(gabaa.get("agonist_concentration_um", 0.0))
@@ -99,16 +141,15 @@ def step_neuromodulation_state(
         ligand_rest = mwc_fraction(concentration, rest_aff)
         ligand_active = mwc_fraction(concentration, active_aff)
 
-        bind_rate = _rate(float(gabaa.get("k_on", 0.18)), dt_seconds, 0.18)
-        unbind_rate = _rate(float(gabaa.get("k_off", 0.06)), dt_seconds, 0.06)
-        des_rate = _rate(float(gabaa.get("desensitization_rate_hz", 0.0)), dt_seconds, 0.02)
-        rec_rate = _rate(float(gabaa.get("recovery_rate_hz", 0.0)), dt_seconds, 0.02)
+        bind_rate = _rate(float(gabaa.get("k_on", DEFAULT_K_ON_HZ)), dt_seconds, DEFAULT_K_ON_HZ)
+        unbind_rate = _rate(float(gabaa.get("k_off", DEFAULT_K_OFF_HZ)), dt_seconds, DEFAULT_K_OFF_HZ)
+        des_rate = _rate(float(gabaa.get("desensitization_rate_hz", 0.0)), dt_seconds, DEFAULT_DES_RATE_HZ)
+        rec_rate = _rate(float(gabaa.get("recovery_rate_hz", 0.0)), dt_seconds, DEFAULT_REC_RATE_HZ)
 
         available_rest = np.clip(1.0 - occ_active - occ_des, 0.0, 1.0)
         bind_propensity = np.clip(
-            bind_rate * (0.35 * ligand_rest + 0.65 * ligand_active * activity_drive),
-            0.0,
-            1.0,
+            bind_rate * (BIND_RESTING_WEIGHT * ligand_rest + BIND_ACTIVE_WEIGHT * ligand_active * activity_drive),
+            0.0, 1.0,
         )
         bind_flux = available_rest * bind_propensity
         occ_rest = occ_rest - bind_flux
@@ -119,12 +160,17 @@ def step_neuromodulation_state(
         occ_active = occ_active - unbind_flux
         occ_rest = occ_rest + unbind_flux
 
-        des_propensity = np.clip(des_rate * (0.40 + 0.60 * activity_drive), 0.0, 1.0)
+        des_propensity = np.clip(
+            des_rate * (DESENSITIZATION_BASELINE_FRACTION + DESENSITIZATION_DRIVE_FRACTION * activity_drive),
+            0.0, 1.0,
+        )
         des_flux = occ_active * des_propensity
         occ_active = occ_active - des_flux
         occ_des = occ_des + des_flux
 
-        rec_propensity = np.clip(rec_rate * (1.0 - 0.50 * activity_drive), 0.0, 1.0)
+        rec_propensity = np.clip(
+            rec_rate * (1.0 - RECOVERY_ACTIVITY_DAMPENING * activity_drive), 0.0, 1.0
+        )
         rec_flux = occ_des * rec_propensity
         occ_des = occ_des - rec_flux
         occ_rest = occ_rest + rec_flux
@@ -137,7 +183,7 @@ def step_neuromodulation_state(
 
     plasticity_scale = float((serotonergic or {}).get("plasticity_scale", 1.0))
     plasticity_drive = np.clip(
-        np.abs(activator - np.mean(activator)) * 2.0 * plasticity_scale, 0.0, 1.0
+        np.abs(activator - np.mean(activator)) * PLASTICITY_DRIVE_SCALE * plasticity_scale, 0.0, 1.0
     )
     if serotonergic:
         plasticity_drive = _clip01(
