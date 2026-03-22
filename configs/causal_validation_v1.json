@@ -41,7 +41,6 @@
     "DET-008": {"stage": "detect", "category": "causal", "severity": "info", "description": "Watch label near threshold margin", "threshold": 0.25},
     "FOR-001": {"stage": "forecast", "category": "contract", "severity": "error", "description": "Horizon >= 1"},
     "FOR-002": {"stage": "forecast", "category": "numerical", "severity": "error", "description": "Predicted states finite"},
-    "FOR-003": {"stage": "forecast", "category": "numerical", "severity": "warn", "description": "Predicted states within biophysical bounds"},
     "FOR-004": {"stage": "forecast", "category": "contract", "severity": "error", "description": "Uncertainty envelope non-empty"},
     "FOR-005": {"stage": "forecast", "category": "contract", "severity": "error", "description": "Benchmark metrics required keys present"},
     "FOR-006": {"stage": "forecast", "category": "causal", "severity": "warn", "description": "Forecast structural error bounded", "threshold": 1.0},

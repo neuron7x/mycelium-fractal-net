@@ -10,7 +10,7 @@ All domain types are frozen dataclasses in `src/mycelium_fractal_net/types/`.
 |------|--------|-------------|
 | `SimulationSpec` | `types.field` | Simulation parameters: grid size, steps, seed, alpha, neuromodulation |
 | `FieldSequence` | `types.field` | Simulation result: 2D field array, metadata, fluent API methods |
-| `MorphologyDescriptor` | `types.features` | 57-dimensional feature vector across 7 groups |
+| `MorphologyDescriptor` | `types.features` | 57-dimensional embedding across 6 active feature groups |
 | `AnomalyEvent` | `types.detection` | Detection result: label, score, confidence, regime, evidence |
 | `ForecastResult` | `types.forecast` | Predicted states, uncertainty envelope, accuracy metrics |
 | `ComparisonResult` | `types.analytics` | Distance, cosine similarity, topology drift label |
@@ -54,7 +54,7 @@ All domain types are frozen dataclasses in `src/mycelium_fractal_net/types/`.
 
 ## Feature Groups
 
-The `MorphologyDescriptor` contains 57 features across 7 groups:
+The `MorphologyDescriptor` produces a 57-dimensional embedding from 6 active feature groups (42 scalar keys, expanded to 57 via derived dimensions):
 
 | Group | Features | Examples |
 |-------|----------|---------|

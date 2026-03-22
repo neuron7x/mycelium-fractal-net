@@ -61,11 +61,12 @@ It sits between computation and publication: after `detect/forecast/compare` but
 |------|----------|---------------|
 | FOR-001 | ERROR | Horizon >= 1 |
 | FOR-002 | ERROR | Predicted states finite |
-| FOR-003 | WARN | Predicted states within biophysical bounds |
 | FOR-004 | ERROR | Uncertainty envelope non-empty |
 | FOR-005 | ERROR | Benchmark metrics keys present |
 | FOR-006 | WARN | Structural error <= 1.0 |
 | FOR-007 | WARN | Damping in [0.80, 0.95] |
+
+*Note: FOR-003 (predicted states within biophysical bounds) is reserved but not yet implemented.*
 
 ### Comparison (CMP-001 → CMP-006)
 

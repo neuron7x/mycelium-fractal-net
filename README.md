@@ -31,7 +31,7 @@ import mycelium_fractal_net as mfn
 seq = mfn.simulate(mfn.SimulationSpec(grid_size=64, steps=32, seed=42))
 
 seq.detect()       # → AnomalyEvent(label=nominal, score=0.18, confidence=0.79)
-seq.extract()      # → MorphologyDescriptor(57 dimensions, 7 feature groups)
+seq.extract()      # → MorphologyDescriptor(57-dim embedding, 6 feature groups)
 seq.forecast(4)    # → ForecastResult(horizon=4, structural_error=0.039)
 seq.compare(seq)   # → ComparisonResult(label=near-identical, distance=0.0)
 ```
@@ -72,7 +72,7 @@ SimulationSpec
      ▼
   simulate ──→ FieldSequence(NxN, T steps, V ∈ [-95, +40] mV)
      │
-     ├──→ extract  ──→ MorphologyDescriptor(57 dims, 7 feature groups)
+     ├──→ extract  ──→ MorphologyDescriptor(57-dim embedding, 6 feature groups)
      ├──→ detect   ──→ AnomalyEvent(label + regime + evidence)
      ├──→ forecast ──→ ForecastResult(predicted states + uncertainty)
      ├──→ compare  ──→ ComparisonResult(distance + topology drift)
@@ -225,7 +225,7 @@ CausalValidation(decision=pass, rules=33/33, errors=0, warnings=0)
 | **SIM** | 10 | Field bounds, NaN/Inf, CFL stability, occupancy conservation |
 | **EXT** | 6 | Embedding validity, descriptor completeness, feature-group integrity |
 | **DET** | 8 | Score bounds, label vocabulary, confidence range, evidence consistency |
-| **FOR** | 7 | Horizon validity, prediction bounds, uncertainty envelope, damping range |
+| **FOR** | 6 | Horizon validity, prediction bounds, uncertainty envelope, damping range |
 | **CMP** | 6 | Distance non-negativity, cosine bounds, label-metric consistency |
 | **XST** | 3 | Cross-stage logical coherence (regime ↔ anomaly, neuromod ↔ plasticity) |
 | **PTB** | 2 | Label stability under ε=10⁻⁶ perturbation (3 noise seeds) |
