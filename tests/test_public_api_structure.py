@@ -306,7 +306,7 @@ class TestAnalyticsAPI:
 
     def test_analytics_module_importable(self) -> None:
         """Test analytics module is importable."""
-        from analytics import FeatureConfig, compute_features
+        from mycelium_fractal_net.analytics.legacy_features import FeatureConfig, compute_features
         from mycelium_fractal_net.analytics import compute_fractal_features
 
         assert callable(compute_features)

@@ -52,7 +52,7 @@ def ws_client():
         clear=False,
     ):
         # Import after environment is set
-        import api
+        import mycelium_fractal_net.api as api
 
         client = TestClient(api.app)
         yield client
@@ -71,7 +71,7 @@ def ws_client_with_auth():
         },
         clear=False,
     ):
-        import api
+        import mycelium_fractal_net.api as api
 
         client = TestClient(api.app)
         yield client

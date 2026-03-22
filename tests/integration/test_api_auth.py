@@ -52,7 +52,7 @@ def auth_enabled_client():
     ):
         reset_config()
         # Import api after setting env vars
-        from api import app
+        from mycelium_fractal_net.api import app
 
         # Force middleware reconfiguration by recreating app state
         yield TestClient(app)
@@ -73,7 +73,7 @@ def auth_disabled_client():
         clear=False,
     ):
         reset_config()
-        from api import app
+        from mycelium_fractal_net.api import app
 
         yield TestClient(app)
 

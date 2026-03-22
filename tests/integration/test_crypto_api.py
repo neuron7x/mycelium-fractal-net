@@ -55,7 +55,7 @@ def client():
         reset_config()
         reset_crypto_config()
         reset_key_store()
-        from api import app
+        from mycelium_fractal_net.api import app
 
         yield TestClient(app)
 
@@ -76,7 +76,7 @@ def crypto_disabled_client():
         reset_config()
         reset_crypto_config()
         reset_key_store()
-        from api import app
+        from mycelium_fractal_net.api import app
 
         yield TestClient(app)
 

@@ -15,7 +15,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from analytics import (
+from mycelium_fractal_net.analytics.legacy_features import (
     FeatureConfig,
     FeatureVector,
     compute_basic_stats,

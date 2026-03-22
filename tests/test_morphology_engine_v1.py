@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 import mycelium_fractal_net as mfn
-from api import app
+from mycelium_fractal_net.api import app
 
 
 def test_public_root_exports() -> None:

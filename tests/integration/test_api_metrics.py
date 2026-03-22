@@ -47,7 +47,7 @@ def metrics_client():
         clear=False,
     ):
         reset_config()
-        from api import app
+        from mycelium_fractal_net.api import app
 
         yield TestClient(app)
 
@@ -66,7 +66,7 @@ def metrics_disabled_client():
         clear=False,
     ):
         reset_config()
-        from api import app
+        from mycelium_fractal_net.api import app
 
         yield TestClient(app)
 
@@ -86,7 +86,7 @@ def metrics_custom_endpoint_client():
         clear=False,
     ):
         reset_config()
-        from api import app
+        from mycelium_fractal_net.api import app
 
         yield TestClient(app)
 

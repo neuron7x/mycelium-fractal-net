@@ -15,7 +15,7 @@ import pytest
 pytest.importorskip("torch")
 from fastapi.testclient import TestClient
 
-from api import app
+from mycelium_fractal_net.api import app
 from mycelium_fractal_net import ValidationConfig, run_validation
 from mycelium_fractal_net.integration import (
     ExecutionMode,

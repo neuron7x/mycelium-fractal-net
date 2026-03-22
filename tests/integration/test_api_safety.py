@@ -6,7 +6,7 @@ import json
 
 from fastapi.testclient import TestClient
 
-from api import app
+from mycelium_fractal_net.api import app
 
 
 def test_health_ok() -> None:

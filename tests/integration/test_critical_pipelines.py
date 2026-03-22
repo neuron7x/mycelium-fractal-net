@@ -102,7 +102,7 @@ class TestPipeline2ResultToFeatures:
 
     def test_complete_pipeline_flow(self) -> None:
         """Test feature extraction from simulation result."""
-        from analytics import FeatureVector, compute_features
+        from mycelium_fractal_net.analytics.legacy_features import FeatureVector, compute_features
         from mycelium_fractal_net import (
             SimulationConfig,
             run_mycelium_simulation_with_history,
@@ -125,7 +125,7 @@ class TestPipeline2ResultToFeatures:
 
     def test_feature_extraction_from_single_field(self) -> None:
         """Test feature extraction from single field (no history)."""
-        from analytics import FeatureVector, compute_features
+        from mycelium_fractal_net.analytics.legacy_features import FeatureVector, compute_features
         from mycelium_fractal_net import SimulationConfig, run_mycelium_simulation
 
         config = SimulationConfig(grid_size=32, steps=20, seed=42)
@@ -139,7 +139,7 @@ class TestPipeline2ResultToFeatures:
 
     def test_feature_ranges_match_spec(self) -> None:
         """Test feature values are within expected ranges from FEATURE_SCHEMA.md."""
-        from analytics import compute_features
+        from mycelium_fractal_net.analytics.legacy_features import compute_features
         from mycelium_fractal_net import (
             SimulationConfig,
             run_mycelium_simulation_with_history,
@@ -170,7 +170,7 @@ class TestPipeline3DatasetGeneration:
 
     def test_complete_pipeline_flow(self) -> None:
         """Test complete dataset generation pipeline."""
-        from experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments.generate_dataset import SweepConfig, generate_dataset
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_pipeline.parquet"
@@ -198,7 +198,7 @@ class TestPipeline3DatasetGeneration:
         """Test generated dataset has correct schema per DATASET_SPEC.md."""
         import pandas as pd
 
-        from experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments.generate_dataset import SweepConfig, generate_dataset
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_schema.parquet"
@@ -255,7 +255,7 @@ class TestPipeline3DatasetGeneration:
 
     def test_dataset_reproducibility(self) -> None:
         """Test dataset generation is reproducible with fixed seed."""
-        from experiments import SweepConfig, generate_dataset
+        from mycelium_fractal_net.experiments.generate_dataset import SweepConfig, generate_dataset
 
         sweep1 = SweepConfig(
             grid_sizes=[32],
@@ -287,7 +287,7 @@ class TestEndToEndPipeline:
 
     def test_full_workflow(self) -> None:
         """Test complete workflow: config → simulation → features → dataset record."""
-        from analytics import compute_features
+        from mycelium_fractal_net.analytics.legacy_features import compute_features
         from mycelium_fractal_net import (
             SimulationConfig,
             run_mycelium_simulation_with_history,
@@ -336,7 +336,7 @@ class TestEndToEndPipeline:
 
     def test_workflow_with_multiple_configs(self) -> None:
         """Test workflow with parameter variations."""
-        from analytics import compute_features
+        from mycelium_fractal_net.analytics.legacy_features import compute_features
         from mycelium_fractal_net import (
             SimulationConfig,
             run_mycelium_simulation_with_history,
@@ -374,7 +374,7 @@ class TestAPIEndpoints:
     @pytest.mark.skipif(not HAS_FASTAPI, reason="fastapi not installed")
     def test_api_module_imports(self) -> None:
         """Test that API module imports without errors."""
-        import api
+        import mycelium_fractal_net.api as api
 
         assert hasattr(api, "app")
         assert hasattr(api, "health_check")
@@ -386,7 +386,7 @@ class TestAPIEndpoints:
     @pytest.mark.skipif(not HAS_FASTAPI, reason="fastapi not installed")
     def test_api_models_valid(self) -> None:
         """Test that Pydantic models are valid."""
-        from api import (
+        from mycelium_fractal_net.api import (
             HealthResponse,
             NernstRequest,
             SimulationRequest,
