@@ -1,0 +1,29 @@
+{
+  "schema": "mfn-claims-manifest-v1",
+  "engine_version": "4.1.0",
+  "metrics": {
+    "causal_rules": 41,
+    "causal_stages": 7,
+    "import_contracts": 7,
+    "embedding_dims": 57,
+    "feature_groups_active": 6,
+    "feature_groups_reserved": 2,
+    "scalar_keys": 42,
+    "detection_config_version": "mfn-detection-config-v1",
+    "detection_config_hash": "fd51f2c27d0ea36b",
+    "pre_commit_hooks": 16,
+    "ci_workflows": 5,
+    "python_min": "3.10",
+    "python_max": "3.13"
+  },
+  "surfaces": {
+    "sdk_exports": 41,
+    "cli_commands": 10,
+    "api_endpoints": 8
+  },
+  "notes": {
+    "test_count": "Run pytest to get current count \u2014 not hardcoded",
+    "coverage": "Run pytest --cov to get current value \u2014 not hardcoded",
+    "benchmark_throughput": "Run benchmarks/benchmark_core.py \u2014 hardware-dependent"
+  }
+}

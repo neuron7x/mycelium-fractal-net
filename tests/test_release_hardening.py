@@ -317,6 +317,10 @@ class TestReleaseGovernanceFiles:
             "docs/CAUSAL_VALIDATION.md",
             "docs/BENCHMARKS.md",
             "docs/DATA_MODEL.md",
+            "docs/DEPRECATION_POLICY.md",
+            "docs/VERSIONING_POLICY.md",
+            "docs/DEPENDENCY_POLICY.md",
+            "docs/contracts/claims_manifest.json",
             "configs/detection_thresholds_v1.json",
             "configs/causal_validation_v1.json",
         ],
@@ -325,3 +329,20 @@ class TestReleaseGovernanceFiles:
         full = self.ROOT / path
         assert full.exists(), f"Missing governance file: {path}"
         assert full.stat().st_size > 0, f"Empty governance file: {path}"
+
+    def test_claims_manifest_consistent_with_runtime(self) -> None:
+        """Claims manifest must match actual runtime values."""
+        import subprocess
+        result = subprocess.run(
+            ["python", "scripts/check_claims_drift.py"],
+            capture_output=True, text=True, cwd=str(self.ROOT),
+        )
+        assert result.returncode == 0, f"Claims drift: {result.stdout}"
+
+    def test_claims_manifest_valid_json(self) -> None:
+        path = self.ROOT / "docs" / "contracts" / "claims_manifest.json"
+        data = json.loads(path.read_text())
+        assert data["schema"] == "mfn-claims-manifest-v1"
+        assert data["metrics"]["causal_rules"] == 41
+        assert data["metrics"]["embedding_dims"] == 57
+        assert data["metrics"]["feature_groups_active"] == 6
