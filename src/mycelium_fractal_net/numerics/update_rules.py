@@ -16,9 +16,19 @@ from numpy.typing import NDArray
 from mycelium_fractal_net.core.reaction_diffusion_engine import (
     DEFAULT_D_ACTIVATOR,
     DEFAULT_D_INHIBITOR,
+)
+from mycelium_fractal_net.core.reaction_diffusion_engine import (
+    DEFAULT_FIELD_ALPHA as DEFAULT_ALPHA,
+)
+from mycelium_fractal_net.core.reaction_diffusion_engine import (
     DEFAULT_R_ACTIVATOR,
     DEFAULT_R_INHIBITOR,
     DEFAULT_TURING_THRESHOLD,
+)
+from mycelium_fractal_net.core.reaction_diffusion_engine import (
+    BoundaryCondition as CoreBoundaryCondition,
+)
+from mycelium_fractal_net.core.reaction_diffusion_engine import (
     ReactionDiffusionConfig,
     compat_activator_inhibitor_step,
     compat_apply_growth_event,
@@ -28,12 +38,6 @@ from mycelium_fractal_net.core.reaction_diffusion_engine import (
     compat_diffusion_step,
     compat_full_step,
     compat_validate_cfl_condition,
-)
-from mycelium_fractal_net.core.reaction_diffusion_engine import (
-    DEFAULT_FIELD_ALPHA as DEFAULT_ALPHA,
-)
-from mycelium_fractal_net.core.reaction_diffusion_engine import (
-    BoundaryCondition as CoreBoundaryCondition,
 )
 from mycelium_fractal_net.numerics.grid_ops import BoundaryCondition
 

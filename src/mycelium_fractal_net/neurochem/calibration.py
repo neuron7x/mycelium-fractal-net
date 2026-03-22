@@ -28,7 +28,7 @@ def get_calibration_criteria() -> dict[str, float]:
     return deepcopy(_CALIBRATION_CRITERIA)
 
 
-def run_calibration_task(task_name: str) -> dict:
+def run_calibration_task(task_name: str) -> dict[str, Any]:
     if task_name not in _CALIBRATION_TASKS:
         raise KeyError(f"unknown calibration task: {task_name}")
     profile = get_profile(_CALIBRATION_TASKS[task_name])

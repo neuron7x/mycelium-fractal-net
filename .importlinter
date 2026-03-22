@@ -2,8 +2,9 @@
 root_package = mycelium_fractal_net
 include_external_packages = False
 
+# === Layer 1: Core operations must not depend on interfaces ===
 [importlinter:contract:canonical_core_isolation]
-name = Canonical core operations must not depend on interfaces or adapters
+name = Core operations must not depend on interfaces or adapters
 type = forbidden
 source_modules =
     mycelium_fractal_net.core.simulate
@@ -12,11 +13,13 @@ source_modules =
     mycelium_fractal_net.core.forecast
     mycelium_fractal_net.core.compare
     mycelium_fractal_net.core.report
+    mycelium_fractal_net.core.causal_validation
 forbidden_modules =
     mycelium_fractal_net.integration
     mycelium_fractal_net.api
     mycelium_fractal_net.cli
 
+# === Layer 2: Pipelines must not import transport ===
 [importlinter:contract:pipelines_no_transport]
 name = Pipelines must not import transport layers
 type = forbidden
@@ -26,8 +29,9 @@ forbidden_modules =
     mycelium_fractal_net.api
     mycelium_fractal_net.cli
 
+# === Layer 3: CLI/API must not import crypto directly ===
 [importlinter:contract:v1_interfaces_engine_only]
-name = Canonical interfaces depend only on engine-facing packages
+name = Interfaces must not import crypto directly
 type = forbidden
 source_modules =
     mycelium_fractal_net.cli
@@ -35,8 +39,9 @@ source_modules =
 forbidden_modules =
     mycelium_fractal_net.crypto
 
+# === Layer 4: Numerics compat delegates only ===
 [importlinter:contract:compat_layer_only_delegates_to_canonical_kernel]
-name = Numerics compat layer must not own simulation logic or alternate runtime kernels
+name = Numerics compat layer must not own simulation logic
 type = forbidden
 source_modules =
     mycelium_fractal_net.numerics.update_rules
@@ -44,3 +49,46 @@ forbidden_modules =
     mycelium_fractal_net.core.engine
     mycelium_fractal_net.core.simulate
     mycelium_fractal_net.model
+
+# === Layer 5: Types must not import from core (field.py exempt: fluent API) ===
+[importlinter:contract:types_purity]
+name = Types must not eagerly import core operations
+type = forbidden
+source_modules =
+    mycelium_fractal_net.types.analytics
+    mycelium_fractal_net.types.causal
+    mycelium_fractal_net.types.detection
+    mycelium_fractal_net.types.features
+    mycelium_fractal_net.types.forecast
+    mycelium_fractal_net.types.symbolic
+forbidden_modules =
+    mycelium_fractal_net.core.detect
+    mycelium_fractal_net.core.forecast
+    mycelium_fractal_net.core.compare
+    mycelium_fractal_net.core.simulate
+    mycelium_fractal_net.core.engine
+    mycelium_fractal_net.pipelines
+
+# === Layer 6: Analytics must not import integration ===
+[importlinter:contract:analytics_isolation]
+name = Analytics must not depend on integration or transport
+type = forbidden
+source_modules =
+    mycelium_fractal_net.analytics
+forbidden_modules =
+    mycelium_fractal_net.integration
+    mycelium_fractal_net.api
+    mycelium_fractal_net.cli
+    mycelium_fractal_net.pipelines
+
+# === Layer 7: Security must not import core domain ===
+[importlinter:contract:security_isolation]
+name = Security must not depend on domain logic
+type = forbidden
+source_modules =
+    mycelium_fractal_net.security
+forbidden_modules =
+    mycelium_fractal_net.core
+    mycelium_fractal_net.analytics
+    mycelium_fractal_net.neurochem
+    mycelium_fractal_net.pipelines

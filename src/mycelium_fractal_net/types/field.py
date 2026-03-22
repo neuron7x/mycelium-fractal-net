@@ -9,10 +9,15 @@ import json
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Tuple
+from typing import TYPE_CHECKING, Any, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.detection import AnomalyEvent
+    from mycelium_fractal_net.types.features import MorphologyDescriptor
+    from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
 
 
 class BoundaryCondition(str, Enum):
@@ -429,7 +434,7 @@ class SimulationSpec:
         if seed_value in (None, ""):
             seed: int | None = None
         else:
-            seed = int(seed_value)
+            seed = int(seed_value)  # type: ignore[arg-type]
         neuromod_raw = data.get("neuromodulation")
         neuromod = None if neuromod_raw is None else NeuromodulationSpec.from_dict(neuromod_raw)
         return cls(
@@ -522,18 +527,27 @@ class FieldSequence:
 
         object.__setattr__(self, "metadata", dict(self.metadata or {}))
 
+    @property
+    def field_min_mV(self) -> float:
+        return float(np.min(self.field)) * 1000
+
+    @property
+    def field_max_mV(self) -> float:
+        return float(np.max(self.field)) * 1000
+
+    @property
+    def field_mean_mV(self) -> float:
+        return float(np.mean(self.field)) * 1000
+
     def __repr__(self) -> str:
         n = self.field.shape[0]
-        steps = self.num_steps
-        v_min = float(np.min(self.field)) * 1000
-        v_max = float(np.max(self.field)) * 1000
         seed = self.spec.seed if self.spec else "?"
         neuro = ""
         if self.spec and self.spec.neuromodulation and self.spec.neuromodulation.enabled:
             neuro = f", neuromod={self.spec.neuromodulation.profile}"
         return (
-            f"FieldSequence({n}x{n}, {steps} steps, "
-            f"[{v_min:.1f}, {v_max:.1f}] mV, seed={seed}{neuro})"
+            f"FieldSequence({n}x{n}, {self.num_steps} steps, "
+            f"[{self.field_min_mV:.1f}, {self.field_max_mV:.1f}] mV, seed={seed}{neuro})"
         )
 
     @property
@@ -598,6 +612,25 @@ class FieldSequence:
         from mycelium_fractal_net.core.compare import compare
 
         return compare(self, other)
+
+    def explain(self) -> Any:
+        """Explain every pipeline decision with reasoning chains.
+
+        Returns a PipelineExplanation with human-readable narratives
+        for detection, regime classification, and causal verification.
+
+        >>> seq.explain().narrate()  # full human-readable explanation
+        >>> seq.explain().detection.margin_to_flip  # how close to a different label
+        """
+        from mycelium_fractal_net.core.causal_validation import (
+            validate_causal_consistency,
+        )
+        from mycelium_fractal_net.core.detect import detect_anomaly
+        from mycelium_fractal_net.core.explainability import explain_pipeline
+
+        event = detect_anomaly(self)
+        causal = validate_causal_consistency(self, detection=event)
+        return explain_pipeline(event, causal=causal)
 
     # ─────────────────────────────────────────────────────────
 

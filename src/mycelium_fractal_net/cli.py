@@ -422,7 +422,34 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--host", type=str, default="127.0.0.1")
     p.add_argument("--port", type=int, default=8000)
     p.set_defaults(func=cmd_api)
+
+    sub.add_parser("doctor", help="system health check").set_defaults(func=cmd_doctor)
+    sub.add_parser("info", help="system info and metrics").set_defaults(func=cmd_info)
+    sub.add_parser("scenarios", help="list available simulation scenarios").set_defaults(
+        func=cmd_scenarios
+    )
     return parser
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.cli_doctor import run_doctor
+
+    print(run_doctor())
+    return 0
+
+
+def cmd_info(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.cli_doctor import run_info
+
+    print(run_info())
+    return 0
+
+
+def cmd_scenarios(args: argparse.Namespace) -> int:
+    from mycelium_fractal_net.cli_doctor import run_scenarios
+
+    print(run_scenarios())
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
