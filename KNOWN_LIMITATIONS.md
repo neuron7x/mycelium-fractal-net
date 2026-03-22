@@ -41,7 +41,7 @@ The following surfaces are frozen and excluded from the v1 release contract:
 ## Neuromodulation
 
 - Occupancy conservation is enforced numerically (error < 1e-6) but not algebraically proven.
-- Observation noise model is BOLD-like but not validated against real fMRI data.
+- Observation noise model (`observation_noise_bold_like`) applies Gaussian temporal smoothing, not a hemodynamic response function. The name is aspirational — a true BOLD model requires HRF convolution (Buxton et al. 1998). Planned for v5.0.
 - Profile parameter ranges are based on published literature but not independently calibrated.
 
 ## Dependencies

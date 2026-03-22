@@ -1,6 +1,53 @@
+"""Morphology descriptor computation.
+
+Includes LZ76 complexity (Kaspar & Schuster 1987) for temporal analysis.
+"""
+
 from __future__ import annotations
 
 import numpy as np
+
+
+def _lempel_ziv_76_complexity(s: str) -> float:
+    """Lempel-Ziv complexity (LZ76) via sequential parsing.
+
+    Counts the number of new patterns encountered when parsing
+    the binary string left-to-right. Normalized by ``len(s) / log2(len(s))``
+    to give a value in approximately [0, 1] for comparison across lengths.
+
+    Reference: Kaspar & Schuster (1987) Phys Rev A 36:842-848
+               Lempel & Ziv (1976) IEEE Trans Inform Theory IT-22:75-81
+    """
+    n = len(s)
+    if n <= 1:
+        return 0.0
+
+    complexity = 1
+    i = 0
+    k = 1
+    k_max = 1
+
+    while i + k <= n:
+        # Check if s[i+1..i+k] is a substring of s[0..i+k-1]
+        substring = s[i + 1 : i + k + 1] if i + k + 1 <= n else s[i + 1 : n]
+        prefix = s[0 : i + k]
+
+        if substring in prefix:
+            k += 1
+            if i + k > n:
+                complexity += 1
+                break
+        else:
+            k_max = max(k_max, k)
+            complexity += 1
+            i += k_max if k_max > 0 else 1
+            k = 1
+            k_max = 1
+
+    # Normalize: for random binary string, LZ76 ~ n / log2(n)
+    import math
+    normalizer = n / max(1.0, math.log2(n))
+    return float(complexity / normalizer)
 
 from mycelium_fractal_net.analytics.connectivity import compute_connectivity_features
 from mycelium_fractal_net.analytics.embedding import build_embedding
@@ -45,10 +92,7 @@ def _complexity_metrics(sequence: FieldSequence) -> ComplexityMetrics:
         multiscale_entropy_short = 0.0
     else:
         bits = "".join("1" if value > np.mean(mean_series) else "0" for value in mean_series)
-        unique_substrings = {
-            bits[i:j] for i in range(len(bits)) for j in range(i + 1, min(len(bits), i + 5) + 1)
-        }
-        temporal_lzc = float(len(unique_substrings) / max(1, len(bits)))
+        temporal_lzc = _lempel_ziv_76_complexity(bits)
         diffs = np.abs(np.diff(mean_series))
         temporal_hfd = float(np.mean(diffs) / (np.std(mean_series) + 1e-12))
         coarse = (

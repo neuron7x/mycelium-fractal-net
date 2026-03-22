@@ -34,6 +34,11 @@ from mycelium_fractal_net.neurochem.constants import (
     REST_OFFSET_BASELINE_FRACTION,
     REST_OFFSET_DRIVE_FRACTION,
 )
+from mycelium_fractal_net.neurochem.config_types import (
+    GABAAKineticsConfig,
+    ObservationNoiseConfig,
+    SerotonergicKineticsConfig,
+)
 from mycelium_fractal_net.neurochem.mwc import (
     effective_gabaa_shunt,
     effective_serotonergic_gain,
@@ -112,9 +117,9 @@ def step_neuromodulation_state(
     dt_seconds: float,
     activator: NDArray[np.float64],
     field: NDArray[np.float64],
-    gabaa: dict | None,
-    serotonergic: dict | None,
-    observation_noise: dict | None,
+    gabaa: GABAAKineticsConfig | dict | None,
+    serotonergic: SerotonergicKineticsConfig | dict | None,
+    observation_noise: ObservationNoiseConfig | dict | None,
 ) -> NeuromodulationState:
     shape = field.shape
     if state.occupancy_resting.shape != shape:
