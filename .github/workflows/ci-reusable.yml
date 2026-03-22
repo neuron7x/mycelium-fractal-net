@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run python scripts/dev_doctor.py
       - run: uv run pytest tests/ -q --timeout=300
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev --extra ml
       - run: uv run python -c "import torch; import mycelium_fractal_net as mfn; assert mfn.MyceliumFractalNet is not None"
 
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run python validation/run_validation_experiments.py
 
@@ -60,7 +60,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev --extra ml
       - run: uv run python benchmarks/benchmark_core.py
 
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run python benchmarks/benchmark_quality.py
 
@@ -84,7 +84,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run python scripts/showcase_run.py
       - uses: actions/upload-artifact@v4
@@ -103,7 +103,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run python scripts/showcase_run.py
       - run: uv run python scripts/baseline_parity.py
@@ -124,7 +124,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run pytest -q tests/test_neuromodulation_completion.py tests/test_schema_roundtrip_completion.py tests/test_contract_hardening_completion.py
 
@@ -136,7 +136,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run python validation/neurochem_controls.py
 
@@ -148,7 +148,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run python scripts/export_openapi.py
       - run: uv run python scripts/check_openapi_contract.py
@@ -167,7 +167,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: uv run python scripts/docs_drift_check.py
 
@@ -180,7 +180,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --group dev
       - run: |
           uv run python benchmarks/benchmark_core.py
