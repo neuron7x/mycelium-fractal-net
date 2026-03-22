@@ -112,6 +112,9 @@ class CausalValidationResult:
     stages_checked: int = 0
     runtime_hash: str = ""
     config_hash: str = ""
+    provenance_hash: str = ""
+    mode: str = "strict"
+    engine_version: str = ""
     rule_version: str = CAUSAL_SCHEMA_VERSION
 
     @property
@@ -157,6 +160,9 @@ class CausalValidationResult:
             "warning_count": self.warning_count,
             "runtime_hash": self.runtime_hash,
             "config_hash": self.config_hash,
+            "provenance_hash": self.provenance_hash,
+            "mode": self.mode,
+            "engine_version": self.engine_version,
             "rule_version": self.rule_version,
             "violations": [r.to_dict() for r in self.violations],
             "all_rules": [r.to_dict() for r in self.rule_results],

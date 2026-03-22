@@ -3,9 +3,11 @@
   "calibration_date": "2026-03-21",
   "mode": "strict",
   "modes": {
-    "strict": "Block report on error/fatal violations",
-    "observe": "Log violations without blocking",
-    "permissive": "Log only fatal violations"
+    "strict": "Block report on error/fatal violations (default)",
+    "strict_release": "Block report on any violation including warnings — release gate",
+    "strict_api": "Block API response on error/fatal — runtime enforcement",
+    "observe": "Log violations without blocking — development mode",
+    "permissive": "Block only on fatal violations — experimental mode"
   },
   "severity_escalation": {
     "max_warnings_before_degraded": 5,

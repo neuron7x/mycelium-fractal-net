@@ -822,23 +822,52 @@ def validate_causal_consistency(
             if has_fatal
             else (CausalDecision.DEGRADED if (has_error or has_warn) else CausalDecision.PASS)
         )
+    elif mode == "strict_release":
+        # Release gate: any violation blocks
+        decision = (
+            CausalDecision.FAIL
+            if (has_fatal or has_error or has_warn)
+            else CausalDecision.PASS
+        )
+    elif mode in ("strict", "strict_api"):
+        # Default strict and API: error/fatal blocks, warnings degrade
+        decision = (
+            CausalDecision.FAIL
+            if (has_fatal or has_error)
+            else (CausalDecision.DEGRADED if has_warn else CausalDecision.PASS)
+        )
     else:
+        # Unknown mode falls back to strict
         decision = (
             CausalDecision.FAIL
             if (has_fatal or has_error)
             else (CausalDecision.DEGRADED if has_warn else CausalDecision.PASS)
         )
 
-    h = hashlib.sha256(
+    config_h = hashlib.sha256(
         json.dumps([{"id": r.rule_id, "p": r.passed} for r in results], sort_keys=True).encode()
     ).hexdigest()[:16]
+
+    # Provenance hash: input identity + config + engine version
+    runtime_h = getattr(sequence, "runtime_hash", "")
+    try:
+        from importlib.metadata import version as pkg_version
+
+        engine_ver = pkg_version("mycelium-fractal-net")
+    except Exception:
+        engine_ver = "unknown"
+    provenance_input = f"{runtime_h}:{config_h}:{engine_ver}:{mode}"
+    provenance_h = hashlib.sha256(provenance_input.encode()).hexdigest()[:16]
 
     return CausalValidationResult(
         decision=decision,
         rule_results=tuple(results),
         stages_checked=stages,
-        runtime_hash=getattr(sequence, "runtime_hash", ""),
-        config_hash=h,
+        runtime_hash=runtime_h,
+        config_hash=config_h,
+        provenance_hash=provenance_h,
+        mode=mode,
+        engine_version=engine_ver,
     )
 
 
