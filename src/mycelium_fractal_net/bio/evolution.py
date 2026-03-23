@@ -120,16 +120,15 @@ class BioEvolutionOptimizer:
         self.seed = seed
 
     def evaluate(self, params: np.ndarray) -> float:
-        import mycelium_fractal_net as mfn
-        from mycelium_fractal_net.bio import BioExtension
+        from mycelium_fractal_net.bio.extension import BioExtension
+        from mycelium_fractal_net.core.diagnose import diagnose
+        from mycelium_fractal_net.core.simulate import simulate_history
+        from mycelium_fractal_net.types.field import SimulationSpec
 
         config = params_to_bio_config(params)
         try:
-            from mycelium_fractal_net.core.diagnose import diagnose
-            from mycelium_fractal_net.types.field import SimulationSpec
-
             spec = SimulationSpec(grid_size=self.grid_size, steps=self.steps, seed=self.seed)
-            seq = mfn.simulate(spec)
+            seq = simulate_history(spec)
             bio = BioExtension.from_sequence(seq, config=config).step(n=self.bio_steps)
             diagnosis = diagnose(seq, skip_intervention=True, mode="fast")
             return compute_fitness(bio.report(), diagnosis)

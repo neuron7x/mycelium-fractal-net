@@ -45,8 +45,13 @@ class HDVEncoder:
         padded = np.zeros(self.n_features)
         n = min(len(x), self.n_features)
         padded[:n] = x[:n]
+        # NaN/overflow safety: replace non-finite with 0, clip extreme values
+        padded = np.where(np.isfinite(padded), padded, 0.0)
+        padded = np.clip(padded, -1e6, 1e6)
         projection = self._omega @ padded + self._b
-        return np.sign(np.cos(projection)).astype(np.float32)
+        raw = np.sign(np.cos(projection))
+        # Guarantee ±1 output (sign(0)=0 → map to +1)
+        return np.where(raw == 0.0, 1.0, raw).astype(np.float32)
 
     def similarity(self, a: np.ndarray, b: np.ndarray) -> float:
         return float(np.dot(a, b)) / self.D

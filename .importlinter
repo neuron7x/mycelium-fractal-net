@@ -92,3 +92,15 @@ forbidden_modules =
     mycelium_fractal_net.analytics
     mycelium_fractal_net.neurochem
     mycelium_fractal_net.pipelines
+
+# === Layer 8: Bio must not import transport/UI ===
+[importlinter:contract:bio_isolation]
+name = Bio layer must not depend on transport or UI
+type = forbidden
+source_modules =
+    mycelium_fractal_net.bio
+forbidden_modules =
+    mycelium_fractal_net.integration
+    mycelium_fractal_net.api
+    mycelium_fractal_net.cli
+    mycelium_fractal_net.pipelines
