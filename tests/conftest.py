@@ -12,23 +12,40 @@ import pytest
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """
-    Configure pytest environment before tests run.
-
-    Sets MFN_ENV=dev to ensure authentication and rate limiting are disabled
-    by default during tests, unless explicitly overridden.
-    """
-    # Only set if not already set (allows override for specific tests)
+    """Configure pytest: env vars + Hypothesis profiles."""
     if "MFN_ENV" not in os.environ:
         os.environ["MFN_ENV"] = "dev"
-
-    # Disable auth by default in tests
     if "MFN_API_KEY_REQUIRED" not in os.environ:
         os.environ["MFN_API_KEY_REQUIRED"] = "false"
-
-    # Disable rate limiting by default in tests
     if "MFN_RATE_LIMIT_ENABLED" not in os.environ:
         os.environ["MFN_RATE_LIMIT_ENABLED"] = "false"
+
+    # Hypothesis profiles: fast (PR), ci (default), full (nightly)
+    try:
+        from hypothesis import HealthCheck, settings as h_settings
+
+        h_settings.register_profile(
+            "fast",
+            max_examples=20,
+            deadline=2000,
+            suppress_health_check=[HealthCheck.too_slow],
+        )
+        h_settings.register_profile(
+            "ci",
+            max_examples=50,
+            deadline=5000,
+            suppress_health_check=[HealthCheck.too_slow],
+        )
+        h_settings.register_profile(
+            "full",
+            max_examples=500,
+            deadline=None,
+            suppress_health_check=[HealthCheck.too_slow],
+        )
+        profile = os.environ.get("BIO_HYPOTHESIS_PROFILE", "fast")
+        h_settings.load_profile(profile)
+    except ImportError:
+        pass
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -102,3 +119,24 @@ def clear_descriptor_cache():
     _descriptor_cache.clear()
     yield
     _descriptor_cache.clear()
+
+
+# ── Benchmark baseline loader ─────────────────────────────────────────────────
+
+
+@pytest.fixture(scope="session")
+def bio_baseline():
+    """Load calibrated benchmark baselines from JSON."""
+    import json
+    from pathlib import Path
+
+    p = Path(__file__).parent.parent / "benchmarks" / "bio_baseline.json"
+    if p.exists():
+        return json.loads(p.read_text())
+    return {
+        "physarum_step_32": {"median_ms": 100.0, "p95_ms": 150.0},
+        "memory_query_200": {"median_ms": 5.0, "p95_ms": 10.0},
+        "hdv_encode": {"median_ms": 2.0, "p95_ms": 3.0},
+        "bio_step_16": {"median_ms": 50.0, "p95_ms": 80.0},
+        "meta_single_eval": {"median_ms": 500.0, "p95_ms": 800.0},
+    }
