@@ -124,49 +124,98 @@ class DiagnosisReport:
 
     def diff(self, other: DiagnosisReport) -> DiagnosisDiff:
         """Compare this report with another and return what changed."""
+        import math as _m
+
+        sev_order = {"stable": 0, "info": 1, "warning": 2, "critical": 3}
+        s_from = sev_order.get(self.severity, 1)
+        s_to = sev_order.get(other.severity, 1)
+        if s_to > s_from:
+            sev_dir = "escalated"
+        elif s_to < s_from:
+            sev_dir = "de-escalated"
+        else:
+            sev_dir = "unchanged"
+
+        ews_delta = round(other.warning.ews_score - self.warning.ews_score, 6)
+        if ews_delta > 0.05:
+            ews_trend = "rising"
+        elif ews_delta < -0.05:
+            ews_trend = "falling"
+        else:
+            ews_trend = "stable"
+
+        t_from = self.warning.time_to_transition
+        t_to = other.warning.time_to_transition
+        if _m.isinf(t_from) or _m.isinf(t_to):
+            t_delta = float("inf")
+        else:
+            t_delta = round(t_to - t_from, 2)
+
+        if sev_dir == "escalated" or ews_delta > 0.1:
+            overall = "deteriorating"
+        elif sev_dir == "de-escalated" or ews_delta < -0.1:
+            overall = "improving"
+        else:
+            overall = "stable"
+
         return DiagnosisDiff(
             severity_changed=self.severity != other.severity,
-            severity_before=self.severity,
-            severity_after=other.severity,
+            severity_from=self.severity,
+            severity_to=other.severity,
+            severity_direction=sev_dir,
+            ews_score_delta=ews_delta,
+            ews_score_from=round(self.warning.ews_score, 4),
+            ews_score_to=round(other.warning.ews_score, 4),
+            ews_trend=ews_trend,
+            transition_type_changed=self.warning.transition_type != other.warning.transition_type,
+            transition_type_from=self.warning.transition_type,
+            transition_type_to=other.warning.transition_type,
             anomaly_label_changed=self.anomaly.label != other.anomaly.label,
-            anomaly_label_before=self.anomaly.label,
-            anomaly_label_after=other.anomaly.label,
-            anomaly_score_delta=round(other.anomaly.score - self.anomaly.score, 6),
-            ews_score_delta=round(other.warning.ews_score - self.warning.ews_score, 6),
-            ews_type_changed=self.warning.transition_type != other.warning.transition_type,
-            ews_type_before=self.warning.transition_type,
-            ews_type_after=other.warning.transition_type,
+            anomaly_label_from=self.anomaly.label,
+            anomaly_label_to=other.anomaly.label,
             causal_changed=self.causal.decision != other.causal.decision,
-            causal_before=self.causal.decision.value,
-            causal_after=other.causal.decision.value,
+            causal_from=self.causal.decision.value,
+            causal_to=other.causal.decision.value,
+            time_to_transition_delta=t_delta,
+            overall_trend=overall,
         )
 
 
 @dataclass(frozen=True)
 class DiagnosisDiff:
-    """Difference between two DiagnosisReport instances."""
+    """Temporal diff between two DiagnosisReport instances."""
 
     severity_changed: bool
-    severity_before: str
-    severity_after: str
-    anomaly_label_changed: bool
-    anomaly_label_before: str
-    anomaly_label_after: str
-    anomaly_score_delta: float
+    severity_from: str
+    severity_to: str
+    severity_direction: str  # "escalated" | "de-escalated" | "unchanged"
+
     ews_score_delta: float
-    ews_type_changed: bool
-    ews_type_before: str
-    ews_type_after: str
+    ews_score_from: float
+    ews_score_to: float
+    ews_trend: str  # "rising" | "falling" | "stable"
+
+    transition_type_changed: bool
+    transition_type_from: str
+    transition_type_to: str
+
+    anomaly_label_changed: bool
+    anomaly_label_from: str
+    anomaly_label_to: str
+
     causal_changed: bool
-    causal_before: str
-    causal_after: str
+    causal_from: str
+    causal_to: str
+
+    time_to_transition_delta: float
+    overall_trend: str  # "deteriorating" | "improving" | "stable"
 
     @property
     def has_changes(self) -> bool:
         return (
             self.severity_changed
             or self.anomaly_label_changed
-            or self.ews_type_changed
+            or self.transition_type_changed
             or self.causal_changed
         )
 
@@ -174,37 +223,45 @@ class DiagnosisDiff:
         return {
             "severity": {
                 "changed": self.severity_changed,
-                "before": self.severity_before,
-                "after": self.severity_after,
+                "from": self.severity_from,
+                "to": self.severity_to,
+                "direction": self.severity_direction,
             },
             "anomaly_label": {
                 "changed": self.anomaly_label_changed,
-                "before": self.anomaly_label_before,
-                "after": self.anomaly_label_after,
+                "from": self.anomaly_label_from,
+                "to": self.anomaly_label_to,
             },
-            "anomaly_score_delta": self.anomaly_score_delta,
-            "ews_score_delta": self.ews_score_delta,
-            "ews_type": {
-                "changed": self.ews_type_changed,
-                "before": self.ews_type_before,
-                "after": self.ews_type_after,
+            "ews": {
+                "delta": self.ews_score_delta,
+                "from": self.ews_score_from,
+                "to": self.ews_score_to,
+                "trend": self.ews_trend,
+            },
+            "transition_type": {
+                "changed": self.transition_type_changed,
+                "from": self.transition_type_from,
+                "to": self.transition_type_to,
             },
             "causal": {
                 "changed": self.causal_changed,
-                "before": self.causal_before,
-                "after": self.causal_after,
+                "from": self.causal_from,
+                "to": self.causal_to,
             },
+            "time_to_transition_delta": self.time_to_transition_delta,
+            "overall_trend": self.overall_trend,
             "has_changes": self.has_changes,
         }
 
     def summary(self) -> str:
-        parts = []
+        parts = [f"[DIFF:{self.overall_trend}]"]
+        parts.append(
+            f"ews {self.ews_score_from:.2f}→{self.ews_score_to:.2f} Δ={self.ews_score_delta:+.2f}"
+        )
+        parts.append(f"trend={self.ews_trend}")
         if self.severity_changed:
-            parts.append(f"severity: {self.severity_before}→{self.severity_after}")
+            parts.append(f"severity: {self.severity_from}→{self.severity_to}")
         if self.anomaly_label_changed:
-            parts.append(f"anomaly: {self.anomaly_label_before}→{self.anomaly_label_after}")
-        if abs(self.ews_score_delta) > 0.01:
-            parts.append(f"ews: {self.ews_score_delta:+.3f}")
-        if self.causal_changed:
-            parts.append(f"causal: {self.causal_before}→{self.causal_after}")
-        return ", ".join(parts) if parts else "no changes"
+            parts.append(f"anomaly: {self.anomaly_label_from}→{self.anomaly_label_to}")
+        parts.append(f"overall={self.overall_trend}")
+        return " ".join(parts)

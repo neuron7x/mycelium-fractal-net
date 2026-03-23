@@ -144,8 +144,8 @@ class TestDiagnosisDiff:
         diff = report.diff(report)
         assert isinstance(diff, DiagnosisDiff)
         assert not diff.has_changes
-        assert diff.anomaly_score_delta == 0.0
         assert diff.ews_score_delta == 0.0
+        assert diff.overall_trend == "stable"
 
     def test_different_seeds_may_diff(self) -> None:
         r1 = mfn.diagnose(
@@ -163,7 +163,8 @@ class TestDiagnosisDiff:
     def test_diff_summary(self) -> None:
         r1 = mfn.diagnose(_seq(), skip_intervention=True)
         diff = r1.diff(r1)
-        assert diff.summary() == "no changes"
+        assert "[DIFF:" in diff.summary()
+        assert "overall=" in diff.summary()
 
     def test_diff_to_dict(self) -> None:
         r1 = mfn.diagnose(_seq(), skip_intervention=True)

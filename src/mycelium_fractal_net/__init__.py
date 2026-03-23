@@ -101,9 +101,13 @@ from .types.report import AnalysisReport  # noqa: TC001
 
 from .core.diagnose import diagnose, diagnose_streaming  # noqa: E402
 from .core.early_warning import early_warning  # noqa: E402
+from .core.ensemble import ensemble_diagnose  # noqa: E402
+from .core.inverse import inverse_synthesis  # noqa: E402
 from .core.watch import watch  # noqa: E402
 from .types.diagnosis import DiagnosisDiff, DiagnosisReport  # noqa: E402
+from .types.ensemble import EnsembleDiagnosisReport  # noqa: E402
 from .types.ews import CriticalTransitionWarning  # noqa: E402
+from .types.inverse import InverseSynthesisResult  # noqa: E402
 
 
 def plan_intervention(
