@@ -6,6 +6,9 @@ The original model.py imports from here.
 
 from __future__ import annotations
 
+from mycelium_fractal_net.model_pkg.aggregation import (
+    HierarchicalKrumAggregator,
+)
 from mycelium_fractal_net.model_pkg.biophysics import (
     BODY_TEMPERATURE_K,
     FARADAY_CONSTANT,
@@ -35,16 +38,11 @@ from mycelium_fractal_net.model_pkg.network import (
     run_validation,
     run_validation_cli,
 )
-from mycelium_fractal_net.model_pkg.aggregation import (
-    HierarchicalKrumAggregator,
-)
 
 __all__ = [
     "BODY_TEMPERATURE_K",
     "FARADAY_CONSTANT",
-    "HierarchicalKrumAggregator",
     "ION_CLAMP_MIN",
-    "MyceliumFractalNet",
     "NERNST_RTFZ_MV",
     "QUANTUM_JITTER_VAR",
     "R_GAS_CONSTANT",
@@ -53,9 +51,11 @@ __all__ = [
     "STDP_A_PLUS",
     "STDP_TAU_MINUS",
     "STDP_TAU_PLUS",
+    "TURING_THRESHOLD",
+    "HierarchicalKrumAggregator",
+    "MyceliumFractalNet",
     "STDPPlasticity",
     "SparseAttention",
-    "TURING_THRESHOLD",
     "ValidationConfig",
     "compute_lyapunov_exponent",
     "compute_nernst_potential",

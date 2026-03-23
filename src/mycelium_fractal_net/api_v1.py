@@ -3,11 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import tempfile
-from pathlib import Path
-from typing import Any
 
-import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -17,7 +13,7 @@ from mycelium_fractal_net.core.detect import detect_anomaly
 from mycelium_fractal_net.core.forecast import forecast_next
 from mycelium_fractal_net.core.simulate import simulate_final, simulate_history
 from mycelium_fractal_net.pipelines.reporting import build_analysis_report
-from mycelium_fractal_net.types.field import FieldSequence, NeuromodulationSpec, SimulationSpec
+from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
 
 v1_router = APIRouter(tags=["v1"])
 
@@ -64,7 +60,6 @@ def _sequence_from_payload(payload: V1FieldPayload) -> FieldSequence:
 
 @v1_router.post("/v1/simulate")
 async def v1_simulate(request: V1SimulationRequest) -> dict:
-    import asyncio
 
     spec = _spec_from_v1(request)
     loop = asyncio.get_running_loop()
@@ -75,7 +70,6 @@ async def v1_simulate(request: V1SimulationRequest) -> dict:
 
 @v1_router.post("/v1/extract")
 async def v1_extract(payload: V1FieldPayload) -> dict:
-    import asyncio
 
     seq = _sequence_from_payload(payload)
     loop = asyncio.get_running_loop()
@@ -146,8 +140,12 @@ async def v1_report(payload: V1ReportRequest) -> dict:
 
 def main(host: str | None = None, port: int | None = None) -> None:
     """Run the FastAPI server with uvicorn."""
+    import os
+
     import uvicorn
 
     resolved_host = host or os.getenv("MFN_HOST", "0.0.0.0")  # nosec B104
     resolved_port = int(port or int(os.getenv("MFN_PORT", "8000")))
+    from mycelium_fractal_net.api import app
+
     uvicorn.run(app, host=resolved_host, port=resolved_port)

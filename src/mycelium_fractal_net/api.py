@@ -54,7 +54,6 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 
 # Import schemas and adapters from integration layer
 from mycelium_fractal_net.integration import (
@@ -918,20 +917,15 @@ async def _stream_simulation_task(
 
 
 # === Canonical v1 structural analytics endpoints ===
-from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
-from mycelium_fractal_net.core.compare import compare as compare_sequences
-from mycelium_fractal_net.core.detect import detect_anomaly
-from mycelium_fractal_net.core.forecast import forecast_next
-from mycelium_fractal_net.core.simulate import simulate_final, simulate_history
-from mycelium_fractal_net.pipelines.reporting import build_analysis_report
-from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
 
 
 # V1 endpoints extracted to api_v1.py
-from mycelium_fractal_net.api_v1 import v1_router  # noqa: E402
+from mycelium_fractal_net.api_v1 import v1_router
 
 app.include_router(v1_router)
 
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)

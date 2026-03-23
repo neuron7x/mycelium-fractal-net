@@ -7,12 +7,14 @@ Stops when callback returns False or severity reaches critical.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from mycelium_fractal_net.core.diagnose import diagnose
 from mycelium_fractal_net.types.diagnosis import SEVERITY_CRITICAL, DiagnosisReport
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from mycelium_fractal_net.types.field import SimulationSpec
 
 logger = logging.getLogger(__name__)

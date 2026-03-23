@@ -9,5 +9,5 @@ Original model.py (1329 LOC) has been split into:
 All imports from mycelium_fractal_net.model continue to work.
 """
 
-from mycelium_fractal_net.model_pkg import *  # noqa: F401, F403
+from mycelium_fractal_net.model_pkg import *  # noqa: F403
 from mycelium_fractal_net.model_pkg import __all__  # noqa: F401

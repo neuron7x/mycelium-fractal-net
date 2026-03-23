@@ -5,21 +5,13 @@ from __future__ import annotations
 import argparse
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from mycelium_fractal_net._optional import require_ml_dependency
 from mycelium_fractal_net.model_pkg.biophysics import (
-    BODY_TEMPERATURE_K,
-    FARADAY_CONSTANT,
-    ION_CLAMP_MIN,
     NERNST_RTFZ_MV,
-    QUANTUM_JITTER_VAR,
-    R_GAS_CONSTANT,
-    TURING_THRESHOLD,
     _symbolic_nernst_example,
-    compute_lyapunov_exponent,
     compute_nernst_potential,
     estimate_fractal_dimension,
     generate_fractal_ifs,
@@ -27,16 +19,9 @@ from mycelium_fractal_net.model_pkg.biophysics import (
 )
 from mycelium_fractal_net.model_pkg.components import (
     SPARSE_TOPK,
-    STDP_A_MINUS,
-    STDP_A_PLUS,
-    STDP_TAU_MINUS,
-    STDP_TAU_PLUS,
     SparseAttention,
     STDPPlasticity,
 )
-
-if TYPE_CHECKING:
-    from numpy.typing import NDArray
 
 torch = require_ml_dependency("torch")
 nn = torch.nn

@@ -24,7 +24,6 @@ from pathlib import Path
 from typing import Any
 
 # Re-export SimulationConfig from core.types (single source of truth)
-from .core.types import SimulationConfig
 
 # ============================================================================
 # Constants - Parameter Bounds
@@ -305,7 +304,7 @@ class DatasetConfig:
 
 
 # Validation and factory functions extracted to config_validation.py
-from mycelium_fractal_net.config_validation import (  # noqa: E402, F401
+from mycelium_fractal_net.config_validation import (  # noqa: F401
     make_dataset_config_default,
     make_dataset_config_demo,
     make_feature_config_default,
@@ -315,4 +314,9 @@ from mycelium_fractal_net.config_validation import (  # noqa: E402, F401
     validate_dataset_config,
     validate_feature_config,
     validate_simulation_config,
+)
+
+# Re-export SimulationConfig for backward compatibility
+from mycelium_fractal_net.core.types import (
+    SimulationConfig as SimulationConfig,  # noqa: PLC0414
 )

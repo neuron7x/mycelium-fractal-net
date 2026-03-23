@@ -12,8 +12,6 @@ from mycelium_fractal_net.types.diagnosis import (
     DiagnosisReport,
 )
 from mycelium_fractal_net.types.field import (
-    GABAATonicSpec,
-    NeuromodulationSpec,
     SimulationSpec,
 )
 
@@ -44,7 +42,8 @@ class TestDiagnose:
         assert report.forecast is not None
         assert report.causal is not None
         assert report.descriptor is not None
-        assert isinstance(report.narrative, str) and len(report.narrative) > 10
+        assert isinstance(report.narrative, str)
+        assert len(report.narrative) > 10
         assert "diagnosis_time_ms" in report.metadata
 
     def test_summary_format(self) -> None:
@@ -211,7 +210,7 @@ class TestWatch:
         spec = SimulationSpec(grid_size=16, steps=8, seed=42)
         r1 = mfn.watch(spec, n_steps_per_tick=8, n_ticks=3)
         r2 = mfn.watch(spec, n_steps_per_tick=8, n_ticks=3)
-        for a, b in zip(r1, r2):
+        for a, b in zip(r1, r2, strict=False):
             assert a.severity == b.severity
             assert a.warning.ews_score == b.warning.ews_score
 

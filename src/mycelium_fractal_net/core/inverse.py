@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-import mycelium_fractal_net as _mfn
 from mycelium_fractal_net.core.early_warning import early_warning
 from mycelium_fractal_net.core.simulate import simulate_history
 from mycelium_fractal_net.types.inverse import InverseSynthesisResult
@@ -176,7 +175,7 @@ def inverse_synthesis(
     param_names = list(SEARCH_PARAMS.keys())
     iterations = 0
 
-    for outer in range(max_iterations):
+    for _outer in range(max_iterations):
         improved = False
         for pname in param_names:
             lo, hi, step = SEARCH_PARAMS[pname]

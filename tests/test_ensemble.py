@@ -27,7 +27,7 @@ def test_ensemble_ci95_bounds() -> None:
     result = mfn.ensemble_diagnose(SPEC, n_runs=5)
     lo, hi = result.ews_score_ci95
     assert lo <= result.ews_score_mean <= hi
-    assert 0.0 <= lo
+    assert lo >= 0.0
     assert hi <= 1.0
 
 

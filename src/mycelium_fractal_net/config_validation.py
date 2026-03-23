@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from mycelium_fractal_net.config import (  # noqa: F401
+from pathlib import Path
+
+from mycelium_fractal_net.config import (
     ALPHA_MAX,
     ALPHA_MIN,
     BOX_SIZE_MIN,
     CONNECTIVITY_VALUES,
-    DatasetConfig,
-    FeatureConfig,
     GRID_SIZE_MAX,
     GRID_SIZE_MIN,
     JITTER_VAR_MAX,
@@ -25,9 +25,9 @@ from mycelium_fractal_net.config import (  # noqa: F401
     THRESHOLD_MV_MIN,
     TURING_THRESHOLD_MAX,
     TURING_THRESHOLD_MIN,
+    DatasetConfig,
+    FeatureConfig,
 )
-from pathlib import Path
-
 from mycelium_fractal_net.core.types import SimulationConfig
 
 

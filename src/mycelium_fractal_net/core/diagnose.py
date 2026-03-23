@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 import time
-from typing import TYPE_CHECKING, Generator, Literal
+from typing import TYPE_CHECKING, Literal
 
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
@@ -18,12 +18,6 @@ from mycelium_fractal_net.core.detect import detect_anomaly
 from mycelium_fractal_net.core.early_warning import early_warning
 from mycelium_fractal_net.core.forecast import forecast_next
 from mycelium_fractal_net.intervention import plan_intervention
-from mycelium_fractal_net.intervention.types import InterventionPlan
-from mycelium_fractal_net.types.causal import CausalValidationResult
-from mycelium_fractal_net.types.detection import AnomalyEvent
-from mycelium_fractal_net.types.ews import CriticalTransitionWarning
-from mycelium_fractal_net.types.features import MorphologyDescriptor
-from mycelium_fractal_net.types.forecast import ForecastResult
 from mycelium_fractal_net.types.diagnosis import (
     SEVERITY_CRITICAL,
     SEVERITY_INFO,
@@ -33,7 +27,15 @@ from mycelium_fractal_net.types.diagnosis import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from mycelium_fractal_net.intervention.types import InterventionPlan
+    from mycelium_fractal_net.types.causal import CausalValidationResult
+    from mycelium_fractal_net.types.detection import AnomalyEvent
+    from mycelium_fractal_net.types.ews import CriticalTransitionWarning
+    from mycelium_fractal_net.types.features import MorphologyDescriptor
     from mycelium_fractal_net.types.field import FieldSequence
+    from mycelium_fractal_net.types.forecast import ForecastResult
 
 __all__ = ["diagnose", "diagnose_streaming"]
 
