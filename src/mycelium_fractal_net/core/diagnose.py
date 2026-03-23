@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import math
 import time
-from typing import TYPE_CHECKING, Any, Generator, Literal
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Literal
 
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency

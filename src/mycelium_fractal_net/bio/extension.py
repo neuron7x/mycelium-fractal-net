@@ -11,17 +11,18 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-
-from mycelium_fractal_net.types.field import FieldSequence
 
 from .anastomosis import AnastomosisConfig, AnastomosisEngine, AnastomosisState
 from .chemotaxis import ChemotaxisConfig, ChemotaxisEngine, ChemotaxisState
 from .dispersal import DispersalConfig, SporeDispersalEngine, SporeDispersalState
 from .fhn import FHNConfig, FHNEngine, FHNState
 from .physarum import PhysarumConfig, PhysarumEngine, PhysarumState
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.field import FieldSequence
 
 __all__ = ["BioConfig", "BioExtension", "BioReport"]
 

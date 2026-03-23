@@ -46,7 +46,7 @@ def test_all_stages_have_rules() -> None:
 
 def test_every_sim_rule_passes() -> None:
     """All SIM-* rules pass on valid simulation."""
-    seq, desc, det, fc, cmp = _full_pipeline()
+    seq, _desc, _det, _fc, _cmp = _full_pipeline()
     result = validate_causal_consistency(seq, mode="strict")
     for r in result.rule_results:
         if r.rule_id.startswith("SIM"):
@@ -55,7 +55,7 @@ def test_every_sim_rule_passes() -> None:
 
 def test_every_ext_rule_passes() -> None:
     """All EXT-* rules pass on valid descriptor."""
-    seq, desc, det, fc, cmp = _full_pipeline()
+    seq, desc, _det, _fc, _cmp = _full_pipeline()
     result = validate_causal_consistency(seq, descriptor=desc, mode="strict")
     for r in result.rule_results:
         if r.rule_id.startswith("EXT"):
@@ -64,7 +64,7 @@ def test_every_ext_rule_passes() -> None:
 
 def test_every_det_rule_passes() -> None:
     """All DET-* rules pass on valid detection."""
-    seq, desc, det, fc, cmp = _full_pipeline()
+    seq, _desc, det, _fc, _cmp = _full_pipeline()
     result = validate_causal_consistency(seq, detection=det, mode="strict")
     for r in result.rule_results:
         if r.rule_id.startswith("DET"):
@@ -73,7 +73,7 @@ def test_every_det_rule_passes() -> None:
 
 def test_every_for_rule_passes() -> None:
     """All FOR-* rules pass on valid forecast."""
-    seq, desc, det, fc, cmp = _full_pipeline()
+    seq, _desc, _det, fc, _cmp = _full_pipeline()
     result = validate_causal_consistency(seq, forecast=fc, mode="strict")
     for r in result.rule_results:
         if r.rule_id.startswith("FOR"):
@@ -82,7 +82,7 @@ def test_every_for_rule_passes() -> None:
 
 def test_every_cmp_rule_passes() -> None:
     """All CMP-* rules pass on valid comparison."""
-    seq, desc, det, fc, cmp = _full_pipeline()
+    seq, _desc, _det, _fc, cmp = _full_pipeline()
     result = validate_causal_consistency(seq, comparison=cmp, mode="strict")
     for r in result.rule_results:
         if r.rule_id.startswith("CMP"):

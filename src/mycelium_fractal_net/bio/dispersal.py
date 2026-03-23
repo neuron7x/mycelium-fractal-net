@@ -78,8 +78,8 @@ class SporeDispersalEngine:
                     r = cfg.r_min * u ** (-1.0 / cfg.alpha_levy)
                     r = min(r, N * 0.7)
                     angle = rng.uniform(0, 2 * np.pi)
-                    ti = (coord[0] + int(round(r * np.sin(angle)))) % N
-                    tj = (coord[1] + int(round(r * np.cos(angle)))) % N
+                    ti = (coord[0] + round(r * np.sin(angle))) % N
+                    tj = (coord[1] + round(r * np.cos(angle))) % N
                     spore_air_new[ti, tj] += 1.0
                     new_events += 1
 
