@@ -99,6 +99,11 @@ from .types.field import (
 from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
 from .types.report import AnalysisReport  # noqa: TC001
 
+from .core.diagnose import diagnose  # noqa: E402
+from .core.early_warning import early_warning  # noqa: E402
+from .types.diagnosis import DiagnosisReport  # noqa: E402
+from .types.ews import CriticalTransitionWarning  # noqa: E402
+
 
 def plan_intervention(
     source: FieldSequence,
@@ -396,6 +401,8 @@ V1_SURFACE = (
     "compare",
     "report",
     "plan_intervention",
+    "diagnose",
+    "early_warning",
     "SimulationSpec",
     "NeuromodulationSpec",
     "GABAATonicSpec",
