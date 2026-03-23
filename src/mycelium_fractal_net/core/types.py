@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 from mycelium_fractal_net.neurochem.config_types import NeuromodulationConfig
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 @dataclass(frozen=True)
@@ -61,7 +63,7 @@ class SimulationMetrics:
         return d
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SimulationMetrics":
+    def from_dict(cls, data: dict[str, Any]) -> SimulationMetrics:
         return cls(**{k: data[k] for k in cls.__dataclass_fields__ if k in data})
 
 
@@ -89,10 +91,14 @@ class SimulationConfig:
         # Normalize: accept typed NeuromodulationSpec, dict, or NeuromodulationConfig
         if isinstance(self.neuromodulation, dict):
             self.neuromodulation = NeuromodulationConfig.from_dict(self.neuromodulation)
-        elif self.neuromodulation is not None and not isinstance(self.neuromodulation, NeuromodulationConfig):
+        elif self.neuromodulation is not None and not isinstance(
+            self.neuromodulation, NeuromodulationConfig
+        ):
             # Accept NeuromodulationSpec or any object with to_dict()
             if hasattr(self.neuromodulation, "to_dict"):
-                self.neuromodulation = NeuromodulationConfig.from_dict(self.neuromodulation.to_dict())
+                self.neuromodulation = NeuromodulationConfig.from_dict(
+                    self.neuromodulation.to_dict()
+                )
         if not (4 <= self.grid_size <= 512):
             raise ValueError("grid_size must be in [4, 512]")
         if self.steps < 1:
@@ -123,11 +129,13 @@ class SimulationConfig:
             "quantum_jitter": self.quantum_jitter,
             "jitter_var": self.jitter_var,
             "seed": self.seed,
-            "neuromodulation": self.neuromodulation.to_dict() if self.neuromodulation is not None else None,
+            "neuromodulation": self.neuromodulation.to_dict()
+            if self.neuromodulation is not None
+            else None,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SimulationConfig":
+    def from_dict(cls, data: dict[str, Any]) -> SimulationConfig:
         """
         Create configuration from a dictionary.
 
@@ -200,7 +208,9 @@ class SimulationConfig:
             quantum_jitter=_parse_bool(data.get("quantum_jitter"), False),
             jitter_var=float(data.get("jitter_var", 0.0005)),
             seed=_parse_seed(seed_value),
-            neuromodulation=NeuromodulationConfig.from_dict(data["neuromodulation"]) if data.get("neuromodulation") is not None else None,
+            neuromodulation=NeuromodulationConfig.from_dict(data["neuromodulation"])
+            if data.get("neuromodulation") is not None
+            else None,
         )
 
 
@@ -319,7 +329,7 @@ class SimulationResult:
         return result
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SimulationResult":
+    def from_dict(cls, data: dict[str, Any]) -> SimulationResult:
         """
         Create SimulationResult from a dictionary.
 

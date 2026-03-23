@@ -19,11 +19,9 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-import numpy as np
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.core.detect import detect_anomaly
-
 
 # Scenarios to test
 SCENARIOS = [
@@ -103,7 +101,7 @@ def main() -> None:
                     flips_down += 1
 
             flip_rate = max(flips_up, flips_down) / n_scenarios
-            row["perturbations"][f"±{int(pct*100)}%"] = {
+            row["perturbations"][f"±{int(pct * 100)}%"] = {
                 "flips_up": flips_up,
                 "flips_down": flips_down,
                 "flip_rate": round(flip_rate, 2),
@@ -140,13 +138,15 @@ def main() -> None:
             f"{fragile} |"
         )
 
-    lines.extend([
-        "",
-        f"**Fragile thresholds (>10% flip at ±5%): {fragile_count}**",
-        "",
-        "Fragile thresholds should be reviewed for robustness.",
-        "See `configs/detection_thresholds_v1.json` for current values.",
-    ])
+    lines.extend(
+        [
+            "",
+            f"**Fragile thresholds (>10% flip at ±5%): {fragile_count}**",
+            "",
+            "Fragile thresholds should be reviewed for robustness.",
+            "See `configs/detection_thresholds_v1.json` for current values.",
+        ]
+    )
 
     report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Report: {report_path}")

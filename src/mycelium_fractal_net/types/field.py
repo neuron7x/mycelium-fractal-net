@@ -9,12 +9,13 @@ import json
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from mycelium_fractal_net.types.detection import AnomalyEvent
     from mycelium_fractal_net.types.features import MorphologyDescriptor
     from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
@@ -51,11 +52,11 @@ class GridShape:
     def total_cells(self) -> int:
         return self.rows * self.cols
 
-    def to_tuple(self) -> Tuple[int, int]:
+    def to_tuple(self) -> tuple[int, int]:
         return (self.rows, self.cols)
 
     @classmethod
-    def square(cls, size: int) -> "GridShape":
+    def square(cls, size: int) -> GridShape:
         return cls(rows=size, cols=size)
 
 
@@ -205,7 +206,7 @@ class GABAATonicSpec:
         return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "GABAATonicSpec":
+    def from_dict(cls, data: dict[str, Any]) -> GABAATonicSpec:
         return cls(**{name: data[name] for name in cls.__dataclass_fields__ if name in data})
 
 
@@ -227,7 +228,7 @@ class SerotonergicPlasticitySpec:
         return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SerotonergicPlasticitySpec":
+    def from_dict(cls, data: dict[str, Any]) -> SerotonergicPlasticitySpec:
         return cls(**{name: data[name] for name in cls.__dataclass_fields__ if name in data})
 
 
@@ -247,7 +248,7 @@ class ObservationNoiseSpec:
         return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ObservationNoiseSpec":
+    def from_dict(cls, data: dict[str, Any]) -> ObservationNoiseSpec:
         return cls(**{name: data[name] for name in cls.__dataclass_fields__ if name in data})
 
 
@@ -326,13 +327,13 @@ class NeuromodulationSpec:
         }
 
     @classmethod
-    def from_profile(cls, profile: str) -> "NeuromodulationSpec":
+    def from_profile(cls, profile: str) -> NeuromodulationSpec:
         from mycelium_fractal_net.neurochem.profiles import get_profile
 
         return cls.from_dict(get_profile(profile))
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "NeuromodulationSpec":
+    def from_dict(cls, data: dict[str, Any]) -> NeuromodulationSpec:
         from mycelium_fractal_net.neurochem.profiles import (
             PROFILE_REGISTRY,
             get_profile,
@@ -413,7 +414,7 @@ class SimulationSpec:
         return self.as_runtime_dict()
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SimulationSpec":
+    def from_dict(cls, data: dict[str, Any]) -> SimulationSpec:
         def _parse_bool(value: Any, default: bool) -> bool:
             if value is None:
                 return default
@@ -492,7 +493,7 @@ class NeuromodulationStateSnapshot:
         return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "NeuromodulationStateSnapshot":
+    def from_dict(cls, data: dict[str, Any]) -> NeuromodulationStateSnapshot:
         return cls(**{k: float(data[k]) for k in cls.__dataclass_fields__ if k in data})
 
 
@@ -587,7 +588,7 @@ class FieldSequence:
 
     # ─── Fluent pipeline interface ───────────────────────────
 
-    def extract(self) -> "MorphologyDescriptor":
+    def extract(self) -> MorphologyDescriptor:
         """Extract morphology descriptor. Shorthand for mfn.extract(self)."""
         from mycelium_fractal_net.analytics.morphology import (
             compute_morphology_descriptor,
@@ -595,19 +596,19 @@ class FieldSequence:
 
         return compute_morphology_descriptor(self)
 
-    def detect(self) -> "AnomalyEvent":
+    def detect(self) -> AnomalyEvent:
         """Detect anomalies. Shorthand for mfn.detect(self)."""
         from mycelium_fractal_net.core.detect import detect_anomaly
 
         return detect_anomaly(self)
 
-    def forecast(self, horizon: int = 8) -> "ForecastResult":
+    def forecast(self, horizon: int = 8) -> ForecastResult:
         """Forecast future states. Shorthand for mfn.forecast(self, horizon)."""
         from mycelium_fractal_net.core.forecast import forecast_next
 
         return forecast_next(self, horizon=horizon)
 
-    def compare(self, other: "FieldSequence") -> "ComparisonResult":
+    def compare(self, other: FieldSequence) -> ComparisonResult:
         """Compare with another sequence. Shorthand for mfn.compare(self, other)."""
         from mycelium_fractal_net.core.compare import compare
 
@@ -664,7 +665,7 @@ class FieldSequence:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "FieldSequence":
+    def from_dict(cls, data: dict[str, Any]) -> FieldSequence:
         if "field" not in data:
             raise ValueError(
                 "FieldSequence.from_dict requires 'field' when include_arrays=True payload is used"
@@ -700,7 +701,7 @@ class FieldSequence:
         history: NDArray[np.float64] | None = None,
         spec: SimulationSpec | None = None,
         metadata: dict[str, Any] | None = None,
-    ) -> "FieldSequence":
+    ) -> FieldSequence:
         return cls(
             field=np.asarray(field, dtype=np.float64),
             history=None if history is None else np.asarray(history, dtype=np.float64),

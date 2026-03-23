@@ -149,11 +149,11 @@ def test_physical_constants_import() -> None:
 
     # Verify constants have expected types and values
     assert isinstance(R_GAS_CONSTANT, float)
-    assert R_GAS_CONSTANT == pytest.approx(8.314, rel=1e-6)
+    assert pytest.approx(8.314, rel=1e-6) == R_GAS_CONSTANT
     assert isinstance(FARADAY_CONSTANT, float)
-    assert FARADAY_CONSTANT == pytest.approx(96485.33212, rel=1e-6)
+    assert pytest.approx(96485.33212, rel=1e-6) == FARADAY_CONSTANT
     assert isinstance(BODY_TEMPERATURE_K, float)
-    assert BODY_TEMPERATURE_K == pytest.approx(310.0, rel=1e-6)
+    assert pytest.approx(310.0, rel=1e-6) == BODY_TEMPERATURE_K
     assert isinstance(NERNST_RTFZ_MV, float)
     assert isinstance(ION_CLAMP_MIN, float)
     assert isinstance(TURING_THRESHOLD, float)

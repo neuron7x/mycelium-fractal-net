@@ -22,7 +22,7 @@ class UncertaintyEnvelope:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "UncertaintyEnvelope":
+    def from_dict(cls, data: dict[str, Any]) -> UncertaintyEnvelope:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -41,7 +41,7 @@ class TrajectoryStep:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TrajectoryStep":
+    def from_dict(cls, data: dict[str, Any]) -> TrajectoryStep:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -141,7 +141,7 @@ class ForecastResult:
 
     def __repr__(self) -> str:
         se = self.benchmark_metrics.get("forecast_structural_error", 0.0)
-        return f"ForecastResult(h={self.horizon}, method={self.method}, " f"error={se:.3f})"
+        return f"ForecastResult(h={self.horizon}, method={self.method}, error={se:.3f})"
 
     def to_dict(self) -> dict[str, Any]:
         return self.validate()
@@ -190,4 +190,4 @@ class ComparisonResult:
         return payload
 
 
-__all__ = ["ForecastResult", "ComparisonResult", "validate_forecast_payload"]
+__all__ = ["ComparisonResult", "ForecastResult", "validate_forecast_payload"]

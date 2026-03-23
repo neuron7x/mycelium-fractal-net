@@ -15,7 +15,6 @@ import tracemalloc
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -37,7 +36,7 @@ class BenchmarkResult:
 class BenchmarkSuite:
     """Performance benchmarks to prevent regressions."""
 
-    def __init__(self, results_dir: Optional[Path] = None) -> None:
+    def __init__(self, results_dir: Path | None = None) -> None:
         self.results: list[BenchmarkResult] = []
         self.results_dir = results_dir or Path(__file__).parent / "results"
         self.results_dir.mkdir(exist_ok=True)
@@ -75,7 +74,9 @@ class BenchmarkSuite:
             passed=avg_latency_ms < target_ms,
             timestamp=datetime.now().isoformat(),
         )
-        print(f"Field simulation ({grid_size}x{grid_size}, {steps} steps): {avg_latency_ms:.2f} ms (target: <{target_ms} ms)")
+        print(
+            f"Field simulation ({grid_size}x{grid_size}, {steps} steps): {avg_latency_ms:.2f} ms (target: <{target_ms} ms)"
+        )
         self.results.append(result)
         return result
 
@@ -179,7 +180,7 @@ class BenchmarkSuite:
         rng = np.random.default_rng(42)
         for _ in range(10):
             _, _ = simulate_mycelium_field(rng, grid_size=64, steps=50)
-        current, peak = tracemalloc.get_traced_memory()
+        _current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
         peak_mb = peak / (1024 * 1024)
@@ -203,6 +204,7 @@ class BenchmarkSuite:
     def _has_torch(self) -> bool:
         try:
             import torch  # noqa: F401
+
             return True
         except ImportError:
             return False
@@ -213,6 +215,7 @@ class BenchmarkSuite:
             print("Forward pass: SKIPPED (torch not installed)")
             return None
         import torch
+
         from mycelium_fractal_net.model import MyceliumFractalNet
 
         torch.manual_seed(42)
@@ -252,6 +255,7 @@ class BenchmarkSuite:
             print("Training step: SKIPPED (torch not installed)")
             return None
         import torch
+
         from mycelium_fractal_net.model import MyceliumFractalNet
 
         torch.manual_seed(42)
@@ -320,11 +324,13 @@ class BenchmarkSuite:
             print("\nFailed benchmarks:")
             for r in self.results:
                 if not r.passed:
-                    print(f"  - {r.name}: {r.metric_value:.2f} {r.metric_unit} (target: {r.target_value} {r.metric_unit})")
+                    print(
+                        f"  - {r.name}: {r.metric_value:.2f} {r.metric_unit} (target: {r.target_value} {r.metric_unit})"
+                    )
 
         return self.results
 
-    def save_results(self, filename: Optional[str] = None) -> Path:
+    def save_results(self, filename: str | None = None) -> Path:
         """Save benchmark results to canonical JSON + CSV files."""
         json_name = filename or "benchmark_core.json"
         csv_name = json_name.replace(".json", ".csv")
@@ -343,7 +349,17 @@ class BenchmarkSuite:
         with open(output_path, "w") as f:
             json.dump(results_dict, f, indent=2)
         with open(csv_path, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=["name", "metric_value", "metric_unit", "target_value", "passed", "timestamp"])
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "name",
+                    "metric_value",
+                    "metric_unit",
+                    "target_value",
+                    "passed",
+                    "timestamp",
+                ],
+            )
             writer.writeheader()
             for row in self.results:
                 writer.writerow(asdict(row))

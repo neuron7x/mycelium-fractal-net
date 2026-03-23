@@ -24,10 +24,9 @@ import datetime
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 from mycelium_fractal_net.analytics.legacy_features import (
     FeatureConfig,
@@ -42,6 +41,11 @@ from mycelium_fractal_net.core import (
     ValueOutOfRangeError,
 )
 from mycelium_fractal_net.core.exceptions import NumericalInstabilityError
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +129,7 @@ class ConfigSampler:
         self,
         num_samples: int,
         rng: np.random.Generator | None = None,
-    ) -> Iterator[Dict[str, Any]]:
+    ) -> Iterator[dict[str, Any]]:
         """
         Generate num_samples configuration dictionaries.
 
@@ -198,9 +202,9 @@ class SweepConfig:
             raise ValueError("alpha_values must all be < 0.25 for CFL stability")
 
 
-def _generate_sweep_configs(sweep: SweepConfig) -> List[Dict[str, Any]]:
+def _generate_sweep_configs(sweep: SweepConfig) -> list[dict[str, Any]]:
     """Expand legacy SweepConfig into explicit parameter dictionaries."""
-    configs: List[Dict[str, Any]] = []
+    configs: list[dict[str, Any]] = []
     sim_id = 0
     for grid_size in sweep.grid_sizes or []:
         for steps in sweep.steps_list or []:
@@ -224,12 +228,12 @@ def _generate_sweep_configs(sweep: SweepConfig) -> List[Dict[str, Any]]:
 
 
 def to_record(
-    config: Dict[str, Any],
+    config: dict[str, Any],
     features: FeatureVector,
     *,
     metrics: ReactionDiffusionMetrics,
     timestamp: str | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convert simulation config and features to a flat dataset record.
 
@@ -252,7 +256,7 @@ def to_record(
     if timestamp is None:
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
-    record: Dict[str, Any] = {
+    record: dict[str, Any] = {
         # Configuration fields
         "sim_id": config["sim_id"],
         "random_seed": config["random_seed"],
@@ -276,8 +280,8 @@ def to_record(
 
 
 def run_simulation(
-    params: Dict[str, Any],
-) -> Tuple[NDArray[np.floating[Any]], ReactionDiffusionMetrics] | None:
+    params: dict[str, Any],
+) -> tuple[NDArray[np.floating[Any]], ReactionDiffusionMetrics] | None:
     """
     Run a single simulation with given parameters.
 
@@ -333,7 +337,7 @@ def generate_dataset(
     *,
     num_samples: int | None = None,
     config_sampler: ConfigSampler | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate dataset with num_samples simulations.
 
@@ -385,7 +389,7 @@ def generate_dataset(
 
     logger.info(f"Starting dataset generation with {requested_samples} samples")
 
-    all_rows: List[Dict[str, Any]] = []
+    all_rows: list[dict[str, Any]] = []
     n_success = 0
     n_failed = 0
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -421,7 +425,7 @@ def generate_dataset(
         saved_path = _save_dataset(all_rows, output_path)
 
     # Compute statistics
-    stats: Dict[str, Any] = {
+    stats: dict[str, Any] = {
         "total_samples": requested_samples,
         "successful": n_success,
         "failed": n_failed,
@@ -446,7 +450,7 @@ def generate_dataset(
     return stats
 
 
-def _save_dataset(rows: List[Dict[str, Any]], output_path: Path) -> str:
+def _save_dataset(rows: list[dict[str, Any]], output_path: Path) -> str:
     """
     Save dataset to file in Parquet format (with NPZ fallback).
 

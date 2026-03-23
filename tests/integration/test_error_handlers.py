@@ -19,7 +19,7 @@ class Payload(BaseModel):
     value: int
 
 
-@pytest.fixture()
+@pytest.fixture
 def app_with_handlers() -> FastAPI:
     app = FastAPI()
     register_error_handlers(app)
@@ -75,7 +75,7 @@ def test_register_error_handlers_registers_expected_handlers(
 
 
 @pytest.mark.parametrize(
-    "endpoint,status,code,message",
+    ("endpoint", "status", "code", "message"),
     [
         ("/items", 422, ErrorCode.VALIDATION_ERROR, "Validation failed: 1 error(s)"),
         ("/value-error", 400, ErrorCode.INVALID_REQUEST, "invalid state"),

@@ -14,6 +14,7 @@ from mycelium_fractal_net.core.detection_config import (
     UNCERTAINTY_W_DESENSITIZATION,
     UNCERTAINTY_W_PLASTICITY,
 )
+
 # Numerical stability constants
 _NUMERICAL_DIVISOR_GUARD: float = 1e-12  # [PHYS] Prevents division by zero in OLS
 
@@ -220,7 +221,7 @@ def counterfactual(sequence: FieldSequence, modified_spec: SimulationSpec) -> Fo
         spec=modified_spec,
         metadata={"counterfactual": True},
     )
-    horizon = max(1, min(16, modified_spec.steps if modified_spec.steps else 8))
+    horizon = max(1, min(16, modified_spec.steps or 8))
     result = forecast_next(candidate, horizon=horizon)
     mode = "baseline"
     if modified_spec.neuromodulation is not None:

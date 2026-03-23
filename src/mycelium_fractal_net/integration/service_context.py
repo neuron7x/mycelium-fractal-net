@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 
@@ -62,14 +62,14 @@ class ServiceContext:
         >>> # Use rng for reproducible operations
     """
 
-    seed: Optional[int] = 42
+    seed: int | None = 42
     mode: ExecutionMode = ExecutionMode.LIBRARY
     grid_size: int = 64
     steps: int = 64
     turing_enabled: bool = True
     quantum_jitter: bool = False
-    _rng: Optional[np.random.Generator] = field(default=None, repr=False)
-    _metadata: Dict[str, Any] = field(default_factory=dict, repr=False)
+    _rng: np.random.Generator | None = field(default=None, repr=False)
+    _metadata: dict[str, Any] = field(default_factory=dict, repr=False)
 
     def __post_init__(self) -> None:
         """Initialize RNG if seed is provided."""
@@ -117,7 +117,7 @@ class ServiceContext:
         if self.seed is not None:
             self._rng = np.random.default_rng(self.seed)
 
-    def with_seed(self, seed: int) -> "ServiceContext":
+    def with_seed(self, seed: int) -> ServiceContext:
         """
         Create a new context with a different seed.
 
@@ -137,7 +137,7 @@ class ServiceContext:
             _metadata=self._metadata.copy(),
         )
 
-    def with_mode(self, mode: ExecutionMode) -> "ServiceContext":
+    def with_mode(self, mode: ExecutionMode) -> ServiceContext:
         """
         Create a new context with a different execution mode.
 

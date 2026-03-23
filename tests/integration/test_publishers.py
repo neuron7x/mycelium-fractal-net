@@ -97,7 +97,7 @@ class TestFilePublisher:
             assert len(files) == 1
 
             # Verify content
-            with open(files[0], "r") as f:
+            with open(files[0]) as f:
                 content = json.load(f)
             assert content == test_data
 

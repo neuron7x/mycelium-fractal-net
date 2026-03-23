@@ -188,7 +188,7 @@ class TestReactionDiffusionStability:
         engine = ReactionDiffusionEngine(config)
 
         engine.initialize_field()
-        field, metrics = engine.simulate(steps=100, turing_enabled=True)
+        _field, _metrics = engine.simulate(steps=100, turing_enabled=True)
 
         # Check activator/inhibitor bounds
         assert engine.activator is not None
@@ -291,7 +291,7 @@ class TestNumericsModuleStability:
         params = UpdateParameters()
 
         for step in range(100):
-            field, activator, inhibitor, metrics = full_simulation_step(
+            field, activator, inhibitor, _metrics = full_simulation_step(
                 field,
                 activator,
                 inhibitor,
@@ -486,7 +486,7 @@ class TestLongRunStability:
         )
         engine = ReactionDiffusionEngine(config)
 
-        field, metrics = engine.simulate(steps=200, turing_enabled=True)
+        field, _metrics = engine.simulate(steps=200, turing_enabled=True)
 
         assert np.all(np.isfinite(field))
         # Field should still be bounded even with jitter

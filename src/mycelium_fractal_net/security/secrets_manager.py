@@ -42,7 +42,6 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
 
 
 class SecretRetrievalError(RuntimeError):
@@ -58,7 +57,7 @@ class SecretsBackend(str, Enum):
     VAULT = "vault"
 
     @classmethod
-    def from_env(cls, value: str | None) -> "SecretsBackend":
+    def from_env(cls, value: str | None) -> SecretsBackend:
         try:
             return cls((value or "env").lower())
         except ValueError as exc:
@@ -72,15 +71,15 @@ class SecretManagerConfig:
     """Configuration for the secrets manager."""
 
     backend: SecretsBackend = SecretsBackend.ENV
-    file_path: Optional[Path] = None
-    aws_secret_name: Optional[str] = None
-    aws_region: Optional[str] = None
-    vault_url: Optional[str] = None
-    vault_path: Optional[str] = None
+    file_path: Path | None = None
+    aws_secret_name: str | None = None
+    aws_region: str | None = None
+    vault_url: str | None = None
+    vault_path: str | None = None
     vault_token_env: str = "MFN_VAULT_TOKEN"
 
     @classmethod
-    def from_env(cls) -> "SecretManagerConfig":
+    def from_env(cls) -> SecretManagerConfig:
         backend = SecretsBackend.from_env(os.getenv("MFN_SECRETS_BACKEND"))
         file_path_env = os.getenv("MFN_SECRETS_FILE")
         file_path = Path(file_path_env) if file_path_env else None
@@ -98,10 +97,10 @@ class SecretManagerConfig:
 class SecretManager:
     """Retrieve secrets from configurable backends with safe fallbacks."""
 
-    def __init__(self, config: Optional[SecretManagerConfig] = None) -> None:
+    def __init__(self, config: SecretManagerConfig | None = None) -> None:
         self.config = config or SecretManagerConfig.from_env()
-        self._file_cache: Dict[str, str] | None = None
-        self._remote_cache: Dict[str, str] | None = None
+        self._file_cache: dict[str, str] | None = None
+        self._remote_cache: dict[str, str] | None = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -110,10 +109,10 @@ class SecretManager:
         self,
         key: str,
         *,
-        file_env_key: Optional[str] = None,
+        file_env_key: str | None = None,
         required: bool = False,
         allow_empty: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Retrieve a single secret value.
 
         Resolution order (by backend):
@@ -146,10 +145,10 @@ class SecretManager:
         self,
         env_key: str,
         *,
-        file_env_key: Optional[str] = None,
+        file_env_key: str | None = None,
         separator: str = ",",
         required: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """Retrieve a list-type secret with flexible separators.
 
         Values can be comma-separated, newline-separated, or JSON arrays.
@@ -179,7 +178,7 @@ class SecretManager:
 
         # Newline or separator-delimited list
         candidates = [part.strip() for part in raw_value.replace("\r", "").split("\n")]
-        flattened: List[str] = []
+        flattened: list[str] = []
         for candidate in candidates:
             if separator in candidate:
                 flattened.extend(part.strip() for part in candidate.split(separator))
@@ -191,7 +190,7 @@ class SecretManager:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _fetch_secret_value(self, *, key: str, file_env_key: Optional[str] = None) -> Optional[str]:
+    def _fetch_secret_value(self, *, key: str, file_env_key: str | None = None) -> str | None:
         backend = self.config.backend
         if backend == SecretsBackend.ENV:
             return self._from_env(key=key, file_env_key=file_env_key)
@@ -203,7 +202,7 @@ class SecretManager:
             return self._from_vault(key=key)
         raise SecretRetrievalError(f"Unhandled secrets backend: {backend}")
 
-    def _from_env(self, *, key: str, file_env_key: Optional[str]) -> Optional[str]:
+    def _from_env(self, *, key: str, file_env_key: str | None) -> str | None:
         # 1) Direct environment variable
         value = os.getenv(key)
         if value is not None:
@@ -221,7 +220,7 @@ class SecretManager:
 
         return None
 
-    def _from_file_cache(self, key: str) -> Optional[str]:
+    def _from_file_cache(self, key: str) -> str | None:
         if self.config.file_path is None:
             raise SecretRetrievalError(
                 "MFN_SECRETS_FILE must be set when using the file secrets backend"
@@ -232,12 +231,12 @@ class SecretManager:
 
         return self._file_cache.get(key)
 
-    def _from_aws(self, key: str) -> Optional[str]:
+    def _from_aws(self, key: str) -> str | None:
         if self._remote_cache is None:
             self._remote_cache = self._load_aws_secrets()
         return self._remote_cache.get(key)
 
-    def _from_vault(self, key: str) -> Optional[str]:
+    def _from_vault(self, key: str) -> str | None:
         if self._remote_cache is None:
             self._remote_cache = self._load_vault_secrets()
         return self._remote_cache.get(key)
@@ -245,7 +244,7 @@ class SecretManager:
     # ------------------------------------------------------------------
     # Backend loaders
     # ------------------------------------------------------------------
-    def _load_secret_file(self, path: Path) -> Dict[str, str]:
+    def _load_secret_file(self, path: Path) -> dict[str, str]:
         if not path.exists():
             raise SecretRetrievalError(f"Secrets file not found: {path}")
         if not path.is_file():
@@ -275,7 +274,7 @@ class SecretManager:
                 raise SecretRetrievalError(f"Invalid JSON in secrets file {path}: {exc}") from exc
 
         # .env style fallback
-        secrets: Dict[str, str] = {}
+        secrets: dict[str, str] = {}
         for line in text.splitlines():
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
@@ -299,7 +298,7 @@ class SecretManager:
                 f"Secret file {path} is not valid UTF-8 encoded text"
             ) from exc
 
-    def _load_aws_secrets(self) -> Dict[str, str]:
+    def _load_aws_secrets(self) -> dict[str, str]:
         if not self.config.aws_secret_name:
             raise SecretRetrievalError(
                 "MFN_SECRETS_AWS_NAME must be set when using the aws secrets backend"
@@ -330,7 +329,7 @@ class SecretManager:
 
         raise SecretRetrievalError("AWS secret payload is not a valid mapping")
 
-    def _load_vault_secrets(self) -> Dict[str, str]:
+    def _load_vault_secrets(self) -> dict[str, str]:
         if not self.config.vault_url or not self.config.vault_path:
             raise SecretRetrievalError(
                 "MFN_SECRETS_VAULT_URL and MFN_SECRETS_VAULT_PATH are required for Vault backend"
@@ -359,6 +358,6 @@ class SecretManager:
 __all__ = [
     "SecretManager",
     "SecretManagerConfig",
-    "SecretsBackend",
     "SecretRetrievalError",
+    "SecretsBackend",
 ]

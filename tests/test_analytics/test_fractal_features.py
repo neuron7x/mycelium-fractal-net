@@ -16,18 +16,16 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from mycelium_fractal_net.analytics.legacy_features import (
+    FEATURE_COUNT,
     FeatureConfig,
     FeatureVector,
+    _box_counting_dimension,
+    _count_clusters_4conn,
     compute_basic_stats,
     compute_features,
     compute_fractal_features,
     compute_structural_features,
     compute_temporal_features,
-)
-from mycelium_fractal_net.analytics.legacy_features import (
-    FEATURE_COUNT,
-    _box_counting_dimension,
-    _count_clusters_4conn,
     validate_feature_ranges,
 )
 
@@ -119,20 +117,20 @@ class TestBoxCountingDimension:
     def test_empty_field(self) -> None:
         """Empty field should have dimension 0."""
         empty = np.zeros((64, 64), dtype=bool)
-        D, r2 = _box_counting_dimension(empty, 2, None, 5)
+        D, _r2 = _box_counting_dimension(empty, 2, None, 5)
         assert D == 0.0
 
     def test_line(self) -> None:
         """Horizontal line should have dimension ~1."""
         line = np.zeros((64, 64), dtype=bool)
         line[32, :] = True
-        D, r2 = _box_counting_dimension(line, 2, None, 5)
+        D, _r2 = _box_counting_dimension(line, 2, None, 5)
         assert 0.8 <= D <= 1.3, f"Line D={D:.3f}, expected ~1"
 
     def test_diagonal(self) -> None:
         """Diagonal line should have dimension ~1."""
         diag = np.eye(64, dtype=bool)
-        D, r2 = _box_counting_dimension(diag, 2, None, 5)
+        D, _r2 = _box_counting_dimension(diag, 2, None, 5)
         assert 0.8 <= D <= 1.3, f"Diagonal D={D:.3f}, expected ~1"
 
     def test_random_pattern(self) -> None:
@@ -168,7 +166,7 @@ class TestBasicStats:
         """Normal distribution should have near-zero skew and kurt."""
         rng = np.random.default_rng(42)
         normal = rng.normal(-0.070, 0.010, size=(64, 64))  # -70 ± 10 mV
-        V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(normal)
+        _V_min, _V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(normal)
         assert V_mean == pytest.approx(-70.0, abs=2.0)
         assert V_std == pytest.approx(10.0, abs=2.0)
         assert abs(V_skew) < 0.5
@@ -177,7 +175,7 @@ class TestBasicStats:
     def test_units_in_mv(self) -> None:
         """Output should be in mV (not Volts)."""
         field = np.full((16, 16), -0.095)  # -95 mV
-        V_min, V_max, V_mean, V_std, V_skew, V_kurt = compute_basic_stats(field)
+        V_min, _V_max, _V_mean, _V_std, _V_skew, _V_kurt = compute_basic_stats(field)
         assert V_min == pytest.approx(-95.0, abs=0.1)
 
 
@@ -200,7 +198,7 @@ class TestTemporalFeatures:
         """Constant field history should show stability quickly."""
         const = np.full((50, 32, 32), -0.070)  # 50 identical frames
         config = FeatureConfig(stability_window=5)
-        dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(const, config)
+        dV_mean, dV_max, T_stable, _E_trend = compute_temporal_features(const, config)
         assert dV_mean == pytest.approx(0.0, abs=0.001)
         assert dV_max == pytest.approx(0.0, abs=0.001)
         # Should reach stability very quickly
@@ -217,7 +215,7 @@ class TestTemporalFeatures:
         history = np.stack(history)
 
         config = FeatureConfig()
-        dV_mean, dV_max, T_stable, E_trend = compute_temporal_features(history, config)
+        dV_mean, _dV_max, _T_stable, _E_trend = compute_temporal_features(history, config)
         assert dV_mean > 0  # Should have non-zero change
 
     def test_short_history_without_stability_window(self) -> None:
@@ -260,7 +258,9 @@ class TestStructuralFeatures:
         field = np.full((32, 32), -0.070)  # All below threshold
         field[10:20, 10:20] = -0.040  # One active region
         config = FeatureConfig(threshold_low_mv=-50.0)
-        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(field, config)
+        _f_active, n_low, _n_med, _n_high, max_cs, _cs_std = compute_structural_features(
+            field, config
+        )
         assert n_low == 1
         assert max_cs == 100  # 10x10 region
 
@@ -270,14 +270,16 @@ class TestStructuralFeatures:
         field[5:10, 5:10] = -0.040  # Cluster 1
         field[20:25, 20:25] = -0.040  # Cluster 2
         config = FeatureConfig(threshold_low_mv=-50.0)
-        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(field, config)
+        _f_active, n_low, _n_med, _n_high, _max_cs, _cs_std = compute_structural_features(
+            field, config
+        )
         assert n_low == 2
 
     def test_empty_field(self) -> None:
         """Field below all thresholds should have 0 clusters."""
         field = np.full((32, 32), -0.090)  # All below -60mV
         config = FeatureConfig()
-        f_active, n_low, n_med, n_high, max_cs, cs_std = compute_structural_features(field, config)
+        f_active, n_low, n_med, n_high, max_cs, _cs_std = compute_structural_features(field, config)
         assert n_low == 0
         assert n_med == 0
         assert n_high == 0
@@ -301,7 +303,7 @@ class TestClusterCounting:
         binary = np.zeros((16, 16), dtype=bool)
         binary[5, 5] = True
         binary[6, 6] = True  # Diagonal neighbor
-        n, sizes = _count_clusters_4conn(binary)
+        n, _sizes = _count_clusters_4conn(binary)
         assert n == 2  # Not connected
 
     def test_horizontal_line(self) -> None:
@@ -475,7 +477,7 @@ class TestSensitivity:
         field = rng.normal(-0.055, 0.020, size=(32, 32))
 
         config = FeatureConfig()
-        f, n_low, n_med, n_high, _, _ = compute_structural_features(field, config)
+        _f, n_low, n_med, n_high, _, _ = compute_structural_features(field, config)
 
         # Lower threshold → more cells active → potentially different cluster structure
         # This is a basic sanity check

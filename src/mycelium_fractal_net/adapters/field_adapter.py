@@ -14,13 +14,15 @@ Usage:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
-from numpy.typing import NDArray
 
 from mycelium_fractal_net.core.reaction_diffusion_config import FIELD_V_MAX, FIELD_V_MIN
 from mycelium_fractal_net.types.field import FieldSequence
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 class FieldAdapter:

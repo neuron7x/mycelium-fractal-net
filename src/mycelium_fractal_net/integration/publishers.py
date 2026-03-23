@@ -26,9 +26,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import aiohttp
     from kafka import KafkaProducer
 
@@ -104,11 +106,11 @@ class PublisherMetrics:
     failed_publishes: int = 0
     total_retries: int = 0
     total_bytes_published: int = 0
-    last_publish_timestamp: Optional[float] = None
-    last_error: Optional[str] = None
-    last_error_timestamp: Optional[float] = None
+    last_publish_timestamp: float | None = None
+    last_error: str | None = None
+    last_error_timestamp: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary."""
         return {
             "total_publishes": self.total_publishes,
@@ -134,7 +136,7 @@ class BasePublisher(ABC):
     Provides common functionality for retry logic, error handling, and metrics.
     """
 
-    def __init__(self, config: Optional[PublisherConfig] = None):
+    def __init__(self, config: PublisherConfig | None = None):
         """
         Initialize base publisher.
 
@@ -144,17 +146,15 @@ class BasePublisher(ABC):
         self.config = config or PublisherConfig()
         self.status = PublisherStatus.IDLE
         self.metrics = PublisherMetrics()
-        self._connection_timestamp: Optional[float] = None
+        self._connection_timestamp: float | None = None
 
     @abstractmethod
     async def connect(self) -> None:
         """Establish connection to the destination."""
-        pass
 
     @abstractmethod
     async def disconnect(self) -> None:
         """Close connection to the destination."""
-        pass
 
     @abstractmethod
     async def publish(self, data: Any, **kwargs: Any) -> None:
@@ -165,7 +165,6 @@ class BasePublisher(ABC):
             data: Data to publish.
             **kwargs: Destination-specific parameters.
         """
-        pass
 
     def _calculate_retry_delay(self, attempt: int) -> float:
         """
@@ -206,7 +205,7 @@ class BasePublisher(ABC):
         Raises:
             Exception: If all retries are exhausted.
         """
-        last_exception: Optional[Exception] = None
+        last_exception: Exception | None = None
 
         for attempt in range(self.config.max_retries + 1):
             try:
@@ -277,8 +276,8 @@ class WebhookPublisher(BasePublisher):
     def __init__(
         self,
         webhook_url: str,
-        headers: Optional[Dict[str, str]] = None,
-        config: Optional[PublisherConfig] = None,
+        headers: dict[str, str] | None = None,
+        config: PublisherConfig | None = None,
     ):
         """
         Initialize webhook publisher.
@@ -291,7 +290,7 @@ class WebhookPublisher(BasePublisher):
         super().__init__(config)
         self.webhook_url = webhook_url
         self.headers = headers or {"Content-Type": "application/json"}
-        self._session: Optional[Any] = None
+        self._session: Any | None = None
 
     async def connect(self) -> None:
         """Establish HTTP session."""
@@ -319,7 +318,7 @@ class WebhookPublisher(BasePublisher):
             self.status = PublisherStatus.DISCONNECTED
             logger.info(f"Webhook publisher disconnected from {self.webhook_url}")
 
-    async def publish(self, data: Dict[str, Any], **kwargs: Any) -> None:
+    async def publish(self, data: dict[str, Any], **kwargs: Any) -> None:
         """
         Publish data to webhook endpoint.
 
@@ -393,9 +392,9 @@ class KafkaPublisherAdapter(BasePublisher):
 
     def __init__(
         self,
-        bootstrap_servers: List[str],
+        bootstrap_servers: list[str],
         topic: str,
-        config: Optional[PublisherConfig] = None,
+        config: PublisherConfig | None = None,
     ):
         """
         Initialize Kafka publisher.
@@ -408,7 +407,7 @@ class KafkaPublisherAdapter(BasePublisher):
         super().__init__(config)
         self.bootstrap_servers = bootstrap_servers
         self.topic = topic
-        self._producer: Optional[Any] = None
+        self._producer: Any | None = None
 
     async def connect(self) -> None:
         """Establish Kafka producer connection."""
@@ -440,7 +439,7 @@ class KafkaPublisherAdapter(BasePublisher):
             self.status = PublisherStatus.DISCONNECTED
             logger.info("Kafka publisher disconnected")
 
-    async def publish(self, data: Dict[str, Any], **kwargs: Any) -> None:
+    async def publish(self, data: dict[str, Any], **kwargs: Any) -> None:
         """
         Publish message to Kafka topic.
 
@@ -516,7 +515,7 @@ class FilePublisher(BasePublisher):
         directory: Union[str, Path],
         filename_pattern: str = "output_{timestamp}.json",
         append_mode: bool = False,
-        config: Optional[PublisherConfig] = None,
+        config: PublisherConfig | None = None,
     ):
         """
         Initialize file publisher.
@@ -553,7 +552,7 @@ class FilePublisher(BasePublisher):
         self.status = PublisherStatus.DISCONNECTED
         logger.info(f"File publisher stopped for directory: {self.directory}")
 
-    async def publish(self, data: Dict[str, Any], **kwargs: Any) -> None:
+    async def publish(self, data: dict[str, Any], **kwargs: Any) -> None:
         """
         Publish data to file.
 
@@ -605,11 +604,11 @@ class FilePublisher(BasePublisher):
 
 __all__ = [
     "BasePublisher",
-    "WebhookPublisher",
-    "KafkaPublisherAdapter",
     "FilePublisher",
+    "KafkaPublisherAdapter",
     "PublisherConfig",
     "PublisherMetrics",
     "PublisherStatus",
     "RetryStrategy",
+    "WebhookPublisher",
 ]

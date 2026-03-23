@@ -13,7 +13,7 @@ Capabilities no other system provides:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -295,7 +295,9 @@ def explain_regime(event: Any) -> DecisionExplanation:
     stability = (
         "stable"
         if regime.confidence > 0.75
-        else "marginal" if regime.confidence > 0.60 else "unstable"
+        else "marginal"
+        if regime.confidence > 0.60
+        else "unstable"
     )
     tension = _detect_tension(event)
 

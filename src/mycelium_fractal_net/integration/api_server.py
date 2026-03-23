@@ -281,16 +281,16 @@ app = create_app()
 
 __all__ = [
     "API_VERSION",
-    "SimulationPayload",
+    "ComparePayload",
     "FieldPayload",
     "ForecastPayload",
-    "ComparePayload",
     "ReportPayload",
-    "build_v1_router",
-    "register_canonical_routes",
-    "create_app",
+    "SimulationPayload",
     "app",
+    "build_v1_router",
+    "create_app",
     "health_payload",
     "metrics_payload",
+    "register_canonical_routes",
     "v1_router",
 ]

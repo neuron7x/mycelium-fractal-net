@@ -12,7 +12,7 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-STREAMING
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -70,9 +70,9 @@ class WSMessage(BaseModel):
     """
 
     type: WSMessageType
-    stream_id: Optional[str] = None
-    timestamp: Optional[float] = None
-    payload: Optional[Dict[str, Any]] = None
+    stream_id: str | None = None
+    timestamp: float | None = None
+    payload: dict[str, Any] | None = None
 
 
 # =============================================================================
@@ -92,7 +92,7 @@ class WSInitRequest(BaseModel):
     """
 
     protocol_version: str = "1.0"
-    client_info: Optional[str] = None
+    client_info: str | None = None
 
 
 class WSAuthRequest(BaseModel):
@@ -109,7 +109,7 @@ class WSAuthRequest(BaseModel):
 
     api_key: str
     timestamp: float
-    signature: Optional[str] = None
+    signature: str | None = None
 
 
 class WSSubscribeRequest(BaseModel):
@@ -126,7 +126,7 @@ class WSSubscribeRequest(BaseModel):
 
     stream_type: WSStreamType
     stream_id: str
-    params: Optional[Dict[str, Any]] = None
+    params: dict[str, Any] | None = None
 
 
 class WSUnsubscribeRequest(BaseModel):
@@ -175,7 +175,7 @@ class WSFeatureUpdate(BaseModel):
 
     stream_id: str
     sequence: int
-    features: Dict[str, float] = Field(
+    features: dict[str, float] = Field(
         description="Fractal features: fractal_dimension, lyapunov_exponent, growth_events, etc."
     )
     timestamp: float
@@ -199,10 +199,10 @@ class WSSimulationState(BaseModel):
     stream_id: str
     step: int
     total_steps: int
-    state: Dict[str, Any] = Field(
+    state: dict[str, Any] = Field(
         description="State data: pot_mean_mV, pot_std_mV, active_nodes, field_shape, etc."
     )
-    metrics: Optional[Dict[str, float]] = None
+    metrics: dict[str, float] | None = None
     timestamp: float
 
 
@@ -219,7 +219,7 @@ class WSSimulationComplete(BaseModel):
     """
 
     stream_id: str
-    final_metrics: Dict[str, float]
+    final_metrics: dict[str, float]
     timestamp: float
 
 
@@ -243,7 +243,7 @@ class WSErrorMessage(BaseModel):
 
     error_code: str
     message: str
-    stream_id: Optional[str] = None
+    stream_id: str | None = None
     timestamp: float
 
 
@@ -263,7 +263,7 @@ class StreamFeaturesParams(BaseModel):
     """
 
     update_interval_ms: int = Field(default=100, ge=10, le=10000)
-    features: Optional[List[str]] = None
+    features: list[str] | None = None
     compression: bool = False
 
 

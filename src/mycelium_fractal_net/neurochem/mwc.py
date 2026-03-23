@@ -23,9 +23,12 @@ References:
 
 from __future__ import annotations
 
-import numpy as np
-from numpy.typing import NDArray
+from typing import TYPE_CHECKING
 
+import numpy as np
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 # ═══════════════════════════════════════════════════════════════
 #  MWC parameters for GABA-A α1β3γ2 subtype
@@ -109,7 +112,7 @@ def mwc_fraction(
         return 0.0
 
     ratio = numerator_factor / denominator_factor
-    allosteric_term = L0 * (ratio ** n)
+    allosteric_term = L0 * (ratio**n)
 
     r_fraction = 1.0 / (1.0 + allosteric_term)
 
@@ -164,7 +167,7 @@ def mwc_ec50(
     """
     # Binary search for R_fraction = R_max / 2
     # R_max = 1 / (1 + L0 * c^n)
-    r_max = 1.0 / (1.0 + L0 * (c ** n))
+    r_max = 1.0 / (1.0 + L0 * (c**n))
     target = r_max / 2.0
     lo, hi = 0.0, K_R * 1e6  # search up to 1M * K_R
     for _ in range(200):

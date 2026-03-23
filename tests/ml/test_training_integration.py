@@ -70,7 +70,7 @@ class TestTrainingConvergence:
         optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
-        for epoch in range(200):
+        for _epoch in range(200):
             optimizer.zero_grad()
             y_pred = model(x)
             loss = criterion(y_pred, y)
@@ -95,7 +95,7 @@ class TestTrainingConvergence:
         criterion = nn.MSELoss()
 
         losses = []
-        for epoch in range(10):
+        for _epoch in range(10):
             epoch_loss = 0.0
             for batch_x, batch_y in loader:
                 optimizer.zero_grad()
@@ -161,9 +161,9 @@ class TestDeterministicTraining:
         params1 = train_model(42)
         params2 = train_model(123)
 
-        assert not torch.allclose(
-            params1, params2, atol=1e-4
-        ), "Different seeds should produce different results"
+        assert not torch.allclose(params1, params2, atol=1e-4), (
+            "Different seeds should produce different results"
+        )
 
 
 class TestGradientFlow:
@@ -202,7 +202,7 @@ class TestGradientFlow:
         loss.backward()
 
         grad_norms = []
-        for name, param in model.named_parameters():
+        for _name, param in model.named_parameters():
             if param.grad is not None:
                 grad_norm = param.grad.norm().item()
                 grad_norms.append(grad_norm)
@@ -368,9 +368,9 @@ class TestOptimizers:
 
         final_loss = criterion(model(x), y).item()
 
-        assert torch.isfinite(
-            torch.tensor(final_loss)
-        ), f"Non-finite loss with {optimizer_class.__name__}"
+        assert torch.isfinite(torch.tensor(final_loss)), (
+            f"Non-finite loss with {optimizer_class.__name__}"
+        )
 
 
 class TestLearningRates:
@@ -432,7 +432,7 @@ class TestTrainStepMethod:
 
         # Check parameters changed
         params_changed = False
-        for p_init, p_curr in zip(initial_params, model.parameters()):
+        for p_init, p_curr in zip(initial_params, model.parameters(), strict=False):
             if not torch.allclose(p_init, p_curr, atol=1e-8):
                 params_changed = True
                 break

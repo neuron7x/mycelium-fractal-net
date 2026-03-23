@@ -50,11 +50,11 @@ STDP_A_PLUS: float = 0.01
 STDP_A_MINUS: float = 0.012
 
 __all__ = [
+    "STDP_A_MINUS",
+    "STDP_A_PLUS",
+    "STDP_TAU_MINUS",
     # Constants
     "STDP_TAU_PLUS",
-    "STDP_TAU_MINUS",
-    "STDP_A_PLUS",
-    "STDP_A_MINUS",
     # Classes
     "STDPPlasticity",
 ]

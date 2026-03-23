@@ -28,7 +28,7 @@ class TemporalFeatures:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TemporalFeatures":
+    def from_dict(cls, data: dict[str, Any]) -> TemporalFeatures:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -44,7 +44,7 @@ class StabilityMetrics:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "StabilityMetrics":
+    def from_dict(cls, data: dict[str, Any]) -> StabilityMetrics:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -60,7 +60,7 @@ class ComplexityMetrics:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ComplexityMetrics":
+    def from_dict(cls, data: dict[str, Any]) -> ComplexityMetrics:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -79,7 +79,7 @@ class ConnectivityFeatures:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ConnectivityFeatures":
+    def from_dict(cls, data: dict[str, Any]) -> ConnectivityFeatures:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -97,7 +97,7 @@ class NeuromodulationFeatures:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "NeuromodulationFeatures":
+    def from_dict(cls, data: dict[str, Any]) -> NeuromodulationFeatures:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -114,7 +114,7 @@ class ChangePointResult:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ChangePointResult":
+    def from_dict(cls, data: dict[str, Any]) -> ChangePointResult:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -138,7 +138,7 @@ class DriftSummary:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "DriftSummary":
+    def from_dict(cls, data: dict[str, Any]) -> DriftSummary:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
@@ -155,17 +155,17 @@ class TopologySummary:
         return {k: float(getattr(self, k)) for k in self.__dataclass_fields__}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TopologySummary":
+    def from_dict(cls, data: dict[str, Any]) -> TopologySummary:
         return cls(**{k: float(data.get(k, 0.0)) for k in cls.__dataclass_fields__})
 
 
 __all__ = [
-    "TemporalFeatures",
-    "StabilityMetrics",
+    "ChangePointResult",
     "ComplexityMetrics",
     "ConnectivityFeatures",
-    "NeuromodulationFeatures",
-    "ChangePointResult",
     "DriftSummary",
+    "NeuromodulationFeatures",
+    "StabilityMetrics",
+    "TemporalFeatures",
     "TopologySummary",
 ]

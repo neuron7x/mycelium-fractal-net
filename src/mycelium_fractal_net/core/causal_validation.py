@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -28,18 +28,19 @@ from mycelium_fractal_net.core.reaction_diffusion_config import (
     FIELD_V_MIN,
     MAX_STABLE_DIFFUSION,
 )
-from mycelium_fractal_net.core.rule_registry import get_registry, print_manifest, rule
+from mycelium_fractal_net.core.rule_registry import print_manifest, rule
 from mycelium_fractal_net.types.causal import (
     CausalDecision,
     CausalRuleResult,
     CausalSeverity,
     CausalValidationResult,
-    ViolationCategory,
 )
-from mycelium_fractal_net.types.detection import AnomalyEvent
-from mycelium_fractal_net.types.features import MorphologyDescriptor
-from mycelium_fractal_net.types.field import FieldSequence
-from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.detection import AnomalyEvent
+    from mycelium_fractal_net.types.features import MorphologyDescriptor
+    from mycelium_fractal_net.types.field import FieldSequence
+    from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
 
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE: SIMULATE — biophysical field invariants
@@ -275,7 +276,9 @@ def ext_002_version_present(desc: MorphologyDescriptor, seq: FieldSequence) -> b
     falsifiable_by="Index diverging from direct field CV",
     rationale="Inconsistency indicates bug or stale cached descriptor",
 )
-def ext_003_instability_consistency(desc: MorphologyDescriptor, seq: FieldSequence) -> tuple[bool, Any, Any]:
+def ext_003_instability_consistency(
+    desc: MorphologyDescriptor, seq: FieldSequence
+) -> tuple[bool, Any, Any]:
     cv = float(np.std(seq.field) / (abs(np.mean(seq.field)) + 1e-12))
     ii = desc.stability.get("instability_index", 0.0)
     return abs(cv - ii) < 0.01, abs(cv - ii), 0.01
@@ -333,7 +336,9 @@ def ext_006_connectivity_keys(desc: MorphologyDescriptor, seq: FieldSequence) ->
     falsifiable_by="D_r2 < 0.7 with D_box contributing to anomaly score",
     rationale="Low R² means log-log regression is unreliable; D_box may be noise",
 )
-def ext_007_fractal_quality(desc: MorphologyDescriptor, seq: FieldSequence) -> tuple[bool, Any, Any]:
+def ext_007_fractal_quality(
+    desc: MorphologyDescriptor, seq: FieldSequence
+) -> tuple[bool, Any, Any]:
     d_r2 = desc.features.get("D_r2", 1.0)
     return d_r2 >= 0.7, d_r2, 0.7
 
@@ -385,7 +390,9 @@ def det_002_label_valid(det: AnomalyEvent) -> tuple[bool, Any]:
     category="contract",
 )
 def det_003_regime_valid(det: AnomalyEvent) -> tuple[bool, Any]:
-    return det.regime.label in _VALID_REGIME, det.regime.label
+    return (det.regime is not None and det.regime.label in _VALID_REGIME), (
+        det.regime.label if det.regime else None
+    )
 
 
 @rule(
@@ -423,7 +430,7 @@ def det_005_contributing_subset(det: AnomalyEvent) -> tuple[bool, Any]:
     rationale="Noise classification without noise evidence is a causal error",
 )
 def det_006_pathological_causality(det: AnomalyEvent) -> Any:
-    if det.regime.label != "pathological_noise":
+    if det.regime is None or det.regime.label != "pathological_noise":
         return True
     n = det.evidence.get("observation_noise_gain", 0.0)
     return n >= 0.1, n, 0.1
@@ -440,7 +447,7 @@ def det_006_pathological_causality(det: AnomalyEvent) -> Any:
     rationale="Reorganization without plasticity is indistinguishable from noise",
 )
 def det_007_reorganized_causality(det: AnomalyEvent) -> Any:
-    if det.regime.label != "reorganized":
+    if det.regime is None or det.regime.label != "reorganized":
         return True
     p = det.evidence.get("plasticity_index", 0.0)
     return p >= 0.05, p, 0.05
@@ -571,7 +578,11 @@ def for_008_error_monotonic(fc: ForecastResult) -> tuple[bool, Any, Any]:
     # Check non-decreasing (allowing small tolerance)
     for i in range(1, len(shifts)):
         if shifts[i] < shifts[i - 1] - 0.01:
-            return False, f"shift[{i}]={shifts[i]:.4f} < shift[{i-1}]={shifts[i-1]:.4f}", "monotonic"
+            return (
+                False,
+                f"shift[{i}]={shifts[i]:.4f} < shift[{i - 1}]={shifts[i - 1]:.4f}",
+                "monotonic",
+            )
     return True, f"shifts=[{shifts[0]:.4f}..{shifts[-1]:.4f}]", "monotonic"
 
 
@@ -680,7 +691,10 @@ def cmp_006(c: ComparisonResult) -> tuple[bool, Any, Any]:
     rationale="Stable is known good; anomalous is false positive",
 )
 def xst_001(seq: FieldSequence, det: AnomalyEvent) -> bool:
-    return not (det.regime.label == "stable" and det.label == "anomalous")
+    return not (
+        (det.regime.label if det.regime is not None else "") == "stable"
+        and det.label == "anomalous"
+    )
 
 
 @rule(
@@ -714,7 +728,10 @@ def xst_002(seq: FieldSequence, det: AnomalyEvent) -> Any:
 def xst_003(seq: FieldSequence, det: AnomalyEvent) -> Any:
     if seq.spec is None or seq.spec.neuromodulation is None:
         return True
-    if "noise" not in seq.spec.neuromodulation.profile or det.regime.label != "reorganized":
+    if (
+        "noise" not in seq.spec.neuromodulation.profile
+        or (det.regime.label if det.regime is not None else "") != "reorganized"
+    ):
         return True
     c = det.evidence.get("connectivity_divergence", 0.0)
     return c >= 0.10, c, 0.10
@@ -731,7 +748,7 @@ def xst_003(seq: FieldSequence, det: AnomalyEvent) -> Any:
     rationale="Detection should not claim reorganization without neuromodulation-level evidence",
 )
 def xst_004(seq: FieldSequence, det: AnomalyEvent) -> Any:
-    if det.regime.label not in ("reorganized", "critical"):
+    if det.regime is None or det.regime.label not in ("reorganized", "critical"):
         return True
     ns = getattr(seq, "neuromodulation_state", None)
     if ns is not None:
@@ -753,9 +770,9 @@ def xst_004(seq: FieldSequence, det: AnomalyEvent) -> Any:
 )
 def xst_005(seq: FieldSequence, det: AnomalyEvent) -> bool:
     if seq.spec is None or seq.spec.neuromodulation is None:
-        return det.regime.label != "reorganized"
+        return (det.regime.label if det.regime is not None else "") != "reorganized"
     if not getattr(seq.spec.neuromodulation, "enabled", False):
-        return det.regime.label != "reorganized"
+        return (det.regime.label if det.regime is not None else "") != "reorganized"
     return True
 
 
@@ -817,7 +834,11 @@ def ptb_002(seq: FieldSequence, det: AnomalyEvent) -> bool:
             spec=seq.spec,
             metadata=seq.metadata,
         )
-        if detect_anomaly(p).regime.label != det.regime.label:
+        p_regime = detect_anomaly(p).regime
+        det_regime = det.regime
+        if (p_regime.label if p_regime is not None else "") != (
+            det_regime.label if det_regime is not None else ""
+        ):
             return False
     return True
 
@@ -937,9 +958,7 @@ def validate_causal_consistency(
     elif mode == "strict_release":
         # Release gate: any violation blocks
         decision = (
-            CausalDecision.FAIL
-            if (has_fatal or has_error or has_warn)
-            else CausalDecision.PASS
+            CausalDecision.FAIL if (has_fatal or has_error or has_warn) else CausalDecision.PASS
         )
     elif mode in ("strict", "strict_api"):
         # Default strict and API: error/fatal blocks, warnings degrade

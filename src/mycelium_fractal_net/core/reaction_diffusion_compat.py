@@ -6,10 +6,9 @@ compatibility. No independent equation-of-motion logic lives here.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .exceptions import NumericalInstabilityError
 from .reaction_diffusion_config import (
@@ -20,6 +19,9 @@ from .reaction_diffusion_config import (
     ReactionDiffusionConfig,
     _validate_diffusion_coefficient,
 )
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 def compat_validate_cfl_condition(diffusion_coeff: float) -> bool:

@@ -196,9 +196,20 @@ ignore = [
   "PLW2901", # loop variable overwritten (common in numeric code)
   "S603",    # subprocess call (needed in scripts)
   "S607",    # partial executable path (needed in scripts)
+  "PLC0415", # import-outside-top-level (lazy imports by design for optional deps)
+  "RUF002",  # ambiguous-unicode-character-docstring (μM, α, β are scientific notation)
+  "RUF001",  # ambiguous-unicode-character-string (same)
+  "RUF003",  # ambiguous-unicode-character-comment (same)
+  "PLW0603", # global-statement (registry pattern for causal rules, detection config)
+  "RUF043",  # pytest-raises-ambiguous-pattern (acceptable in test assertions)
+  "PERF203", # try-except-in-loop (necessary for resilient iteration over scenarios)
+  "PLW1510", # subprocess-run-without-check (scripts handle errors explicitly)
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/**/__init__.py" = [
+  "F401",    # unused-import: __init__.py re-exports are intentional public API
+]
 "tests/**/*.py" = [
   "S101",    # assert is fine in tests
   "S105",    # hardcoded passwords in test fixtures

@@ -49,38 +49,38 @@ def test_constants_match_config_json() -> None:
 
     # Evidence normalization
     norm = config["evidence_normalization"]
-    assert detect._TEMPORAL_LZC_NORMALIZER == norm["temporal_lzc_normalizer"]
-    assert detect._CONNECTIVITY_AMPLIFICATION == norm["connectivity_amplification"]
-    assert detect._HIERARCHY_BASELINE == norm["hierarchy_baseline"]
-    assert detect._HIERARCHY_RANGE == norm["hierarchy_range"]
-    assert detect._CRITICALITY_AMPLIFICATION == norm["criticality_amplification"]
-    assert detect._NOISE_GAIN_AMPLIFICATION == norm["noise_gain_amplification"]
+    assert norm["temporal_lzc_normalizer"] == detect._TEMPORAL_LZC_NORMALIZER
+    assert norm["connectivity_amplification"] == detect._CONNECTIVITY_AMPLIFICATION
+    assert norm["hierarchy_baseline"] == detect._HIERARCHY_BASELINE
+    assert norm["hierarchy_range"] == detect._HIERARCHY_RANGE
+    assert norm["criticality_amplification"] == detect._CRITICALITY_AMPLIFICATION
+    assert norm["noise_gain_amplification"] == detect._NOISE_GAIN_AMPLIFICATION
 
     # Regime thresholds
     rt = config["regime_thresholds"]
-    assert detect._DYNAMIC_ANOMALY_BASELINE == rt["dynamic_anomaly_baseline"]
-    assert detect._REORGANIZED_COMPLEXITY_THRESHOLD == rt["reorganized_complexity_threshold"]
-    assert detect._REORGANIZED_TOPOLOGY_THRESHOLD == rt["reorganized_topology_threshold"]
-    assert detect._REORGANIZED_PLASTICITY_FLOOR == rt["reorganized_plasticity_floor"]
-    assert detect._PATHOLOGICAL_NOISE_THRESHOLD == rt["pathological_noise_threshold"]
-    assert detect._STRUCTURE_FLOOR == rt["structure_floor"]
-    assert detect._STABLE_CEILING == rt["stable_ceiling"]
+    assert rt["dynamic_anomaly_baseline"] == detect._DYNAMIC_ANOMALY_BASELINE
+    assert rt["reorganized_complexity_threshold"] == detect._REORGANIZED_COMPLEXITY_THRESHOLD
+    assert rt["reorganized_topology_threshold"] == detect._REORGANIZED_TOPOLOGY_THRESHOLD
+    assert rt["reorganized_plasticity_floor"] == detect._REORGANIZED_PLASTICITY_FLOOR
+    assert rt["pathological_noise_threshold"] == detect._PATHOLOGICAL_NOISE_THRESHOLD
+    assert rt["structure_floor"] == detect._STRUCTURE_FLOOR
+    assert rt["stable_ceiling"] == detect._STABLE_CEILING
 
     # Anomaly weights
     aw = config["anomaly_weights"]
-    assert detect._ANOMALY_W_INSTABILITY == aw["instability"]
-    assert detect._ANOMALY_W_TRANSITION == aw["transition"]
-    assert detect._ANOMALY_W_COLLAPSE == aw["collapse"]
-    assert detect._ANOMALY_W_CHANGE == aw["change"]
-    assert detect._ANOMALY_W_VOLATILITY == aw["volatility"]
-    assert detect._ANOMALY_W_NOISE == aw["noise"]
-    assert detect._ANOMALY_W_CONNECTIVITY == aw["connectivity"]
-    assert detect._ANOMALY_W_PLASTICITY == aw["plasticity"]
+    assert aw["instability"] == detect._ANOMALY_W_INSTABILITY
+    assert aw["transition"] == detect._ANOMALY_W_TRANSITION
+    assert aw["collapse"] == detect._ANOMALY_W_COLLAPSE
+    assert aw["change"] == detect._ANOMALY_W_CHANGE
+    assert aw["volatility"] == detect._ANOMALY_W_VOLATILITY
+    assert aw["noise"] == detect._ANOMALY_W_NOISE
+    assert aw["connectivity"] == detect._ANOMALY_W_CONNECTIVITY
+    assert aw["plasticity"] == detect._ANOMALY_W_PLASTICITY
 
     # Profile hints
     ph = config["profile_hints"]
-    assert detect._PROFILE_HINT_SEROTONERGIC == ph["serotonergic"]
-    assert detect._PROFILE_HINT_CRITICALITY == ph["criticality"]
+    assert ph["serotonergic"] == detect._PROFILE_HINT_SEROTONERGIC
+    assert ph["criticality"] == detect._PROFILE_HINT_CRITICALITY
 
 
 def test_compare_constants_match_config() -> None:
@@ -91,16 +91,16 @@ def test_compare_constants_match_config() -> None:
     config = json.loads(config_path.read_text())
     cc = config["comparison"]
 
-    assert compare._COSINE_NEAR_IDENTICAL == cc["cosine_near_identical"]
-    assert compare._COSINE_SIMILAR == cc["cosine_similar"]
-    assert compare._COSINE_RELATED == cc["cosine_related"]
-    assert compare._DISTANCE_NEAR_IDENTICAL == cc["distance_near_identical"]
-    assert compare._NOISE_PATHOLOGICAL_HIGH == cc["noise_pathological_high"]
-    assert compare._NOISE_PATHOLOGICAL_LOW == cc["noise_pathological_low"]
-    assert compare._CONNECTIVITY_LOW == cc["connectivity_low"]
-    assert compare._MODULARITY_LOW == cc["modularity_low"]
-    assert compare._HIERARCHY_FLAT_THRESHOLD == cc["hierarchy_flat_threshold"]
-    assert compare._CONNECTIVITY_FLAT_CEILING == cc["connectivity_flat_ceiling"]
-    assert compare._CONNECTIVITY_REORG_THRESHOLD == cc["connectivity_reorg_threshold"]
-    assert compare._MODULARITY_REORG_THRESHOLD == cc["modularity_reorg_threshold"]
-    assert compare._TOP_CHANGED_FEATURES == cc["top_changed_features"]
+    assert cc["cosine_near_identical"] == compare._COSINE_NEAR_IDENTICAL
+    assert cc["cosine_similar"] == compare._COSINE_SIMILAR
+    assert cc["cosine_related"] == compare._COSINE_RELATED
+    assert cc["distance_near_identical"] == compare._DISTANCE_NEAR_IDENTICAL
+    assert cc["noise_pathological_high"] == compare._NOISE_PATHOLOGICAL_HIGH
+    assert cc["noise_pathological_low"] == compare._NOISE_PATHOLOGICAL_LOW
+    assert cc["connectivity_low"] == compare._CONNECTIVITY_LOW
+    assert cc["modularity_low"] == compare._MODULARITY_LOW
+    assert cc["hierarchy_flat_threshold"] == compare._HIERARCHY_FLAT_THRESHOLD
+    assert cc["connectivity_flat_ceiling"] == compare._CONNECTIVITY_FLAT_CEILING
+    assert cc["connectivity_reorg_threshold"] == compare._CONNECTIVITY_REORG_THRESHOLD
+    assert cc["modularity_reorg_threshold"] == compare._MODULARITY_REORG_THRESHOLD
+    assert cc["top_changed_features"] == compare._TOP_CHANGED_FEATURES

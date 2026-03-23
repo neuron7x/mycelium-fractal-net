@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, Mapping, TypedDict, cast
+from typing import TYPE_CHECKING, Literal, TypedDict, cast
 
 from mycelium_fractal_net._optional import require_ml_dependency
 
@@ -10,6 +10,9 @@ torch = require_ml_dependency("torch")
 nn = torch.nn
 
 from .denoise_1d import OptimizedFractalDenoise1D, _canonicalize_1d
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 class _PresetConfig(TypedDict):
@@ -171,9 +174,9 @@ class Fractal1DPreprocessor(nn.Module):
         denoised = self.denoiser(processed, return_stats=return_stats, debug=debug)
         stats: dict[str, float] | None = None
         if return_stats:
-            processed, stats = cast(tuple[torch.Tensor, dict[str, float]], denoised)
+            processed, stats = cast("tuple[torch.Tensor, dict[str, float]]", denoised)
         else:
-            processed = cast(torch.Tensor, denoised)
+            processed = cast("torch.Tensor", denoised)
 
         if self.normalize:
             mean = processed.mean(dim=-1, keepdim=True)

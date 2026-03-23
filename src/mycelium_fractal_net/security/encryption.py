@@ -30,7 +30,7 @@ from __future__ import annotations
 import base64
 import binascii
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Union
 
 from mycelium_fractal_net.crypto import (
     AES_KEY_SIZE,
@@ -44,8 +44,6 @@ from mycelium_fractal_net.crypto import (
 
 class EncryptionError(Exception):
     """Raised when encryption or decryption fails."""
-
-    pass
 
 
 def generate_key(length: int = AES_KEY_SIZE) -> bytes:
@@ -79,8 +77,8 @@ def _validate_key(key: bytes | bytearray) -> bytes:
 
 
 def _normalize_associated_data(
-    associated_data: Optional[Union[str, bytes]], encoding: str
-) -> Optional[bytes]:
+    associated_data: Union[str, bytes] | None, encoding: str
+) -> bytes | None:
     """Normalize associated data to bytes if provided."""
 
     if associated_data is None:
@@ -100,7 +98,7 @@ def encrypt_data(
     key: bytes,
     *,
     encoding: str = "utf-8",
-    associated_data: Optional[Union[str, bytes]] = None,
+    associated_data: Union[str, bytes] | None = None,
 ) -> str:
     """
     Encrypt data using symmetric encryption.
@@ -154,7 +152,7 @@ def decrypt_data(
     key: bytes,
     *,
     encoding: str = "utf-8",
-    associated_data: Optional[Union[str, bytes]] = None,
+    associated_data: Union[str, bytes] | None = None,
 ) -> str:
     """
     Decrypt data that was encrypted with encrypt_data.
@@ -224,7 +222,7 @@ class DataEncryptor:
 
     key: bytes
 
-    def __init__(self, key: Optional[bytes] = None) -> None:
+    def __init__(self, key: bytes | None = None) -> None:
         """
         Initialize encryptor.
 
@@ -237,7 +235,7 @@ class DataEncryptor:
         self,
         data: Union[str, bytes],
         *,
-        associated_data: Optional[Union[str, bytes]] = None,
+        associated_data: Union[str, bytes] | None = None,
     ) -> str:
         """
         Encrypt data.
@@ -254,7 +252,7 @@ class DataEncryptor:
         self,
         ciphertext: str,
         *,
-        associated_data: Optional[Union[str, bytes]] = None,
+        associated_data: Union[str, bytes] | None = None,
     ) -> str:
         """
         Decrypt data.
@@ -269,10 +267,10 @@ class DataEncryptor:
 
 
 __all__ = [
-    "EncryptionError",
-    "generate_key",
-    "_normalize_associated_data",
-    "encrypt_data",
-    "decrypt_data",
     "DataEncryptor",
+    "EncryptionError",
+    "_normalize_associated_data",
+    "decrypt_data",
+    "encrypt_data",
+    "generate_key",
 ]

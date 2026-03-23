@@ -7,22 +7,17 @@ for system-level visibility.
 from __future__ import annotations
 
 import importlib
-import json
 import platform
 import sys
 import time
 from pathlib import Path
-from typing import Any
 
 from mycelium_fractal_net.cli_display import (
-    blue,
     bold,
     cyan,
     dim,
     green,
-    magenta,
     red,
-    section,
     yellow,
 )
 
@@ -134,7 +129,7 @@ def run_info() -> str:
     lines = [
         f"\n{bold('MFN')} {dim('v' + mfn.__version__)} {dim('— system info')}\n",
         "─" * 50,
-        f"  Engine:     Morphology-aware Field Intelligence Engine",
+        "  Engine:     Morphology-aware Field Intelligence Engine",
         f"  Version:    {bold(mfn.__version__)}",
         f"  Python:     {platform.python_version()}",
         f"  Platform:   {platform.system()} {platform.machine()}",
@@ -152,7 +147,6 @@ def run_info() -> str:
 
 def run_scenarios() -> str:
     """List available simulation scenarios with descriptions."""
-    from mycelium_fractal_net.core.simulate import simulate_scenario
 
     scenarios = {
         "synthetic_morphology": "Pure Turing morphogenesis, no neuromodulation",

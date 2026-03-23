@@ -46,8 +46,12 @@ def _lempel_ziv_76_complexity(s: str) -> float:
 
     # Normalize: for random binary string, LZ76 ~ n / log2(n)
     import math
+
     normalizer = n / max(1.0, math.log2(n))
     return float(complexity / normalizer)
+
+
+from typing import TYPE_CHECKING
 
 from mycelium_fractal_net.analytics.connectivity import compute_connectivity_features
 from mycelium_fractal_net.analytics.embedding import build_embedding
@@ -62,7 +66,9 @@ from mycelium_fractal_net.types.analytics import (
     TemporalFeatures,
 )
 from mycelium_fractal_net.types.features import MorphologyDescriptor
-from mycelium_fractal_net.types.field import FieldSequence
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.field import FieldSequence
 
 _DESCRIPTOR_VERSION = "mfn-morphology-v2"
 

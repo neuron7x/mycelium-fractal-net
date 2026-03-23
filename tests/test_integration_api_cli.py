@@ -17,6 +17,7 @@ from mycelium_fractal_net.api import app
 
 try:
     from mycelium_fractal_net import ValidationConfig, run_validation
+
     _HAS_TORCH = True
 except Exception:
     _HAS_TORCH = False

@@ -20,10 +20,12 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
-from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 # === Constants ===
 FEATURE_COUNT: int = 18
@@ -42,14 +44,12 @@ BIOLOGICAL_DIMENSION_MIN: float = 1.4
 BIOLOGICAL_DIMENSION_MAX: float = 1.9
 
 # Fractal confidence thresholds
-FRACTAL_MIN_GRID_SIZE: int = 8       # Grids below this lack scale range
-FRACTAL_MIN_R2: float = 0.8          # R² below this = unstable regression
-FRACTAL_MIN_NUM_SCALES: int = 3      # Fewer scales = insufficient for fit
+FRACTAL_MIN_GRID_SIZE: int = 8  # Grids below this lack scale range
+FRACTAL_MIN_R2: float = 0.8  # R² below this = unstable regression
+FRACTAL_MIN_NUM_SCALES: int = 3  # Fewer scales = insufficient for fit
 
 
-def assess_fractal_confidence(
-    grid_size: int, num_scales: int, d_r2: float
-) -> str:
+def assess_fractal_confidence(grid_size: int, num_scales: int, d_r2: float) -> str:
     """Assess confidence in fractal dimension estimate.
 
     Returns "high" or "low_confidence".
@@ -186,7 +186,7 @@ class FeatureVector:
         ]
 
     @classmethod
-    def from_array(cls, arr: NDArray[np.float64]) -> "FeatureVector":
+    def from_array(cls, arr: NDArray[np.float64]) -> FeatureVector:
         """Create FeatureVector from numpy array."""
         if len(arr) != FEATURE_COUNT:
             raise ValueError(f"Expected {FEATURE_COUNT} features, got {len(arr)}")
@@ -217,7 +217,7 @@ def _box_counting_dimension(
     min_box_size: int,
     max_box_size: int | None,
     num_scales: int,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Compute box-counting fractal dimension.
 
@@ -305,7 +305,7 @@ def _box_counting_dimension(
 def compute_fractal_features(
     field: NDArray[np.floating],
     config: FeatureConfig,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Compute fractal features (D_box, D_r2).
 
@@ -335,7 +335,7 @@ def compute_fractal_features(
 
 def compute_basic_stats(
     field: NDArray[np.floating],
-) -> Tuple[float, float, float, float, float, float]:
+) -> tuple[float, float, float, float, float, float]:
     """
     Compute basic field statistics.
 
@@ -374,7 +374,7 @@ def compute_basic_stats(
 def compute_temporal_features(
     history: NDArray[np.floating],
     config: FeatureConfig,
-) -> Tuple[float, float, int, float]:
+) -> tuple[float, float, int, float]:
     """
     Compute temporal dynamics features.
 
@@ -410,7 +410,7 @@ def compute_temporal_features(
     # Default to 0 to indicate stability was not reached during the windowed scan
     T_stable = 0
 
-    if T >= window:
+    if window <= T:
         # Compute rolling std of diffs
         diff_stds = [float(np.std(d)) for d in diffs]
         consecutive = 0
@@ -443,7 +443,7 @@ def compute_temporal_features(
 
 def _count_clusters_4conn(
     binary: NDArray[np.bool_],
-) -> Tuple[int, list[int]]:
+) -> tuple[int, list[int]]:
     """
     Count connected components using 4-connectivity.
 
@@ -518,7 +518,7 @@ def _count_clusters_4conn(
 
 def _count_clusters_8conn(
     binary: NDArray[np.bool_],
-) -> Tuple[int, list[int]]:
+) -> tuple[int, list[int]]:
     """
     Count connected components using 8-connectivity.
 
@@ -589,7 +589,7 @@ def _count_clusters_8conn(
 def compute_structural_features(
     field: NDArray[np.floating],
     config: FeatureConfig,
-) -> Tuple[float, int, int, int, int, float]:
+) -> tuple[float, int, int, int, int, float]:
     """
     Compute structural features.
 

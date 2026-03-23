@@ -12,12 +12,10 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import numpy as np
 import pytest
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
-
 
 # ═══════════════════════════════════════════════════════════════
 #  cli_display.py — full coverage
@@ -33,18 +31,21 @@ class TestCliDisplay:
 
     def test_banner(self) -> None:
         from mycelium_fractal_net.cli_display import banner
+
         result = banner()
         assert "MFN" in result
         assert "v4.1.0" in result
 
     def test_section(self) -> None:
         from mycelium_fractal_net.cli_display import section
+
         result = section("Test Section")
         assert "Test Section" in result
         assert "─" in result
 
     def test_format_simulation(self, seq: mfn.types.field.FieldSequence) -> None:
         from mycelium_fractal_net.cli_display import format_simulation
+
         result = format_simulation(seq)
         assert "Simulation" in result
         assert "Grid" in result
@@ -52,6 +53,7 @@ class TestCliDisplay:
 
     def test_format_detection(self, seq: mfn.types.field.FieldSequence) -> None:
         from mycelium_fractal_net.cli_display import format_detection
+
         det = seq.detect()
         result = format_detection(det)
         assert "Detection" in result
@@ -59,6 +61,7 @@ class TestCliDisplay:
 
     def test_format_descriptor(self, seq: mfn.types.field.FieldSequence) -> None:
         from mycelium_fractal_net.cli_display import format_descriptor
+
         desc = seq.extract()
         result = format_descriptor(desc)
         assert "Morphology" in result
@@ -66,6 +69,7 @@ class TestCliDisplay:
 
     def test_format_forecast(self, seq: mfn.types.field.FieldSequence) -> None:
         from mycelium_fractal_net.cli_display import format_forecast
+
         fc = seq.forecast(4)
         result = format_forecast(fc)
         assert "Forecast" in result
@@ -73,6 +77,7 @@ class TestCliDisplay:
 
     def test_format_comparison(self, seq: mfn.types.field.FieldSequence) -> None:
         from mycelium_fractal_net.cli_display import format_comparison
+
         comp = seq.compare(seq)
         result = format_comparison(comp)
         assert "Comparison" in result
@@ -80,6 +85,7 @@ class TestCliDisplay:
 
     def test_format_causal_pass(self, seq: mfn.types.field.FieldSequence) -> None:
         from mycelium_fractal_net.cli_display import format_causal
+
         v = validate_causal_consistency(seq, mode="strict")
         result = format_causal(v)
         assert "Causal" in result
@@ -87,6 +93,7 @@ class TestCliDisplay:
 
     def test_format_pipeline(self, seq: mfn.types.field.FieldSequence) -> None:
         from mycelium_fractal_net.cli_display import format_pipeline
+
         desc = seq.extract()
         det = seq.detect()
         fc = seq.forecast(4)
@@ -99,8 +106,17 @@ class TestCliDisplay:
 
     def test_label_color_functions(self) -> None:
         from mycelium_fractal_net.cli_display import (
-            _label_color, dim, bold, green, yellow, red, cyan, blue, magenta
+            _label_color,
+            blue,
+            bold,
+            cyan,
+            dim,
+            green,
+            magenta,
+            red,
+            yellow,
         )
+
         assert "nominal" in _label_color("nominal")
         assert "watch" in _label_color("watch")
         assert "anomalous" in _label_color("anomalous")
@@ -111,13 +127,16 @@ class TestCliDisplay:
     def test_color_disabled(self) -> None:
         with patch.dict(os.environ, {"NO_COLOR": "1"}):
             from mycelium_fractal_net.cli_display import _c
+
             result = _c("32", "hello")
             assert "hello" in result
 
     def test_format_report(self, seq: mfn.types.field.FieldSequence) -> None:
+        import tempfile
+
         from mycelium_fractal_net.cli_display import format_report
         from mycelium_fractal_net.core.report import report as run_report
-        import tempfile
+
         with tempfile.TemporaryDirectory() as tmpdir:
             rep = run_report(seq, output_root=tmpdir)
             result = format_report(rep)
@@ -126,21 +145,37 @@ class TestCliDisplay:
     def test_format_causal_degraded(self) -> None:
         from mycelium_fractal_net.cli_display import format_causal
         from mycelium_fractal_net.types.causal import (
-            CausalDecision, CausalRuleResult, CausalSeverity,
-            CausalValidationResult, ViolationCategory,
+            CausalDecision,
+            CausalRuleResult,
+            CausalSeverity,
+            CausalValidationResult,
+            ViolationCategory,
         )
+
         # Simulate a degraded result with warnings
         warn_rule = CausalRuleResult(
-            rule_id="TEST-001", stage="test", category=ViolationCategory.CAUSAL,
-            severity=CausalSeverity.WARN, passed=False, message="Test warning",
+            rule_id="TEST-001",
+            stage="test",
+            category=ViolationCategory.CAUSAL,
+            severity=CausalSeverity.WARN,
+            passed=False,
+            message="Test warning",
         )
         err_rule = CausalRuleResult(
-            rule_id="TEST-002", stage="test", category=ViolationCategory.NUMERICAL,
-            severity=CausalSeverity.ERROR, passed=False, message="Test error",
+            rule_id="TEST-002",
+            stage="test",
+            category=ViolationCategory.NUMERICAL,
+            severity=CausalSeverity.ERROR,
+            passed=False,
+            message="Test error",
         )
         info_rule = CausalRuleResult(
-            rule_id="TEST-003", stage="test", category=ViolationCategory.STRUCTURAL,
-            severity=CausalSeverity.INFO, passed=False, message="Test info",
+            rule_id="TEST-003",
+            stage="test",
+            category=ViolationCategory.STRUCTURAL,
+            severity=CausalSeverity.INFO,
+            passed=False,
+            message="Test info",
         )
         result_degraded = CausalValidationResult(
             decision=CausalDecision.DEGRADED,
@@ -158,16 +193,21 @@ class TestCliDisplay:
 
     def test_format_pipeline_partial(self, seq: mfn.types.field.FieldSequence) -> None:
         from mycelium_fractal_net.cli_display import format_pipeline
+
         # Pipeline with only simulation (no desc/det/fc/comp/causal)
         result = format_pipeline(seq)
         assert "Simulation" in result
 
     def test_format_simulation_with_neuromod(self) -> None:
         from mycelium_fractal_net.cli_display import format_simulation
+
         spec = mfn.SimulationSpec(
-            grid_size=16, steps=8, seed=42,
+            grid_size=16,
+            steps=8,
+            seed=42,
             neuromodulation=mfn.NeuromodulationSpec(
-                profile="gabaa_tonic_muscimol_alpha1beta3", enabled=True,
+                profile="gabaa_tonic_muscimol_alpha1beta3",
+                enabled=True,
             ),
         )
         seq = mfn.simulate(spec)
@@ -185,6 +225,7 @@ class TestCliDoctor:
 
     def test_run_doctor(self) -> None:
         from mycelium_fractal_net.cli_doctor import run_doctor
+
         result = run_doctor()
         assert "MFN Doctor" in result
         assert "Python" in result
@@ -193,6 +234,7 @@ class TestCliDoctor:
 
     def test_run_info(self) -> None:
         from mycelium_fractal_net.cli_doctor import run_info
+
         result = run_info()
         assert "MFN" in result
         assert "Engine" in result
@@ -200,6 +242,7 @@ class TestCliDoctor:
 
     def test_run_scenarios(self) -> None:
         from mycelium_fractal_net.cli_doctor import run_scenarios
+
         result = run_scenarios()
         assert "Available Scenarios" in result
         assert "synthetic_morphology" in result
@@ -216,6 +259,7 @@ class TestArtifactBundle:
 
     def test_sha256_file(self) -> None:
         from mycelium_fractal_net.artifact_bundle import sha256_file
+
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             f.write(b'{"test": true}')
             f.flush()
@@ -243,13 +287,24 @@ class TestConfigProfiles:
         from mycelium_fractal_net.config_profiles import (
             load_config_profile,
         )
+
         # Default profile should work
         config = load_config_profile("small")
         assert config is not None
 
     def test_available_profiles(self) -> None:
         configs_dir = Path(__file__).resolve().parents[1] / "configs"
-        profiles = [p.stem for p in configs_dir.glob("*.json") if p.stem not in ("detection_thresholds_v1", "causal_validation_v1", "benchmark_baseline", "crypto")]
+        profiles = [
+            p.stem
+            for p in configs_dir.glob("*.json")
+            if p.stem
+            not in (
+                "detection_thresholds_v1",
+                "causal_validation_v1",
+                "benchmark_baseline",
+                "crypto",
+            )
+        ]
         assert "small" in profiles
         assert "medium" in profiles
         assert "large" in profiles
@@ -274,7 +329,9 @@ class TestE2EReleasePipeline:
         v = validate_causal_consistency(seq, desc, det, fc, comp, mode="strict")
 
         # Causal gate must pass
-        assert v.decision.value == "pass", f"Causal gate failed: {v.error_count}E {v.warning_count}W"
+        assert v.decision.value == "pass", (
+            f"Causal gate failed: {v.error_count}E {v.warning_count}W"
+        )
         assert v.provenance_hash != ""
         assert v.engine_version != ""
         assert v.mode == "strict"
@@ -298,7 +355,9 @@ class TestE2EReleasePipeline:
     def test_pipeline_with_neuromodulation(self) -> None:
         """Full pipeline with neuromodulation enabled."""
         spec = mfn.SimulationSpec(
-            grid_size=24, steps=12, seed=42,
+            grid_size=24,
+            steps=12,
+            seed=42,
             neuromodulation=mfn.NeuromodulationSpec(
                 profile="gabaa_tonic_muscimol_alpha1beta3",
                 enabled=True,
@@ -335,6 +394,7 @@ class TestManifestTampering:
     def test_sha256_mismatch_detected(self) -> None:
         """Tampered file should produce different hash."""
         from mycelium_fractal_net.artifact_bundle import sha256_file
+
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as f:
             json.dump({"data": "original"}, f)
             path = Path(f.name)
@@ -353,6 +413,7 @@ class TestManifestTampering:
             artifact = Path(tmpdir) / "data.json"
             artifact.write_text(json.dumps({"value": 42}))
             from mycelium_fractal_net.artifact_bundle import sha256_file
+
             real_hash = sha256_file(artifact)
 
             # Create a manifest with a forged hash
@@ -372,9 +433,7 @@ class TestManifestTampering:
         """Manifest referencing a non-existent file should be detectable."""
         with tempfile.TemporaryDirectory() as tmpdir:
             manifest = {
-                "artifacts": [
-                    {"path": "nonexistent.json", "sha256": "abc123", "bytes": 100}
-                ]
+                "artifacts": [{"path": "nonexistent.json", "sha256": "abc123", "bytes": 100}]
             }
             manifest_path = Path(tmpdir) / "manifest.json"
             manifest_path.write_text(json.dumps(manifest))
@@ -402,8 +461,7 @@ class TestManifestTampering:
             # Check for extra files
             listed_paths = {a["path"] for a in manifest["artifacts"]}
             actual_files = {
-                p.name for p in Path(tmpdir).iterdir()
-                if p.name != "manifest.json" and p.is_file()
+                p.name for p in Path(tmpdir).iterdir() if p.name != "manifest.json" and p.is_file()
             }
             extra = actual_files - listed_paths
             assert len(extra) > 0, "Extra artifact should be detected"

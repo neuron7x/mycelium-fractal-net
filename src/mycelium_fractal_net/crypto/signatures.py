@@ -74,7 +74,7 @@ import hashlib
 import secrets
 import warnings
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Union
 
 warnings.warn(
     "mycelium_fractal_net.crypto.signatures is deprecated. "
@@ -96,8 +96,6 @@ _ED25519_GY = (4 * pow(5, 2**255 - 19 - 2, 2**255 - 19)) % (2**255 - 19)
 
 class SignatureError(Exception):
     """Raised when signature operation fails."""
-
-    pass
 
 
 def _sha512(data: bytes) -> bytes:
@@ -143,7 +141,7 @@ def _recover_x(y: int, sign: int) -> int:
 
 
 # Type alias for extended coordinates
-ExtPoint = Tuple[int, int, int, int]
+ExtPoint = tuple[int, int, int, int]
 
 
 def _point_add(P: ExtPoint, Q: ExtPoint) -> ExtPoint:
@@ -538,14 +536,14 @@ class EdDSASignature:
         True
     """
 
-    def __init__(self, keypair: Optional[SignatureKeyPair] = None) -> None:
+    def __init__(self, keypair: SignatureKeyPair | None = None) -> None:
         """
         Initialize signer with optional existing keypair.
 
         Args:
             keypair: Existing keypair or None to generate new one.
         """
-        self._keypair = keypair if keypair else generate_signature_keypair()
+        self._keypair = keypair or generate_signature_keypair()
 
     @property
     def public_key(self) -> bytes:
@@ -573,7 +571,7 @@ class EdDSASignature:
         self,
         message: Union[bytes, str],
         signature: bytes,
-        public_key: Optional[bytes] = None,
+        public_key: bytes | None = None,
     ) -> bool:
         """
         Verify a signature.
@@ -592,9 +590,9 @@ class EdDSASignature:
 
 
 __all__ = [
+    "EdDSASignature",
     "SignatureError",
     "SignatureKeyPair",
-    "EdDSASignature",
     "generate_signature_keypair",
     "sign_message",
     "verify_signature",

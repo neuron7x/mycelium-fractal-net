@@ -15,10 +15,9 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 # Import the core feature computation from the canonical package implementation
 from .legacy_features import FeatureConfig
@@ -28,13 +27,15 @@ from .legacy_features import compute_features as _compute_features
 from .legacy_features import compute_fractal_features as _compute_fractal_dim
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from mycelium_fractal_net.core.types import SimulationResult
 
 __all__ = [
     "FeatureVector",
-    "compute_fractal_features",
-    "compute_box_counting_dimension",
     "compute_basic_stats",
+    "compute_box_counting_dimension",
+    "compute_fractal_features",
 ]
 
 
@@ -61,7 +62,7 @@ class FeatureVector:
     array([1.65, 0.95, -80.0, ...])
     """
 
-    values: Dict[str, float] = field(default_factory=dict)
+    values: dict[str, float] = field(default_factory=dict)
 
     # Feature names in canonical order (from MFN_FEATURE_SCHEMA.md)
     _FEATURE_NAMES: tuple[str, ...] = (
@@ -105,7 +106,7 @@ class FeatureVector:
         )
 
     @classmethod
-    def from_analytics_vector(cls, av: AnalyticsFeatureVector) -> "FeatureVector":
+    def from_analytics_vector(cls, av: AnalyticsFeatureVector) -> FeatureVector:
         """
         Create FeatureVector from analytics module FeatureVector.
 
@@ -205,7 +206,7 @@ def compute_box_counting_dimension(
     return D_box
 
 
-def compute_basic_stats(field: NDArray[np.floating[Any]]) -> Dict[str, float]:
+def compute_basic_stats(field: NDArray[np.floating[Any]]) -> dict[str, float]:
     """
     Compute basic statistics for a 2D field.
 
@@ -242,7 +243,7 @@ def compute_basic_stats(field: NDArray[np.floating[Any]]) -> Dict[str, float]:
     }
 
 
-def compute_fractal_features(result: "SimulationResult") -> FeatureVector:
+def compute_fractal_features(result: SimulationResult) -> FeatureVector:
     """
     Compute complete feature vector from SimulationResult.
 

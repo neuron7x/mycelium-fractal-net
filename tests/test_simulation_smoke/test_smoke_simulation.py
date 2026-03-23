@@ -193,9 +193,9 @@ class TestRunSimulationReproducibleSeed:
         result2 = run_mycelium_simulation(config2)
 
         # Fields should be different (not exactly equal)
-        assert not np.allclose(
-            result1.field, result2.field
-        ), "Fields are unexpectedly identical with different seeds"
+        assert not np.allclose(result1.field, result2.field), (
+            "Fields are unexpectedly identical with different seeds"
+        )
 
     def test_multiple_runs_same_seed_consistent(self) -> None:
         """Test that multiple runs with same seed are consistent."""

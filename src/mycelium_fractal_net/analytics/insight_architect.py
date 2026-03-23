@@ -7,8 +7,9 @@ is intentionally lightweight and deterministic so it can run inside automated
 tests without external dependencies.
 """
 
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 
 class InsufficientDataError(ValueError):

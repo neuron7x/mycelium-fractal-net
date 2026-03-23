@@ -10,7 +10,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from mycelium_fractal_net.model import MyceliumFractalNet  # noqa: E402
+from mycelium_fractal_net.model import MyceliumFractalNet
 
 
 class TestNetworkNumericalStability:
@@ -40,7 +40,9 @@ class TestNetworkNumericalStability:
             loss.backward()
             for name, param in model.named_parameters():
                 if param.grad is not None:
-                    assert torch.isfinite(param.grad).all(), f"Non-finite gradient in {name} at step {step}"
+                    assert torch.isfinite(param.grad).all(), (
+                        f"Non-finite gradient in {name} at step {step}"
+                    )
             optimizer.step()
 
     def test_model_with_extreme_inputs(self) -> None:

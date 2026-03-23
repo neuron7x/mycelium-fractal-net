@@ -14,7 +14,6 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-005
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import List, Optional
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -30,8 +29,8 @@ logger = get_logger("error_handlers")
 def create_error_response(
     error_code: str,
     message: str,
-    details: Optional[List[ErrorDetail]] = None,
-    request_id: Optional[str] = None,
+    details: list[ErrorDetail] | None = None,
+    request_id: str | None = None,
 ) -> ErrorResponse:
     """
     Create a standardized error response.
@@ -55,7 +54,7 @@ def create_error_response(
     )
 
 
-def _extract_request_id(request: Request) -> Optional[str]:
+def _extract_request_id(request: Request) -> str | None:
     """Extract request ID from context or headers.
 
     Uses the context variable set by RequestIDMiddleware first,
@@ -88,13 +87,13 @@ async def validation_exception_handler(request: Request, exc: Exception) -> JSON
 
     request_id = _extract_request_id(request)
 
-    details: List[ErrorDetail] = []
+    details: list[ErrorDetail] = []
     for error in exc.errors():
         field = ".".join(str(loc) for loc in error.get("loc", []))
         input_value = error.get("input", None)
         details.append(
             ErrorDetail(
-                field=field if field else None,
+                field=field or None,
                 message=error.get("msg", "Validation error"),
                 value=str(input_value)[:100] if input_value is not None else None,
             )
@@ -139,12 +138,12 @@ async def pydantic_validation_exception_handler(request: Request, exc: Exception
 
     request_id = _extract_request_id(request)
 
-    details: List[ErrorDetail] = []
+    details: list[ErrorDetail] = []
     for error in exc.errors():
         field = ".".join(str(loc) for loc in error.get("loc", []))
         details.append(
             ErrorDetail(
-                field=field if field else None,
+                field=field or None,
                 message=error.get("msg", "Validation error"),
             )
         )
@@ -248,9 +247,9 @@ def register_error_handlers(app: FastAPI) -> None:
 
 __all__ = [
     "create_error_response",
-    "validation_exception_handler",
-    "pydantic_validation_exception_handler",
-    "value_error_handler",
     "internal_error_handler",
+    "pydantic_validation_exception_handler",
     "register_error_handlers",
+    "validation_exception_handler",
+    "value_error_handler",
 ]

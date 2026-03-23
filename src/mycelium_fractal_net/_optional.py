@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from importlib import import_module
-from types import ModuleType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 class MissingOptionalDependencyError(ImportError):
@@ -44,6 +47,6 @@ def optional_dependency_error(
 
 __all__ = [
     "MissingOptionalDependencyError",
-    "require_ml_dependency",
     "optional_dependency_error",
+    "require_ml_dependency",
 ]

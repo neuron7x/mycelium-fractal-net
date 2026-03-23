@@ -188,7 +188,7 @@ class TestGridOpsNonPeriodicBoundaries:
         )
 
         field = np.arange(25, dtype=np.float64).reshape(5, 5) / 10.0
-        gx, gy = compute_gradient(field, boundary=BoundaryCondition.NEUMANN)
+        gx, _gy = compute_gradient(field, boundary=BoundaryCondition.NEUMANN)
         assert gx.shape == (5, 5)
         # Neumann: zero gradient at boundaries
         assert gx[0, :].sum() == pytest.approx(0.0)
@@ -201,7 +201,7 @@ class TestGridOpsNonPeriodicBoundaries:
         )
 
         field = np.arange(25, dtype=np.float64).reshape(5, 5) / 10.0
-        gx, gy = compute_gradient(field, boundary=BoundaryCondition.DIRICHLET)
+        gx, _gy = compute_gradient(field, boundary=BoundaryCondition.DIRICHLET)
         assert gx.shape == (5, 5)
         assert np.isfinite(gx).all()
 

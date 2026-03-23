@@ -20,8 +20,8 @@ from mycelium_fractal_net.config import DatasetConfig, FeatureConfig
 from mycelium_fractal_net.core.types import SimulationConfig, SimulationResult
 
 __all__ = [
+    "DatasetConfig",
+    "FeatureConfig",
     "SimulationConfig",
     "SimulationResult",
-    "FeatureConfig",
-    "DatasetConfig",
 ]

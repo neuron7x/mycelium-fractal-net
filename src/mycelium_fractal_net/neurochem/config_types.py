@@ -44,7 +44,7 @@ class GABAAKineticsConfig:
     k_leak_reduction_fraction: float = 0.0
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "GABAAKineticsConfig":
+    def from_dict(cls, d: dict[str, Any]) -> GABAAKineticsConfig:
         """Construct from dict, ignoring unknown keys."""
         known = {f.name for f in cls.__dataclass_fields__.values()}
         return cls(**{k: v for k, v in d.items() if k in known})
@@ -60,7 +60,7 @@ class SerotonergicKineticsConfig:
     coherence_bias: float = 0.0
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "SerotonergicKineticsConfig":
+    def from_dict(cls, d: dict[str, Any]) -> SerotonergicKineticsConfig:
         """Construct from dict, ignoring unknown keys."""
         known = {f.name for f in cls.__dataclass_fields__.values()}
         return cls(**{k: v for k, v in d.items() if k in known})
@@ -74,7 +74,7 @@ class ObservationNoiseConfig:
     temporal_smoothing: float = 0.0
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "ObservationNoiseConfig":
+    def from_dict(cls, d: dict[str, Any]) -> ObservationNoiseConfig:
         """Construct from dict, ignoring unknown keys."""
         known = {f.name for f in cls.__dataclass_fields__.values()}
         return cls(**{k: v for k, v in d.items() if k in known})
@@ -107,7 +107,7 @@ class NeuromodulationConfig:
             raise ValueError("neuromodulation.dt_seconds must be > 0")
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "NeuromodulationConfig":
+    def from_dict(cls, d: dict[str, Any]) -> NeuromodulationConfig:
         """Construct from dict, converting sub-configs."""
         clean = dict(d)
         gabaa_raw = clean.pop("gabaa_tonic", None)
@@ -115,23 +115,31 @@ class NeuromodulationConfig:
         obs_raw = clean.pop("observation_noise", None)
 
         gabaa: GABAAKineticsConfig | None = (
-            GABAAKineticsConfig.from_dict(gabaa_raw) if isinstance(gabaa_raw, dict)
-            else gabaa_raw if isinstance(gabaa_raw, GABAAKineticsConfig)
+            GABAAKineticsConfig.from_dict(gabaa_raw)
+            if isinstance(gabaa_raw, dict)
+            else gabaa_raw
+            if isinstance(gabaa_raw, GABAAKineticsConfig)
             else None
         )
         sero: SerotonergicKineticsConfig | None = (
-            SerotonergicKineticsConfig.from_dict(sero_raw) if isinstance(sero_raw, dict)
-            else sero_raw if isinstance(sero_raw, SerotonergicKineticsConfig)
+            SerotonergicKineticsConfig.from_dict(sero_raw)
+            if isinstance(sero_raw, dict)
+            else sero_raw
+            if isinstance(sero_raw, SerotonergicKineticsConfig)
             else None
         )
         obs: ObservationNoiseConfig | None = (
-            ObservationNoiseConfig.from_dict(obs_raw) if isinstance(obs_raw, dict)
-            else obs_raw if isinstance(obs_raw, ObservationNoiseConfig)
+            ObservationNoiseConfig.from_dict(obs_raw)
+            if isinstance(obs_raw, dict)
+            else obs_raw
+            if isinstance(obs_raw, ObservationNoiseConfig)
             else None
         )
 
         known = {f.name for f in cls.__dataclass_fields__.values()} - {
-            "gabaa_tonic", "serotonergic", "observation_noise",
+            "gabaa_tonic",
+            "serotonergic",
+            "observation_noise",
         }
         kwargs: dict[str, Any] = {k: v for k, v in clean.items() if k in known}
         return cls(gabaa_tonic=gabaa, serotonergic=sero, observation_noise=obs, **kwargs)

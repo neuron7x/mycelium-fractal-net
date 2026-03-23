@@ -73,7 +73,7 @@ class TestRequestID:
         """Response should include X-Request-ID header."""
         response = logging_client.get("/health")
         assert response.status_code == 200
-        assert REQUEST_ID_HEADER.lower() in [h.lower() for h in response.headers.keys()]
+        assert REQUEST_ID_HEADER.lower() in [h.lower() for h in response.headers]
 
     def test_request_id_format(self, logging_client: TestClient) -> None:
         """Request ID should be a valid UUID format."""

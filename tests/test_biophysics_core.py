@@ -28,6 +28,7 @@ from mycelium_fractal_net import (
     estimate_fractal_dimension,
     simulate_mycelium_field,
 )
+
 # MyceliumFractalNet tests moved to tests/ml/test_biophysics_ml.py
 
 # === Constants for Testing ===
@@ -138,9 +139,9 @@ class TestNernstPotential:
         ratio = e_at_310k / e_at_293k
         expected_ratio = 310.0 / 293.0
 
-        assert (
-            abs(ratio - expected_ratio) < 0.001
-        ), f"Temperature scaling incorrect: got {ratio:.4f}, expected {expected_ratio:.4f}"
+        assert abs(ratio - expected_ratio) < 0.001, (
+            f"Temperature scaling incorrect: got {ratio:.4f}, expected {expected_ratio:.4f}"
+        )
 
     def test_nernst_valence_scaling(self) -> None:
         """Test that Nernst potential scales inversely with valence.
@@ -199,9 +200,9 @@ class TestNernstPotential:
         )
 
         # Test symmetry property
-        assert np.isclose(
-            e1, -e2, atol=1e-10
-        ), f"Nernst symmetry violated: E1={e1}, E2={e2}, should have E1=-E2"
+        assert np.isclose(e1, -e2, atol=1e-10), (
+            f"Nernst symmetry violated: E1={e1}, E2={e2}, should have E1=-E2"
+        )
 
         # Test finiteness
         assert np.isfinite(e1), f"Non-finite potential: E={e1}"
@@ -225,23 +226,23 @@ class TestNernstPotential:
         )
 
         # E should equal RT/zF when ln(ratio) = 1
-        assert np.isclose(
-            e, rt_zf, rtol=1e-10
-        ), f"RT/zF inconsistency: computed {e:.6f}, expected {rt_zf:.6f}"
+        assert np.isclose(e, rt_zf, rtol=1e-10), (
+            f"RT/zF inconsistency: computed {e:.6f}, expected {rt_zf:.6f}"
+        )
 
     def test_nernst_rtfz_at_body_temp(self) -> None:
         """Verify NERNST_RTFZ_MV constant is correct."""
         # Calculate manually: (R * T) / (z * F) * 1000 for z=1 at 310K
         expected_rtfz = (R_GAS_CONSTANT * BODY_TEMPERATURE_K / FARADAY_CONSTANT) * 1000.0
 
-        assert np.isclose(
-            NERNST_RTFZ_MV, expected_rtfz, rtol=1e-6
-        ), f"NERNST_RTFZ_MV={NERNST_RTFZ_MV}, expected={expected_rtfz}"
+        assert np.isclose(NERNST_RTFZ_MV, expected_rtfz, rtol=1e-6), (
+            f"NERNST_RTFZ_MV={NERNST_RTFZ_MV}, expected={expected_rtfz}"
+        )
 
         # Should be approximately 26.7 mV
-        assert (
-            26.5 < NERNST_RTFZ_MV < 27.0
-        ), f"RT/zF at 37°C should be ~26.7 mV, got {NERNST_RTFZ_MV:.2f} mV"
+        assert 26.5 < NERNST_RTFZ_MV < 27.0, (
+            f"RT/zF at 37°C should be ~26.7 mV, got {NERNST_RTFZ_MV:.2f} mV"
+        )
 
 
 class TestNernstEdgeCases:
@@ -349,9 +350,9 @@ class TestFieldSimulationStability:
 
     def test_turing_morphogenesis_threshold(self) -> None:
         """Verify Turing threshold matches specification."""
-        assert (
-            abs(TURING_THRESHOLD - 0.75) < 1e-6
-        ), f"TURING_THRESHOLD={TURING_THRESHOLD}, expected 0.75"
+        assert abs(TURING_THRESHOLD - 0.75) < 1e-6, (
+            f"TURING_THRESHOLD={TURING_THRESHOLD}, expected 0.75"
+        )
 
     def test_quantum_jitter_variance(self) -> None:
         """Test quantum jitter adds appropriate noise."""

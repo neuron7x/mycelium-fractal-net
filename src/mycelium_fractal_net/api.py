@@ -44,7 +44,6 @@ from __future__ import annotations
 import asyncio
 import os
 import time
-from typing import List
 
 from fastapi import (
     FastAPI,
@@ -121,7 +120,7 @@ setup_logging()
 logger = get_logger("api")
 
 
-def _get_cors_origins() -> List[str]:
+def _get_cors_origins() -> list[str]:
     """
     Get CORS origins from environment or defaults.
 
@@ -275,7 +274,7 @@ async def validate(request: ValidateRequest) -> ValidateResponse:
         return run_validation_adapter(request, ctx)
     except Exception as e:
         logger.error(f"Validation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/simulate", response_model=SimulateResponse)
@@ -286,7 +285,7 @@ async def simulate(request: SimulateRequest) -> SimulateResponse:
         return run_simulation_adapter(request, ctx)
     except Exception as e:
         logger.error(f"Simulation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/nernst", response_model=NernstResponse)
@@ -297,7 +296,7 @@ async def nernst(request: NernstRequest) -> NernstResponse:
         return compute_nernst_adapter(request, ctx)
     except Exception as e:
         logger.error(f"Nernst computation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/federated/aggregate", response_model=FederatedAggregateResponse)
@@ -309,10 +308,10 @@ async def aggregate_gradients(
         ctx = ServiceContext(mode=ExecutionMode.API)
         return aggregate_gradients_adapter(request, ctx)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Federated aggregation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # =============================================================================
@@ -340,10 +339,10 @@ async def encrypt(request: EncryptRequest) -> EncryptResponse:
         return encrypt_data_adapter(request)
     except CryptoAPIError as e:
         logger.warning(f"Encryption failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Encryption failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Encryption failed")
+        raise HTTPException(status_code=500, detail="Encryption failed") from e
 
 
 @app.post("/api/decrypt", response_model=DecryptResponse)
@@ -365,10 +364,10 @@ async def decrypt(request: DecryptRequest) -> DecryptResponse:
         return decrypt_data_adapter(request)
     except CryptoAPIError as e:
         logger.warning(f"Decryption failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Decryption failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Decryption failed")
+        raise HTTPException(status_code=500, detail="Decryption failed") from e
 
 
 @app.post("/api/sign", response_model=SignResponse)
@@ -390,10 +389,10 @@ async def sign(request: SignRequest) -> SignResponse:
         return sign_message_adapter(request)
     except CryptoAPIError as e:
         logger.warning(f"Signing failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Signing failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Signing failed")
+        raise HTTPException(status_code=500, detail="Signing failed") from e
 
 
 @app.post("/api/verify", response_model=VerifyResponse)
@@ -415,10 +414,10 @@ async def verify(request: VerifyRequest) -> VerifyResponse:
         return verify_signature_adapter(request)
     except CryptoAPIError as e:
         logger.warning(f"Verification failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Verification failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Verification failed")
+        raise HTTPException(status_code=500, detail="Verification failed") from e
 
 
 @app.post("/api/keypair", response_model=KeypairResponse)
@@ -440,10 +439,10 @@ async def keypair(request: KeypairRequest) -> KeypairResponse:
         return generate_keypair_adapter(request)
     except CryptoAPIError as e:
         logger.warning(f"Key generation failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Key generation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Key generation failed")
+        raise HTTPException(status_code=500, detail="Key generation failed") from e
 
 
 # =============================================================================
@@ -953,7 +952,7 @@ def _sequence_from_payload(payload: V1FieldPayload) -> FieldSequence:
     if payload.spec is not None:
         spec = _spec_from_v1(payload.spec)
         return simulate_history(spec) if payload.spec.with_history else simulate_final(spec)
-    raise HTTPException(status_code=400, detail="Provide history, field, or spec")
+    raise HTTPException(status_code=400, detail="Provide history, field, or spec") from e
 
 
 @app.post("/v1/simulate")

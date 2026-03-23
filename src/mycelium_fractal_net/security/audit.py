@@ -32,7 +32,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Audit logger name
 AUDIT_LOGGER_NAME = "mfn.security.audit"
@@ -87,15 +87,15 @@ class AuditEvent:
     severity: AuditSeverity = AuditSeverity.INFO
     category: AuditCategory = AuditCategory.API
     timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
-    user_id: Optional[str] = None
-    resource: Optional[str] = None
-    source_ip: Optional[str] = None
-    request_id: Optional[str] = None
+    user_id: str | None = None
+    resource: str | None = None
+    source_ip: str | None = None
+    request_id: str | None = None
     success: bool = True
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     sensitive_fields: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert event to dictionary for logging.
 
@@ -183,9 +183,9 @@ def _redact_ip(ip: str) -> str:
 
 
 def _redact_dict(
-    data: Dict[str, Any],
+    data: dict[str, Any],
     sensitive_fields: list[str],
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Redact sensitive fields in a dictionary.
 
@@ -196,7 +196,7 @@ def _redact_dict(
     Returns:
         Dictionary with sensitive fields redacted.
     """
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
     for key, value in data.items():
         if key in sensitive_fields:
             if isinstance(value, str):
@@ -260,14 +260,14 @@ class AuditLogger:
         self,
         action: str,
         severity: AuditSeverity = AuditSeverity.INFO,
-        category: Optional[AuditCategory] = None,
-        user_id: Optional[str] = None,
-        resource: Optional[str] = None,
-        source_ip: Optional[str] = None,
-        request_id: Optional[str] = None,
+        category: AuditCategory | None = None,
+        user_id: str | None = None,
+        resource: str | None = None,
+        source_ip: str | None = None,
+        request_id: str | None = None,
         success: bool = True,
-        details: Optional[Dict[str, Any]] = None,
-        sensitive_fields: Optional[list[str]] = None,
+        details: dict[str, Any] | None = None,
+        sensitive_fields: list[str] | None = None,
     ) -> AuditEvent:
         """
         Log an audit event.
@@ -317,9 +317,9 @@ class AuditLogger:
     def authentication_success(
         self,
         user_id: str,
-        source_ip: Optional[str] = None,
-        request_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        source_ip: str | None = None,
+        request_id: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log successful authentication."""
         return self.log(
@@ -335,11 +335,11 @@ class AuditLogger:
 
     def authentication_failure(
         self,
-        user_id: Optional[str] = None,
-        source_ip: Optional[str] = None,
-        request_id: Optional[str] = None,
+        user_id: str | None = None,
+        source_ip: str | None = None,
+        request_id: str | None = None,
         reason: str = "invalid_credentials",
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log failed authentication."""
         event_details = {"reason": reason}
@@ -361,9 +361,9 @@ class AuditLogger:
         self,
         user_id: str,
         resource: str,
-        source_ip: Optional[str] = None,
-        request_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        source_ip: str | None = None,
+        request_id: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log access granted to resource."""
         return self.log(
@@ -380,12 +380,12 @@ class AuditLogger:
 
     def access_denied(
         self,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         resource: str = "",
-        source_ip: Optional[str] = None,
-        request_id: Optional[str] = None,
+        source_ip: str | None = None,
+        request_id: str | None = None,
         reason: str = "insufficient_permissions",
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log access denied to resource."""
         event_details = {"reason": reason}
@@ -406,11 +406,11 @@ class AuditLogger:
 
     def rate_limit_exceeded(
         self,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         resource: str = "",
-        source_ip: Optional[str] = None,
-        request_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        source_ip: str | None = None,
+        request_id: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log rate limit exceeded."""
         return self.log(
@@ -428,10 +428,10 @@ class AuditLogger:
     def suspicious_activity(
         self,
         activity_type: str,
-        user_id: Optional[str] = None,
-        source_ip: Optional[str] = None,
-        request_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        source_ip: str | None = None,
+        request_id: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log suspicious activity detected."""
         event_details = {"activity_type": activity_type}
@@ -451,7 +451,7 @@ class AuditLogger:
 
 
 # Singleton audit logger
-_audit_logger: Optional[AuditLogger] = None
+_audit_logger: AuditLogger | None = None
 
 
 def get_audit_logger() -> AuditLogger:
@@ -471,13 +471,13 @@ def audit_log(
     action: str,
     severity: AuditSeverity = AuditSeverity.INFO,
     category: AuditCategory = AuditCategory.API,
-    user_id: Optional[str] = None,
-    resource: Optional[str] = None,
-    source_ip: Optional[str] = None,
-    request_id: Optional[str] = None,
+    user_id: str | None = None,
+    resource: str | None = None,
+    source_ip: str | None = None,
+    request_id: str | None = None,
     success: bool = True,
-    details: Optional[Dict[str, Any]] = None,
-    sensitive_fields: Optional[list[str]] = None,
+    details: dict[str, Any] | None = None,
+    sensitive_fields: list[str] | None = None,
 ) -> AuditEvent:
     """
     Convenience function to log an audit event.
@@ -514,10 +514,10 @@ def audit_log(
 
 
 __all__ = [
-    "AuditSeverity",
     "AuditCategory",
     "AuditEvent",
     "AuditLogger",
-    "get_audit_logger",
+    "AuditSeverity",
     "audit_log",
+    "get_audit_logger",
 ]

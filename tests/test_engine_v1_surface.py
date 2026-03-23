@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from fastapi.testclient import TestClient
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.api import app
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_sdk_surface_end_to_end(tmp_path: Path) -> None:

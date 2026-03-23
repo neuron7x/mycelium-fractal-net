@@ -3,7 +3,7 @@
 Canonical location: mycelium_fractal_net.types.exceptions
 """
 
-from mycelium_fractal_net.types.exceptions import (  # noqa: F401
+from mycelium_fractal_net.types.exceptions import (
     NumericalInstabilityError,
     StabilityError,
     ValueOutOfRangeError,

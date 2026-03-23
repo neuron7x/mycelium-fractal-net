@@ -21,13 +21,15 @@ Reference: docs/MFN_BACKLOG.md#MFN-OBS-001
 from __future__ import annotations
 
 import time
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response as StarletteResponse
 
 from .api_config import MetricsConfig, get_api_config
+
+if TYPE_CHECKING:
+    from starlette.responses import Response as StarletteResponse
 
 # Try to import prometheus_client, provide fallback if not available
 try:
@@ -140,7 +142,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: Any,
-        config: Optional[MetricsConfig] = None,
+        config: MetricsConfig | None = None,
     ) -> None:
         """
         Initialize metrics middleware.
@@ -268,10 +270,10 @@ def is_prometheus_available() -> bool:
 
 
 __all__ = [
-    "MetricsMiddleware",
-    "metrics_endpoint",
+    "REQUESTS_IN_PROGRESS",
     "REQUEST_COUNTER",
     "REQUEST_LATENCY",
-    "REQUESTS_IN_PROGRESS",
+    "MetricsMiddleware",
     "is_prometheus_available",
+    "metrics_endpoint",
 ]

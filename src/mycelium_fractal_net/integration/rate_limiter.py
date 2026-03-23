@@ -22,14 +22,16 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from threading import Lock
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response
 
 from .api_config import RateLimitConfig, get_api_config
+
+if TYPE_CHECKING:
+    from starlette.responses import Response
 
 
 @dataclass
@@ -107,7 +109,7 @@ class RateLimiter:
         _lock: Thread lock for bucket access.
     """
 
-    def __init__(self, config: Optional[RateLimitConfig] = None) -> None:
+    def __init__(self, config: RateLimitConfig | None = None) -> None:
         """
         Initialize rate limiter.
 
@@ -115,7 +117,7 @@ class RateLimiter:
             config: Rate limit configuration. If None, uses global config.
         """
         self.config = config or get_api_config().rate_limit
-        self.buckets: Dict[Tuple[str, str], TokenBucket] = {}
+        self.buckets: dict[tuple[str, str], TokenBucket] = {}
         self._lock = Lock()
 
     def update_config(self, config: RateLimitConfig) -> None:
@@ -185,7 +187,7 @@ class RateLimiter:
 
         return "unknown"
 
-    def _get_bucket_key(self, client: str, endpoint: str) -> Tuple[str, str]:
+    def _get_bucket_key(self, client: str, endpoint: str) -> tuple[str, str]:
         """
         Create a bucket key from client and endpoint.
 
@@ -219,7 +221,7 @@ class RateLimiter:
         # Fall back to default
         return self.config.max_requests
 
-    def check_rate_limit(self, request: Request) -> Tuple[bool, int, int, Optional[int]]:
+    def check_rate_limit(self, request: Request) -> tuple[bool, int, int, int | None]:
         """
         Check if request is within rate limit.
 
@@ -311,7 +313,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: Any,
-        config: Optional[RateLimitConfig] = None,
+        config: RateLimitConfig | None = None,
     ) -> None:
         """
         Initialize rate limit middleware.
@@ -323,7 +325,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """
         super().__init__(app)
         self._static_config = config
-        self._limiter: Optional[RateLimiter] = None
+        self._limiter: RateLimiter | None = None
 
     @property
     def config(self) -> RateLimitConfig:
@@ -385,7 +387,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 __all__ = [
-    "TokenBucket",
-    "RateLimiter",
     "RateLimitMiddleware",
+    "RateLimiter",
+    "TokenBucket",
 ]

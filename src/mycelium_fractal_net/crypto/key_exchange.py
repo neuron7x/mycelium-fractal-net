@@ -63,7 +63,7 @@ import hashlib
 import hmac
 import secrets
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Union
 
 # Constants for Curve25519
 _CURVE25519_ORDER = (1 << 252) + 27742317777372353535851937790883648493
@@ -73,8 +73,6 @@ _CURVE25519_A24 = 121666  # (A + 2) / 4 where A = 486662
 
 class KeyExchangeError(Exception):
     """Raised when key exchange operation fails."""
-
-    pass
 
 
 def _clamp_scalar(k: bytes) -> int:
@@ -229,7 +227,7 @@ def _hkdf_expand(prk: bytes, info: bytes, length: int) -> bytes:
     return okm[:length]
 
 
-def _hkdf(ikm: bytes, salt: Optional[bytes], info: bytes, length: int) -> bytes:
+def _hkdf(ikm: bytes, salt: bytes | None, info: bytes, length: int) -> bytes:
     """
     HKDF (HMAC-based Key Derivation Function) as specified in RFC 5869.
 
@@ -373,14 +371,14 @@ class ECDHKeyExchange:
         True
     """
 
-    def __init__(self, keypair: Optional[ECDHKeyPair] = None) -> None:
+    def __init__(self, keypair: ECDHKeyPair | None = None) -> None:
         """
         Initialize key exchange with optional existing keypair.
 
         Args:
             keypair: Existing keypair or None to generate new one.
         """
-        self._keypair = keypair if keypair else generate_ecdh_keypair()
+        self._keypair = keypair or generate_ecdh_keypair()
 
     @property
     def public_key(self) -> bytes:
@@ -455,9 +453,9 @@ class ECDHKeyExchange:
 
 
 __all__ = [
-    "KeyExchangeError",
-    "ECDHKeyPair",
     "ECDHKeyExchange",
-    "generate_ecdh_keypair",
+    "ECDHKeyPair",
+    "KeyExchangeError",
     "derive_symmetric_key",
+    "generate_ecdh_keypair",
 ]

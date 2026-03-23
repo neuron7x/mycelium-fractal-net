@@ -41,7 +41,7 @@ def test_invalid_profile_rejected(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "overrides, expected",
+    ("overrides", "expected"),
     [
         ("validation.seed=99", 99),
         ("validation.device=gpu", "gpu"),

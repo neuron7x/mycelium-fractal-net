@@ -8,9 +8,12 @@ Reference: Newman (2006) PNAS 103:8577-8582, doi:10.1073/pnas.0601602103
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from mycelium_fractal_net.types.field import FieldSequence
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.field import FieldSequence
 
 
 def _spectral_modularity(active: np.ndarray) -> float:
@@ -23,7 +26,7 @@ def _spectral_modularity(active: np.ndarray) -> float:
 
     Returns Q in [-0.5, 1.0]. Higher = more modular structure.
     """
-    n = active.shape[0]
+    active.shape[0]
     # Build compact adjacency for active cells only
     indices = np.argwhere(active)
     n_active = len(indices)

@@ -22,23 +22,24 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
-
-import numpy as np
-from numpy.typing import NDArray
+from typing import TYPE_CHECKING, Any, Literal
 
 # Guard: ensure pandas is available with clear error message
 try:
     import pandas as pd
-except ModuleNotFoundError:
+except ModuleNotFoundError as exc:
     raise RuntimeError(
-        "pandas is required for dataset generation. Install with: pip install -r requirements.txt"
-    )
+        "pandas is required for dataset generation. Install with: pip install 'mycelium-fractal-net[data]'"
+    ) from exc
 
 from mycelium_fractal_net.core.reaction_diffusion_engine import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
 )
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -315,7 +316,7 @@ def _generate_param_configs(
     # Generate combinations up to num_samples
     while len(configs) < config.num_samples:
         for alpha in config.alpha_values:
-            for seed_offset in range(config.seeds_per_config):
+            for _seed_offset in range(config.seeds_per_config):
                 if len(configs) >= config.num_samples:
                     break
                 seed = config.base_seed + sim_id
@@ -536,15 +537,15 @@ def run_canonical_scenarios(
 
 
 __all__ = [
-    "ScenarioType",
-    "ScenarioConfig",
     "DatasetMeta",
+    "ScenarioConfig",
+    "ScenarioType",
+    "_generate_param_configs",
     "get_preset_config",
     "list_presets",
-    "run_scenario",
     "run_canonical_scenarios",
-    "run_synthetic_morphology_scenario",
-    "run_sensor_grid_anomaly_scenario",
     "run_regime_transition_scenario",
-    "_generate_param_configs",
+    "run_scenario",
+    "run_sensor_grid_anomaly_scenario",
+    "run_synthetic_morphology_scenario",
 ]

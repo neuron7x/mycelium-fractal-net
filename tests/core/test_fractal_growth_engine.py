@@ -144,7 +144,7 @@ class TestIFSGeneration:
         assert engine.validate_contraction()
         assert engine.transforms is not None
 
-        for a, b, c, d, e, f in engine.transforms:
+        for a, b, c, d, _e, _f in engine.transforms:
             det = abs(a * d - b * c)
             assert det < 1.0, f"Determinant {det:.4f} >= 1 (non-contractive)"
 
@@ -496,9 +496,9 @@ class TestInvariantsVerification:
             engine = FractalGrowthEngine(config)
             _, lyap = engine.generate_ifs()
 
-            assert (
-                lyap < LYAPUNOV_STABLE_MAX
-            ), f"λ = {lyap:.3f} >= 0 at seed={seed} (non-contractive)"
+            assert lyap < LYAPUNOV_STABLE_MAX, (
+                f"λ = {lyap:.3f} >= 0 at seed={seed} (non-contractive)"
+            )
             assert engine.metrics.is_contractive
 
     def test_contraction_requirement_invariant(self) -> None:
@@ -513,7 +513,7 @@ class TestInvariantsVerification:
 
         assert engine.validate_contraction()
 
-        for a, b, c, d, e, f in engine.transforms or []:
+        for a, b, c, d, _e, _f in engine.transforms or []:
             det = abs(a * d - b * c)
             assert det < 1.0, f"Determinant {det:.4f} >= 1 (non-contractive)"
 
@@ -531,9 +531,9 @@ class TestInvariantsVerification:
             binary = rng.random((64, 64)) > threshold
             dim = engine.estimate_dimension(binary)
 
-            assert (
-                FRACTAL_DIM_MIN <= dim <= FRACTAL_DIM_MAX + 0.5
-            ), f"Dimension {dim:.3f} outside bounds for threshold={threshold}"
+            assert FRACTAL_DIM_MIN <= dim <= FRACTAL_DIM_MAX + 0.5, (
+                f"Dimension {dim:.3f} outside bounds for threshold={threshold}"
+            )
 
     def test_biological_dimension_range(self) -> None:
         """Mycelium-like patterns should have D ∈ [1.4, 1.9].

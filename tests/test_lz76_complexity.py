@@ -6,8 +6,6 @@ Ref: Kaspar & Schuster (1987) Phys Rev A 36:842-848
 
 from __future__ import annotations
 
-import pytest
-
 from mycelium_fractal_net.analytics.morphology import _lempel_ziv_76_complexity
 
 
@@ -19,6 +17,7 @@ class TestLZ76:
         assert c < 1.0, f"Constant string complexity too high: {c}"
         # Must be lower than random
         import numpy as np
+
         rng = np.random.default_rng(42)
         c_rand = _lempel_ziv_76_complexity("".join(str(b) for b in rng.integers(0, 2, 10)))
         assert c < c_rand, "Constant string should have lower complexity than random"
@@ -31,6 +30,7 @@ class TestLZ76:
     def test_random_high_complexity(self) -> None:
         """Pseudorandom: high complexity."""
         import numpy as np
+
         rng = np.random.default_rng(42)
         bits = "".join(str(b) for b in rng.integers(0, 2, 100))
         c = _lempel_ziv_76_complexity(bits)
@@ -48,6 +48,7 @@ class TestLZ76:
         c_const = _lempel_ziv_76_complexity("0" * 50)
         c_periodic = _lempel_ziv_76_complexity("01" * 25)
         import numpy as np
+
         rng = np.random.default_rng(7)
         c_random = _lempel_ziv_76_complexity("".join(str(b) for b in rng.integers(0, 2, 50)))
         assert c_const <= c_periodic <= c_random, (
@@ -57,6 +58,7 @@ class TestLZ76:
     def test_normalized_output_range(self) -> None:
         """Output should be roughly in [0, 1+] range."""
         import numpy as np
+
         rng = np.random.default_rng(42)
         for length in [10, 50, 100]:
             bits = "".join(str(b) for b in rng.integers(0, 2, length))

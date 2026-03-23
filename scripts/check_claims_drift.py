@@ -52,7 +52,9 @@ def check_readme(manifest: dict) -> list[str]:
     group_mentions = re.findall(r"(\d+)\s+feature group", readme)
     for val in group_mentions:
         if int(val) != m["feature_groups_active"]:
-            failures.append(f"README mentions '{val} feature groups', manifest={m['feature_groups_active']}")
+            failures.append(
+                f"README mentions '{val} feature groups', manifest={m['feature_groups_active']}"
+            )
 
     # Check embedding dims
     embed_mentions = re.findall(r"(\d+)-dim", readme)

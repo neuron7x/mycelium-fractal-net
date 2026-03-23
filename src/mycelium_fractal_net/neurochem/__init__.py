@@ -14,11 +14,11 @@ from .profiles import PROFILE_REGISTRY, get_profile, list_profiles
 from .state import NeuromodulationState
 
 __all__ = [
+    "PROFILE_REGISTRY",
     "GABAAKineticsConfig",
     "NeuromodulationConfig",
     "NeuromodulationState",
     "ObservationNoiseConfig",
-    "PROFILE_REGISTRY",
     "SerotonergicKineticsConfig",
     "compute_excitability_offset_v",
     "get_calibration_criteria",

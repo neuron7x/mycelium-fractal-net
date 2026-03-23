@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class IntegrationCategory(str, Enum):
@@ -52,7 +52,7 @@ INTEGRATION_COUNT: int = 77
 
 
 # === Core Iteration Parameters (1-10) ===
-CORE_ITERATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
+CORE_ITERATION_INTEGRATIONS: dict[int, dict[str, Any]] = {
     1: {
         "name": "base_iteration_factor",
         "value": 1.0,
@@ -102,7 +102,7 @@ CORE_ITERATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
 }
 
 # === Key Derivation Integrations (11-20) ===
-KEY_DERIVATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
+KEY_DERIVATION_INTEGRATIONS: dict[int, dict[str, Any]] = {
     11: {
         "name": "kdf_algorithm",
         "value": "pbkdf2",
@@ -136,7 +136,7 @@ KEY_DERIVATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
 }
 
 # === Encryption Optimization Integrations (21-30) ===
-ENCRYPTION_OPTIMIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
+ENCRYPTION_OPTIMIZATION_INTEGRATIONS: dict[int, dict[str, Any]] = {
     21: {"name": "enc_block_size", "value": 16, "description": "Encryption block size"},
     22: {"name": "enc_iv_length", "value": 16, "description": "IV length in bytes"},
     23: {
@@ -168,7 +168,7 @@ ENCRYPTION_OPTIMIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
 }
 
 # === Hash Function Integrations (31-40) ===
-HASH_FUNCTION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
+HASH_FUNCTION_INTEGRATIONS: dict[int, dict[str, Any]] = {
     31: {
         "name": "hash_algorithm",
         "value": "sha256",
@@ -206,7 +206,7 @@ HASH_FUNCTION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
 }
 
 # === Salt Generation Integrations (41-50) ===
-SALT_GENERATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
+SALT_GENERATION_INTEGRATIONS: dict[int, dict[str, Any]] = {
     41: {
         "name": "salt_entropy_bits",
         "value": 128,
@@ -252,7 +252,7 @@ SALT_GENERATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
 }
 
 # === Memory Optimization Integrations (51-60) ===
-MEMORY_OPTIMIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
+MEMORY_OPTIMIZATION_INTEGRATIONS: dict[int, dict[str, Any]] = {
     51: {
         "name": "mem_pool_size",
         "value": 1048576,
@@ -294,7 +294,7 @@ MEMORY_OPTIMIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
 }
 
 # === Parallelization Integrations (61-70) ===
-PARALLELIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
+PARALLELIZATION_INTEGRATIONS: dict[int, dict[str, Any]] = {
     61: {
         "name": "parallel_enabled",
         "value": True,
@@ -340,7 +340,7 @@ PARALLELIZATION_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
 }
 
 # === Validation and Audit Integrations (71-77) ===
-VALIDATION_AUDIT_INTEGRATIONS: Dict[int, Dict[str, Any]] = {
+VALIDATION_AUDIT_INTEGRATIONS: dict[int, dict[str, Any]] = {
     71: {"name": "audit_enabled", "value": True, "description": "Enable audit logging"},
     72: {"name": "audit_level", "value": "info", "description": "Audit log level"},
     73: {
@@ -388,7 +388,7 @@ class DataIntegration:
     category: IntegrationCategory
     enabled: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "id": self.id,
@@ -422,7 +422,7 @@ def _get_category_for_id(integration_id: int) -> IntegrationCategory:
         raise ValueError(f"Invalid integration ID: {integration_id}")
 
 
-def _get_integration_data(integration_id: int) -> Dict[str, Any]:
+def _get_integration_data(integration_id: int) -> dict[str, Any]:
     """Get raw integration data by ID."""
     all_integrations = {
         **CORE_ITERATION_INTEGRATIONS,
@@ -459,8 +459,8 @@ class DataIntegrationConfig:
     """
 
     version: str = "1.0.0"
-    _integrations: Dict[int, DataIntegration] = field(default_factory=dict)
-    _changes: List[Dict[str, Any]] = field(default_factory=list)
+    _integrations: dict[int, DataIntegration] = field(default_factory=dict)
+    _changes: list[dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Initialize all 77 integrations."""
@@ -499,7 +499,7 @@ class DataIntegrationConfig:
     def get_integrations_by_category(
         self,
         category: IntegrationCategory,
-    ) -> List[DataIntegration]:
+    ) -> list[DataIntegration]:
         """
         Get all integrations for a specific category.
 
@@ -511,7 +511,7 @@ class DataIntegrationConfig:
         """
         return [intg for intg in self._integrations.values() if intg.category == category]
 
-    def get_enabled_integrations(self) -> List[DataIntegration]:
+    def get_enabled_integrations(self) -> list[DataIntegration]:
         """Get all enabled integrations."""
         return [intg for intg in self._integrations.values() if intg.enabled]
 
@@ -557,7 +557,7 @@ class DataIntegrationConfig:
             }
         )
 
-    def get_change_history(self) -> List[Dict[str, Any]]:
+    def get_change_history(self) -> list[dict[str, Any]]:
         """Get history of configuration changes."""
         return list(self._changes)
 
@@ -565,7 +565,7 @@ class DataIntegrationConfig:
         """Count enabled integrations."""
         return len(self.get_enabled_integrations())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
             "version": self.version,
@@ -574,14 +574,14 @@ class DataIntegrationConfig:
             "integrations": {i: intg.to_dict() for i, intg in self._integrations.items()},
         }
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """
         Get optimization summary for all integrations.
 
         Returns:
             Summary of integration optimization status.
         """
-        categories: Dict[str, int] = {}
+        categories: dict[str, int] = {}
         for intg in self._integrations.values():
             cat = intg.category.value
             if cat not in categories:
@@ -598,7 +598,7 @@ class DataIntegrationConfig:
 
 
 # Global configuration instance
-_data_integration_config: Optional[DataIntegrationConfig] = None
+_data_integration_config: DataIntegrationConfig | None = None
 
 
 def get_data_integration_config() -> DataIntegrationConfig:
@@ -640,7 +640,7 @@ def get_integration(integration_id: int) -> DataIntegration:
     return get_data_integration_config().get_integration(integration_id)
 
 
-def list_all_integrations() -> List[DataIntegration]:
+def list_all_integrations() -> list[DataIntegration]:
     """
     List all 77 data integrations.
 
@@ -651,7 +651,7 @@ def list_all_integrations() -> List[DataIntegration]:
     return [config.get_integration(i) for i in range(1, INTEGRATION_COUNT + 1)]
 
 
-def get_integration_categories() -> List[Tuple[IntegrationCategory, int, int]]:
+def get_integration_categories() -> list[tuple[IntegrationCategory, int, int]]:
     """
     Get all integration categories with their ID ranges.
 
@@ -671,25 +671,25 @@ def get_integration_categories() -> List[Tuple[IntegrationCategory, int, int]]:
 
 
 __all__ = [
-    # Constants
-    "INTEGRATION_COUNT",
     "CORE_ITERATION_INTEGRATIONS",
-    "KEY_DERIVATION_INTEGRATIONS",
     "ENCRYPTION_OPTIMIZATION_INTEGRATIONS",
     "HASH_FUNCTION_INTEGRATIONS",
-    "SALT_GENERATION_INTEGRATIONS",
+    # Constants
+    "INTEGRATION_COUNT",
+    "KEY_DERIVATION_INTEGRATIONS",
     "MEMORY_OPTIMIZATION_INTEGRATIONS",
     "PARALLELIZATION_INTEGRATIONS",
+    "SALT_GENERATION_INTEGRATIONS",
     "VALIDATION_AUDIT_INTEGRATIONS",
-    # Enums
-    "IntegrationCategory",
     # Classes
     "DataIntegration",
     "DataIntegrationConfig",
+    # Enums
+    "IntegrationCategory",
     # Functions
     "get_data_integration_config",
-    "reset_data_integration_config",
     "get_integration",
-    "list_all_integrations",
     "get_integration_categories",
+    "list_all_integrations",
+    "reset_data_integration_config",
 ]

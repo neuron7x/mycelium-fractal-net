@@ -177,7 +177,7 @@ class TestFinanceRegimeClassification:
         MarketRegime = self.module.MarketRegime
 
         # High fractal dimension and positive Lyapunov
-        regime, confidence = self.module.classify_regime(
+        regime, _confidence = self.module.classify_regime(
             fractal_dim=1.8,
             v_std=10.0,
             lyapunov=0.5,
@@ -190,7 +190,7 @@ class TestFinanceRegimeClassification:
         MarketRegime = self.module.MarketRegime
 
         # Low fractal dimension, low volatility, very stable
-        regime, confidence = self.module.classify_regime(
+        regime, _confidence = self.module.classify_regime(
             fractal_dim=0.5,
             v_std=1.0,
             lyapunov=-3.0,
@@ -203,7 +203,7 @@ class TestFinanceRegimeClassification:
         MarketRegime = self.module.MarketRegime
 
         # Intermediate values
-        regime, confidence = self.module.classify_regime(
+        regime, _confidence = self.module.classify_regime(
             fractal_dim=1.3,
             v_std=5.0,
             lyapunov=-1.5,

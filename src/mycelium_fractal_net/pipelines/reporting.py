@@ -198,8 +198,8 @@ def _build_report_html(
             "Detection",
             {
                 "label": detection.get("label"),
-                "score": f'{float(detection.get("score", 0.0)):.4f}',
-                "confidence": f'{float(detection.get("confidence", 0.0)):.4f}',
+                "score": f"{float(detection.get('score', 0.0)):.4f}",
+                "confidence": f"{float(detection.get('confidence', 0.0)):.4f}",
                 "top_features": ", ".join(detection.get("top_contributing_features", [])),
             },
         ),
@@ -207,8 +207,8 @@ def _build_report_html(
             "Comparison",
             {
                 "label": comparison.get("label"),
-                "distance": f'{float(comparison.get("distance", 0.0)):.6f}',
-                "cosine_similarity": f'{float(comparison.get("cosine_similarity", 0.0)):.6f}',
+                "distance": f"{float(comparison.get('distance', 0.0)):.6f}",
+                "cosine_similarity": f"{float(comparison.get('cosine_similarity', 0.0)):.6f}",
                 "nearest_analog": comparison.get("nearest_structural_analog"),
             },
         ),
@@ -217,8 +217,8 @@ def _build_report_html(
             {
                 "descriptor_version": descriptor.get("descriptor_version"),
                 "embedding_dim": len(descriptor.get("embedding", [])),
-                "fractal_dimension": f'{float(descriptor.get("features", {}).get("D_box", 0.0)):.4f}',
-                "activity": f'{float(descriptor.get("features", {}).get("f_active", 0.0)):.4f}',
+                "fractal_dimension": f"{float(descriptor.get('features', {}).get('D_box', 0.0)):.4f}",
+                "activity": f"{float(descriptor.get('features', {}).get('f_active', 0.0)):.4f}",
             },
         ),
     ]
@@ -325,7 +325,7 @@ def build_analysis_report(
         "report.md",
     ]
     # Full artifact list including self-referential ones
-    artifact_list = core_artifacts + ["manifest.json", "causal_validation.json"]
+    artifact_list = [*core_artifacts, "manifest.json", "causal_validation.json"]
 
     summary = {
         "grid_size": sequence.grid_size,

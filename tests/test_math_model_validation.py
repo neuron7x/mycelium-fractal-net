@@ -445,7 +445,7 @@ class TestNumericalStability:
     def test_combined_stress_test(self) -> None:
         """Stress test with all features enabled."""
         rng = np.random.default_rng(42)
-        field, events = simulate_mycelium_field(
+        field, _events = simulate_mycelium_field(
             rng,
             grid_size=64,
             steps=500,

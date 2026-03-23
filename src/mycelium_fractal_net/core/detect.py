@@ -10,73 +10,191 @@ See docs/MFN_MATH_MODEL.md Section 5 (Detection Theory).
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from mycelium_fractal_net.analytics.change_points import detect_change_points
 from mycelium_fractal_net.analytics.drift import morphology_drift
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.detection_config import (
     ANOMALY_CONFIDENCE_BASE as _ANOMALY_CONFIDENCE_BASE,
+    DETECTION_CONFIG_VERSION,  # re-exported for backward compat
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_CONFIDENCE_MAX as _ANOMALY_CONFIDENCE_MAX,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_CONFIDENCE_SCALE as _ANOMALY_CONFIDENCE_SCALE,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_W_CHANGE as _ANOMALY_W_CHANGE,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_W_COLLAPSE as _ANOMALY_W_COLLAPSE,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_W_CONNECTIVITY as _ANOMALY_W_CONNECTIVITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_W_INSTABILITY as _ANOMALY_W_INSTABILITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_W_NOISE as _ANOMALY_W_NOISE,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_W_PLASTICITY as _ANOMALY_W_PLASTICITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_W_TRANSITION as _ANOMALY_W_TRANSITION,
+)
+from mycelium_fractal_net.core.detection_config import (
     ANOMALY_W_VOLATILITY as _ANOMALY_W_VOLATILITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     CONNECTIVITY_AMPLIFICATION as _CONNECTIVITY_AMPLIFICATION,
+)
+from mycelium_fractal_net.core.detection_config import (
     CRITICALITY_AMPLIFICATION as _CRITICALITY_AMPLIFICATION,
-    DETECTION_CONFIG_VERSION,
+)
+from mycelium_fractal_net.core.detection_config import (
     DYNAMIC_ANOMALY_BASELINE as _DYNAMIC_ANOMALY_BASELINE,
+)
+from mycelium_fractal_net.core.detection_config import (
     HIERARCHY_BASELINE as _HIERARCHY_BASELINE,
+)
+from mycelium_fractal_net.core.detection_config import (
     HIERARCHY_RANGE as _HIERARCHY_RANGE,
+)
+from mycelium_fractal_net.core.detection_config import (
     INSTABILITY_W_COLLAPSE as _INSTABILITY_W_COLLAPSE,
+)
+from mycelium_fractal_net.core.detection_config import (
     INSTABILITY_W_INDEX as _INSTABILITY_W_INDEX,
+)
+from mycelium_fractal_net.core.detection_config import (
     INSTABILITY_W_NOISE as _INSTABILITY_W_NOISE,
+)
+from mycelium_fractal_net.core.detection_config import (
     INSTABILITY_W_TRANSITION as _INSTABILITY_W_TRANSITION,
+)
+from mycelium_fractal_net.core.detection_config import (
     INSTABILITY_W_VOLATILITY as _INSTABILITY_W_VOLATILITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     NOISE_GAIN_AMPLIFICATION as _NOISE_GAIN_AMPLIFICATION,
+)
+from mycelium_fractal_net.core.detection_config import (
     PATHOLOGICAL_NOISE_THRESHOLD as _PATHOLOGICAL_NOISE_THRESHOLD,
+)
+from mycelium_fractal_net.core.detection_config import (
     PROFILE_HINT_CRITICALITY as _PROFILE_HINT_CRITICALITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     PROFILE_HINT_SEROTONERGIC as _PROFILE_HINT_SEROTONERGIC,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_CONFIDENCE_BASE as _REGIME_CONFIDENCE_BASE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_CONFIDENCE_MAX as _REGIME_CONFIDENCE_MAX,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_CONFIDENCE_SCALE as _REGIME_CONFIDENCE_SCALE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_CRITICAL_W_CHANGE as _REGIME_CRITICAL_W_CHANGE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_CRITICAL_W_HIERARCHY as _REGIME_CRITICAL_W_HIERARCHY,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_CRITICAL_W_PLASTICITY as _REGIME_CRITICAL_W_PLASTICITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_CRITICAL_W_PRESSURE as _REGIME_CRITICAL_W_PRESSURE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_PATHNOISE_FLOOR_GAP as _REGIME_PATHNOISE_FLOOR_GAP,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_PATHNOISE_W_CHANGE as _REGIME_PATHNOISE_W_CHANGE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_PATHNOISE_W_LOW_COMPLEX as _REGIME_PATHNOISE_W_LOW_COMPLEX,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_PATHNOISE_W_LOW_CONN as _REGIME_PATHNOISE_W_LOW_CONN,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_PATHNOISE_W_NOISE as _REGIME_PATHNOISE_W_NOISE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_REORGANIZED_W_CHANGE as _REGIME_REORGANIZED_W_CHANGE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_REORGANIZED_W_COMPLEXITY as _REGIME_REORGANIZED_W_COMPLEXITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_REORGANIZED_W_CONNECTIVITY as _REGIME_REORGANIZED_W_CONNECTIVITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_REORGANIZED_W_PLASTICITY as _REGIME_REORGANIZED_W_PLASTICITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_TRANSITIONAL_W_CHANGE as _REGIME_TRANSITIONAL_W_CHANGE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_TRANSITIONAL_W_CONNECTIVITY as _REGIME_TRANSITIONAL_W_CONNECTIVITY,
+)
+from mycelium_fractal_net.core.detection_config import (
     REGIME_TRANSITIONAL_W_PRESSURE as _REGIME_TRANSITIONAL_W_PRESSURE,
+)
+from mycelium_fractal_net.core.detection_config import (
     REORGANIZED_COMPLEXITY_THRESHOLD as _REORGANIZED_COMPLEXITY_THRESHOLD,
+)
+from mycelium_fractal_net.core.detection_config import (
     REORGANIZED_PLASTICITY_FLOOR as _REORGANIZED_PLASTICITY_FLOOR,
+)
+from mycelium_fractal_net.core.detection_config import (
     REORGANIZED_TOPOLOGY_THRESHOLD as _REORGANIZED_TOPOLOGY_THRESHOLD,
+)
+from mycelium_fractal_net.core.detection_config import (
     STABLE_CEILING as _STABLE_CEILING,
+)
+from mycelium_fractal_net.core.detection_config import (
     STRUCTURE_FLOOR as _STRUCTURE_FLOOR,
+)
+from mycelium_fractal_net.core.detection_config import (
     TEMPORAL_LZC_NORMALIZER as _TEMPORAL_LZC_NORMALIZER,
+)
+from mycelium_fractal_net.core.detection_config import (
     THRESHOLD_CEILING as _THRESHOLD_CEILING,
+)
+from mycelium_fractal_net.core.detection_config import (
     THRESHOLD_CONNECTIVITY_WEIGHT as _THRESHOLD_CONNECTIVITY_WEIGHT,
+)
+from mycelium_fractal_net.core.detection_config import (
     THRESHOLD_FLOOR as _THRESHOLD_FLOOR,
+)
+from mycelium_fractal_net.core.detection_config import (
     THRESHOLD_NOISE_PENALTY as _THRESHOLD_NOISE_PENALTY,
+)
+from mycelium_fractal_net.core.detection_config import (
     THRESHOLD_PLASTICITY_WEIGHT as _THRESHOLD_PLASTICITY_WEIGHT,
+)
+from mycelium_fractal_net.core.detection_config import (
     THRESHOLD_REORGANIZED_OFFSET as _THRESHOLD_REORGANIZED_OFFSET,
+)
+from mycelium_fractal_net.core.detection_config import (
     WATCH_THRESHOLD_FLOOR as _WATCH_THRESHOLD_FLOOR,
+)
+from mycelium_fractal_net.core.detection_config import (
     WATCH_THRESHOLD_GAP as _WATCH_THRESHOLD_GAP,
 )
 from mycelium_fractal_net.types.detection import AnomalyEvent, RegimeState
 from mycelium_fractal_net.types.features import MorphologyDescriptor
-from mycelium_fractal_net.types.field import FieldSequence
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.field import FieldSequence
 
 # === Regime classification ===
 _ALLOWED_REGIMES = (
@@ -312,7 +430,9 @@ def detect_anomaly(sequence: FieldSequence) -> AnomalyEvent:
         label = (
             "anomalous"
             if score >= dynamic_threshold
-            else "watch" if score >= watch_threshold else "nominal"
+            else "watch"
+            if score >= watch_threshold
+            else "nominal"
         )
     contributing = [k for k, _ in sorted(evidence.items(), key=lambda kv: kv[1], reverse=True)[:5]]
     confidence = float(

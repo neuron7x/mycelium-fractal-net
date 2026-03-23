@@ -6,13 +6,11 @@ Uses Hypothesis to verify contracts hold across wide parameter ranges.
 from __future__ import annotations
 
 import numpy as np
-import pytest
-from hypothesis import given, settings, assume
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
-
 
 # ═══════════════════════════════════════════════════════════════
 #  Simulation invariants
@@ -30,9 +28,14 @@ class TestSimulationInvariants:
     )
     @settings(max_examples=30, deadline=10000)
     def test_field_always_finite(self, grid_size: int, steps: int, seed: int, alpha: float) -> None:
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=grid_size, steps=steps, seed=seed, alpha=alpha,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=grid_size,
+                steps=steps,
+                seed=seed,
+                alpha=alpha,
+            )
+        )
         assert np.isfinite(seq.field).all(), "Field contains NaN or Inf"
 
     @given(
@@ -42,9 +45,13 @@ class TestSimulationInvariants:
     )
     @settings(max_examples=20, deadline=10000)
     def test_field_shape_matches_spec(self, grid_size: int, steps: int, seed: int) -> None:
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=grid_size, steps=steps, seed=seed,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=grid_size,
+                steps=steps,
+                seed=seed,
+            )
+        )
         assert seq.field.shape == (grid_size, grid_size)
 
     @given(seed=st.integers(min_value=0, max_value=10000))
@@ -62,9 +69,13 @@ class TestSimulationInvariants:
     )
     @settings(max_examples=15, deadline=10000)
     def test_field_biophysical_bounds(self, grid_size: int, steps: int, seed: int) -> None:
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=grid_size, steps=steps, seed=seed,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=grid_size,
+                steps=steps,
+                seed=seed,
+            )
+        )
         # Field should be within biophysical bounds: [-95mV, +40mV] in volts
         assert seq.field.min() >= -0.100, f"Field below -100mV: {seq.field.min()}"
         assert seq.field.max() <= 0.045, f"Field above +45mV: {seq.field.max()}"
@@ -85,9 +96,13 @@ class TestDescriptorInvariants:
     )
     @settings(max_examples=15, deadline=10000)
     def test_embedding_always_finite(self, grid_size: int, steps: int, seed: int) -> None:
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=grid_size, steps=steps, seed=seed,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=grid_size,
+                steps=steps,
+                seed=seed,
+            )
+        )
         desc = seq.extract()
         assert all(np.isfinite(x) for x in desc.embedding), "Embedding contains NaN/Inf"
 
@@ -97,9 +112,13 @@ class TestDescriptorInvariants:
     )
     @settings(max_examples=10, deadline=10000)
     def test_embedding_dimension_constant(self, grid_size: int, seed: int) -> None:
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=grid_size, steps=8, seed=seed,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=grid_size,
+                steps=8,
+                seed=seed,
+            )
+        )
         desc = seq.extract()
         assert len(desc.embedding) == 57, f"Embedding dim={len(desc.embedding)}, expected 57"
 
@@ -129,9 +148,13 @@ class TestDetectionInvariants:
     )
     @settings(max_examples=15, deadline=10000)
     def test_score_bounded(self, grid_size: int, steps: int, seed: int) -> None:
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=grid_size, steps=steps, seed=seed,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=grid_size,
+                steps=steps,
+                seed=seed,
+            )
+        )
         det = seq.detect()
         assert 0.0 <= det.score <= 1.0, f"Score {det.score} out of [0,1]"
 
@@ -141,9 +164,13 @@ class TestDetectionInvariants:
     )
     @settings(max_examples=10, deadline=10000)
     def test_confidence_bounded(self, grid_size: int, seed: int) -> None:
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=grid_size, steps=8, seed=seed,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=grid_size,
+                steps=8,
+                seed=seed,
+            )
+        )
         det = seq.detect()
         assert 0.0 <= det.confidence <= 1.0
 
@@ -170,9 +197,13 @@ class TestCausalGateInvariants:
     )
     @settings(max_examples=10, deadline=15000)
     def test_clean_simulation_always_passes_strict(self, grid_size: int, seed: int) -> None:
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=grid_size, steps=8, seed=seed,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=grid_size,
+                steps=8,
+                seed=seed,
+            )
+        )
         v = validate_causal_consistency(seq, mode="strict")
         assert v.decision.value in ("pass", "degraded"), (
             f"Clean sim failed causal gate: {v.error_count}E {v.warning_count}W"

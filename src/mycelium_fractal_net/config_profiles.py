@@ -43,7 +43,7 @@ class ValidationProfile:
                 raise ConfigValidationError(f"{name} must be positive")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ValidationProfile":
+    def from_dict(cls, data: dict[str, Any]) -> ValidationProfile:
         profile = cls(
             seed=int(data["seed"]),
             epochs=int(data["epochs"]),
@@ -80,7 +80,7 @@ class ModelProfile:
             raise ConfigValidationError("hidden_dim must be positive")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ModelProfile":
+    def from_dict(cls, data: dict[str, Any]) -> ModelProfile:
         profile = cls(
             input_dim=int(data["input_dim"]),
             hidden_dim=int(data["hidden_dim"]),
@@ -113,7 +113,7 @@ class SimulationProfile:
             raise ConfigValidationError("jitter_var must be non-negative")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SimulationProfile":
+    def from_dict(cls, data: dict[str, Any]) -> SimulationProfile:
         profile = cls(
             turing_enabled=bool(data.get("turing_enabled", True)),
             turing_threshold=float(data.get("turing_threshold", 0.75)),
@@ -149,7 +149,7 @@ class FederatedProfile:
             raise ConfigValidationError("num_clusters must be positive")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "FederatedProfile":
+    def from_dict(cls, data: dict[str, Any]) -> FederatedProfile:
         profile = cls(
             num_clusters=int(data.get("num_clusters", 1)),
             byzantine_fraction=float(data.get("byzantine_fraction", 0.0)),
@@ -183,7 +183,7 @@ class ExpectedMetricsProfile:
             raise ConfigValidationError("memory_mb_max must be positive")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ExpectedMetricsProfile":
+    def from_dict(cls, data: dict[str, Any]) -> ExpectedMetricsProfile:
         profile = cls(
             runtime_seconds_max=float(data.get("runtime_seconds_max", 0)),
             memory_mb_max=float(data.get("memory_mb_max", 0)),
@@ -224,7 +224,7 @@ class ConfigProfile:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ConfigProfile":
+    def from_dict(cls, data: dict[str, Any]) -> ConfigProfile:
         required_keys = {
             "name",
             "description",

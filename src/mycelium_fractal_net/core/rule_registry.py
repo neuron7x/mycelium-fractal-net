@@ -24,9 +24,8 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import sys
-from typing import IO, Any, Callable
+from typing import IO, TYPE_CHECKING, Any
 
 from mycelium_fractal_net.types.causal import (
     CausalRuleResult,
@@ -35,13 +34,16 @@ from mycelium_fractal_net.types.causal import (
     ViolationCategory,
 )
 
-_REGISTRY: dict[str, "RegisteredRule"] = {}
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+_REGISTRY: dict[str, RegisteredRule] = {}
 
 
 class RegisteredRule:
     """A rule function with attached scientific specification."""
 
-    __slots__ = ("fn", "id", "spec", "stage", "severity", "category")
+    __slots__ = ("category", "fn", "id", "severity", "spec", "stage")
 
     def __init__(
         self,

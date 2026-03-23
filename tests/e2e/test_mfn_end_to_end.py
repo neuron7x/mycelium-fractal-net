@@ -114,9 +114,9 @@ class TestFullPipelineDemo:
             )
 
             # Stage 6: Verify dataset generation results
-            assert (
-                stats["successful"] == num_samples
-            ), f"Expected {num_samples} successful, got {stats['successful']}"
+            assert stats["successful"] == num_samples, (
+                f"Expected {num_samples} successful, got {stats['successful']}"
+            )
             assert stats["failed"] == 0, f"Unexpected failures: {stats['failed']}"
             assert stats["success_rate"] == 1.0
 
@@ -178,9 +178,9 @@ class TestPipelineWithDifferentConfigs:
         features2 = compute_fractal_features(result)
 
         for name in features1.values:
-            assert features1.values[name] == pytest.approx(
-                features2.values[name], rel=1e-10
-            ), f"Feature {name} not deterministic"
+            assert features1.values[name] == pytest.approx(features2.values[name], rel=1e-10), (
+                f"Feature {name} not deterministic"
+            )
 
 
 class TestConfigValidation:

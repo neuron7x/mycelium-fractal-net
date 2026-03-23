@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
@@ -12,7 +13,9 @@ from mycelium_fractal_net.config_profiles import (
     ConfigValidationError,
     load_config_profile,
 )
-from mycelium_fractal_net.integration.schemas import ValidateRequest
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.integration.schemas import ValidateRequest
 
 DEFAULT_PROFILE_ENV = "MFN_CONFIG_PROFILE"
 DEFAULT_PROFILE_NAME = "dev"

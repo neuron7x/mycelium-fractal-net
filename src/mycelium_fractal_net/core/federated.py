@@ -46,7 +46,6 @@ Example:
 from __future__ import annotations
 
 import math
-from typing import List
 
 import numpy as np
 
@@ -60,9 +59,9 @@ BYZANTINE_FRACTION_DEFAULT: float = 0.2
 SAMPLE_FRACTION_DEFAULT: float = 0.1
 
 __all__ = [
+    "BYZANTINE_FRACTION_DEFAULT",
     # Constants
     "NUM_CLUSTERS_DEFAULT",
-    "BYZANTINE_FRACTION_DEFAULT",
     "SAMPLE_FRACTION_DEFAULT",
     # Classes
     "HierarchicalKrumAggregator",
@@ -140,13 +139,13 @@ class HierarchicalKrumAggregator:
         if group_size <= 0:
             return 0
 
-        estimated = int(math.ceil(group_size * self.byzantine_fraction))
+        estimated = math.ceil(group_size * self.byzantine_fraction)
         max_allowed = max(0, (group_size - 3) // 2)
 
         return min(estimated, max_allowed)
 
     @staticmethod
-    def _validate_gradient_shapes(gradients: List[torch.Tensor]) -> None:
+    def _validate_gradient_shapes(gradients: list[torch.Tensor]) -> None:
         """Ensure all gradients share the same shape."""
         if not gradients:
             return
@@ -161,7 +160,7 @@ class HierarchicalKrumAggregator:
 
     def krum_select(
         self,
-        gradients: List[torch.Tensor],
+        gradients: list[torch.Tensor],
         num_byzantine: int,
     ) -> torch.Tensor:
         """
@@ -217,7 +216,7 @@ class HierarchicalKrumAggregator:
 
     def aggregate(
         self,
-        client_gradients: List[torch.Tensor],
+        client_gradients: list[torch.Tensor],
         rng: np.random.Generator | None = None,
     ) -> torch.Tensor:
         """
@@ -279,7 +278,7 @@ class HierarchicalKrumAggregator:
         cluster_gradients = []
         for c in range(actual_clusters):
             cluster_mask = cluster_assignments == c
-            cluster_grads = [g for g, m in zip(client_gradients, cluster_mask) if m]
+            cluster_grads = [g for g, m in zip(client_gradients, cluster_mask, strict=False) if m]
             if len(cluster_grads) > 0:
                 cluster_byzantine = self._estimate_byzantine_count(len(cluster_grads))
                 if len(cluster_grads) == 1:
@@ -313,7 +312,7 @@ class HierarchicalKrumAggregator:
 
 
 def aggregate_gradients_krum(
-    gradients: List[torch.Tensor],
+    gradients: list[torch.Tensor],
     num_clusters: int = NUM_CLUSTERS_DEFAULT,
     byzantine_fraction: float = BYZANTINE_FRACTION_DEFAULT,
     rng: np.random.Generator | None = None,

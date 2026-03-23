@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, AsyncIterator, Dict
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
-from ..core import ReactionDiffusionConfig, ReactionDiffusionEngine
+from mycelium_fractal_net.core import ReactionDiffusionConfig, ReactionDiffusionEngine
+
 from .logging_config import get_logger
 from .service_context import ServiceContext
 from .ws_schemas import (
@@ -26,6 +26,11 @@ from .ws_schemas import (
     WSSimulationComplete,
     WSSimulationState,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from numpy.typing import NDArray
 
 logger = get_logger("ws_adapters")
 
@@ -163,7 +168,7 @@ async def stream_simulation_live_adapter(
                 field = rd_engine.field
                 if field is not None:
                     # Compute state metrics
-                    state_data: Dict[str, Any] = {
+                    state_data: dict[str, Any] = {
                         "pot_mean_mV": float(np.mean(field) * 1000),
                         "pot_std_mV": float(np.std(field) * 1000),
                         "pot_min_mV": float(np.min(field) * 1000),
@@ -177,7 +182,7 @@ async def stream_simulation_live_adapter(
                         state_data["field_shape"] = list(field.shape)
                         state_data["field_mean"] = float(np.mean(field))
 
-                    metrics_data: Dict[str, float] = {
+                    metrics_data: dict[str, float] = {
                         "growth_events": float(growth_events),
                     }
 
@@ -232,7 +237,7 @@ async def stream_simulation_live_adapter(
         raise
 
 
-def _compute_fractal_features(field: NDArray[np.floating[Any]]) -> Dict[str, float]:
+def _compute_fractal_features(field: NDArray[np.floating[Any]]) -> dict[str, float]:
     """
     Compute fractal features from field.
 
@@ -242,7 +247,7 @@ def _compute_fractal_features(field: NDArray[np.floating[Any]]) -> Dict[str, flo
     Returns:
         Dictionary of fractal features.
     """
-    features: Dict[str, float] = {}
+    features: dict[str, float] = {}
 
     # Basic statistics
     features["pot_mean_mV"] = float(np.mean(field) * 1000)
@@ -310,7 +315,7 @@ def _compute_fractal_dimension(field: NDArray[np.floating[Any]], threshold: floa
         return 1.0
 
     sizes_used = sizes[: len(counts)]
-    positive_samples = [(s, c) for s, c in zip(sizes_used, counts) if c > 0]
+    positive_samples = [(s, c) for s, c in zip(sizes_used, counts, strict=False) if c > 0]
 
     # If no boxes are active at any scale, the fractal dimension is undefined;
     # return 0.0 to avoid propagating NaNs from log(0) while signaling an empty

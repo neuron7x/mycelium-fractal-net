@@ -16,7 +16,7 @@ Reference: docs/MFN_PERFORMANCE_BASELINES.md
 from __future__ import annotations
 
 import time
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -34,6 +34,9 @@ from mycelium_fractal_net.experiments.generate_dataset import (
     ConfigSampler,
     generate_dataset,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # ============================================================================
 # Performance Baselines (from MFN_PERFORMANCE_BASELINES.md)
@@ -198,9 +201,9 @@ class TestDatasetDemoPerf:
         elapsed = time.perf_counter() - start
 
         # Verify all samples succeeded
-        assert (
-            stats["successful"] == num_samples
-        ), f"Dataset generation failed: {stats['successful']}/{num_samples} successful"
+        assert stats["successful"] == num_samples, (
+            f"Dataset generation failed: {stats['successful']}/{num_samples} successful"
+        )
 
         assert elapsed <= threshold, (
             f"Dataset generation exceeded performance threshold: "

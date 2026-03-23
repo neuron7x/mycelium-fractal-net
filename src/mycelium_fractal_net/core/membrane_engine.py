@@ -30,12 +30,16 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .exceptions import NumericalInstabilityError, ValueOutOfRangeError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from numpy.typing import NDArray
 
 # === Physical Constants (SI) ===
 # Reference: MFN_MATH_MODEL.md Section 1.3
@@ -422,7 +426,7 @@ class MembraneEngine:
         self._metrics.potential_mean_v = float(np.mean(potential))
         self._metrics.potential_std_v = float(np.std(potential))
 
-        return cast(NDArray[np.floating[Any]], potential)
+        return cast("NDArray[np.floating[Any]]", potential)
 
     def integrate_ode(
         self,
@@ -528,7 +532,7 @@ class MembraneEngine:
         Stability: Requires dt * |dV/dt| < 1 for stability
         """
         dv_dt = derivative_fn(v)
-        return cast(NDArray[np.floating[Any]], v + self.config.dt * dv_dt)
+        return cast("NDArray[np.floating[Any]]", v + self.config.dt * dv_dt)
 
     def _rk4_step(
         self,
@@ -549,7 +553,7 @@ class MembraneEngine:
         k3 = derivative_fn(v + 0.5 * dt * k2)
         k4 = derivative_fn(v + dt * k3)
 
-        return cast(NDArray[np.floating[Any]], v + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4))
+        return cast("NDArray[np.floating[Any]]", v + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4))
 
     def validate_potential_range(
         self,

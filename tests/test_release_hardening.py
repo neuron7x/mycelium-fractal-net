@@ -9,16 +9,13 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pytest
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
-from mycelium_fractal_net.core.detect import detect_anomaly
 from mycelium_fractal_net.types.causal import CausalDecision, CausalValidationResult
-
 
 # ═══════════════════════════════════════════════════════════════
 #  Property tests — replay determinism
@@ -142,9 +139,7 @@ class TestNegativeInputs:
         corrupted_field[0, :] = 100.0  # Above +40 mV biophysical limit
         from mycelium_fractal_net.types.field import FieldSequence
 
-        corrupted = FieldSequence(
-            field=corrupted_field, spec=seq.spec, metadata=seq.metadata
-        )
+        corrupted = FieldSequence(field=corrupted_field, spec=seq.spec, metadata=seq.metadata)
         v = validate_causal_consistency(corrupted, mode="strict")
         assert v.decision == CausalDecision.FAIL
         assert any(r.rule_id == "SIM-003" and not r.passed for r in v.rule_results)
@@ -187,11 +182,22 @@ class TestCausalGateModes:
     def test_to_dict_has_all_fields(self, clean_result: CausalValidationResult) -> None:
         d = clean_result.to_dict()
         required_keys = {
-            "schema_version", "decision", "ok", "stages_checked",
-            "total_rules", "passed_rules", "error_count", "warning_count",
-            "runtime_hash", "config_hash", "provenance_hash",
-            "mode", "engine_version", "rule_version",
-            "violations", "all_rules",
+            "schema_version",
+            "decision",
+            "ok",
+            "stages_checked",
+            "total_rules",
+            "passed_rules",
+            "error_count",
+            "warning_count",
+            "runtime_hash",
+            "config_hash",
+            "provenance_hash",
+            "mode",
+            "engine_version",
+            "rule_version",
+            "violations",
+            "all_rules",
         }
         assert required_keys.issubset(d.keys()), f"Missing keys: {required_keys - d.keys()}"
 
@@ -216,9 +222,14 @@ class TestConfigGovernance:
         path = self.ROOT / "configs" / "detection_thresholds_v1.json"
         data = json.loads(path.read_text())
         required = [
-            "evidence_normalization", "regime_thresholds", "regime_weights",
-            "anomaly_weights", "instability_weights", "confidence",
-            "comparison", "forecast",
+            "evidence_normalization",
+            "regime_thresholds",
+            "regime_weights",
+            "anomaly_weights",
+            "instability_weights",
+            "confidence",
+            "comparison",
+            "forecast",
         ]
         for section in required:
             assert section in data, f"Missing required section: {section}"
@@ -226,6 +237,7 @@ class TestConfigGovernance:
 
     def test_detection_config_schema_validation(self) -> None:
         from mycelium_fractal_net.core.detection_config import _validate_schema
+
         path = self.ROOT / "configs" / "detection_thresholds_v1.json"
         data = json.loads(path.read_text())
         warnings = _validate_schema(data)
@@ -265,16 +277,17 @@ class TestConfigGovernance:
     def test_config_loaded_matches_file(self) -> None:
         """Verify detection_config.py actually loaded values from the JSON file."""
         from mycelium_fractal_net.core.detection_config import (
-            DYNAMIC_ANOMALY_BASELINE,
+            CONFIG_HASH,
             COSINE_NEAR_IDENTICAL,
             DAMPING_BASE,
-            CONFIG_HASH,
+            DYNAMIC_ANOMALY_BASELINE,
         )
+
         path = self.ROOT / "configs" / "detection_thresholds_v1.json"
         data = json.loads(path.read_text())
-        assert DYNAMIC_ANOMALY_BASELINE == data["regime_thresholds"]["dynamic_anomaly_baseline"]
-        assert COSINE_NEAR_IDENTICAL == data["comparison"]["cosine_near_identical"]
-        assert DAMPING_BASE == data["forecast"]["damping_base"]
+        assert data["regime_thresholds"]["dynamic_anomaly_baseline"] == DYNAMIC_ANOMALY_BASELINE
+        assert data["comparison"]["cosine_near_identical"] == COSINE_NEAR_IDENTICAL
+        assert data["forecast"]["damping_base"] == DAMPING_BASE
         assert CONFIG_HASH != "default", "Config was not loaded from file"
 
     def test_forecast_config_present(self) -> None:
@@ -282,10 +295,15 @@ class TestConfigGovernance:
         data = json.loads(path.read_text())
         fc = data["forecast"]
         required_keys = [
-            "damping_base", "damping_max", "fluidity_coeff_default",
-            "field_clip_min", "field_clip_max",
-            "uncertainty_w_plasticity", "uncertainty_w_connectivity",
-            "uncertainty_w_desensitization", "structural_error_weight",
+            "damping_base",
+            "damping_max",
+            "fluidity_coeff_default",
+            "field_clip_min",
+            "field_clip_max",
+            "uncertainty_w_plasticity",
+            "uncertainty_w_connectivity",
+            "uncertainty_w_desensitization",
+            "structural_error_weight",
         ]
         for key in required_keys:
             assert key in fc, f"Missing forecast config key: {key}"
@@ -333,9 +351,12 @@ class TestReleaseGovernanceFiles:
     def test_claims_manifest_consistent_with_runtime(self) -> None:
         """Claims manifest must match actual runtime values."""
         import subprocess
+
         result = subprocess.run(
             ["python", "scripts/check_claims_drift.py"],
-            capture_output=True, text=True, cwd=str(self.ROOT),
+            capture_output=True,
+            text=True,
+            cwd=str(self.ROOT),
         )
         assert result.returncode == 0, f"Claims drift: {result.stdout}"
 

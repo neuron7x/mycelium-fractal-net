@@ -12,9 +12,9 @@ from mycelium_fractal_net.analytics.legacy_features import (
     FRACTAL_MIN_GRID_SIZE,
     FRACTAL_MIN_NUM_SCALES,
     FRACTAL_MIN_R2,
+    FeatureConfig,
     assess_fractal_confidence,
     compute_features,
-    FeatureConfig,
     is_fractal_strong_signal,
 )
 

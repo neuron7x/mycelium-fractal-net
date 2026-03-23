@@ -15,7 +15,6 @@ References:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from mycelium_fractal_net.neurochem.mwc import (
     MWC_C,
@@ -109,16 +108,14 @@ class TestMWCEC50:
         Ref: Gielen & Bhatt (2019) Br J Pharmacol 176:2524-2537
         """
         ec50 = mwc_ec50()
-        assert 3.0 <= ec50 <= 20.0, (
-            f"EC50 = {ec50:.2f} μM, expected 5-15 μM for muscimol on α1β3γ2"
-        )
+        assert 3.0 <= ec50 <= 20.0, f"EC50 = {ec50:.2f} μM, expected 5-15 μM for muscimol on α1β3γ2"
 
     def test_ec50_response_is_half_max(self) -> None:
         """At EC50, R_fraction should be ~R_max/2."""
         ec50 = mwc_ec50()
         r = mwc_fraction(ec50)
-        r_max = 1.0 / (1.0 + MWC_L0 * (MWC_C ** MWC_N_SITES))
-        assert abs(r - r_max / 2.0) < 0.01, f"R at EC50 = {r}, expected ~{r_max/2:.4f}"
+        r_max = 1.0 / (1.0 + MWC_L0 * (MWC_C**MWC_N_SITES))
+        assert abs(r - r_max / 2.0) < 0.01, f"R at EC50 = {r}, expected ~{r_max / 2:.4f}"
 
     def test_ec50_comparison_with_published_data(self) -> None:
         """Compare EC50 with known muscimol data.
@@ -134,9 +131,7 @@ class TestMWCEC50:
         """Higher L0 (more closed at rest) should shift EC50 rightward."""
         ec50_low = mwc_ec50(L0=1000.0)
         ec50_high = mwc_ec50(L0=10000.0)
-        assert ec50_high > ec50_low, (
-            f"EC50 should increase with L0: {ec50_low} vs {ec50_high}"
-        )
+        assert ec50_high > ec50_low, f"EC50 should increase with L0: {ec50_low} vs {ec50_high}"
 
     def test_ec50_decreases_with_n(self) -> None:
         """More binding sites should make the transition steeper, shifting EC50."""

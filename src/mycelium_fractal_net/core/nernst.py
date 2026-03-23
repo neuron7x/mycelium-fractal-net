@@ -66,12 +66,12 @@ def compute_nernst_potential(
 
 
 __all__ = [
-    "R_GAS_CONSTANT",
-    "FARADAY_CONSTANT",
     "BODY_TEMPERATURE_K",
+    "FARADAY_CONSTANT",
     "ION_CLAMP_MIN",
-    "TEMPERATURE_MIN_K",
+    "R_GAS_CONSTANT",
     "TEMPERATURE_MAX_K",
+    "TEMPERATURE_MIN_K",
     "MembraneConfig",
     "MembraneEngine",
     "MembraneMetrics",

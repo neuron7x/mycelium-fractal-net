@@ -134,7 +134,7 @@ class TestReactionDiffusionSimulation:
         )
         engine = ReactionDiffusionEngine(config)
 
-        field, metrics = engine.simulate(steps=500)
+        field, _metrics = engine.simulate(steps=500)
 
         field_mv = field * 1000.0
         assert field_mv.min() >= -95.0 - 0.5, f"Min {field_mv.min():.2f} mV < -95"
@@ -386,7 +386,7 @@ class TestHistoryCollection:
         config = ReactionDiffusionConfig(grid_size=16, random_seed=42)
         engine = ReactionDiffusionEngine(config)
 
-        history, metrics = engine.simulate(steps=50, return_history=True)
+        history, _metrics = engine.simulate(steps=50, return_history=True)
 
         assert history.shape == (50, 16, 16)
 
@@ -572,16 +572,16 @@ class TestInvariantsVerification:
             random_seed=42,
         )
         engine = ReactionDiffusionEngine(config)
-        field, metrics = engine.simulate(steps=500)
+        field, _metrics = engine.simulate(steps=500)
 
         # Convert to mV for comparison
         field_mv = field * 1000.0
-        assert (
-            field_mv.min() >= FIELD_V_MIN * 1000 - 0.5
-        ), f"Min {field_mv.min():.2f} mV < {FIELD_V_MIN * 1000:.0f} mV"
-        assert (
-            field_mv.max() <= FIELD_V_MAX * 1000 + 0.5
-        ), f"Max {field_mv.max():.2f} mV > {FIELD_V_MAX * 1000:.0f} mV"
+        assert field_mv.min() >= FIELD_V_MIN * 1000 - 0.5, (
+            f"Min {field_mv.min():.2f} mV < {FIELD_V_MIN * 1000:.0f} mV"
+        )
+        assert field_mv.max() <= FIELD_V_MAX * 1000 + 0.5, (
+            f"Max {field_mv.max():.2f} mV > {FIELD_V_MAX * 1000:.0f} mV"
+        )
 
     def test_no_nan_inf_invariant(self) -> None:
         """No NaN/Inf after 1000+ steps.
@@ -652,6 +652,6 @@ class TestInvariantsVerification:
         _, metrics = engine.simulate(steps=100)
 
         # Expect ~25 events, allow 10-40 range for randomness
-        assert (
-            10 <= metrics.growth_events <= 40
-        ), f"Expected ~25 events, got {metrics.growth_events}"
+        assert 10 <= metrics.growth_events <= 40, (
+            f"Expected ~25 events, got {metrics.growth_events}"
+        )

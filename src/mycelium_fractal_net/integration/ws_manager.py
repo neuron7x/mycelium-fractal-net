@@ -14,12 +14,13 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-STREAMING
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hmac
 import time
 import uuid
 from collections import deque
 from enum import Enum
-from typing import Any, Deque, Dict, Optional, Set
+from typing import Any
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -67,12 +68,12 @@ class WSConnectionState:
         self.connection_id = connection_id
         self.websocket = websocket
         self.authenticated = False
-        self.subscriptions: Set[str] = set()
+        self.subscriptions: set[str] = set()
         self.last_heartbeat = time.time()
         self.created_at = time.time()
-        self.message_queue: Deque[Dict[str, Any]] = deque(maxlen=max_queue_size)
-        self.client_info: Optional[str] = None
-        self.api_key_used: Optional[str] = None
+        self.message_queue: deque[dict[str, Any]] = deque(maxlen=max_queue_size)
+        self.client_info: str | None = None
+        self.api_key_used: str | None = None
 
     def is_alive(self, timeout: float = 60.0) -> bool:
         """Check if connection is alive based on heartbeat timeout."""
@@ -130,13 +131,13 @@ class WSConnectionManager:
         heartbeat_interval: float = 30.0,
         heartbeat_timeout: float = 60.0,
     ):
-        self.connections: Dict[str, WSConnectionState] = {}
-        self.stream_subscriptions: Dict[str, Set[str]] = {}
+        self.connections: dict[str, WSConnectionState] = {}
+        self.stream_subscriptions: dict[str, set[str]] = {}
         self.backpressure_strategy = backpressure_strategy
         self.max_queue_size = max_queue_size
         self.heartbeat_interval = heartbeat_interval
         self.heartbeat_timeout = heartbeat_timeout
-        self._heartbeat_task: Optional[asyncio.Task[Any]] = None
+        self._heartbeat_task: asyncio.Task[Any] | None = None
 
     async def connect(self, websocket: WebSocket) -> str:
         """
@@ -323,7 +324,7 @@ class WSConnectionManager:
         connection_id: str,
         stream_id: str,
         stream_type: WSStreamType,
-        params: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
     ) -> bool:
         """
         Subscribe connection to a stream.
@@ -402,7 +403,7 @@ class WSConnectionManager:
     async def send_message(
         self,
         connection_id: str,
-        message: Dict[str, Any],
+        message: dict[str, Any],
         apply_backpressure: bool = True,
     ) -> bool:
         """
@@ -448,7 +449,7 @@ class WSConnectionManager:
     async def _handle_backpressure(
         self,
         connection: WSConnectionState,
-        message: Dict[str, Any],
+        message: dict[str, Any],
     ) -> None:
         """Handle backpressure when queue is full."""
         if self.backpressure_strategy == BackpressureStrategy.DROP_OLDEST:
@@ -505,7 +506,7 @@ class WSConnectionManager:
     async def broadcast_to_stream(
         self,
         stream_id: str,
-        message: Dict[str, Any],
+        message: dict[str, Any],
     ) -> int:
         """
         Broadcast message to all subscribers of a stream.
@@ -585,10 +586,8 @@ class WSConnectionManager:
         """Stop heartbeat monitoring."""
         if self._heartbeat_task is not None:
             self._heartbeat_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._heartbeat_task
-            except asyncio.CancelledError:
-                pass
             self._heartbeat_task = None
             logger.info("Heartbeat monitor stopped")
 
@@ -629,7 +628,7 @@ class WSConnectionManager:
         """Get number of subscribers for a stream."""
         return len(self.stream_subscriptions.get(stream_id, set()))
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get connection manager statistics."""
         total_subscriptions = sum(len(subs) for subs in self.stream_subscriptions.values())
         return {

@@ -6,28 +6,56 @@ via ``detection_config.py``. Hardcoded fallbacks ensure import-time safety.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from mycelium_fractal_net.analytics.drift import morphology_drift
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.detection_config import (
     CONNECTIVITY_FLAT_CEILING as _CONNECTIVITY_FLAT_CEILING,
+)
+from mycelium_fractal_net.core.detection_config import (
     CONNECTIVITY_LOW as _CONNECTIVITY_LOW,
+)
+from mycelium_fractal_net.core.detection_config import (
     CONNECTIVITY_REORG_THRESHOLD as _CONNECTIVITY_REORG_THRESHOLD,
+)
+from mycelium_fractal_net.core.detection_config import (
     COSINE_NEAR_IDENTICAL as _COSINE_NEAR_IDENTICAL,
+)
+from mycelium_fractal_net.core.detection_config import (
     COSINE_RELATED as _COSINE_RELATED,
+)
+from mycelium_fractal_net.core.detection_config import (
     COSINE_SIMILAR as _COSINE_SIMILAR,
+)
+from mycelium_fractal_net.core.detection_config import (
     DISTANCE_NEAR_IDENTICAL as _DISTANCE_NEAR_IDENTICAL,
+)
+from mycelium_fractal_net.core.detection_config import (
     HIERARCHY_FLAT_THRESHOLD as _HIERARCHY_FLAT_THRESHOLD,
+)
+from mycelium_fractal_net.core.detection_config import (
     MODULARITY_LOW as _MODULARITY_LOW,
+)
+from mycelium_fractal_net.core.detection_config import (
     MODULARITY_REORG_THRESHOLD as _MODULARITY_REORG_THRESHOLD,
+)
+from mycelium_fractal_net.core.detection_config import (
     NOISE_PATHOLOGICAL_HIGH as _NOISE_PATHOLOGICAL_HIGH,
+)
+from mycelium_fractal_net.core.detection_config import (
     NOISE_PATHOLOGICAL_LOW as _NOISE_PATHOLOGICAL_LOW,
+)
+from mycelium_fractal_net.core.detection_config import (
     TOP_CHANGED_FEATURES as _TOP_CHANGED_FEATURES,
 )
 from mycelium_fractal_net.types.features import MorphologyDescriptor
-from mycelium_fractal_net.types.field import FieldSequence
 from mycelium_fractal_net.types.forecast import ComparisonResult
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.field import FieldSequence
 
 
 def _topology_label(drift: dict[str, float]) -> str:

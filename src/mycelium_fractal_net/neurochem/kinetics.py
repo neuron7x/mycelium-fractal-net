@@ -6,8 +6,9 @@ Zero bare float literals except 0.0 and 1.0.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
-from numpy.typing import NDArray
 
 from mycelium_fractal_net.neurochem.constants import (
     ACTIVITY_DRIVE_ACTIVATOR_WEIGHT,
@@ -34,17 +35,21 @@ from mycelium_fractal_net.neurochem.constants import (
     REST_OFFSET_BASELINE_FRACTION,
     REST_OFFSET_DRIVE_FRACTION,
 )
-from mycelium_fractal_net.neurochem.config_types import (
-    GABAAKineticsConfig,
-    ObservationNoiseConfig,
-    SerotonergicKineticsConfig,
-)
 from mycelium_fractal_net.neurochem.mwc import (
     effective_gabaa_shunt,
     effective_serotonergic_gain,
     mwc_fraction,
 )
 from mycelium_fractal_net.neurochem.state import NeuromodulationState
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from mycelium_fractal_net.neurochem.config_types import (
+        GABAAKineticsConfig,
+        ObservationNoiseConfig,
+        SerotonergicKineticsConfig,
+    )
 
 
 def _clip01(arr: NDArray[np.float64] | float) -> NDArray[np.float64]:
@@ -97,7 +102,9 @@ def compute_excitability_offset_v(
     )
     local_offset_mv = float(baseline_activation_offset_mv) + float(
         rest_offset_mv
-    ) * occupancy_bias * (REST_OFFSET_BASELINE_FRACTION + REST_OFFSET_DRIVE_FRACTION * excitability_drive)
+    ) * occupancy_bias * (
+        REST_OFFSET_BASELINE_FRACTION + REST_OFFSET_DRIVE_FRACTION * excitability_drive
+    )
     if plasticity_scale > 1.0:
         local_offset_mv += (
             float(rest_offset_mv)
@@ -134,15 +141,15 @@ def step_neuromodulation_state(
 
     field_drive = np.clip((field + FIELD_DRIVE_REST_V) / FIELD_DRIVE_RANGE_V, 0.0, 1.0)
     activity_drive = np.clip(
-        ACTIVITY_DRIVE_ACTIVATOR_WEIGHT * activator
-        + ACTIVITY_DRIVE_FIELD_WEIGHT * field_drive,
-        0.0, 1.0,
+        ACTIVITY_DRIVE_ACTIVATOR_WEIGHT * activator + ACTIVITY_DRIVE_FIELD_WEIGHT * field_drive,
+        0.0,
+        1.0,
     )
 
     if gabaa is not None:
         concentration = float(gabaa.agonist_concentration_um)
         rest_aff = float(gabaa.resting_affinity_um)
-        active_aff = float(gabaa.active_affinity_um) if gabaa.active_affinity_um != 0.0 else rest_aff
+        float(gabaa.active_affinity_um) if gabaa.active_affinity_um != 0.0 else rest_aff
         ligand_rest = mwc_fraction(concentration)
         ligand_active = mwc_fraction(concentration)
 
@@ -153,8 +160,13 @@ def step_neuromodulation_state(
 
         available_rest = np.clip(1.0 - occ_active - occ_des, 0.0, 1.0)
         bind_propensity = np.clip(
-            bind_rate * (BIND_RESTING_WEIGHT * ligand_rest + BIND_ACTIVE_WEIGHT * ligand_active * activity_drive),
-            0.0, 1.0,
+            bind_rate
+            * (
+                BIND_RESTING_WEIGHT * ligand_rest
+                + BIND_ACTIVE_WEIGHT * ligand_active * activity_drive
+            ),
+            0.0,
+            1.0,
         )
         bind_flux = available_rest * bind_propensity
         occ_rest = occ_rest - bind_flux
@@ -166,8 +178,10 @@ def step_neuromodulation_state(
         occ_rest = occ_rest + unbind_flux
 
         des_propensity = np.clip(
-            des_rate * (DESENSITIZATION_BASELINE_FRACTION + DESENSITIZATION_DRIVE_FRACTION * activity_drive),
-            0.0, 1.0,
+            des_rate
+            * (DESENSITIZATION_BASELINE_FRACTION + DESENSITIZATION_DRIVE_FRACTION * activity_drive),
+            0.0,
+            1.0,
         )
         des_flux = occ_active * des_propensity
         occ_active = occ_active - des_flux
@@ -191,9 +205,7 @@ def step_neuromodulation_state(
         np.abs(activator - np.mean(activator)) * PLASTICITY_DRIVE_SCALE * plasticity_scale, 0.0, 1.0
     )
     if serotonergic is not None:
-        plasticity_drive = _clip01(
-            plasticity_drive + float(serotonergic.reorganization_drive)
-        )
+        plasticity_drive = _clip01(plasticity_drive + float(serotonergic.reorganization_drive))
         effective_gain = effective_serotonergic_gain(
             plasticity_drive,
             float(serotonergic.gain_fluidity_coeff),
@@ -209,9 +221,7 @@ def step_neuromodulation_state(
     )
 
     if observation_noise is not None:
-        target_noise = np.full(
-            shape, max(0.0, float(observation_noise.std)), dtype=np.float64
-        )
+        target_noise = np.full(shape, max(0.0, float(observation_noise.std)), dtype=np.float64)
         smoothing = float(np.clip(observation_noise.temporal_smoothing, 0.0, 1.0))
         observation_noise_gain = state.observation_noise_gain * smoothing + target_noise * (
             1.0 - smoothing

@@ -48,7 +48,7 @@ class DetectionEvidence:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, float]) -> "DetectionEvidence":
+    def from_dict(cls, data: dict[str, float]) -> DetectionEvidence:
         return cls(**{k: float(data[k]) for k in cls.__dataclass_fields__ if k in data})
 
 

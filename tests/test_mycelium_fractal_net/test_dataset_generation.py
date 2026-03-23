@@ -208,7 +208,7 @@ class TestGenerateDatasetReproducibleWithFixedSeed:
         assert len(stats1["rows"]) == len(stats2["rows"]), "Different number of rows"
 
         # Compare key feature values
-        for r1, r2 in zip(stats1["rows"], stats2["rows"]):
+        for r1, r2 in zip(stats1["rows"], stats2["rows"], strict=False):
             assert r1["sim_id"] == r2["sim_id"], "sim_id mismatch"
             assert r1["random_seed"] == r2["random_seed"], "random_seed mismatch"
             assert r1["grid_size"] == r2["grid_size"], "grid_size mismatch"
@@ -248,10 +248,12 @@ class TestGenerateDatasetReproducibleWithFixedSeed:
         if len(stats1["rows"]) > 0 and len(stats2["rows"]) > 0:
             # Check that configuration parameters differ
             steps_differ = any(
-                r1["steps"] != r2["steps"] for r1, r2 in zip(stats1["rows"], stats2["rows"])
+                r1["steps"] != r2["steps"]
+                for r1, r2 in zip(stats1["rows"], stats2["rows"], strict=False)
             )
             alpha_differ = any(
-                r1["alpha"] != r2["alpha"] for r1, r2 in zip(stats1["rows"], stats2["rows"])
+                r1["alpha"] != r2["alpha"]
+                for r1, r2 in zip(stats1["rows"], stats2["rows"], strict=False)
             )
             assert steps_differ or alpha_differ, "Configs should differ with different seeds"
 

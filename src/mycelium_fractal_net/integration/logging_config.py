@@ -39,25 +39,27 @@ import time
 import uuid
 from contextvars import ContextVar
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
-from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response
 
 from .api_config import LoggingConfig, get_api_config
 
+if TYPE_CHECKING:
+    from fastapi import Request
+    from starlette.responses import Response
+
 # Context variable for request ID (thread-safe, async-safe)
-_request_id: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
+_request_id: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 # Request context for additional logging info
-_request_context: ContextVar[Dict[str, Any]] = ContextVar("request_context", default={})
+_request_context: ContextVar[dict[str, Any]] = ContextVar("request_context", default={})
 
 # Header name for request ID
 REQUEST_ID_HEADER = "X-Request-ID"
 
 
-def get_request_id() -> Optional[str]:
+def get_request_id() -> str | None:
     """
     Get the current request ID from context.
 
@@ -77,7 +79,7 @@ def set_request_id(request_id: str) -> None:
     _request_id.set(request_id)
 
 
-def get_request_context() -> Dict[str, Any]:
+def get_request_context() -> dict[str, Any]:
     """
     Get the current request context.
 
@@ -87,7 +89,7 @@ def get_request_context() -> Dict[str, Any]:
     return _request_context.get().copy()
 
 
-def set_request_context(context: Dict[str, Any]) -> None:
+def set_request_context(context: dict[str, Any]) -> None:
     """
     Set the request context.
 
@@ -124,7 +126,7 @@ class JSONFormatter(logging.Formatter):
         Returns:
             str: JSON-formatted log string.
         """
-        log_data: Dict[str, Any] = {
+        log_data: dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "level": record.levelname,
             "logger": record.name,
@@ -181,7 +183,7 @@ class TextFormatter(logging.Formatter):
         return message
 
 
-def setup_logging(config: Optional[LoggingConfig] = None) -> None:
+def setup_logging(config: LoggingConfig | None = None) -> None:
     """
     Configure logging for the application.
 
@@ -288,7 +290,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: Any,
-        config: Optional[LoggingConfig] = None,
+        config: LoggingConfig | None = None,
     ) -> None:
         """
         Initialize request logging middleware.
@@ -373,14 +375,14 @@ def get_logger(name: str) -> logging.Logger:
 
 __all__ = [
     "REQUEST_ID_HEADER",
-    "get_request_id",
-    "set_request_id",
-    "get_request_context",
-    "set_request_context",
     "JSONFormatter",
-    "TextFormatter",
-    "setup_logging",
     "RequestIDMiddleware",
     "RequestLoggingMiddleware",
+    "TextFormatter",
     "get_logger",
+    "get_request_context",
+    "get_request_id",
+    "set_request_context",
+    "set_request_id",
+    "setup_logging",
 ]

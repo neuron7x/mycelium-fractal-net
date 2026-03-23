@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from mycelium_fractal_net.types.detection import AnomalyEvent
-from mycelium_fractal_net.types.features import MorphologyDescriptor
-from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
-from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
 from mycelium_fractal_net.types.symbolic import SymbolicContext
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.detection import AnomalyEvent
+    from mycelium_fractal_net.types.features import MorphologyDescriptor
+    from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
+    from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
 
 
 @dataclass(frozen=True)

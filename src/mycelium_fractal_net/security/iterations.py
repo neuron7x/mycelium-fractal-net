@@ -30,7 +30,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Optional
 
 
 class SecurityLevel(str, Enum):
@@ -99,7 +98,7 @@ class SecurityIterationConfig:
     adaptive_max: int = ADAPTIVE_MAX_ITERATIONS
     quantum_resistant: int = QUANTUM_RESISTANT_ITERATIONS
     version: str = "1.0.0"
-    _iteration_history: list[Dict[str, int]] = field(default_factory=list)
+    _iteration_history: list[dict[str, int]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Validate configuration after initialization."""
@@ -193,7 +192,7 @@ class SecurityIterationConfig:
         range_size = self.adaptive_max - self.adaptive_min
         return self.adaptive_min + int(range_size * score)
 
-    def get_iteration_history(self) -> list[Dict[str, int]]:
+    def get_iteration_history(self) -> list[dict[str, int]]:
         """
         Get history of iteration configuration changes.
 
@@ -233,7 +232,7 @@ class SecurityIterationConfig:
         self._validate()
         self._record_iteration_state()
 
-    def to_dict(self) -> Dict[str, int | str]:
+    def to_dict(self) -> dict[str, int | str]:
         """
         Convert configuration to dictionary.
 
@@ -253,7 +252,7 @@ class SecurityIterationConfig:
 
 
 # Global configuration instance
-_security_iteration_config: Optional[SecurityIterationConfig] = None
+_security_iteration_config: SecurityIterationConfig | None = None
 
 
 def get_security_iteration_config() -> SecurityIterationConfig:
@@ -322,21 +321,21 @@ def validate_iteration_count(count: int, min_count: int = 10_000) -> bool:
 
 
 __all__ = [
-    # Enums
-    "SecurityLevel",
+    "ADAPTIVE_MAX_ITERATIONS",
+    "ADAPTIVE_MIN_ITERATIONS",
     # Constants
     "BASE_ITERATIONS",
     "ENHANCED_ITERATIONS",
     "HIGH_SECURITY_ITERATIONS",
     "MAXIMUM_ITERATIONS",
-    "ADAPTIVE_MIN_ITERATIONS",
-    "ADAPTIVE_MAX_ITERATIONS",
     "QUANTUM_RESISTANT_ITERATIONS",
     # Classes
     "SecurityIterationConfig",
+    # Enums
+    "SecurityLevel",
+    "get_iteration_count",
     # Functions
     "get_security_iteration_config",
     "reset_security_iteration_config",
-    "get_iteration_count",
     "validate_iteration_count",
 ]

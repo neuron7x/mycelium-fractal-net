@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import os
 from enum import Enum
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
-from numpy.typing import NDArray
 
 from mycelium_fractal_net.types.exceptions import NumericalInstabilityError
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 try:  # optional acceleration contour
     from numba import njit
@@ -39,7 +41,7 @@ def _laplacian_numpy_periodic(field: NDArray[np.floating]) -> NDArray[np.floatin
     down = np.roll(field, -1, axis=0)
     left = np.roll(field, 1, axis=1)
     right = np.roll(field, -1, axis=1)
-    return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
+    return cast("NDArray[np.floating[Any]]", up + down + left + right - 4.0 * field)
 
 
 def _laplacian_numpy_neumann(field: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -58,7 +60,7 @@ def _laplacian_numpy_neumann(field: NDArray[np.floating]) -> NDArray[np.floating
     right = np.empty_like(field)
     right[:, :-1] = field[:, 1:]
     right[:, -1] = field[:, -1]
-    return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
+    return cast("NDArray[np.floating[Any]]", up + down + left + right - 4.0 * field)
 
 
 def _laplacian_numpy_dirichlet(field: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -66,7 +68,7 @@ def _laplacian_numpy_dirichlet(field: NDArray[np.floating]) -> NDArray[np.floati
     down = np.pad(field[1:, :], ((0, 1), (0, 0)), mode="constant", constant_values=0)
     left = np.pad(field[:, :-1], ((0, 0), (1, 0)), mode="constant", constant_values=0)
     right = np.pad(field[:, 1:], ((0, 0), (0, 1)), mode="constant", constant_values=0)
-    return cast(NDArray[np.floating[Any]], up + down + left + right - 4.0 * field)
+    return cast("NDArray[np.floating[Any]]", up + down + left + right - 4.0 * field)
 
 
 if njit is not None:
@@ -154,7 +156,7 @@ def compute_laplacian(
 
     if check_stability:
         validate_field_stability(laplacian, field_name="laplacian")
-    return cast(NDArray[np.floating[Any]], laplacian)
+    return cast("NDArray[np.floating[Any]]", laplacian)
 
 
 def compute_gradient(
@@ -179,7 +181,7 @@ def compute_gradient(
             grad_x[-1, :] = field[-1, :] - field[-2, :]
             grad_y[:, 0] = field[:, 1] - field[:, 0]
             grad_y[:, -1] = field[:, -1] - field[:, -2]
-    return cast(NDArray[np.floating[Any]], grad_x), cast(NDArray[np.floating[Any]], grad_y)
+    return cast("NDArray[np.floating[Any]]", grad_x), cast("NDArray[np.floating[Any]]", grad_y)
 
 
 def compute_field_statistics(field: NDArray[np.floating]) -> dict[str, float]:
@@ -234,16 +236,16 @@ def clamp_field(
     needs_clamping = (field < min_value) | (field > max_value)
     clamp_count = int(np.sum(needs_clamping))
     clamped = np.clip(field, min_value, max_value)
-    return cast(NDArray[np.floating[Any]], clamped), clamp_count
+    return cast("NDArray[np.floating[Any]]", clamped), clamp_count
 
 
 __all__ = [
     "BoundaryCondition",
+    "clamp_field",
+    "compute_field_statistics",
+    "compute_gradient",
     "compute_laplacian",
     "laplacian_backend",
-    "compute_gradient",
-    "compute_field_statistics",
-    "validate_field_stability",
     "validate_field_bounds",
-    "clamp_field",
+    "validate_field_stability",
 ]

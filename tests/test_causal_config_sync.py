@@ -52,9 +52,9 @@ def test_all_config_rules_in_code() -> None:
     # Some rules are conditional (only fire for specific regimes/profiles)
     # Baseline won't trigger: DET-006/007/008, CMP-005, FOR-003, SIM-008/009, XST-001/003
     missing_in_code = config_ids - code_ids
-    assert (
-        len(missing_in_code) <= 12
-    ), f"Too many config rules not triggered: {sorted(missing_in_code)}"
+    assert len(missing_in_code) <= 12, (
+        f"Too many config rules not triggered: {sorted(missing_in_code)}"
+    )
 
 
 def test_severity_levels_match() -> None:

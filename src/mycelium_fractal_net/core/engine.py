@@ -11,13 +11,15 @@ with the SimulationConfig/SimulationResult types.
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .reaction_diffusion_engine import ReactionDiffusionConfig, ReactionDiffusionEngine
 from .types import SimulationConfig, SimulationMetrics, SimulationResult
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 def run_mycelium_simulation(config: SimulationConfig) -> SimulationResult:

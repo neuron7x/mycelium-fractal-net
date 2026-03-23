@@ -162,7 +162,7 @@ class TestRateLimiter:
                 self.client = type("obj", (object,), {"host": "127.0.0.1"})()
 
         request = MockRequest()
-        allowed, limit, remaining, retry_after = limiter.check_rate_limit(request)
+        allowed, limit, remaining, _retry_after = limiter.check_rate_limit(request)
 
         assert allowed is True
         assert limit == 10
@@ -196,7 +196,7 @@ class TestRateLimiter:
         assert retry_after > 0
 
     @pytest.mark.parametrize(
-        "max_requests, window_seconds",
+        ("max_requests", "window_seconds"),
         [
             (0, 60),  # disabled via zero limit
             (10, 0),  # disabled via zero-length window
@@ -248,7 +248,7 @@ class TestRateLimiter:
         new_config = RateLimitConfig(max_requests=2, window_seconds=0, enabled=True)
         limiter.update_config(new_config)
 
-        allowed_after, limit, remaining, retry_after = limiter.check_rate_limit(request)
+        allowed_after, limit, _remaining, retry_after = limiter.check_rate_limit(request)
         assert allowed_after is True
         assert limit == 2
         assert retry_after is None
@@ -360,7 +360,7 @@ class TestRateLimitMiddleware:
         limiter.check_rate_limit(request)
 
         # Next request should be blocked with retry_after
-        allowed, limit, remaining, retry_after = limiter.check_rate_limit(request)
+        allowed, _limit, _remaining, retry_after = limiter.check_rate_limit(request)
         assert allowed is False
         assert retry_after is not None
         assert isinstance(retry_after, int)
@@ -373,7 +373,7 @@ class TestRateLimitMiddleware:
         # - detail: error message
         # - error_code: "rate_limit_exceeded"
         # - retry_after: seconds to wait
-        pass  # Format validation is done in rate_limit_exceeded_behavior test
+        # Format validation is done in rate_limit_exceeded_behavior test
 
     def test_middleware_refreshes_dynamic_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Middleware should adopt updated rate limit config at runtime."""

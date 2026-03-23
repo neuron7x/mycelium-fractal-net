@@ -65,8 +65,7 @@ def magenta(text: str) -> str:
 
 def banner() -> str:
     return (
-        f"\n{bold('MFN')} {dim('v4.1.0')} {dim('|')} "
-        f"Morphology-aware Field Intelligence Engine\n"
+        f"\n{bold('MFN')} {dim('v4.1.0')} {dim('|')} Morphology-aware Field Intelligence Engine\n"
     )
 
 

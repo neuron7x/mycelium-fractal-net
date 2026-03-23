@@ -26,7 +26,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
 
 from mycelium_fractal_net.security import SecretManager, SecretRetrievalError
 
@@ -80,8 +79,8 @@ class AuthConfig:
     """
 
     api_key_required: bool = False
-    api_keys: List[str] = field(default_factory=list)
-    public_endpoints: List[str] = field(
+    api_keys: list[str] = field(default_factory=list)
+    public_endpoints: list[str] = field(
         default_factory=lambda: [
             "/health",
             "/metrics",
@@ -92,7 +91,7 @@ class AuthConfig:
     )
 
     @classmethod
-    def from_env(cls, env: Environment) -> "AuthConfig":
+    def from_env(cls, env: Environment) -> AuthConfig:
         """
         Create AuthConfig from environment variables.
 
@@ -113,7 +112,7 @@ class AuthConfig:
             api_key_required = env != Environment.DEV
 
         # Collect API keys from environment
-        api_keys: List[str] = []
+        api_keys: list[str] = []
 
         # Single key via env or file-backed secret
         try:
@@ -165,10 +164,10 @@ class RateLimitConfig:
     max_requests: int = 100
     window_seconds: int = 60
     enabled: bool = True
-    per_endpoint_limits: Dict[str, int] = field(default_factory=dict)
+    per_endpoint_limits: dict[str, int] = field(default_factory=dict)
 
     @classmethod
-    def from_env(cls, env: Environment) -> "RateLimitConfig":
+    def from_env(cls, env: Environment) -> RateLimitConfig:
         """
         Create RateLimitConfig from environment variables.
 
@@ -227,7 +226,7 @@ class LoggingConfig:
     include_request_body: bool = False
 
     @classmethod
-    def from_env(cls, env: Environment) -> "LoggingConfig":
+    def from_env(cls, env: Environment) -> LoggingConfig:
         """
         Create LoggingConfig from environment variables.
 
@@ -269,7 +268,7 @@ class MetricsConfig:
     include_in_auth: bool = False
 
     @classmethod
-    def from_env(cls, env: Environment) -> "MetricsConfig":
+    def from_env(cls, env: Environment) -> MetricsConfig:
         """
         Create MetricsConfig from environment variables.
 
@@ -335,14 +334,14 @@ class APIConfig:
         else:
             # Maintain metrics as public when authentication is not required
             public_endpoints.append(metrics_path)
-            deduped: List[str] = []
+            deduped: list[str] = []
             for endpoint in public_endpoints:
                 if endpoint not in deduped:
                     deduped.append(endpoint)
             self.auth.public_endpoints = deduped
 
     @classmethod
-    def from_env(cls) -> "APIConfig":
+    def from_env(cls) -> APIConfig:
         """
         Create complete API configuration from environment.
 
@@ -365,7 +364,7 @@ class APIConfig:
 
 
 # Singleton instance for easy access
-_config: Optional[APIConfig] = None
+_config: APIConfig | None = None
 
 
 def get_api_config() -> APIConfig:
@@ -388,12 +387,12 @@ def reset_config() -> None:
 
 
 __all__ = [
-    "Environment",
+    "APIConfig",
     "AuthConfig",
-    "RateLimitConfig",
+    "Environment",
     "LoggingConfig",
     "MetricsConfig",
-    "APIConfig",
+    "RateLimitConfig",
     "get_api_config",
     "reset_config",
 ]

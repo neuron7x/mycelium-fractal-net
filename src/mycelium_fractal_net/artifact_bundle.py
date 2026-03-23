@@ -12,12 +12,15 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
     Ed25519PublicKey,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 @dataclass
@@ -245,7 +248,7 @@ def verify_bundle(root_or_manifest: str | Path) -> dict[str, Any]:
 __all__ = [
     "sha256_file",
     "sign_artifact",
-    "verify_artifact_signature",
     "sign_artifacts",
+    "verify_artifact_signature",
     "verify_bundle",
 ]

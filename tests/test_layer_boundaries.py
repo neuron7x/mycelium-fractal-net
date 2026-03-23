@@ -13,7 +13,6 @@ import ast
 import importlib
 import sys
 from pathlib import Path
-from typing import Set
 
 import pytest
 
@@ -54,10 +53,10 @@ ALLOWED_CORE_PACKAGES = {
 class TestCoreLayerBoundaries:
     """Test that core/ modules do not import infrastructure packages."""
 
-    def _get_imports_from_file(self, filepath: Path) -> Set[str]:
+    def _get_imports_from_file(self, filepath: Path) -> set[str]:
         """Extract all import names from a Python file using AST."""
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 tree = ast.parse(f.read())
         except SyntaxError:
             return set()
@@ -67,9 +66,8 @@ class TestCoreLayerBoundaries:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     imports.add(alias.name.split(".")[0])
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imports.add(node.module.split(".")[0])
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imports.add(node.module.split(".")[0])
 
         return imports
 
@@ -228,10 +226,10 @@ class TestNoCircularImports:
 class TestLayerDependencyDirection:
     """Test that dependencies flow in correct direction: core <- integration <- api."""
 
-    def _get_imports_from_file(self, filepath: Path) -> Set[str]:
+    def _get_imports_from_file(self, filepath: Path) -> set[str]:
         """Extract all import names from a Python file."""
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 content = f.read()
                 tree = ast.parse(content)
         except (SyntaxError, FileNotFoundError):
@@ -242,9 +240,8 @@ class TestLayerDependencyDirection:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     imports.add(alias.name)
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imports.add(node.module)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imports.add(node.module)
 
         return imports
 
@@ -270,9 +267,9 @@ class TestLayerDependencyDirection:
 
         # API should import from integration
         integration_imports = [i for i in imports if "integration" in i]
-        assert (
-            len(integration_imports) > 0
-        ), "api.py should import from integration layer for schemas and adapters"
+        assert len(integration_imports) > 0, (
+            "api.py should import from integration layer for schemas and adapters"
+        )
 
 
 class TestModuleExportsConsistency:

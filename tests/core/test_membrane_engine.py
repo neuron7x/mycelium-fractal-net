@@ -464,9 +464,9 @@ class TestInvariantsVerification:
         for z, c_out, c_in in test_cases:
             e_v = engine.compute_nernst_potential(z, c_out, c_in)
             e_mv = e_v * 1000.0
-            assert (
-                POTENTIAL_MIN_V * 1000 <= e_mv <= POTENTIAL_MAX_V * 1000
-            ), f"E = {e_mv:.1f} mV outside bounds for z={z}, ratio={c_out / c_in:.1f}"
+            assert POTENTIAL_MIN_V * 1000 <= e_mv <= POTENTIAL_MAX_V * 1000, (
+                f"E = {e_mv:.1f} mV outside bounds for z={z}, ratio={c_out / c_in:.1f}"
+            )
 
     def test_sign_consistency_invariant(self) -> None:
         """Sign consistency: [X]_out > [X]_in and z > 0 → E > 0.

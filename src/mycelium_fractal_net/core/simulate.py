@@ -4,7 +4,7 @@ import hashlib
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -22,6 +22,9 @@ from mycelium_fractal_net.types.field import (
     SerotonergicPlasticitySpec,
     SimulationSpec,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _fingerprint(spec: SimulationSpec) -> str:

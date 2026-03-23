@@ -5,8 +5,8 @@ from __future__ import annotations
 from importlib import import_module
 
 __all__ = [
-    "OptimizedFractalDenoise1D",
     "Fractal1DPreprocessor",
+    "OptimizedFractalDenoise1D",
 ]
 
 

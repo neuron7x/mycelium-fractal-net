@@ -12,16 +12,18 @@ Reference:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 # Import canonical feature names
 from .features import FEATURE_NAMES
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
 # Simulation parameter column names (per MFN_DATA_PIPELINES.md Section 5.1)
-SIMULATION_PARAM_COLUMNS: List[str] = [
+SIMULATION_PARAM_COLUMNS: list[str] = [
     "sim_id",
     "scenario_name",
     "grid_size",
@@ -32,14 +34,14 @@ SIMULATION_PARAM_COLUMNS: List[str] = [
 ]
 
 # Simulation metadata column names (per MFN_DATA_PIPELINES.md Section 5.3)
-SIMULATION_META_COLUMNS: List[str] = [
+SIMULATION_META_COLUMNS: list[str] = [
     "growth_events",
     "turing_activations",
     "clamping_events",
 ]
 
 # All expected columns in canonical order
-ALL_DATASET_COLUMNS: List[str] = SIMULATION_PARAM_COLUMNS + FEATURE_NAMES + SIMULATION_META_COLUMNS
+ALL_DATASET_COLUMNS: list[str] = SIMULATION_PARAM_COLUMNS + FEATURE_NAMES + SIMULATION_META_COLUMNS
 
 
 @dataclass
@@ -77,7 +79,7 @@ class DatasetRow:
     random_seed: int
 
     # Features (dictionary for flexibility)
-    features: Dict[str, float] = field(default_factory=dict)
+    features: dict[str, float] = field(default_factory=dict)
 
     # Simulation metadata
     growth_events: int = 0
@@ -95,14 +97,14 @@ class DatasetRow:
         if not (0.0 < self.alpha <= 0.25):
             raise ValueError(f"alpha must be in (0, 0.25], got {self.alpha}")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert to flat dictionary suitable for DataFrame row.
 
         Returns:
             Dictionary with all columns in canonical order.
         """
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "sim_id": self.sim_id,
             "scenario_name": self.scenario_name,
             "grid_size": self.grid_size,
@@ -120,7 +122,7 @@ class DatasetRow:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DatasetRow":
+    def from_dict(cls, data: dict[str, Any]) -> DatasetRow:
         """
         Create DatasetRow from dictionary.
 
@@ -195,15 +197,15 @@ class DatasetStats:
 
     num_rows: int
     num_features: int
-    scenario_names: List[str]
-    grid_sizes: List[int]
-    feature_stats: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    scenario_names: list[str]
+    grid_sizes: list[int]
+    feature_stats: dict[str, dict[str, float]] = field(default_factory=dict)
 
     def has_expected_features(self) -> bool:
         """Check if dataset has all 18 expected features."""
         return self.num_features == len(FEATURE_NAMES)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "num_rows": self.num_rows,
@@ -215,7 +217,7 @@ class DatasetStats:
         }
 
     @classmethod
-    def from_dataframe(cls, df: Any) -> "DatasetStats":
+    def from_dataframe(cls, df: Any) -> DatasetStats:
         """
         Compute statistics from a pandas DataFrame.
 
@@ -229,7 +231,7 @@ class DatasetStats:
         feature_cols = [col for col in FEATURE_NAMES if col in df.columns]
 
         # Compute per-feature statistics
-        feature_stats: Dict[str, Dict[str, float]] = {}
+        feature_stats: dict[str, dict[str, float]] = {}
         for col in feature_cols:
             feature_stats[col] = {
                 "min": float(df[col].min()),
@@ -252,10 +254,10 @@ class DatasetStats:
 
 
 __all__ = [
-    "DatasetRow",
-    "DatasetMeta",
-    "DatasetStats",
-    "SIMULATION_PARAM_COLUMNS",
-    "SIMULATION_META_COLUMNS",
     "ALL_DATASET_COLUMNS",
+    "SIMULATION_META_COLUMNS",
+    "SIMULATION_PARAM_COLUMNS",
+    "DatasetMeta",
+    "DatasetRow",
+    "DatasetStats",
 ]

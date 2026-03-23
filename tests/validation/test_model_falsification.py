@@ -24,7 +24,6 @@ Reference: docs/MFN_MATH_MODEL.md, docs/MFN_VALIDATION_REPORT.md
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 import numpy as np
 import pytest
@@ -45,9 +44,9 @@ class ControlScenario:
 
     name: str
     description: str
-    params: Dict
+    params: dict
     expected_behavior: str
-    invariants: List[str]
+    invariants: list[str]
 
 
 CONTROL_SCENARIOS = [
@@ -168,7 +167,7 @@ class ValidationResult:
     expectation: str
     actual_result: str
     passed: bool
-    details: Dict
+    details: dict
 
 
 class TestControlScenarios:
@@ -211,9 +210,9 @@ class TestControlScenarios:
         assert np.isfinite(field).all(), "NaN/Inf detected"
         assert field.min() >= -0.095, "Field below lower bound"
         assert field.max() <= 0.040, "Field above upper bound"
-        assert (
-            final_var < initial_var
-        ), f"Variance should decrease: initial={initial_var:.6f}, final={final_var:.6f}"
+        assert final_var < initial_var, (
+            f"Variance should decrease: initial={initial_var:.6f}, final={final_var:.6f}"
+        )
 
     def test_growth_with_spikes(self, rng: np.random.Generator) -> None:
         """
@@ -637,7 +636,7 @@ class TestDatasetRegimeDiscrimination:
             },
         }
 
-        features_by_regime: Dict[str, List[Tuple[float, float, float]]] = {
+        features_by_regime: dict[str, list[tuple[float, float, float]]] = {
             name: [] for name in regimes
         }
 
@@ -645,7 +644,7 @@ class TestDatasetRegimeDiscrimination:
         for regime_name, params in regimes.items():
             for seed in range(5):
                 rng = np.random.default_rng(seed * 100)
-                field, events = simulate_mycelium_field(
+                field, _events = simulate_mycelium_field(
                     rng,
                     grid_size=64,
                     steps=100,

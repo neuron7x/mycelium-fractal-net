@@ -200,9 +200,9 @@ class TestLargeGridScalability:
         time_128 = times[2][1]
         scaling_ratio = time_128 / time_32 if time_32 > 0 else float("inf")
 
-        assert (
-            scaling_ratio < 25
-        ), f"Time scaling {scaling_ratio:.1f}x for 128/32 grid exceeds 25x limit"
+        assert scaling_ratio < 25, (
+            f"Time scaling {scaling_ratio:.1f}x for 128/32 grid exceeds 25x limit"
+        )
 
 
 class TestLongSimulations:
@@ -239,9 +239,9 @@ class TestLongSimulations:
         metrics = measure_memory_and_time(run_mycelium_simulation_with_history, config)
 
         # History: 500 steps * 32 * 32 * 8 bytes = ~4MB, allow up to 50MB total
-        assert (
-            metrics["peak_memory_mb"] < 50
-        ), f"History simulation used {metrics['peak_memory_mb']:.2f}MB, exceeds 50MB limit"
+        assert metrics["peak_memory_mb"] < 50, (
+            f"History simulation used {metrics['peak_memory_mb']:.2f}MB, exceeds 50MB limit"
+        )
 
         result = metrics["result"]
         assert result.history is not None
@@ -259,7 +259,7 @@ class TestMemoryStress:
         config = SimulationConfig(grid_size=32, steps=50, seed=42)
 
         # Run multiple simulations
-        for i in range(20):
+        for _i in range(20):
             result = run_mycelium_simulation(config)
             del result
             gc.collect()
@@ -268,9 +268,9 @@ class TestMemoryStress:
         tracemalloc.stop()
 
         # Should not accumulate significant memory across runs
-        assert (
-            peak / (1024 * 1024) < 100
-        ), f"Memory accumulated to {peak / (1024 * 1024):.2f}MB after 20 runs"
+        assert peak / (1024 * 1024) < 100, (
+            f"Memory accumulated to {peak / (1024 * 1024):.2f}MB after 20 runs"
+        )
 
     def test_large_batch_feature_extraction(self) -> None:
         """Feature extraction from many simulations should be memory-efficient."""
@@ -292,9 +292,9 @@ class TestMemoryStress:
         tracemalloc.stop()
 
         assert len(features_list) == 10
-        assert (
-            peak / (1024 * 1024) < 100
-        ), f"Batch feature extraction used {peak / (1024 * 1024):.2f}MB, exceeds 100MB"
+        assert peak / (1024 * 1024) < 100, (
+            f"Batch feature extraction used {peak / (1024 * 1024):.2f}MB, exceeds 100MB"
+        )
 
 
 class TestConcurrentProcessing:
@@ -345,9 +345,9 @@ class TestLargeDataProcessing:
 
         metrics = measure_memory_and_time(estimate_fractal_dimension, large_field)
 
-        assert (
-            metrics["elapsed_s"] < 1.0
-        ), f"Fractal dimension on 256x256 took {metrics['elapsed_s']:.3f}s, exceeds 1s"
+        assert metrics["elapsed_s"] < 1.0, (
+            f"Fractal dimension on 256x256 took {metrics['elapsed_s']:.3f}s, exceeds 1s"
+        )
         result = metrics["result"]
         assert 1.0 <= result <= 2.0  # Valid fractal dimension range
 
@@ -358,9 +358,9 @@ class TestLargeDataProcessing:
 
         metrics = measure_memory_and_time(compute_lyapunov_exponent, large_history)
 
-        assert (
-            metrics["elapsed_s"] < 2.0
-        ), f"Lyapunov on 500x64x64 took {metrics['elapsed_s']:.3f}s, exceeds 2s"
+        assert metrics["elapsed_s"] < 2.0, (
+            f"Lyapunov on 500x64x64 took {metrics['elapsed_s']:.3f}s, exceeds 2s"
+        )
         result = metrics["result"]
         assert not np.isnan(result)
         assert not np.isinf(result)
@@ -376,10 +376,10 @@ class TestLargeDataProcessing:
 
         metrics = measure_memory_and_time(engine.generate_ifs)
 
-        assert (
-            metrics["elapsed_s"] < 5.0
-        ), f"IFS 50k points took {metrics['elapsed_s']:.3f}s, exceeds 5s"
-        points, lyapunov = metrics["result"]
+        assert metrics["elapsed_s"] < 5.0, (
+            f"IFS 50k points took {metrics['elapsed_s']:.3f}s, exceeds 5s"
+        )
+        points, _lyapunov = metrics["result"]
         assert points.shape[0] == 50000
         assert not np.isnan(points).any()
 
@@ -400,9 +400,9 @@ class TestFederatedScalability:
             byzantine_fraction=0.2,
         )
 
-        assert (
-            metrics["elapsed_s"] < 5.0
-        ), f"Krum with {num_clients} clients took {metrics['elapsed_s']:.3f}s, exceeds 5s"
+        assert metrics["elapsed_s"] < 5.0, (
+            f"Krum with {num_clients} clients took {metrics['elapsed_s']:.3f}s, exceeds 5s"
+        )
         result = metrics["result"]
         assert result.shape == (gradient_dim,)
         assert not torch.isnan(result).any()
@@ -420,9 +420,9 @@ class TestFederatedScalability:
             byzantine_fraction=0.2,
         )
 
-        assert (
-            metrics["elapsed_s"] < 10.0
-        ), f"Krum with large gradients took {metrics['elapsed_s']:.3f}s, exceeds 10s"
+        assert metrics["elapsed_s"] < 10.0, (
+            f"Krum with large gradients took {metrics['elapsed_s']:.3f}s, exceeds 10s"
+        )
 
 
 class TestNumericalStabilityUnderStress:
@@ -488,7 +488,7 @@ class TestReactionDiffusionEngineStress:
         engine = ReactionDiffusionEngine(config)
 
         start = time.perf_counter()
-        field, metrics = engine.simulate(steps=100, turing_enabled=True)
+        field, _metrics = engine.simulate(steps=100, turing_enabled=True)
         elapsed = time.perf_counter() - start
 
         assert elapsed < 60.0, f"256x256 engine took {elapsed:.2f}s, exceeds 60s"

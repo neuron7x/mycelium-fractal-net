@@ -14,7 +14,7 @@ Reference: docs/ARCHITECTURE.md, docs/MFN_SYSTEM_ROLE.md
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -35,7 +35,9 @@ from .schemas import (
     ValidateRequest,
     ValidateResponse,
 )
-from .service_context import ServiceContext
+
+if TYPE_CHECKING:
+    from .service_context import ServiceContext
 
 
 def run_validation_adapter(
@@ -64,7 +66,7 @@ def run_validation_adapter(
     cfg = assemble_validation_config(request)
 
     # Run validation using core function
-    metrics: Dict[str, Any] = run_validation(cfg)
+    metrics: dict[str, Any] = run_validation(cfg)
 
     # Convert to response
     return ValidateResponse(
@@ -223,8 +225,8 @@ def aggregate_gradients_adapter(
 # =============================================================================
 
 __all__ = [
-    "run_validation_adapter",
-    "run_simulation_adapter",
-    "compute_nernst_adapter",
     "aggregate_gradients_adapter",
+    "compute_nernst_adapter",
+    "run_simulation_adapter",
+    "run_validation_adapter",
 ]

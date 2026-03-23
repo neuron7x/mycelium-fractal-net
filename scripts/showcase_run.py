@@ -59,12 +59,12 @@ def main() -> int:
 <h1>Morphology-aware Field Intelligence Engine — Showcase Bundle</h1>
 <p>Single-run deterministic showcase with canonical report bundle and release-ready scenario outputs.</p>
 <ul>
-<li><strong>Report:</strong> <code>{bundle['report_dir']}</code></li>
-<li><strong>Release bundle:</strong> <code>{bundle['release_bundle']}</code></li>
-<li><strong>Descriptor version:</strong> <code>{bundle['descriptor_version']}</code></li>
-<li><strong>Anomaly label:</strong> <code>{bundle['anomaly_label']}</code></li>
-<li><strong>Forecast method:</strong> <code>{bundle['forecast_method']}</code></li>
-<li><strong>Comparison label:</strong> <code>{bundle['comparison_label']}</code></li>
+<li><strong>Report:</strong> <code>{bundle["report_dir"]}</code></li>
+<li><strong>Release bundle:</strong> <code>{bundle["release_bundle"]}</code></li>
+<li><strong>Descriptor version:</strong> <code>{bundle["descriptor_version"]}</code></li>
+<li><strong>Anomaly label:</strong> <code>{bundle["anomaly_label"]}</code></li>
+<li><strong>Forecast method:</strong> <code>{bundle["forecast_method"]}</code></li>
+<li><strong>Comparison label:</strong> <code>{bundle["comparison_label"]}</code></li>
 </ul>
 </div>
 </body></html>"""

@@ -53,7 +53,7 @@ import hashlib
 import os
 import secrets
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Union
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
@@ -61,8 +61,6 @@ from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 class SymmetricEncryptionError(Exception):
     """Raised when symmetric encryption operation fails."""
-
-    pass
 
 
 # Constants
@@ -119,7 +117,7 @@ def _generate_nonce() -> bytes:
 def encrypt_aes_gcm(
     plaintext: Union[bytes, str],
     key: bytes,
-    associated_data: Optional[bytes] = None,
+    associated_data: bytes | None = None,
     encoding: str = "utf-8",
 ) -> bytes:
     """
@@ -183,7 +181,7 @@ def encrypt_aes_gcm(
 def decrypt_aes_gcm(
     ciphertext: bytes,
     key: bytes,
-    associated_data: Optional[bytes] = None,
+    associated_data: bytes | None = None,
     encoding: str = "utf-8",
     return_bytes: bool = False,
 ) -> Union[bytes, str]:
@@ -276,7 +274,7 @@ class AESGCMCipher:
 
     key: bytes
 
-    def __init__(self, key: Optional[bytes] = None) -> None:
+    def __init__(self, key: bytes | None = None) -> None:
         """
         Initialize cipher with optional existing key.
 
@@ -298,7 +296,7 @@ class AESGCMCipher:
     def encrypt(
         self,
         plaintext: Union[bytes, str],
-        associated_data: Optional[bytes] = None,
+        associated_data: bytes | None = None,
     ) -> bytes:
         """
         Encrypt data using AES-256-GCM.
@@ -321,7 +319,7 @@ class AESGCMCipher:
     def decrypt(
         self,
         ciphertext: bytes,
-        associated_data: Optional[bytes] = None,
+        associated_data: bytes | None = None,
         return_bytes: bool = False,
     ) -> Union[bytes, str]:
         """
@@ -344,7 +342,7 @@ class AESGCMCipher:
         self,
         plaintext: Union[bytes, str],
         context: Union[bytes, str],
-    ) -> Tuple[bytes, bytes]:
+    ) -> tuple[bytes, bytes]:
         """
         Encrypt with context-bound associated data.
 
@@ -396,10 +394,10 @@ class AESGCMCipher:
 
 def derive_key_from_password(
     password: Union[bytes, str],
-    salt: Optional[bytes] = None,
+    salt: bytes | None = None,
     iterations: int = 100_000,
     key_length: int = AES_KEY_SIZE,
-) -> Tuple[bytes, bytes]:
+) -> tuple[bytes, bytes]:
     """
     Derive an AES key from a password using PBKDF2-HMAC-SHA256.
 
@@ -443,12 +441,12 @@ def derive_key_from_password(
 
 def derive_key_scrypt(
     password: Union[bytes, str],
-    salt: Optional[bytes] = None,
+    salt: bytes | None = None,
     n: int = 2**14,  # CPU/memory cost parameter
     r: int = 8,  # Block size
     p: int = 1,  # Parallelization parameter
     key_length: int = AES_KEY_SIZE,
-) -> Tuple[bytes, bytes]:
+) -> tuple[bytes, bytes]:
     """
     Derive an AES key from a password using scrypt.
 
@@ -488,14 +486,14 @@ def derive_key_scrypt(
 
 
 __all__ = [
-    "SymmetricEncryptionError",
     "AES_KEY_SIZE",
     "GCM_NONCE_SIZE",
     "GCM_TAG_SIZE",
-    "generate_aes_key",
-    "encrypt_aes_gcm",
-    "decrypt_aes_gcm",
     "AESGCMCipher",
+    "SymmetricEncryptionError",
+    "decrypt_aes_gcm",
     "derive_key_from_password",
     "derive_key_scrypt",
+    "encrypt_aes_gcm",
+    "generate_aes_key",
 ]

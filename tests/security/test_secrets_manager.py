@@ -7,7 +7,7 @@ external services (AWS/Vault).
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -17,6 +17,9 @@ from mycelium_fractal_net.security.secrets_manager import (
     SecretRetrievalError,
     SecretsBackend,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_secrets_backend_from_env_invalid() -> None:

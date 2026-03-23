@@ -130,7 +130,7 @@ class FeatureConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "FeatureConfig":
+    def from_dict(cls, data: dict[str, Any]) -> FeatureConfig:
         """
         Create configuration from a dictionary.
 
@@ -226,7 +226,7 @@ class DatasetConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "DatasetConfig":
+    def from_dict(cls, data: dict[str, Any]) -> DatasetConfig:
         """
         Create configuration from a dictionary.
 
@@ -556,7 +556,7 @@ def validate_dataset_config(config: DatasetConfig) -> None:
         raise ValueError("alpha_range values must be numeric")
     if amin >= amax:
         raise ValueError(f"alpha_range min ({amin}) must be < max ({amax})")
-    if not (ALPHA_MIN < amin and amax <= ALPHA_MAX):
+    if not (amin > ALPHA_MIN and amax <= ALPHA_MAX):
         raise ValueError(f"alpha_range must be in ({ALPHA_MIN}, {ALPHA_MAX}] for CFL stability")
 
     # turing_values
@@ -785,26 +785,26 @@ def make_dataset_config_default() -> DatasetConfig:
 # ============================================================================
 
 __all__ = [
-    # Config classes
-    "SimulationConfig",
-    "FeatureConfig",
-    "DatasetConfig",
-    # Validation functions
-    "validate_simulation_config",
-    "validate_feature_config",
-    "validate_dataset_config",
-    # Factory functions
-    "make_simulation_config_demo",
-    "make_simulation_config_default",
-    "make_feature_config_demo",
-    "make_feature_config_default",
-    "make_dataset_config_demo",
-    "make_dataset_config_default",
+    "ALPHA_MAX",
+    "ALPHA_MIN",
+    "GRID_SIZE_MAX",
     # Constants
     "GRID_SIZE_MIN",
-    "GRID_SIZE_MAX",
-    "STEPS_MIN",
     "STEPS_MAX",
-    "ALPHA_MIN",
-    "ALPHA_MAX",
+    "STEPS_MIN",
+    "DatasetConfig",
+    "FeatureConfig",
+    # Config classes
+    "SimulationConfig",
+    "make_dataset_config_default",
+    "make_dataset_config_demo",
+    "make_feature_config_default",
+    "make_feature_config_demo",
+    "make_simulation_config_default",
+    # Factory functions
+    "make_simulation_config_demo",
+    "validate_dataset_config",
+    "validate_feature_config",
+    # Validation functions
+    "validate_simulation_config",
 ]

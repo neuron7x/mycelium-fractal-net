@@ -10,9 +10,12 @@ L2 normalization ensures ``||embedding|| = 1``.
 
 from __future__ import annotations
 
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def build_embedding(parts: Iterable[dict[str, float]]) -> tuple[float, ...]:

@@ -30,15 +30,17 @@ import argparse
 import logging
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 logger = logging.getLogger(__name__)
 
 import numpy as np
 import sympy as sp
-from numpy.typing import NDArray
 
 from mycelium_fractal_net._optional import require_ml_dependency
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 torch = require_ml_dependency("torch")
 F = torch.nn.functional
@@ -143,7 +145,7 @@ def generate_fractal_ifs(
     rng: np.random.Generator,
     num_points: int = 10000,
     num_transforms: int = 4,
-) -> Tuple[NDArray[Any], float]:
+) -> tuple[NDArray[Any], float]:
     """
     Generate fractal pattern using Iterated Function System (IFS).
 
@@ -276,7 +278,7 @@ def simulate_mycelium_field(
     turing_threshold: float = TURING_THRESHOLD,
     quantum_jitter: bool = False,
     jitter_var: float = QUANTUM_JITTER_VAR,
-) -> Tuple[NDArray[Any], int]:
+) -> tuple[NDArray[Any], int]:
     """
     Simulate mycelium-like potential field on 2D lattice with Turing morphogenesis.
 
@@ -330,7 +332,7 @@ def simulate_mycelium_field(
         da, di = 0.1, 0.05  # diffusion rates
         ra, ri = 0.01, 0.02  # reaction rates
 
-    for step in range(steps):
+    for _step in range(steps):
         # Growth events (spikes)
         if rng.random() < spike_probability:
             i = int(rng.integers(0, grid_size))
@@ -697,7 +699,7 @@ class SparseAttention(nn.Module):
         torch.Tensor
             Output of same shape.
         """
-        batch_size, seq_len, _ = x.shape
+        _batch_size, seq_len, _ = x.shape
 
         q = self.q_proj(x)
         k = self.k_proj(x)
@@ -842,7 +844,7 @@ class HierarchicalKrumAggregator:
         if group_size <= 0:
             return 0
 
-        estimated = int(math.ceil(group_size * self.byzantine_fraction))
+        estimated = math.ceil(group_size * self.byzantine_fraction)
         max_allowed = max(0, (group_size - 3) // 2)
 
         # If not enough clients to satisfy the desired Byzantine fraction,
@@ -851,7 +853,7 @@ class HierarchicalKrumAggregator:
 
     def krum_select(
         self,
-        gradients: List[torch.Tensor],
+        gradients: list[torch.Tensor],
         num_byzantine: int,
     ) -> torch.Tensor:
         """
@@ -912,7 +914,7 @@ class HierarchicalKrumAggregator:
 
     def aggregate(
         self,
-        client_gradients: List[torch.Tensor],
+        client_gradients: list[torch.Tensor],
         rng: np.random.Generator | None = None,
     ) -> torch.Tensor:
         """
@@ -953,7 +955,7 @@ class HierarchicalKrumAggregator:
         cluster_gradients = []
         for c in range(actual_clusters):
             cluster_mask = cluster_assignments == c
-            cluster_grads = [g for g, m in zip(client_gradients, cluster_mask) if m]
+            cluster_grads = [g for g, m in zip(client_gradients, cluster_mask, strict=False) if m]
             if len(cluster_grads) > 0:
                 cluster_byzantine = self._estimate_byzantine_count(len(cluster_grads))
                 if len(cluster_grads) == 1:
@@ -1121,7 +1123,7 @@ class ValidationConfig:
     use_stdp: bool = True
 
 
-def _build_dataset(cfg: ValidationConfig) -> Tuple[TensorDataset, Dict[str, float]]:
+def _build_dataset(cfg: ValidationConfig) -> tuple[TensorDataset, dict[str, float]]:
     """
     Build dataset from field statistics.
     """
@@ -1178,7 +1180,7 @@ def _build_dataset(cfg: ValidationConfig) -> Tuple[TensorDataset, Dict[str, floa
     return dataset, meta
 
 
-def run_validation(cfg: ValidationConfig | None = None) -> Dict[str, float]:
+def run_validation(cfg: ValidationConfig | None = None) -> dict[str, float]:
     """
     Run full validation cycle: simulation + NN training + metrics.
 
@@ -1239,7 +1241,7 @@ def run_validation(cfg: ValidationConfig | None = None) -> Dict[str, float]:
     # Generate fractal and compute Lyapunov
     _, lyapunov = generate_fractal_ifs(rng, num_points=1000)
 
-    metrics: Dict[str, float] = {
+    metrics: dict[str, float] = {
         "loss_start": float(loss_start),
         "loss_final": float(loss_final),
         "loss_drop": float(loss_start - loss_final),

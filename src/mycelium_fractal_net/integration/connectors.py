@@ -25,9 +25,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import aiohttp
     from kafka import KafkaConsumer
 
@@ -101,11 +103,11 @@ class ConnectorMetrics:
     failed_requests: int = 0
     total_retries: int = 0
     total_bytes_fetched: int = 0
-    last_fetch_timestamp: Optional[float] = None
-    last_error: Optional[str] = None
-    last_error_timestamp: Optional[float] = None
+    last_fetch_timestamp: float | None = None
+    last_error: str | None = None
+    last_error_timestamp: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary."""
         return {
             "total_requests": self.total_requests,
@@ -129,7 +131,7 @@ class BaseConnector(ABC):
     Provides common functionality for retry logic, error handling, and metrics.
     """
 
-    def __init__(self, config: Optional[ConnectorConfig] = None):
+    def __init__(self, config: ConnectorConfig | None = None):
         """
         Initialize base connector.
 
@@ -139,17 +141,15 @@ class BaseConnector(ABC):
         self.config = config or ConnectorConfig()
         self.status = ConnectorStatus.IDLE
         self.metrics = ConnectorMetrics()
-        self._connection_timestamp: Optional[float] = None
+        self._connection_timestamp: float | None = None
 
     @abstractmethod
     async def connect(self) -> None:
         """Establish connection to the data source."""
-        pass
 
     @abstractmethod
     async def disconnect(self) -> None:
         """Close connection to the data source."""
-        pass
 
     @abstractmethod
     async def fetch(self, **kwargs: Any) -> Any:
@@ -162,7 +162,6 @@ class BaseConnector(ABC):
         Returns:
             Fetched data.
         """
-        pass
 
     def _calculate_retry_delay(self, attempt: int) -> float:
         """
@@ -203,7 +202,7 @@ class BaseConnector(ABC):
         Raises:
             Exception: If all retries are exhausted.
         """
-        last_exception: Optional[Exception] = None
+        last_exception: Exception | None = None
 
         for attempt in range(self.config.max_retries + 1):
             try:
@@ -274,8 +273,8 @@ class RESTConnector(BaseConnector):
     def __init__(
         self,
         base_url: str,
-        headers: Optional[Dict[str, str]] = None,
-        config: Optional[ConnectorConfig] = None,
+        headers: dict[str, str] | None = None,
+        config: ConnectorConfig | None = None,
     ):
         """
         Initialize REST connector.
@@ -288,7 +287,7 @@ class RESTConnector(BaseConnector):
         super().__init__(config)
         self.base_url = base_url.rstrip("/")
         self.headers = headers or {}
-        self._session: Optional[Any] = None
+        self._session: Any | None = None
 
     async def connect(self) -> None:
         """Establish HTTP session."""
@@ -320,10 +319,10 @@ class RESTConnector(BaseConnector):
         self,
         endpoint: str,
         method: str = "GET",
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Fetch data from REST API endpoint.
 
@@ -348,7 +347,7 @@ class RESTConnector(BaseConnector):
 
         url = f"{self.base_url}{endpoint}"
 
-        async def _perform_request() -> Dict[str, Any]:
+        async def _perform_request() -> dict[str, Any]:
             self.status = ConnectorStatus.FETCHING
             self.metrics.total_requests += 1
 
@@ -363,7 +362,7 @@ class RESTConnector(BaseConnector):
                 # Read response body once
                 response_body = await response.read()
                 response_size = len(response_body)
-                response_data: Dict[str, Any] = json.loads(response_body.decode("utf-8"))
+                response_data: dict[str, Any] = json.loads(response_body.decode("utf-8"))
 
                 self.metrics.successful_requests += 1
                 self.metrics.total_bytes_fetched += response_size
@@ -382,7 +381,7 @@ class RESTConnector(BaseConnector):
 
                 return response_data
 
-        result: Dict[str, Any] = await self._retry_operation(
+        result: dict[str, Any] = await self._retry_operation(
             _perform_request, f"REST {method} {url}"
         )
         return result
@@ -415,7 +414,7 @@ class FileConnector(BaseConnector):
         directory: Union[str, Path],
         pattern: str = "*.json",
         auto_delete: bool = False,
-        config: Optional[ConnectorConfig] = None,
+        config: ConnectorConfig | None = None,
     ):
         """
         Initialize file connector.
@@ -451,7 +450,7 @@ class FileConnector(BaseConnector):
         self.status = ConnectorStatus.DISCONNECTED
         logger.info(f"File connector stopped watching: {self.directory}")
 
-    async def fetch(self, **kwargs: Any) -> Optional[Dict[str, Any]]:
+    async def fetch(self, **kwargs: Any) -> dict[str, Any] | None:
         """
         Fetch data from next available file.
 
@@ -464,7 +463,7 @@ class FileConnector(BaseConnector):
         if not self.config.enabled:
             raise RuntimeError("Connector is disabled")
 
-        async def _read_file() -> Optional[Dict[str, Any]]:
+        async def _read_file() -> dict[str, Any] | None:
             # Find next unprocessed file
             files = sorted(self.directory.glob(self.pattern))
             unprocessed = [f for f in files if f not in self._processed_files]
@@ -477,9 +476,9 @@ class FileConnector(BaseConnector):
             self.metrics.total_requests += 1
 
             # Read file
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
-                data: Dict[str, Any] = json.loads(content)
+                data: dict[str, Any] = json.loads(content)
 
             self._processed_files.add(file_path)
             self.metrics.successful_requests += 1
@@ -502,7 +501,7 @@ class FileConnector(BaseConnector):
 
             return data
 
-        result: Optional[Dict[str, Any]] = await self._retry_operation(
+        result: dict[str, Any] | None = await self._retry_operation(
             _read_file, f"File read from {self.directory}"
         )
         return result
@@ -535,10 +534,10 @@ class KafkaConnectorAdapter(BaseConnector):
 
     def __init__(
         self,
-        bootstrap_servers: List[str],
-        topics: List[str],
+        bootstrap_servers: list[str],
+        topics: list[str],
         group_id: str,
-        config: Optional[ConnectorConfig] = None,
+        config: ConnectorConfig | None = None,
     ):
         """
         Initialize Kafka connector.
@@ -553,7 +552,7 @@ class KafkaConnectorAdapter(BaseConnector):
         self.bootstrap_servers = bootstrap_servers
         self.topics = topics
         self.group_id = group_id
-        self._consumer: Optional[Any] = None
+        self._consumer: Any | None = None
 
     async def connect(self) -> None:
         """Establish Kafka consumer connection."""
@@ -591,7 +590,7 @@ class KafkaConnectorAdapter(BaseConnector):
         max_messages: int = 100,
         timeout_ms: int = 1000,
         **kwargs: Any,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Fetch messages from Kafka topics.
 
@@ -612,17 +611,17 @@ class KafkaConnectorAdapter(BaseConnector):
         if self._consumer is None:
             await self.connect()
 
-        async def _poll_messages() -> List[Dict[str, Any]]:
+        async def _poll_messages() -> list[dict[str, Any]]:
             self.status = ConnectorStatus.FETCHING
             self.metrics.total_requests += 1
 
-            messages: List[Dict[str, Any]] = []
+            messages: list[dict[str, Any]] = []
             if self._consumer is not None:
                 records = self._consumer.poll(timeout_ms=timeout_ms, max_records=max_messages)
             else:
                 records = {}
 
-            for topic_partition, records_list in records.items():
+            for records_list in records.values():
                 for record in records_list:
                     messages.append(record.value)
                     self.metrics.total_bytes_fetched += len(str(record.value))
@@ -644,17 +643,17 @@ class KafkaConnectorAdapter(BaseConnector):
 
             return messages
 
-        result: List[Dict[str, Any]] = await self._retry_operation(_poll_messages, "Kafka poll")
+        result: list[dict[str, Any]] = await self._retry_operation(_poll_messages, "Kafka poll")
         return result
 
 
 __all__ = [
     "BaseConnector",
-    "RESTConnector",
-    "FileConnector",
-    "KafkaConnectorAdapter",
     "ConnectorConfig",
     "ConnectorMetrics",
     "ConnectorStatus",
+    "FileConnector",
+    "KafkaConnectorAdapter",
+    "RESTConnector",
     "RetryStrategy",
 ]

@@ -37,10 +37,9 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 # Re-export validated reaction-diffusion engine for advanced use
 from .reaction_diffusion_engine import (
@@ -55,6 +54,9 @@ from .reaction_diffusion_engine import (
     ReactionDiffusionEngine,
     ReactionDiffusionMetrics,
 )
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 # Re-exported constants
 TURING_THRESHOLD = DEFAULT_TURING_THRESHOLD
@@ -76,7 +78,7 @@ def simulate_mycelium_field(
     turing_threshold: float = TURING_THRESHOLD,
     quantum_jitter: bool = False,
     jitter_var: float = QUANTUM_JITTER_VAR,
-) -> Tuple[NDArray[Any], int]:
+) -> tuple[NDArray[Any], int]:
     """Simulate mycelium-like potential field on 2D lattice with Turing morphogenesis.
 
     Returns (field, growth_events). Field in volts, clamped to [-95, 40] mV.
@@ -90,7 +92,7 @@ def simulate_mycelium_field(
         da, di = 0.1, 0.05
         ra, ri = 0.01, 0.02
 
-    for step in range(steps):
+    for _step in range(steps):
         if rng.random() < spike_probability:
             i = int(rng.integers(0, grid_size))
             j = int(rng.integers(0, grid_size))
@@ -136,14 +138,14 @@ def simulate_mycelium_field(
 
 
 __all__ = [
-    # Constants
-    "TURING_THRESHOLD",
     "D_ACTIVATOR",
     "D_INHIBITOR",
-    "R_ACTIVATOR",
-    "R_INHIBITOR",
     "FIELD_ALPHA",
     "QUANTUM_JITTER_VAR",
+    "R_ACTIVATOR",
+    "R_INHIBITOR",
+    # Constants
+    "TURING_THRESHOLD",
     # Classes
     "ReactionDiffusionConfig",
     "ReactionDiffusionEngine",

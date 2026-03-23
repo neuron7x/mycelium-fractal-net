@@ -18,14 +18,18 @@ Reference: docs/MFN_BACKLOG.md#MFN-API-001
 from __future__ import annotations
 
 import secrets
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response
 
 from .api_config import AuthConfig, get_api_config
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from starlette.responses import Response
 
 # Header name for API key
 API_KEY_HEADER = "X-API-Key"
@@ -48,7 +52,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: Any,
-        auth_config: Optional[AuthConfig] = None,
+        auth_config: AuthConfig | None = None,
     ) -> None:
         """
         Initialize authentication middleware.
@@ -90,7 +94,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         return False
 
-    def _validate_api_key(self, api_key: Optional[str]) -> bool:
+    def _validate_api_key(self, api_key: str | None) -> bool:
         """
         Validate the provided API key.
 
@@ -149,8 +153,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
 
 def require_api_key(
-    api_key: Optional[str] = None,
-    config: Optional[AuthConfig] = None,
+    api_key: str | None = None,
+    config: AuthConfig | None = None,
 ) -> Callable[..., Any]:
     """
     Dependency for FastAPI routes requiring API key authentication.
@@ -174,7 +178,7 @@ def require_api_key(
     from fastapi import Header
 
     def dependency(
-        x_api_key: Optional[str] = Header(None, alias=API_KEY_HEADER),
+        x_api_key: str | None = Header(None, alias=API_KEY_HEADER),
     ) -> str:
         auth_config = config or get_api_config().auth
 

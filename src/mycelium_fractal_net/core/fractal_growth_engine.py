@@ -28,11 +28,14 @@ Parameters (from MFN_MATH_MODEL.md Section 3.5):
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .exceptions import NumericalInstabilityError, StabilityError, ValueOutOfRangeError
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 # === Default Parameters (from MFN_MATH_MODEL.md Section 3.5) ===
 DEFAULT_NUM_POINTS: int = 10000
@@ -654,7 +657,7 @@ class FractalGrowthEngine:
         if self._transforms is None:
             return False
 
-        for a, b, c, d, e, f in self._transforms:
+        for a, b, c, d, _e, _f in self._transforms:
             det = abs(a * d - b * c)
             if det >= 1.0:
                 return False

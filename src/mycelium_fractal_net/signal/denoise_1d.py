@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Callable, Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from mycelium_fractal_net._optional import require_ml_dependency
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 torch = require_ml_dependency("torch")
 nn = torch.nn
@@ -155,7 +158,7 @@ class OptimizedFractalDenoise1D(nn.Module):
             )
         filtered_ranges = tuple(r for r in multiscale_range_sizes if r > 1)
         self.multiscale_range_sizes = filtered_ranges or (self.range_size,)
-        base_candidates = self.multiscale_range_sizes + (self.range_size,)
+        base_candidates = (*self.multiscale_range_sizes, self.range_size)
         self._base_multiscale_ranges = tuple(dict.fromkeys(base_candidates))
         self.multiscale_aggregate = multiscale_aggregate
         self._max_multiscale_branches = MAX_MULTISCALE_BRANCHES
@@ -188,8 +191,8 @@ class OptimizedFractalDenoise1D(nn.Module):
         B, C, L = x_working.shape
         device = x_working.device
 
-        trend_kernel = cast(torch.Tensor, self.trend_kernel)
-        detail_kernel = cast(torch.Tensor, self.detail_kernel)
+        trend_kernel = cast("torch.Tensor", self.trend_kernel)
+        detail_kernel = cast("torch.Tensor", self.detail_kernel)
         trend = self._smooth(x_working, trend_kernel)
         local = self._smooth(x_working, detail_kernel)
         residual = x_working - local
@@ -464,28 +467,33 @@ class OptimizedFractalDenoise1D(nn.Module):
         else:
             tau = float(proxy_tensor.std().clamp_min(MIN_SOFTMAX_STD).item())
             weights = torch.softmax(-proxy_tensor / tau, dim=0)
-            weighted_outputs = torch.stack([w * o for w, o in zip(weights, outputs)], dim=0)
+            weighted_outputs = torch.stack(
+                [w * o for w, o in zip(weights, outputs, strict=False)], dim=0
+            )
             current = torch.sum(weighted_outputs, dim=0)
             selected_range = float(
-                sum(float(w.item()) * float(scale) for w, scale in zip(weights, scales))
+                sum(
+                    float(w.item()) * float(scale)
+                    for w, scale in zip(weights, scales, strict=False)
+                )
             )
             selected_stats = {
                 "inhibition_rate": float(
                     sum(
                         float(w.item()) * s.get("inhibition_rate", 0.0)
-                        for w, s in zip(weights, stats_list)
+                        for w, s in zip(weights, stats_list, strict=False)
                     )
                 ),
                 "reconstruction_mse": float(
                     sum(
                         float(w.item()) * s.get("reconstruction_mse", 0.0)
-                        for w, s in zip(weights, stats_list)
+                        for w, s in zip(weights, stats_list, strict=False)
                     )
                 ),
                 "baseline_mse": float(
                     sum(
                         float(w.item()) * s.get("baseline_mse", 0.0)
-                        for w, s in zip(weights, stats_list)
+                        for w, s in zip(weights, stats_list, strict=False)
                     )
                 ),
                 "effective_iterations": float(len(scales)),
@@ -638,7 +646,7 @@ class OptimizedFractalDenoise1D(nn.Module):
         else:
             x_padded = x_working
 
-        smooth_kernel = cast(torch.Tensor, self.fractal_kernel)
+        smooth_kernel = cast("torch.Tensor", self.fractal_kernel)
         smoothed = self._smooth(x_working, smooth_kernel)
         if pad_right > 0:
             smoothed = F.pad(smoothed, (0, pad_right), mode=pad_mode)
@@ -669,7 +677,7 @@ class OptimizedFractalDenoise1D(nn.Module):
             population_size if population_size is not None else self.population_size
         )
         effective_population = max(1, min(effective_population, self.max_population_ci))
-        candidate_pool = min(num_domains, min(effective_population * 2, self.max_population_ci))
+        candidate_pool = min(num_domains, effective_population * 2, self.max_population_ci)
         top_k = candidate_pool
         pop_size = min(effective_population, top_k)
         if top_k == 0 or pop_size == 0:

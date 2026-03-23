@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -69,7 +69,7 @@ def run_simulation_task(params: dict[str, Any]) -> dict[str, Any]:
 class ScalabilityBenchmarkSuite:
     """Scalability benchmarks for stress testing."""
 
-    def __init__(self, results_dir: Optional[Path] = None) -> None:
+    def __init__(self, results_dir: Path | None = None) -> None:
         """Initialize benchmark suite."""
         self.results: list[ScalabilityResult] = []
         self.results_dir = results_dir or Path(__file__).parent / "results"
@@ -487,7 +487,7 @@ class ScalabilityBenchmarkSuite:
 
         return self.results
 
-    def save_results(self, filename: Optional[str] = None) -> Path:
+    def save_results(self, filename: str | None = None) -> Path:
         """Save benchmark results to canonical JSON + CSV files."""
         json_name = filename or "benchmark_scalability.json"
         csv_name = json_name.replace(".json", ".csv")

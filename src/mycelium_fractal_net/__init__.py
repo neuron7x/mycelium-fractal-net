@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from importlib import import_module
 from importlib.metadata import PackageNotFoundError, version
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 try:
     __version__ = version("mycelium-fractal-net")
@@ -74,8 +74,8 @@ from .pipelines import (
     run_forecast_pipeline,
     run_scenario,
 )
-from .types.detection import AnomalyEvent, RegimeState
-from .types.features import FEATURE_COUNT, FEATURE_NAMES, MorphologyDescriptor
+from .types.detection import RegimeState
+from .types.features import FEATURE_COUNT, FEATURE_NAMES
 from .types.field import (
     BoundaryCondition,
     FieldHistory,
@@ -89,6 +89,9 @@ from .types.field import (
     SerotonergicPlasticitySpec,
     SimulationSpec,
 )
+
+from .types.detection import AnomalyEvent
+from .types.features import MorphologyDescriptor
 from .types.forecast import ComparisonResult, ForecastResult
 from .types.report import AnalysisReport
 

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import base64
 import secrets
-from typing import Optional
 
 from mycelium_fractal_net.crypto import (
     AESGCMCipher,
@@ -46,8 +45,6 @@ logger = get_logger("crypto_api")
 class CryptoAPIError(Exception):
     """Base exception for crypto API operations."""
 
-    pass
-
 
 def _generate_key_id() -> str:
     """Generate a unique key identifier."""
@@ -59,7 +56,7 @@ def _log_crypto_operation(
     key_id: str,
     algorithm: str,
     success: bool,
-    error: Optional[str] = None,
+    error: str | None = None,
 ) -> None:
     """
     Log a cryptographic operation for audit purposes.
@@ -115,8 +112,8 @@ def encrypt_data_adapter(request: EncryptRequest) -> EncryptResponse:
         # Decode base64 plaintext
         try:
             plaintext = base64.b64decode(request.plaintext)
-        except Exception:
-            raise CryptoAPIError("Invalid base64-encoded plaintext")
+        except Exception as exc:
+            raise CryptoAPIError("Invalid base64-encoded plaintext") from exc
 
         # Validate size
         if len(plaintext) > config.max_plaintext_size:
@@ -142,8 +139,8 @@ def encrypt_data_adapter(request: EncryptRequest) -> EncryptResponse:
         if request.associated_data:
             try:
                 aad = base64.b64decode(request.associated_data)
-            except Exception:
-                raise CryptoAPIError("Invalid base64-encoded associated data")
+            except Exception as exc:
+                raise CryptoAPIError("Invalid base64-encoded associated data") from exc
 
         # Encrypt
         cipher = AESGCMCipher(key=key)
@@ -185,7 +182,7 @@ def decrypt_data_adapter(request: DecryptRequest) -> DecryptResponse:
     """
     config = get_crypto_config()
     if not config.enabled:
-        raise CryptoAPIError("Cryptographic operations are disabled")
+        raise CryptoAPIError("Cryptographic operations are disabled") from e
 
     key_store = get_key_store()
     key_id = request.key_id
@@ -195,7 +192,7 @@ def decrypt_data_adapter(request: DecryptRequest) -> DecryptResponse:
         try:
             ciphertext = base64.b64decode(request.ciphertext)
         except Exception:
-            raise CryptoAPIError("Invalid base64-encoded ciphertext")
+            raise CryptoAPIError("Invalid base64-encoded ciphertext") from e
 
         # Get decryption key
         if key_id and key_id in key_store.encryption_keys:
@@ -204,15 +201,15 @@ def decrypt_data_adapter(request: DecryptRequest) -> DecryptResponse:
             key_id = key_store.default_encryption_key_id
             key = key_store.encryption_keys[key_id]
         else:
-            raise CryptoAPIError("No encryption key available for decryption")
+            raise CryptoAPIError("No encryption key available for decryption") from e
 
         # Parse associated data if provided
         aad = None
         if request.associated_data:
             try:
                 aad = base64.b64decode(request.associated_data)
-            except Exception:
-                raise CryptoAPIError("Invalid base64-encoded associated data")
+            except Exception as exc:
+                raise CryptoAPIError("Invalid base64-encoded associated data") from exc
 
         # Decrypt
         cipher = AESGCMCipher(key=key)
@@ -255,7 +252,7 @@ def sign_message_adapter(request: SignRequest) -> SignResponse:
     """
     config = get_crypto_config()
     if not config.enabled:
-        raise CryptoAPIError("Cryptographic operations are disabled")
+        raise CryptoAPIError("Cryptographic operations are disabled") from e
 
     key_store = get_key_store()
     key_id = request.key_id
@@ -265,7 +262,7 @@ def sign_message_adapter(request: SignRequest) -> SignResponse:
         try:
             message = base64.b64decode(request.message)
         except Exception:
-            raise CryptoAPIError("Invalid base64-encoded message")
+            raise CryptoAPIError("Invalid base64-encoded message") from e
 
         # Validate size
         if len(message) > config.max_plaintext_size:
@@ -333,7 +330,7 @@ def verify_signature_adapter(request: VerifyRequest) -> VerifyResponse:
     """
     config = get_crypto_config()
     if not config.enabled:
-        raise CryptoAPIError("Cryptographic operations are disabled")
+        raise CryptoAPIError("Cryptographic operations are disabled") from e
 
     key_store = get_key_store()
     key_id = request.key_id
@@ -343,30 +340,30 @@ def verify_signature_adapter(request: VerifyRequest) -> VerifyResponse:
         try:
             message = base64.b64decode(request.message)
         except Exception:
-            raise CryptoAPIError("Invalid base64-encoded message")
+            raise CryptoAPIError("Invalid base64-encoded message") from e
 
         # Decode base64 signature
         try:
             signature = base64.b64decode(request.signature)
         except Exception:
-            raise CryptoAPIError("Invalid base64-encoded signature")
+            raise CryptoAPIError("Invalid base64-encoded signature") from e
 
         # Get public key
-        public_key: Optional[bytes] = None
+        public_key: bytes | None = None
 
         if request.public_key:
             # Use provided public key
             try:
                 public_key = base64.b64decode(request.public_key)
             except Exception:
-                raise CryptoAPIError("Invalid base64-encoded public key")
+                raise CryptoAPIError("Invalid base64-encoded public key") from e
         elif key_id and key_id in key_store.signature_keys:
             _, public_key = key_store.signature_keys[key_id]
         elif key_store.default_signature_key_id:
             key_id = key_store.default_signature_key_id
             _, public_key = key_store.signature_keys[key_id]
         else:
-            raise CryptoAPIError("No public key provided and no key_id matches stored keys")
+            raise CryptoAPIError("No public key provided and no key_id matches stored keys") from e
 
         # Verify
         verifier = EdDSASignature()
@@ -409,7 +406,7 @@ def generate_keypair_adapter(request: KeypairRequest) -> KeypairResponse:
     """
     config = get_crypto_config()
     if not config.enabled:
-        raise CryptoAPIError("Cryptographic operations are disabled")
+        raise CryptoAPIError("Cryptographic operations are disabled") from e
 
     key_store = get_key_store()
     key_id = request.key_id or _generate_key_id()
@@ -441,7 +438,7 @@ def generate_keypair_adapter(request: KeypairRequest) -> KeypairResponse:
             public_key_b64 = base64.b64encode(ecdh_keypair.public_key).decode("ascii")
 
         else:
-            raise CryptoAPIError(f"Unsupported algorithm: {algorithm}")
+            raise CryptoAPIError(f"Unsupported algorithm: {algorithm}") from e
 
         _log_crypto_operation("keypair", key_id, algorithm, True)
 
@@ -463,9 +460,9 @@ def generate_keypair_adapter(request: KeypairRequest) -> KeypairResponse:
 
 __all__ = [
     "CryptoAPIError",
-    "encrypt_data_adapter",
     "decrypt_data_adapter",
+    "encrypt_data_adapter",
+    "generate_keypair_adapter",
     "sign_message_adapter",
     "verify_signature_adapter",
-    "generate_keypair_adapter",
 ]

@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 BENCHMARK_SPEC = importlib.util.spec_from_file_location(
     "benchmark_quality_module", ROOT / "benchmarks" / "benchmark_quality.py"
 )
-assert BENCHMARK_SPEC and BENCHMARK_SPEC.loader
+assert BENCHMARK_SPEC
+assert BENCHMARK_SPEC.loader
 benchmark_quality = importlib.util.module_from_spec(BENCHMARK_SPEC)
 sys.modules[BENCHMARK_SPEC.name] = benchmark_quality
 BENCHMARK_SPEC.loader.exec_module(benchmark_quality)

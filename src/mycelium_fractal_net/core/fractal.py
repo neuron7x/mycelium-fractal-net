@@ -36,10 +36,9 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .fractal_growth_engine import (
     DEFAULT_MIN_BOX_SIZE,
@@ -53,6 +52,9 @@ from .fractal_growth_engine import (
     FractalGrowthEngine,
     FractalMetrics,
 )
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 def estimate_fractal_dimension(
@@ -119,7 +121,7 @@ def generate_fractal_ifs(
     rng: np.random.Generator,
     num_points: int = 10000,
     num_transforms: int = 4,
-) -> Tuple[NDArray[Any], float]:
+) -> tuple[NDArray[Any], float]:
     """Generate fractal pattern using Iterated Function System (IFS)."""
     transforms = []
     for _ in range(num_transforms):
@@ -159,14 +161,14 @@ def generate_fractal_ifs(
 
 
 __all__ = [
+    "DEFAULT_MIN_BOX_SIZE",
     # Constants
     "DEFAULT_NUM_POINTS",
-    "DEFAULT_NUM_TRANSFORMS",
-    "DEFAULT_SCALE_MIN",
-    "DEFAULT_SCALE_MAX",
-    "DEFAULT_TRANSLATION_RANGE",
-    "DEFAULT_MIN_BOX_SIZE",
     "DEFAULT_NUM_SCALES",
+    "DEFAULT_NUM_TRANSFORMS",
+    "DEFAULT_SCALE_MAX",
+    "DEFAULT_SCALE_MIN",
+    "DEFAULT_TRANSLATION_RANGE",
     # Classes
     "FractalConfig",
     "FractalGrowthEngine",

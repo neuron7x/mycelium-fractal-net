@@ -84,7 +84,7 @@ class TestAuthorizationEnforcement:
             ),
         ]
 
-        for path, method, body in endpoints:
+        for path, _method, body in endpoints:
             response = secured_client.post(path, json=body)
             assert response.status_code == 401, f"Endpoint {path} should require authentication"
 

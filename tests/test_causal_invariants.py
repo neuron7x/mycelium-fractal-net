@@ -61,9 +61,9 @@ class TestFullPipelineCausalValidation:
         fcast = mfn.forecast(seq, horizon=4)
         comp = mfn.compare(seq, seq)
         result = validate_causal_consistency(seq, desc, event, fcast, comp)
-        assert (
-            result.error_count == 0
-        ), f"Errors: {[v.message for v in result.violations if v.severity.value in ('error','fatal')]}"
+        assert result.error_count == 0, (
+            f"Errors: {[v.message for v in result.violations if v.severity.value in ('error', 'fatal')]}"
+        )
         assert result.stages_checked >= 6  # 6 core + optional perturbation
 
     def test_report_produces_causal_artifact(self, tmp_path) -> None:
@@ -100,9 +100,9 @@ class TestFullPipelineCausalValidation:
         comp = mfn.compare(seq, seq)
         result = validate_causal_consistency(seq, desc, event, fcast, comp)
         ids = [r.rule_id for r in result.rule_results]
-        assert len(ids) == len(
-            set(ids)
-        ), f"Duplicate rule IDs: {[x for x in ids if ids.count(x) > 1]}"
+        assert len(ids) == len(set(ids)), (
+            f"Duplicate rule IDs: {[x for x in ids if ids.count(x) > 1]}"
+        )
 
     def test_decision_semantics(self) -> None:
         """PASS means zero errors, DEGRADED means warnings only, FAIL means errors."""

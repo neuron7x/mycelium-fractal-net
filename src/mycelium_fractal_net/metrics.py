@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Union
 
 import numpy as np
 
@@ -30,7 +30,7 @@ def _validate_inputs(a: np.ndarray, b: np.ndarray) -> None:
 
 
 def _compute_data_range(
-    clean_np: np.ndarray, test_np: np.ndarray, data_range: Optional[float]
+    clean_np: np.ndarray, test_np: np.ndarray, data_range: float | None
 ) -> float:
     if data_range is not None:
         return data_range
@@ -66,7 +66,7 @@ def snr(clean: ArrayLike, noisy: ArrayLike) -> float:
     return _snr_from_arrays(clean_np, noisy_np)
 
 
-def psnr(clean: ArrayLike, test: ArrayLike, data_range: Optional[float] = None) -> float:
+def psnr(clean: ArrayLike, test: ArrayLike, data_range: float | None = None) -> float:
     clean_np, test_np = _to_numpy(clean), _to_numpy(test)
     _validate_inputs(clean_np, test_np)
     err = _mse_from_arrays(clean_np, test_np)
@@ -79,7 +79,7 @@ def psnr(clean: ArrayLike, test: ArrayLike, data_range: Optional[float] = None) 
 def ssim(
     clean: ArrayLike,
     test: ArrayLike,
-    data_range: Optional[float] = None,
+    data_range: float | None = None,
     k1: float = 0.01,
     k2: float = 0.03,
 ) -> float:
@@ -108,7 +108,7 @@ def ssim(
 
 def validate_quality_metrics(
     clean: ArrayLike, test: ArrayLike
-) -> Tuple[float, float, float, float]:
+) -> tuple[float, float, float, float]:
     clean_np, test_np = _to_numpy(clean), _to_numpy(test)
     _validate_inputs(clean_np, test_np)
     mse_val = _mse_from_arrays(clean_np, test_np)
@@ -123,4 +123,4 @@ def validate_quality_metrics(
     return mse_val, snr_val, psnr_val, ssim_val
 
 
-__all__ = ["mse", "snr", "psnr", "ssim", "validate_quality_metrics"]
+__all__ = ["mse", "psnr", "snr", "ssim", "validate_quality_metrics"]

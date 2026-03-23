@@ -10,12 +10,10 @@ Reference: MFN_MATH_MODEL.md Section 2 (Reaction-Diffusion Processes)
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 import numpy as np
-from numpy.typing import NDArray
 
-from mycelium_fractal_net.neurochem.config_types import NeuromodulationConfig
 from mycelium_fractal_net.neurochem.kinetics import (
     compute_excitability_offset_v,
     step_neuromodulation_state,
@@ -26,7 +24,7 @@ from mycelium_fractal_net.numerics.grid_ops import (
 )
 
 from .exceptions import NumericalInstabilityError
-from .reaction_diffusion_compat import (  # noqa: F401
+from .reaction_diffusion_compat import (
     compat_activator_inhibitor_step,
     compat_apply_growth_event,
     compat_apply_quantum_jitter,
@@ -38,7 +36,7 @@ from .reaction_diffusion_compat import (  # noqa: F401
 )
 
 # Re-export config, metrics, constants, and compat for backward compatibility
-from .reaction_diffusion_config import (  # noqa: F401
+from .reaction_diffusion_config import (
     ALPHA_MAX,
     ALPHA_MIN,
     D_ACTIVATOR_MAX,
@@ -73,25 +71,52 @@ from .reaction_diffusion_config import (  # noqa: F401
     _validate_diffusion_coefficient,
 )
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 __all__ = [
-    "ReactionDiffusionEngine",
     # Re-exported from reaction_diffusion_config
-    "ALPHA_MAX", "ALPHA_MIN", "D_ACTIVATOR_MAX", "D_ACTIVATOR_MIN",
-    "D_INHIBITOR_MAX", "D_INHIBITOR_MIN", "DEFAULT_D_ACTIVATOR",
-    "DEFAULT_D_INHIBITOR", "DEFAULT_FIELD_ALPHA", "DEFAULT_QUANTUM_JITTER_VAR",
-    "DEFAULT_R_ACTIVATOR", "DEFAULT_R_INHIBITOR", "DEFAULT_TURING_THRESHOLD",
-    "FIELD_V_MAX", "FIELD_V_MIN", "GRID_SIZE_MAX", "GRID_SIZE_MIN",
-    "INITIAL_POTENTIAL_MEAN", "INITIAL_POTENTIAL_STD", "JITTER_VAR_MAX",
-    "JITTER_VAR_MIN", "MAX_STABLE_DIFFUSION", "R_ACTIVATOR_MAX",
-    "R_ACTIVATOR_MIN", "R_INHIBITOR_MAX", "R_INHIBITOR_MIN",
-    "TURING_THRESHOLD_MAX", "TURING_THRESHOLD_MIN",
-    "BoundaryCondition", "ReactionDiffusionConfig", "ReactionDiffusionMetrics",
+    "ALPHA_MAX",
+    "ALPHA_MIN",
+    "DEFAULT_D_ACTIVATOR",
+    "DEFAULT_D_INHIBITOR",
+    "DEFAULT_FIELD_ALPHA",
+    "DEFAULT_QUANTUM_JITTER_VAR",
+    "DEFAULT_R_ACTIVATOR",
+    "DEFAULT_R_INHIBITOR",
+    "DEFAULT_TURING_THRESHOLD",
+    "D_ACTIVATOR_MAX",
+    "D_ACTIVATOR_MIN",
+    "D_INHIBITOR_MAX",
+    "D_INHIBITOR_MIN",
+    "FIELD_V_MAX",
+    "FIELD_V_MIN",
+    "GRID_SIZE_MAX",
+    "GRID_SIZE_MIN",
+    "INITIAL_POTENTIAL_MEAN",
+    "INITIAL_POTENTIAL_STD",
+    "JITTER_VAR_MAX",
+    "JITTER_VAR_MIN",
+    "MAX_STABLE_DIFFUSION",
+    "R_ACTIVATOR_MAX",
+    "R_ACTIVATOR_MIN",
+    "R_INHIBITOR_MAX",
+    "R_INHIBITOR_MIN",
+    "TURING_THRESHOLD_MAX",
+    "TURING_THRESHOLD_MIN",
+    "BoundaryCondition",
+    "ReactionDiffusionConfig",
+    "ReactionDiffusionEngine",
+    "ReactionDiffusionMetrics",
     "_validate_diffusion_coefficient",
     # Re-exported from reaction_diffusion_compat
-    "compat_activator_inhibitor_step", "compat_apply_growth_event",
-    "compat_apply_quantum_jitter", "compat_apply_turing_to_field",
-    "compat_clamp_field", "compat_diffusion_step", "compat_full_step",
+    "compat_activator_inhibitor_step",
+    "compat_apply_growth_event",
+    "compat_apply_quantum_jitter",
+    "compat_apply_turing_to_field",
+    "compat_clamp_field",
+    "compat_diffusion_step",
+    "compat_full_step",
     "compat_validate_cfl_condition",
 ]
 
@@ -167,7 +192,9 @@ class ReactionDiffusionEngine:
         if self._field is None:
             self.initialize_field()
         if self._field is None or self._activator is None or self._inhibitor is None:
-            raise RuntimeError("Field initialization failed: field, activator, or inhibitor is None")
+            raise RuntimeError(
+                "Field initialization failed: field, activator, or inhibitor is None"
+            )
 
         history: NDArray[np.floating] | None = None
         if return_history:
@@ -275,8 +302,12 @@ class ReactionDiffusionEngine:
             serotonergic=spec.serotonergic,
             observation_noise=spec.observation_noise,
         )
-        rest_offset_mv = float(spec.gabaa_tonic.rest_offset_mv) if spec.gabaa_tonic is not None else 0.0
-        plasticity_scale = float(spec.serotonergic.plasticity_scale) if spec.serotonergic is not None else 1.0
+        rest_offset_mv = (
+            float(spec.gabaa_tonic.rest_offset_mv) if spec.gabaa_tonic is not None else 0.0
+        )
+        plasticity_scale = (
+            float(spec.serotonergic.plasticity_scale) if spec.serotonergic is not None else 1.0
+        )
         excitability_offset = compute_excitability_offset_v(
             self._neuro_state,
             activator=self._activator.astype(np.float64),

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 @dataclass
@@ -18,7 +20,7 @@ class NeuromodulationState:
     observation_noise_gain: NDArray[np.float64]
 
     @classmethod
-    def zeros(cls, shape: tuple[int, int]) -> "NeuromodulationState":
+    def zeros(cls, shape: tuple[int, int]) -> NeuromodulationState:
         z = np.zeros(shape, dtype=np.float64)
         ones = np.ones(shape, dtype=np.float64)
         return cls(

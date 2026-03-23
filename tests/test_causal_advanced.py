@@ -43,14 +43,14 @@ class TestCausalOverhead:
 
         start = time.perf_counter()
         result_minimal = validate_causal_consistency(seq)
-        t_minimal = time.perf_counter() - start
+        time.perf_counter() - start
 
         desc = mfn.extract(seq)
         event = mfn.detect(seq)
 
         start = time.perf_counter()
         result_full = validate_causal_consistency(seq, desc, event)
-        t_full = time.perf_counter() - start
+        time.perf_counter() - start
 
         assert result_minimal.stages_checked < result_full.stages_checked
 
@@ -74,7 +74,7 @@ class TestDeterministicReplay:
         assert r1.decision == r2.decision
         assert r1.config_hash == r2.config_hash
         assert len(r1.rule_results) == len(r2.rule_results)
-        for a, b in zip(r1.rule_results, r2.rule_results):
+        for a, b in zip(r1.rule_results, r2.rule_results, strict=False):
             assert a.rule_id == b.rule_id
             assert a.passed == b.passed
             assert a.severity == b.severity
@@ -102,9 +102,9 @@ class TestCausalProperties:
         """Any valid SimulationSpec should not produce causal errors."""
         seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=8, seed=seed))
         result = validate_causal_consistency(seq)
-        assert (
-            result.error_count == 0
-        ), f"seed={seed}: {[v.message for v in result.violations if not v.passed]}"
+        assert result.error_count == 0, (
+            f"seed={seed}: {[v.message for v in result.violations if not v.passed]}"
+        )
 
     @pytest.mark.parametrize("grid_size", [4, 8, 16, 32, 64])
     def test_all_grid_sizes_pass(self, grid_size: int) -> None:

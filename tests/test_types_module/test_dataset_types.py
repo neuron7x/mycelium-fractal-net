@@ -192,12 +192,12 @@ class TestDatasetColumns:
             "turing_enabled",
             "random_seed",
         ]
-        assert SIMULATION_PARAM_COLUMNS == expected
+        assert expected == SIMULATION_PARAM_COLUMNS
 
     def test_simulation_meta_columns(self) -> None:
         """Test simulation metadata column list."""
         expected = ["growth_events", "turing_activations", "clamping_events"]
-        assert SIMULATION_META_COLUMNS == expected
+        assert expected == SIMULATION_META_COLUMNS
 
     def test_feature_names_count(self) -> None:
         """Test that we have 18 feature names."""

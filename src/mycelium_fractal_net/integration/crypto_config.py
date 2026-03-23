@@ -18,9 +18,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+from typing import TYPE_CHECKING
 
-from .api_config import Environment
+if TYPE_CHECKING:
+    from .api_config import Environment
 
 
 @dataclass
@@ -47,7 +48,7 @@ class CryptoConfig:
     max_keys_per_user: int = 100
 
     @classmethod
-    def from_env(cls, env: Optional[Environment] = None) -> "CryptoConfig":
+    def from_env(cls, env: Environment | None = None) -> CryptoConfig:
         """
         Create CryptoConfig from environment variables.
 
@@ -108,11 +109,11 @@ class KeyStore:
         ecdh_keys: Mapping of key_id to (private_key, public_key) tuples.
     """
 
-    encryption_keys: Dict[str, bytes] = field(default_factory=dict)
-    signature_keys: Dict[str, Tuple[bytes, bytes]] = field(default_factory=dict)
-    ecdh_keys: Dict[str, Tuple[bytes, bytes]] = field(default_factory=dict)
-    _default_encryption_key_id: Optional[str] = None
-    _default_signature_key_id: Optional[str] = None
+    encryption_keys: dict[str, bytes] = field(default_factory=dict)
+    signature_keys: dict[str, tuple[bytes, bytes]] = field(default_factory=dict)
+    ecdh_keys: dict[str, tuple[bytes, bytes]] = field(default_factory=dict)
+    _default_encryption_key_id: str | None = None
+    _default_signature_key_id: str | None = None
 
     def set_default_encryption_key(self, key_id: str) -> None:
         """Set the default encryption key ID."""
@@ -125,19 +126,19 @@ class KeyStore:
             self._default_signature_key_id = key_id
 
     @property
-    def default_encryption_key_id(self) -> Optional[str]:
+    def default_encryption_key_id(self) -> str | None:
         """Get the default encryption key ID."""
         return self._default_encryption_key_id
 
     @property
-    def default_signature_key_id(self) -> Optional[str]:
+    def default_signature_key_id(self) -> str | None:
         """Get the default signature key ID."""
         return self._default_signature_key_id
 
 
 # Singleton instances
-_crypto_config: Optional[CryptoConfig] = None
-_key_store: Optional[KeyStore] = None
+_crypto_config: CryptoConfig | None = None
+_key_store: KeyStore | None = None
 
 
 def get_crypto_config() -> CryptoConfig:

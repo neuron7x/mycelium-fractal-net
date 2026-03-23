@@ -292,14 +292,12 @@ def test_cfde_return_stats_multiscale_mode() -> None:
     with torch.no_grad():
         out, stats = model(data, return_stats=True)  # type: ignore[misc]
     assert out.shape == data.shape
-    assert set(
-        [
-            "inhibition_rate",
-            "reconstruction_mse",
-            "baseline_mse",
-            "effective_iterations",
-        ]
-    ).issubset(stats.keys())
+    assert {
+        "inhibition_rate",
+        "reconstruction_mse",
+        "baseline_mse",
+        "effective_iterations",
+    }.issubset(stats.keys())
     assert 0.0 <= stats["inhibition_rate"] <= 1.0
     assert stats["effective_iterations"] >= 1.0
     assert math.isfinite(stats["reconstruction_mse"])

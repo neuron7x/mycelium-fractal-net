@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from mycelium_fractal_net.types.features import MorphologyDescriptor
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.features import MorphologyDescriptor
 
 
 def morphology_drift(

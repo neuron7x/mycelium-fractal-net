@@ -18,6 +18,7 @@ import pytest
 def _has_torch() -> bool:
     try:
         import torch  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -297,6 +298,7 @@ class TestREADMEExamples:
     def test_federated_example(self) -> None:
         """Test federated learning example."""
         import torch
+
         from mycelium_fractal_net import aggregate_gradients_krum
 
         gradients = [torch.randn(100) for _ in range(20)]
@@ -319,8 +321,8 @@ class TestAnalyticsAPI:
 
     def test_analytics_module_importable(self) -> None:
         """Test analytics module is importable."""
-        from mycelium_fractal_net.analytics.legacy_features import FeatureConfig, compute_features
         from mycelium_fractal_net.analytics import compute_fractal_features
+        from mycelium_fractal_net.analytics.legacy_features import FeatureConfig, compute_features
 
         assert callable(compute_features)
         assert callable(compute_fractal_features)

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from fastapi.testclient import TestClient
 
 from mycelium_fractal_net.integration.api_server import create_app
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_api_server_health_and_metrics() -> None:

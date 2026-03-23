@@ -24,21 +24,17 @@ from .fractal_features import (
 )
 from .insight_architect import FractalInsightArchitect, Insight, InsufficientDataError
 
-if TYPE_CHECKING:
-    pass
-
-
 # Legacy type alias for compatibility
 FeatureArray = NDArray[np.float64]
 """Type alias for 18-element feature array (see MFN_FEATURE_SCHEMA.md)."""
 
 __all__ = [
-    "FeatureVector",
     "FeatureArray",
-    "compute_fractal_features",
-    "compute_box_counting_dimension",
-    "compute_basic_stats",
+    "FeatureVector",
     "FractalInsightArchitect",
     "Insight",
     "InsufficientDataError",
+    "compute_basic_stats",
+    "compute_box_counting_dimension",
+    "compute_fractal_features",
 ]

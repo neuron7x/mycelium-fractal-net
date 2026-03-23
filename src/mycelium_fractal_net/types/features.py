@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
-
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 if TYPE_CHECKING:
     import pandas as pd
+    from numpy.typing import NDArray
 
 from mycelium_fractal_net.analytics.legacy_features import (
     FEATURE_COUNT,
@@ -183,7 +181,7 @@ class MorphologyDescriptor:
             "metadata": dict(self.metadata),
         }
 
-    def to_series(self) -> "pd.Series":
+    def to_series(self) -> pd.Series:
         import pandas as pd
 
         payload = self.flatten()
@@ -202,7 +200,7 @@ class MorphologyDescriptor:
         return payload
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MorphologyDescriptor":
+    def from_dict(cls, data: dict[str, Any]) -> MorphologyDescriptor:
         return cls(
             version=str(data.get("descriptor_version", data["version"])),
             embedding=tuple(float(v) for v in data["embedding"]),
@@ -226,10 +224,10 @@ class MorphologyDescriptor:
 
 
 __all__ = [
-    "FeatureVector",
-    "FEATURE_NAMES",
     "FEATURE_COUNT",
+    "FEATURE_NAMES",
+    "FeatureVector",
+    "MorphologyDescriptor",
     "compute_features",
     "validate_feature_ranges",
-    "MorphologyDescriptor",
 ]

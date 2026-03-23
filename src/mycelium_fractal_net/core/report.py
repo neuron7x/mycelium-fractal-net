@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from mycelium_fractal_net.types.field import FieldSequence
-from mycelium_fractal_net.types.report import AnalysisReport
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from mycelium_fractal_net.types.field import FieldSequence
+    from mycelium_fractal_net.types.report import AnalysisReport
 
 
 def report(

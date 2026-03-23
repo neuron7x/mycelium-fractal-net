@@ -60,29 +60,29 @@ from .symmetric import (
 )
 
 __all__ = [
-    # Key Exchange
-    "ECDHKeyExchange",
-    "ECDHKeyPair",
-    "KeyExchangeError",
-    "generate_ecdh_keypair",
-    "derive_symmetric_key",
-    # Digital Signatures
-    "EdDSASignature",
-    "SignatureKeyPair",
-    "SignatureError",
-    "generate_signature_keypair",
-    "sign_message",
-    "verify_signature",
-    # Symmetric Encryption (AES-256-GCM)
-    "AESGCMCipher",
-    "SymmetricEncryptionError",
-    "generate_aes_key",
-    "encrypt_aes_gcm",
-    "decrypt_aes_gcm",
     "AES_KEY_SIZE",
     "GCM_NONCE_SIZE",
     "GCM_TAG_SIZE",
+    # Symmetric Encryption (AES-256-GCM)
+    "AESGCMCipher",
+    # Key Exchange
+    "ECDHKeyExchange",
+    "ECDHKeyPair",
+    # Digital Signatures
+    "EdDSASignature",
+    "KeyExchangeError",
+    "SignatureError",
+    "SignatureKeyPair",
+    "SymmetricEncryptionError",
+    "decrypt_aes_gcm",
     # Key Derivation
     "derive_key_from_password",
     "derive_key_scrypt",
+    "derive_symmetric_key",
+    "encrypt_aes_gcm",
+    "generate_aes_key",
+    "generate_ecdh_keypair",
+    "generate_signature_keypair",
+    "sign_message",
+    "verify_signature",
 ]

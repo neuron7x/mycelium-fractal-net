@@ -10,8 +10,6 @@ Reference: docs/ARCHITECTURE.md, docs/MFN_SYSTEM_ROLE.md
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from pydantic import BaseModel, Field
 
 # =============================================================================
@@ -192,7 +190,7 @@ class FederatedAggregateRequest(BaseModel):
             Range: [0.0, 0.5]. Default: 0.2.
     """
 
-    gradients: List[List[float]]
+    gradients: list[list[float]]
     num_clusters: int = Field(default=10, ge=1, le=1000)
     byzantine_fraction: float = Field(default=0.2, ge=0.0, le=0.5)
 
@@ -206,7 +204,7 @@ class FederatedAggregateResponse(BaseModel):
         num_input_gradients: Number of input gradients processed.
     """
 
-    aggregated_gradient: List[float]
+    aggregated_gradient: list[float]
     num_input_gradients: int
 
 
@@ -225,9 +223,9 @@ class ErrorDetail(BaseModel):
         value: The invalid value (if applicable and safe to log).
     """
 
-    field: Optional[str] = None
+    field: str | None = None
     message: str
-    value: Optional[str] = None
+    value: str | None = None
 
 
 class ErrorResponse(BaseModel):
@@ -256,15 +254,15 @@ class ErrorResponse(BaseModel):
         examples=["VALIDATION_ERROR", "AUTHENTICATION_REQUIRED", "RATE_LIMIT_EXCEEDED"],
     )
     message: str = Field(description="Human-readable error message")
-    detail: Optional[str] = Field(
+    detail: str | None = Field(
         default=None,
         description="Detailed error message (deprecated, for backward compatibility)",
     )
-    details: Optional[List[ErrorDetail]] = Field(
+    details: list[ErrorDetail] | None = Field(
         default=None, description="List of detailed errors (for validation errors)"
     )
-    request_id: Optional[str] = Field(default=None, description="Request correlation ID")
-    timestamp: Optional[str] = Field(default=None, description="ISO 8601 timestamp")
+    request_id: str | None = Field(default=None, description="Request correlation ID")
+    timestamp: str | None = Field(default=None, description="ISO 8601 timestamp")
 
 
 # =============================================================================
@@ -329,12 +327,12 @@ class EncryptRequest(BaseModel):
         min_length=1,
         max_length=1048576,  # 1 MB limit
     )
-    key_id: Optional[str] = Field(
+    key_id: str | None = Field(
         default=None,
         description="Key identifier for encryption. If not provided, server-managed key is used.",
         max_length=64,
     )
-    associated_data: Optional[str] = Field(
+    associated_data: str | None = Field(
         default=None,
         description="Base64-encoded additional authenticated data (AAD)",
         max_length=4096,
@@ -371,12 +369,12 @@ class DecryptRequest(BaseModel):
         min_length=1,
         max_length=1048576,  # 1 MB limit
     )
-    key_id: Optional[str] = Field(
+    key_id: str | None = Field(
         default=None,
         description="Key identifier for decryption",
         max_length=64,
     )
-    associated_data: Optional[str] = Field(
+    associated_data: str | None = Field(
         default=None,
         description="Base64-encoded AAD used during encryption",
         max_length=4096,
@@ -410,7 +408,7 @@ class SignRequest(BaseModel):
         min_length=1,
         max_length=1048576,  # 1 MB limit
     )
-    key_id: Optional[str] = Field(
+    key_id: str | None = Field(
         default=None,
         description="Key identifier for signing",
         max_length=64,
@@ -453,12 +451,12 @@ class VerifyRequest(BaseModel):
         min_length=1,
         max_length=256,
     )
-    public_key: Optional[str] = Field(
+    public_key: str | None = Field(
         default=None,
         description="Base64-encoded public key for verification",
         max_length=256,
     )
-    key_id: Optional[str] = Field(
+    key_id: str | None = Field(
         default=None,
         description="Key identifier to look up public key",
         max_length=64,
@@ -476,7 +474,7 @@ class VerifyResponse(BaseModel):
     """
 
     valid: bool = Field(description="True if signature is valid")
-    key_id: Optional[str] = Field(default=None, description="Key identifier used for verification")
+    key_id: str | None = Field(default=None, description="Key identifier used for verification")
     algorithm: str = Field(default="Ed25519", description="Signature algorithm")
 
 
@@ -494,7 +492,7 @@ class KeypairRequest(BaseModel):
         description="Key algorithm: 'ECDH' for X25519 key exchange, 'Ed25519' for signatures",
         pattern="^(ECDH|Ed25519)$",
     )
-    key_id: Optional[str] = Field(
+    key_id: str | None = Field(
         default=None,
         description="Custom key identifier. Auto-generated if not provided.",
         max_length=64,
@@ -521,33 +519,33 @@ class KeypairResponse(BaseModel):
 # =============================================================================
 
 __all__ = [
-    # Health
-    "HealthResponse",
-    # Validation
-    "ValidateRequest",
-    "ValidateResponse",
-    # Simulation
-    "SimulateRequest",
-    "SimulateResponse",
-    # Nernst
-    "NernstRequest",
-    "NernstResponse",
-    # Federated
-    "FederatedAggregateRequest",
-    "FederatedAggregateResponse",
-    # Error
-    "ErrorResponse",
-    "ErrorDetail",
-    "ErrorCode",
+    "DecryptRequest",
+    "DecryptResponse",
     # Cryptography
     "EncryptRequest",
     "EncryptResponse",
-    "DecryptRequest",
-    "DecryptResponse",
-    "SignRequest",
-    "SignResponse",
-    "VerifyRequest",
-    "VerifyResponse",
+    "ErrorCode",
+    "ErrorDetail",
+    # Error
+    "ErrorResponse",
+    # Federated
+    "FederatedAggregateRequest",
+    "FederatedAggregateResponse",
+    # Health
+    "HealthResponse",
     "KeypairRequest",
     "KeypairResponse",
+    # Nernst
+    "NernstRequest",
+    "NernstResponse",
+    "SignRequest",
+    "SignResponse",
+    # Simulation
+    "SimulateRequest",
+    "SimulateResponse",
+    # Validation
+    "ValidateRequest",
+    "ValidateResponse",
+    "VerifyRequest",
+    "VerifyResponse",
 ]

@@ -27,9 +27,9 @@ class TestTuringGrowth:
 
     def test_turing_threshold_specification(self) -> None:
         """Verify Turing threshold is 0.75 as specified."""
-        assert (
-            abs(TURING_THRESHOLD - 0.75) < 1e-10
-        ), f"TURING_THRESHOLD={TURING_THRESHOLD}, expected 0.75"
+        assert abs(TURING_THRESHOLD - 0.75) < 1e-10, (
+            f"TURING_THRESHOLD={TURING_THRESHOLD}, expected 0.75"
+        )
 
     def test_growth_events_occur_with_spike_probability(self) -> None:
         """Verify growth events occur with specified spike probability."""
@@ -129,9 +129,9 @@ class TestFractalDimensionConvergence:
         if len(dimensions) >= 3:
             mean_d = np.mean(dimensions)
             # Allow wider range for stochastic simulation
-            assert (
-                1.0 <= mean_d <= 2.2
-            ), f"Mean fractal dimension D={mean_d:.3f} outside expected range [1.0, 2.2]"
+            assert 1.0 <= mean_d <= 2.2, (
+                f"Mean fractal dimension D={mean_d:.3f} outside expected range [1.0, 2.2]"
+            )
 
     def test_fractal_dimension_consistency(self) -> None:
         """Test fractal dimension is consistent across runs with same seed."""
@@ -270,7 +270,7 @@ class TestGrowthDynamics:
         """Test simulation stability over many steps."""
         rng = np.random.default_rng(42)
 
-        field, growth_events = simulate_mycelium_field(
+        field, _growth_events = simulate_mycelium_field(
             rng,
             grid_size=32,
             steps=1000,
@@ -411,14 +411,14 @@ class TestMorphogenesisValidation:
         field_mv = field * 1000.0
 
         # Check physiological bounds (clamped by simulation)
-        assert (
-            field_mv.min() >= -95.0 - 0.5
-        ), f"Min potential {field_mv.min():.2f} mV below physiological floor"
-        assert (
-            field_mv.max() <= 40.0 + 0.5
-        ), f"Max potential {field_mv.max():.2f} mV above physiological ceiling"
+        assert field_mv.min() >= -95.0 - 0.5, (
+            f"Min potential {field_mv.min():.2f} mV below physiological floor"
+        )
+        assert field_mv.max() <= 40.0 + 0.5, (
+            f"Max potential {field_mv.max():.2f} mV above physiological ceiling"
+        )
 
         # Mean should stay within the clamping bounds
-        assert (
-            -95.0 <= field_mv.mean() <= 40.0
-        ), f"Mean potential {field_mv.mean():.2f} mV outside clamping bounds"
+        assert -95.0 <= field_mv.mean() <= 40.0, (
+            f"Mean potential {field_mv.mean():.2f} mV outside clamping bounds"
+        )

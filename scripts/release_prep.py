@@ -59,7 +59,7 @@ a {{ color: #38bdf8; }}
 <li><code>attestation.json</code></li>
 </ul>
 </section>
-{''.join(items)}
+{"".join(items)}
 </div>
 </body>
 </html>

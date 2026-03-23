@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 from mycelium_fractal_net.analytics import compute_fractal_features
 from mycelium_fractal_net.core import SimulationResult
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 _FIELD_MIN_V = -0.095
 _FIELD_MAX_V = 0.040

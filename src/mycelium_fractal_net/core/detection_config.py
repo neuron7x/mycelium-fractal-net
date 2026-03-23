@@ -75,9 +75,8 @@ def _validate_schema(data: dict[str, Any]) -> list[str]:
         for key, value in section_data.items():
             if isinstance(value, dict):
                 continue  # nested sections (regime_weights)
-            if isinstance(value, (int, float)):
-                if not (-1e6 < value < 1e6):
-                    warnings.append(f"{section_name}.{key}={value} outside reasonable range")
+            if isinstance(value, (int, float)) and not (-1e6 < value < 1e6):
+                warnings.append(f"{section_name}.{key}={value} outside reasonable range")
 
     return warnings
 
@@ -100,9 +99,7 @@ def _config_hash() -> str:
     """SHA256 hash of the config file content (or 'default' if not loaded)."""
     try:
         if _DETECTION_CONFIG_PATH.exists():
-            return hashlib.sha256(
-                _DETECTION_CONFIG_PATH.read_bytes()
-            ).hexdigest()[:16]
+            return hashlib.sha256(_DETECTION_CONFIG_PATH.read_bytes()).hexdigest()[:16]
     except Exception:
         logger.warning("Failed to compute config hash for %s", _DETECTION_CONFIG_PATH)
     return "default"
@@ -150,7 +147,9 @@ def _get_comparison(key: str, default: float) -> float:
 # ═══════════════════════════════════════════════════════════════
 
 TEMPORAL_LZC_NORMALIZER: float = _get("evidence_normalization", "temporal_lzc_normalizer", 3.0)
-CONNECTIVITY_AMPLIFICATION: float = _get("evidence_normalization", "connectivity_amplification", 4.0)
+CONNECTIVITY_AMPLIFICATION: float = _get(
+    "evidence_normalization", "connectivity_amplification", 4.0
+)
 HIERARCHY_BASELINE: float = _get("evidence_normalization", "hierarchy_baseline", 0.70)
 HIERARCHY_RANGE: float = _get("evidence_normalization", "hierarchy_range", 0.30)
 CRITICALITY_AMPLIFICATION: float = _get("evidence_normalization", "criticality_amplification", 50.0)
@@ -161,10 +160,18 @@ NOISE_GAIN_AMPLIFICATION: float = _get("evidence_normalization", "noise_gain_amp
 # ═══════════════════════════════════════════════════════════════
 
 DYNAMIC_ANOMALY_BASELINE: float = _get("regime_thresholds", "dynamic_anomaly_baseline", 0.45)
-REORGANIZED_COMPLEXITY_THRESHOLD: float = _get("regime_thresholds", "reorganized_complexity_threshold", 0.55)
-REORGANIZED_TOPOLOGY_THRESHOLD: float = _get("regime_thresholds", "reorganized_topology_threshold", 0.14)
-REORGANIZED_PLASTICITY_FLOOR: float = _get("regime_thresholds", "reorganized_plasticity_floor", 0.08)
-PATHOLOGICAL_NOISE_THRESHOLD: float = _get("regime_thresholds", "pathological_noise_threshold", 0.55)
+REORGANIZED_COMPLEXITY_THRESHOLD: float = _get(
+    "regime_thresholds", "reorganized_complexity_threshold", 0.55
+)
+REORGANIZED_TOPOLOGY_THRESHOLD: float = _get(
+    "regime_thresholds", "reorganized_topology_threshold", 0.14
+)
+REORGANIZED_PLASTICITY_FLOOR: float = _get(
+    "regime_thresholds", "reorganized_plasticity_floor", 0.08
+)
+PATHOLOGICAL_NOISE_THRESHOLD: float = _get(
+    "regime_thresholds", "pathological_noise_threshold", 0.55
+)
 STRUCTURE_FLOOR: float = _get("regime_thresholds", "structure_floor", 0.10)
 STABLE_CEILING: float = _get("regime_thresholds", "stable_ceiling", 0.70)
 
@@ -173,11 +180,17 @@ STABLE_CEILING: float = _get("regime_thresholds", "stable_ceiling", 0.70)
 # ═══════════════════════════════════════════════════════════════
 
 THRESHOLD_PLASTICITY_WEIGHT: float = _get("regime_thresholds", "threshold_plasticity_weight", 0.18)
-THRESHOLD_CONNECTIVITY_WEIGHT: float = _get("regime_thresholds", "threshold_connectivity_weight", 0.08)
+THRESHOLD_CONNECTIVITY_WEIGHT: float = _get(
+    "regime_thresholds", "threshold_connectivity_weight", 0.08
+)
 THRESHOLD_NOISE_PENALTY: float = _get("regime_thresholds", "threshold_noise_penalty", 0.12)
 THRESHOLD_CRITICAL_OFFSET: float = _get("regime_thresholds", "threshold_critical_offset", -0.03)
-THRESHOLD_REORGANIZED_OFFSET: float = _get("regime_thresholds", "threshold_reorganized_offset", 0.05)
-THRESHOLD_PATHOLOGICAL_OFFSET: float = _get("regime_thresholds", "threshold_pathological_offset", -0.08)
+THRESHOLD_REORGANIZED_OFFSET: float = _get(
+    "regime_thresholds", "threshold_reorganized_offset", 0.05
+)
+THRESHOLD_PATHOLOGICAL_OFFSET: float = _get(
+    "regime_thresholds", "threshold_pathological_offset", -0.08
+)
 THRESHOLD_FLOOR: float = _get("regime_thresholds", "threshold_floor", 0.25)
 THRESHOLD_CEILING: float = _get("regime_thresholds", "threshold_ceiling", 0.85)
 
@@ -208,7 +221,9 @@ REGIME_REORGANIZED_W_CHANGE: float = _get_regime_weight("reorganized", "change",
 REGIME_PATHNOISE_W_NOISE: float = _get_regime_weight("pathological_noise", "noise", 0.45)
 REGIME_PATHNOISE_W_CHANGE: float = _get_regime_weight("pathological_noise", "change", 0.20)
 REGIME_PATHNOISE_W_LOW_CONN: float = _get_regime_weight("pathological_noise", "low_conn", 0.15)
-REGIME_PATHNOISE_W_LOW_COMPLEX: float = _get_regime_weight("pathological_noise", "low_complex", 0.10)
+REGIME_PATHNOISE_W_LOW_COMPLEX: float = _get_regime_weight(
+    "pathological_noise", "low_complex", 0.10
+)
 REGIME_PATHNOISE_FLOOR_GAP: float = _get("regime_thresholds", "pathological_floor_gap", 0.2)
 
 REGIME_TRANSITIONAL_W_CHANGE: float = _get_regime_weight("transitional", "change", 0.32)

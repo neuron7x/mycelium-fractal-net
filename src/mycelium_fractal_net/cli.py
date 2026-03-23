@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -26,6 +27,9 @@ from mycelium_fractal_net.types.field import (
     SerotonergicPlasticitySpec,
     SimulationSpec,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def _dump_json(payload: dict[str, Any], output: str | None) -> int:
@@ -249,10 +253,8 @@ def cmd_report(args: argparse.Namespace) -> int:
         dst_dir.parent.mkdir(parents=True, exist_ok=True)
         src_dir.replace(dst_dir)
         if tmp_root.exists():
-            try:
+            with contextlib.suppress(OSError):
                 tmp_root.rmdir()
-            except OSError:
-                pass
         report_dir = str(dst_dir)
     else:
         result = build_analysis_report(

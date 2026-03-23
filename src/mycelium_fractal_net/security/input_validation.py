@@ -26,7 +26,8 @@ from __future__ import annotations
 import html
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Pattern, TypeVar
+from re import Pattern
+from typing import Any, TypeVar
 
 T = TypeVar("T", int, float)
 
@@ -37,8 +38,8 @@ class ValidationError(Exception):
     def __init__(
         self,
         message: str,
-        field: Optional[str] = None,
-        value: Optional[Any] = None,
+        field: str | None = None,
+        value: Any | None = None,
     ) -> None:
         """
         Initialize validation error.
@@ -54,14 +55,14 @@ class ValidationError(Exception):
 
 
 # Patterns for detecting potentially malicious input
-SQL_INJECTION_PATTERNS: List[Pattern[str]] = [
+SQL_INJECTION_PATTERNS: list[Pattern[str]] = [
     re.compile(r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER)\b)", re.IGNORECASE),
     re.compile(r"(--|;|/\*|\*/|@@|@)", re.IGNORECASE),
     re.compile(r"(\b(OR|AND)\b\s+\d+\s*=\s*\d+)", re.IGNORECASE),
     re.compile(r"(\b(OR|AND)\b\s+['\"]?\w+['\"]?\s*=\s*['\"]?\w+['\"]?)", re.IGNORECASE),
 ]
 
-XSS_PATTERNS: List[Pattern[str]] = [
+XSS_PATTERNS: list[Pattern[str]] = [
     re.compile(r"<script\b[^>]*>", re.IGNORECASE),
     re.compile(r"javascript:", re.IGNORECASE),
     re.compile(r"on\w+\s*=", re.IGNORECASE),
@@ -75,8 +76,8 @@ API_KEY_PATTERN = re.compile(r"^[a-zA-Z0-9\-_]{20,64}$")
 
 def validate_numeric_range(
     value: T,
-    min_value: Optional[T] = None,
-    max_value: Optional[T] = None,
+    min_value: T | None = None,
+    max_value: T | None = None,
     field_name: str = "value",
 ) -> T:
     """
@@ -176,10 +177,7 @@ def detect_sql_injection(value: str) -> bool:
         >>> detect_sql_injection("normal input")
         False
     """
-    for pattern in SQL_INJECTION_PATTERNS:
-        if pattern.search(value):
-            return True
-    return False
+    return any(pattern.search(value) for pattern in SQL_INJECTION_PATTERNS)
 
 
 def detect_xss(value: str) -> bool:
@@ -198,10 +196,7 @@ def detect_xss(value: str) -> bool:
         >>> detect_xss("normal input")
         False
     """
-    for pattern in XSS_PATTERNS:
-        if pattern.search(value):
-            return True
-    return False
+    return any(pattern.search(value) for pattern in XSS_PATTERNS)
 
 
 def validate_api_key_format(api_key: str) -> bool:
@@ -251,13 +246,13 @@ class InputValidator:
     check_sql_injection: bool = True
     check_xss: bool = True
     strict_mode: bool = True
-    _errors: List[ValidationError] = field(default_factory=list)
+    _errors: list[ValidationError] = field(default_factory=list)
 
     def validate_string(
         self,
         value: str,
         field_name: str = "value",
-        max_length: Optional[int] = None,
+        max_length: int | None = None,
         allow_empty: bool = False,
     ) -> str:
         """
@@ -295,22 +290,20 @@ class InputValidator:
             value = value[:max_len]
 
         # Check for SQL injection
-        if self.check_sql_injection and detect_sql_injection(value):
-            if self.strict_mode:
-                raise ValidationError(
-                    f"{field_name} contains potentially dangerous SQL patterns",
-                    field=field_name,
-                    value="<redacted>",
-                )
+        if self.check_sql_injection and detect_sql_injection(value) and self.strict_mode:
+            raise ValidationError(
+                f"{field_name} contains potentially dangerous SQL patterns",
+                field=field_name,
+                value="<redacted>",
+            )
 
         # Check for XSS
-        if self.check_xss and detect_xss(value):
-            if self.strict_mode:
-                raise ValidationError(
-                    f"{field_name} contains potentially dangerous script patterns",
-                    field=field_name,
-                    value="<redacted>",
-                )
+        if self.check_xss and detect_xss(value) and self.strict_mode:
+            raise ValidationError(
+                f"{field_name} contains potentially dangerous script patterns",
+                field=field_name,
+                value="<redacted>",
+            )
 
         # Sanitize
         return sanitize_string(value, max_length=max_len)
@@ -319,8 +312,8 @@ class InputValidator:
         self,
         value: int,
         field_name: str = "value",
-        min_value: Optional[int] = None,
-        max_value: Optional[int] = None,
+        min_value: int | None = None,
+        max_value: int | None = None,
     ) -> int:
         """
         Validate an integer value.
@@ -348,8 +341,8 @@ class InputValidator:
         self,
         value: float,
         field_name: str = "value",
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
     ) -> float:
         """
         Validate a float value.
@@ -401,9 +394,9 @@ class InputValidator:
 
     def validate_request_body(
         self,
-        body: Dict[str, Any],
-        schema: Dict[str, Dict[str, Any]],
-    ) -> Dict[str, Any]:
+        body: dict[str, Any],
+        schema: dict[str, dict[str, Any]],
+    ) -> dict[str, Any]:
         """
         Validate a request body against a schema.
 
@@ -423,7 +416,7 @@ class InputValidator:
             >>> validator.validate_request_body({"name": "test"}, schema)
             {'name': 'test'}
         """
-        validated: Dict[str, Any] = {}
+        validated: dict[str, Any] = {}
 
         for field_name, rules in schema.items():
             if field_name not in body:
@@ -466,11 +459,11 @@ class InputValidator:
 
 
 __all__ = [
+    "InputValidator",
     "ValidationError",
-    "validate_numeric_range",
-    "sanitize_string",
     "detect_sql_injection",
     "detect_xss",
+    "sanitize_string",
     "validate_api_key_format",
-    "InputValidator",
+    "validate_numeric_range",
 ]
