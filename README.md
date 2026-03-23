@@ -28,12 +28,32 @@ MFN simulates biological pattern formation on a 2D lattice, extracts morphologic
 ```python
 import mycelium_fractal_net as mfn
 
-seq = mfn.simulate(mfn.SimulationSpec(grid_size=64, steps=32, seed=42))
+seq = mfn.simulate(mfn.SimulationSpec(grid_size=32, steps=60, seed=42))
 
-seq.detect()       # → AnomalyEvent(label=nominal, score=0.18, confidence=0.79)
+# One-call full diagnosis
+report = mfn.diagnose(seq)
+print(report.summary())
+# [DIAGNOSIS:INFO] anomaly=nominal(0.22) ews=approaching_transition(0.46) causal=pass
+
+print(report.narrative)
+# System is operating in nominal regime. EWS signals a approaching transition
+# transition (score=0.46, estimated T≈70 steps). Causal validation passed.
+
+# Individual pipeline stages
+seq.detect()       # → AnomalyEvent(nominal, score=0.216, confidence=0.77, regime=stable)
 seq.extract()      # → MorphologyDescriptor(57-dim embedding, 6 feature groups)
-seq.forecast(4)    # → ForecastResult(h=4, method=adaptive_descriptor_extrapolation, error=0.000)
-seq.compare(seq)   # → ComparisonResult(label=near-identical, distance=0.0)
+seq.forecast(4)    # → ForecastResult(h=4, method=adaptive_descriptor_extrapolation)
+
+# Ensemble diagnosis with statistical confidence
+ensemble = mfn.ensemble_diagnose(mfn.SimulationSpec(grid_size=32, steps=60, seed=42), n_runs=5)
+print(ensemble.is_robust())  # True (5/5 agreement)
+
+# Intervention planning
+plan = mfn.plan_intervention(seq, target_regime="stable", budget=5.0)
+print(plan.has_viable_plan)  # True
+
+# Continuous monitoring
+reports = mfn.watch(mfn.SimulationSpec(grid_size=32, steps=20, seed=42), n_ticks=5)
 ```
 
 Every result passes through a **Causal Validation Gate** — 46 rules across 7 pipeline stages. If a conclusion does not follow from the data, the system blocks it.
@@ -44,12 +64,14 @@ Every result passes through a **Causal Validation Gate** — 46 rules across 7 p
 
 | | Feature | Description |
 |---|---|---|
-| **Explainability** | Evidence-backed detection | Every anomaly comes with contributing features, confidence score, and evidence payload. No black boxes. |
-| **Causal Gate** | 41 verification rules | Falsifiable cause-effect rules across simulation, extraction, detection, forecasting, comparison, cross-stage, and perturbation stages. |
-| **Biophysics** | Real kinetics | Nernst equation, Turing morphogenesis, GABA-A MWC allosteric model, serotonergic plasticity, occupancy conservation. |
-| **Provenance** | Ed25519 artifact signing | Every report and manifest is cryptographically signed. Immutable audit trail. |
-| **Performance** | 27M cells/sec | Full pipeline (simulate → detect → forecast) in ~77 ms for 64×64 grids. Memmap history for large-scale runs. |
-| **Contracts** | 7 import boundaries | Module dependencies enforced by import-linter in CI. Architecture cannot silently degrade. |
+| **Unified Diagnosis** | `mfn.diagnose()` | One call: detect + EWS + forecast + causal gate + intervention plan + narrative. |
+| **Causal Gate** | 46 verification rules | Falsifiable cause-effect rules across 7 pipeline stages. 100% tested. |
+| **Early Warning** | EWS detection | Autocorrelation, variance ratio, skewness — detects transitions before they happen. |
+| **Intervention Planner** | Pareto-optimal plans | Coordinate descent + counterfactual pipeline + robustness evaluation. |
+| **Ensemble Diagnosis** | Statistical hardening | Multiple seeds, majority voting, CI95, robustness flag. |
+| **Biophysics** | Real kinetics | Nernst, Turing morphogenesis, MWC allosteric model, occupancy conservation. |
+| **Inverse Synthesis** | Reverse engineering | Find parameters that produce a target diagnostic state. |
+| **Contracts** | 15 CI gates | Import boundaries, golden hashes, schema-code sync, docs-as-tests. |
 
 ---
 

@@ -35,7 +35,7 @@ The following surfaces are frozen and excluded from the v1 release contract:
 
 ## Causal Validation
 
-- 41 rules cover the six pipeline stages plus cross-stage and perturbation checks.
+- 46 rules cover the six pipeline stages plus cross-stage and perturbation checks.
 - Exhaustive 512x512 / 1024x1024 OOM profiling with published thresholds is not yet closed.
 - Formal public config limit reduction / promotion policy is not yet established.
 

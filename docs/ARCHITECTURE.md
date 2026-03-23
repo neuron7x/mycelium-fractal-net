@@ -96,7 +96,7 @@ FieldSequence ──→ extract() ──→ MorphologyDescriptor
               ▼
          CausalValidationGate
               │
-         41 rules evaluated
+         46 rules evaluated
               │
               ▼
          CausalValidationResult(decision, rules[], fingerprint)
