@@ -2,7 +2,7 @@ UV ?= uv
 RUN := $(UV) run
 SHELL := /usr/bin/env bash
 
-.PHONY: bootstrap fullcheck quickstart sync doctor test lint typecheck security coverage verify validate simulate extract detect forecast compare report benchmark api demo-scenarios showcase release-proof contracts openapi sbom baseline-parity docs-drift clean
+.PHONY: bootstrap fullcheck quickstart sync doctor test lint typecheck security coverage verify validate simulate extract detect forecast compare report benchmark api demo-scenarios showcase release-proof contracts openapi sbom baseline-parity docs-drift clean selfcheck
 
 # ═══════════════════════════════════════════════════════════════
 #  Setup
@@ -137,3 +137,12 @@ docs-drift:
 
 clean:
 	rm -rf .pytest_cache .ruff_cache .mypy_cache .import_linter_cache build dist *.egg-info artifacts/bootstrap artifacts/runs/fullcheck_* pytest-report.html .coverage coverage.xml junit.xml __pycache__
+
+# ═══════════════════════════════════════════════════════════════
+#  Self-Check — single command to validate everything
+# ═══════════════════════════════════════════════════════════════
+selfcheck:
+	$(RUN) python scripts/selfcheck.py
+
+selfcheck-quick:
+	$(RUN) python scripts/selfcheck.py --quick

@@ -1,0 +1,20 @@
+{
+  "baseline": {
+    "field": "5fe822d89ae49eb9",
+    "descriptor": "be6ff3cd36a44f81",
+    "detection_score": 0.193892,
+    "detection_label": "nominal"
+  },
+  "gabaa_tonic": {
+    "field": "de412a6243b4a2f6",
+    "descriptor": "a5d2f3db0dd7f55e",
+    "detection_score": 0.192273,
+    "detection_label": "nominal"
+  },
+  "serotonergic": {
+    "field": "52aa7806e2ea9c43",
+    "descriptor": "cb58257a360d33ba",
+    "detection_score": 0.228463,
+    "detection_label": "watch"
+  }
+}

@@ -34,9 +34,14 @@ def _check_schemas() -> list[str]:
         return errors
 
     required = [
-        "simulationspec", "morphologydescriptor", "anomalyevent",
-        "forecastresult", "comparisonresult", "causalvalidationresult",
-        "analysisreport", "manifest",
+        "simulationspec",
+        "morphologydescriptor",
+        "anomalyevent",
+        "forecastresult",
+        "comparisonresult",
+        "causalvalidationresult",
+        "analysisreport",
+        "manifest",
     ]
     existing = {f.stem.split(".")[0] for f in schema_dir.glob("*.schema.json")}
     for name in required:
@@ -79,6 +84,7 @@ def _check_type_roundtrips() -> list[str]:
     try:
         d = desc.to_dict()
         from mycelium_fractal_net.types.features import MorphologyDescriptor
+
         restored = MorphologyDescriptor.from_dict(d)
         if restored.features != desc.features:
             errors.append("MorphologyDescriptor roundtrip: features mismatch")
