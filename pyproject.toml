@@ -145,6 +145,7 @@ filterwarnings = [
     "ignore::pytest.PytestDeprecationWarning",
     "ignore::pytest.PytestUnraisableExceptionWarning",
     "ignore::scipy.sparse.SparseEfficiencyWarning",
+    "ignore::RuntimeWarning",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

@@ -24,6 +24,18 @@ from .extension import BioConfig, BioExtension, BioReport
 from .fhn import FHNConfig, FHNEngine, FHNState
 from .physarum import PhysarumConfig, PhysarumEngine, PhysarumState
 
+# Memory-Augmented Evolution (HDV + CMA-ES)
+from .evolution import (
+    PARAM_BOUNDS,
+    PARAM_NAMES,
+    BioEvolutionOptimizer,
+    BioEvolutionResult,
+    compute_fitness,
+    params_to_bio_config,
+)
+from .memory import BioMemory, HDVEncoder, MemoryEntry
+from .meta import MetaOptimizer, MetaOptimizerResult
+
 __all__ = [
     "AnastomosisConfig",
     "AnastomosisEngine",
@@ -43,4 +55,16 @@ __all__ = [
     "PhysarumState",
     "SporeDispersalEngine",
     "SporeDispersalState",
+    # Memory-Augmented Evolution
+    "BioEvolutionOptimizer",
+    "BioEvolutionResult",
+    "BioMemory",
+    "HDVEncoder",
+    "MemoryEntry",
+    "MetaOptimizer",
+    "MetaOptimizerResult",
+    "PARAM_BOUNDS",
+    "PARAM_NAMES",
+    "compute_fitness",
+    "params_to_bio_config",
 ]
