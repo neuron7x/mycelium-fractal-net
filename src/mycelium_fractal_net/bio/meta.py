@@ -98,7 +98,10 @@ class MetaOptimizer:
         return (p - PARAM_BOUNDS[:, 0]) / (PARAM_BOUNDS[:, 1] - PARAM_BOUNDS[:, 0])
 
     def _denorm(self, pn: np.ndarray) -> np.ndarray:
-        return np.clip(pn, 0, 1) * (PARAM_BOUNDS[:, 1] - PARAM_BOUNDS[:, 0]) + PARAM_BOUNDS[:, 0]
+        result: np.ndarray = (
+            np.clip(pn, 0, 1) * (PARAM_BOUNDS[:, 1] - PARAM_BOUNDS[:, 0]) + PARAM_BOUNDS[:, 0]
+        )
+        return result
 
     def memory_aware_evaluate(self, params: np.ndarray) -> tuple[float, bool]:
         self._total_queries += 1

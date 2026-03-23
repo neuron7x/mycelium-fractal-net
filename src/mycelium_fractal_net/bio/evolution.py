@@ -60,13 +60,8 @@ def params_to_bio_config(params: np.ndarray) -> Any:
     from mycelium_fractal_net.bio.fhn import FHNConfig
     from mycelium_fractal_net.bio.physarum import PhysarumConfig
 
-    p = np.clip(
-        np.nan_to_num(
-            params, nan=DEFAULT_PARAMS, posinf=PARAM_BOUNDS[:, 1], neginf=PARAM_BOUNDS[:, 0]
-        ),
-        PARAM_BOUNDS[:, 0],
-        PARAM_BOUNDS[:, 1],
-    )
+    safe = np.where(np.isfinite(params), params, DEFAULT_PARAMS)
+    p = np.clip(safe, PARAM_BOUNDS[:, 0], PARAM_BOUNDS[:, 1])
     return BioConfig(
         physarum=PhysarumConfig(gamma=float(p[0]), alpha=float(p[1])),
         anastomosis=AnastomosisConfig(gamma_anastomosis=float(p[2]), D_tip=float(p[3])),
@@ -130,11 +125,13 @@ class BioEvolutionOptimizer:
 
         config = params_to_bio_config(params)
         try:
-            seq = mfn.simulate(
-                mfn.SimulationSpec(grid_size=self.grid_size, steps=self.steps, seed=self.seed)
-            )
+            from mycelium_fractal_net.core.diagnose import diagnose
+            from mycelium_fractal_net.types.field import SimulationSpec
+
+            spec = SimulationSpec(grid_size=self.grid_size, steps=self.steps, seed=self.seed)
+            seq = mfn.simulate(spec)
             bio = BioExtension.from_sequence(seq, config=config).step(n=self.bio_steps)
-            diagnosis = mfn.diagnose(seq, skip_intervention=True, mode="fast")
+            diagnosis = diagnose(seq, skip_intervention=True, mode="fast")
             return compute_fitness(bio.report(), diagnosis)
         except Exception:
             return 0.0
