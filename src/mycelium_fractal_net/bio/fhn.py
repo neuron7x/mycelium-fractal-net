@@ -31,7 +31,7 @@ class FHNConfig:
     spike_threshold: float = 0.5
 
 
-@dataclass
+@dataclass(slots=True)
 class FHNState:
     u: np.ndarray
     v: np.ndarray

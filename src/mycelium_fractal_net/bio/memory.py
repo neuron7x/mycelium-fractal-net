@@ -61,6 +61,8 @@ class BioMemory:
         self._episodes: list[MemoryEntry] = []
         self._superposition = np.zeros(encoder.D, dtype=np.float64)
         self._total_stored = 0
+        self._hdv_matrix: np.ndarray | None = None
+        self._dirty = True
 
     @property
     def size(self) -> int:
@@ -91,17 +93,34 @@ class BioMemory:
         self._episodes.append(entry)
         self._superposition += hdv.astype(np.float64)
         self._total_stored += 1
+        self._dirty = True
+
+    def _rebuild_matrix(self) -> None:
+        if not self._episodes:
+            self._hdv_matrix = None
+            return
+        self._hdv_matrix = np.stack([ep.hdv for ep in self._episodes], axis=0).astype(np.float64)
 
     def query(
         self, query_hdv: np.ndarray, k: int = 5
     ) -> list[tuple[float, float, dict[str, float], dict[str, Any]]]:
         if self.is_empty:
             return []
-        sims = [self.encoder.similarity(query_hdv, ep.hdv) for ep in self._episodes]
-        top_idx = sorted(range(len(sims)), key=lambda i: sims[i], reverse=True)[:k]
+        if self._dirty:
+            self._rebuild_matrix()
+            self._dirty = False
+        if self._hdv_matrix is None:
+            return []
+        sims = (self._hdv_matrix @ query_hdv.astype(np.float64)) / self.encoder.D
+        n = min(k, len(sims))
+        if n >= len(sims):
+            top_idx = np.argsort(sims)[::-1][:n]
+        else:
+            top_idx = np.argpartition(sims, -n)[-n:]
+            top_idx = top_idx[np.argsort(sims[top_idx])[::-1]]
         return [
             (
-                sims[i],
+                float(sims[i]),
                 self._episodes[i].fitness,
                 self._episodes[i].params,
                 self._episodes[i].metadata,

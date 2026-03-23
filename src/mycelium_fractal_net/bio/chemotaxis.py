@@ -30,7 +30,7 @@ class ChemotaxisConfig:
     source_strength: float = 1.0
 
 
-@dataclass
+@dataclass(slots=True)
 class ChemotaxisState:
     rho: np.ndarray
     c: np.ndarray

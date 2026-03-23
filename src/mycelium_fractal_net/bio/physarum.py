@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import cg
 
 __all__ = ["PhysarumConfig", "PhysarumEngine", "PhysarumState"]
@@ -69,6 +68,35 @@ class PhysarumEngine:
     def __init__(self, N: int, config: PhysarumConfig | None = None) -> None:
         self.N = N
         self.config = config or PhysarumConfig()
+        # Precompute sparse Laplacian structure (indices never change, only data)
+        self._rows, self._cols, self._edge_map = self._precompute_structure()
+
+    def _precompute_structure(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray, list[tuple[int, int, int, int, str]]]:
+        """Build row/col index arrays for the graph Laplacian once."""
+        N = self.N
+        rows_list: list[int] = []
+        cols_list: list[int] = []
+        # edge_map: (row_idx_in_data, node1, node2, grid_i, grid_j, direction)
+        edge_map: list[tuple[int, int, int, int, str]] = []
+
+        for i in range(N):
+            for j in range(N):
+                node = i * N + j
+                if j < N - 1:
+                    nb = i * N + j + 1
+                    # 4 entries per horizontal edge: diag+, off-, diag+, off-
+                    rows_list.extend([node, node, nb, nb])
+                    cols_list.extend([node, nb, nb, node])
+                    edge_map.append((i, j, node, nb, "h"))
+                if i < N - 1:
+                    nb = (i + 1) * N + j
+                    rows_list.extend([node, node, nb, nb])
+                    cols_list.extend([node, nb, nb, node])
+                    edge_map.append((i, j, node, nb, "v"))
+
+        return np.array(rows_list, dtype=np.int32), np.array(cols_list, dtype=np.int32), edge_map
 
     def initialize(
         self,
@@ -143,34 +171,30 @@ class PhysarumEngine:
         return b
 
     def _solve_pressure(self, state: PhysarumState, b: np.ndarray) -> PhysarumState:
+        from scipy.sparse import csr_matrix
+
         N = self.N
         n_nodes = N * N
-        L = lil_matrix((n_nodes, n_nodes), dtype=np.float64)
 
-        for i in range(N):
-            for j in range(N):
-                node = i * N + j
-                if j < N - 1:
-                    d = state.D_h[i, j]
-                    nb = i * N + j + 1
-                    L[node, node] += d
-                    L[node, nb] -= d
-                    L[nb, nb] += d
-                    L[nb, node] -= d
-                if i < N - 1:
-                    d = state.D_v[i, j]
-                    nb = (i + 1) * N + j
-                    L[node, node] += d
-                    L[node, nb] -= d
-                    L[nb, nb] += d
-                    L[nb, node] -= d
+        # Build data vector from precomputed structure (no Python loop over grid)
+        data = np.zeros(len(self._rows), dtype=np.float64)
+        for idx, (i, j, node, nb, direction) in enumerate(self._edge_map):
+            d = state.D_h[i, j] if direction == "h" else state.D_v[i, j]
+            base = idx * 4
+            data[base] = d  # L[node, node] += d
+            data[base + 1] = -d  # L[node, nb] -= d
+            data[base + 2] = d  # L[nb, nb] += d
+            data[base + 3] = -d  # L[nb, node] -= d
 
+        L = csr_matrix((data, (self._rows, self._cols)), shape=(n_nodes, n_nodes))
+        L = L.tolil()
+        L[0, :] = 0
+        L[0, 0] = 1.0
         L_csr = L.tocsr()
-        L_csr[0, :] = 0
-        L_csr[0, 0] = 1.0
+
         b_fixed = b.copy()
         b_fixed[0] = 0.0
-        p_flat, _ = cg(L_csr, b_fixed, atol=1e-8, maxiter=1000)
+        p_flat, _ = cg(L_csr, b_fixed, x0=state.p.ravel(), atol=1e-8, maxiter=500)
         state.p = p_flat.reshape(N, N)
         return state
 

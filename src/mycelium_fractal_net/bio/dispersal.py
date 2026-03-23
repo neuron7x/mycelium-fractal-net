@@ -26,7 +26,7 @@ class DispersalConfig:
     dt: float = 1.0
 
 
-@dataclass
+@dataclass(slots=True)
 class SporeDispersalState:
     spore_bank: np.ndarray
     spore_air: np.ndarray

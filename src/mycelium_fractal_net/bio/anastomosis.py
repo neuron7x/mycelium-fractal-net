@@ -32,7 +32,7 @@ class AnastomosisConfig:
     dt: float = 1.0
 
 
-@dataclass
+@dataclass(slots=True)
 class AnastomosisState:
     C: np.ndarray
     B: np.ndarray

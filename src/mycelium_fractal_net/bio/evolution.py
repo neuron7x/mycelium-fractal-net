@@ -60,7 +60,13 @@ def params_to_bio_config(params: np.ndarray) -> Any:
     from mycelium_fractal_net.bio.fhn import FHNConfig
     from mycelium_fractal_net.bio.physarum import PhysarumConfig
 
-    p = np.clip(params, PARAM_BOUNDS[:, 0], PARAM_BOUNDS[:, 1])
+    p = np.clip(
+        np.nan_to_num(
+            params, nan=DEFAULT_PARAMS, posinf=PARAM_BOUNDS[:, 1], neginf=PARAM_BOUNDS[:, 0]
+        ),
+        PARAM_BOUNDS[:, 0],
+        PARAM_BOUNDS[:, 1],
+    )
     return BioConfig(
         physarum=PhysarumConfig(gamma=float(p[0]), alpha=float(p[1])),
         anastomosis=AnastomosisConfig(gamma_anastomosis=float(p[2]), D_tip=float(p[3])),
