@@ -16,6 +16,10 @@ __all__ = [
 ]
 
 
+# Numerical stability constants
+_NUMERICAL_EPS: float = 1e-12  # [PHYS] Machine-precision guard for log/division
+
+
 def compute_lyapunov_exponent(field_history: NDArray[Any], dt: float = 1.0) -> float:
     """Compute Lyapunov exponent from field evolution history."""
     import math
@@ -28,7 +32,7 @@ def compute_lyapunov_exponent(field_history: NDArray[Any], dt: float = 1.0) -> f
     T = len(field_history)
     log_divergence = 0.0
     steps = T - 1
-    eps = 1e-12
+    eps = _NUMERICAL_EPS
 
     for t in range(1, T):
         diff = np.abs(field_history[t] - field_history[t - 1])

@@ -5,9 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from typing import TYPE_CHECKING
+
 import numpy as np
-import pandas as pd
 from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 from mycelium_fractal_net.analytics.legacy_features import (
     FEATURE_COUNT,
@@ -179,7 +183,9 @@ class MorphologyDescriptor:
             "metadata": dict(self.metadata),
         }
 
-    def to_series(self) -> pd.Series:
+    def to_series(self) -> "pd.Series":
+        import pandas as pd
+
         payload = self.flatten()
         return pd.Series(payload)
 

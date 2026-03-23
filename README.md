@@ -257,7 +257,7 @@ seq = mfn.simulate(spec)
 
 **Occupancy conservation** (resting + active + desensitized = 1.0) is enforced at runtime and verified by causal rule `SIM-008`.
 
-Available profiles: `baseline_nominal` · `gabaa_tonic_muscimol_alpha1beta3` · `gabaa_tonic_extrasynaptic_delta_high_affinity` · `serotonergic_reorganization_candidate` · `balanced_criticality_candidate` · `observation_noise_bold_like`
+Available profiles: `baseline_nominal` · `gabaa_tonic_muscimol_alpha1beta3` · `gabaa_tonic_extrasynaptic_delta_high_affinity` · `serotonergic_reorganization_candidate` · `balanced_criticality_candidate` · `observation_noise_gaussian_temporal`
 
 ---
 

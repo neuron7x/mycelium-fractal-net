@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — Cycle 2 Hardening
+
+#### TASK-03: Neurochem Config Typing
+- Replaced `TypedDict` configs (`GABAAKineticsConfig`, `SerotonergicKineticsConfig`, `ObservationNoiseConfig`) with frozen dataclasses with explicit defaults.
+- Added `NeuromodulationConfig` frozen dataclass replacing `dict[str, Any]` in engine path.
+- Removed `dict` from `step_neuromodulation_state()` signature — accepts only typed configs.
+- Eliminated all `.get()` calls in neurochem runtime path (14 occurrences).
+- Removed `_neuromod_get` and `_neuromod_sub` helper functions from `reaction_diffusion_engine.py`.
+- `ReactionDiffusionConfig.neuromodulation` and `SimulationConfig.neuromodulation` now typed as `NeuromodulationConfig | None`.
+- Backward compatibility: dict input auto-converts via `NeuromodulationConfig.from_dict()`.
+- Added unit tests: valid typed config, missing optional config, invalid type rejection.
+
+#### TASK-01: MWC Finalization
+- Removed legacy `affinity_um` parameter from `mwc_fraction()` (was documented as unused).
+- Added explicit literature mapping for all MWC parameters (Chang et al. 1996, Gielen & Bhatt 2019, Bhatt et al. 2021).
+- Added monotonicity tests across full concentration range (3 test cases).
+- Added EC50 comparison test against published data.
+
+#### TASK-02: Constants Finalization
+- Named bare tolerance literals: `_NUMERICAL_EPS`, `_NUMERICAL_DIVISOR_GUARD` in stability.py and forecast.py.
+- All neurochem constants already named and categorized (biophysical, numerical stability, empirical calibration) in `neurochem/constants.py`.
+
+#### TASK-15: Strict Typing for Core + Analytics + Neurochem
+- `mypy --strict` now passes for `neurochem/` (0 errors) and `analytics/` (0 errors).
+- `core/` strict typing enabled — only frozen modules (turing, federated, stdp) excluded.
+- Added `disallow_untyped_defs`, `warn_return_any`, `no_implicit_optional`, `strict_equality` for core/analytics/neurochem.
+- CI gate blocks merge on mypy regression.
+
+#### TASK-17: Core Dependency Minimization
+- Moved `fastapi`, `websockets`, `pandas`, `pyarrow`, `prometheus_client`, `httpx` from core dependencies to optional extras.
+- New extras: `[api]`, `[data]`, `[metrics]`, `[ws]`.
+- Core install requires only: numpy, sympy, pydantic, cryptography.
+- Added core smoke test (`test_core_smoke.py`) verifying simulate/extract/detect/forecast work without optional deps.
+- Made pandas import lazy in `types/features.py`.
+
+#### CI Improvements
+- Added `core-only` CI job that runs tests without optional ML deps.
+- mypy strict CI gate now covers `core/`, `analytics/`, `neurochem/` (blocking).
+
 ### Changed
 - CI pipeline: 5 workflows (ci.yml 8 jobs, release.yml, security.yml, benchmarks.yml, ci-reusable.yml) with Python 3.10–3.13 matrix, coverage gating (80%), security scanning, import contracts, benchmark tracking.
 - Ruff lint rules expanded from 3 to 24 categories (bugbear, bandit, simplify, print detection, complexity, and more).

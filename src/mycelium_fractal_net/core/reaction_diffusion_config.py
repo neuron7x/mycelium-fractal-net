@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from mycelium_fractal_net.neurochem.config_types import NeuromodulationConfig
+
 from .exceptions import StabilityError, ValueOutOfRangeError
 
 # === Default Parameters (from MFN_MATH_MODEL.md Section 2.3) ===
@@ -100,13 +102,18 @@ class ReactionDiffusionConfig:
     spike_probability: float = 0.25
     check_stability: bool = True
     random_seed: int | None = None
-    neuromodulation: dict[str, Any] | None = None
+    neuromodulation: NeuromodulationConfig | None = None
     accel_laplacian: bool = False
     alpha_guard_enabled: bool = True
     alpha_guard_threshold: float = 0.95
     soft_boundary_damping: float = 0.35
 
     def __post_init__(self) -> None:
+        # Accept dict for backward compatibility — convert to typed config
+        if isinstance(self.neuromodulation, dict):
+            object.__setattr__(
+                self, "neuromodulation", NeuromodulationConfig.from_dict(self.neuromodulation)
+            )
         if not (GRID_SIZE_MIN <= self.grid_size <= GRID_SIZE_MAX):
             raise ValueOutOfRangeError(
                 f"Grid size must be in [{GRID_SIZE_MIN}, {GRID_SIZE_MAX}]",
@@ -158,15 +165,6 @@ class ReactionDiffusionConfig:
                 max_bound=JITTER_VAR_MAX,
                 parameter_name="jitter_var",
             )
-        if self.neuromodulation is not None:
-            dt_seconds = float(self.neuromodulation.get("dt_seconds", 1.0))
-            if dt_seconds <= 0:
-                raise ValueOutOfRangeError(
-                    "neuromodulation.dt_seconds must be > 0",
-                    value=dt_seconds,
-                    min_bound=0.0,
-                    parameter_name="neuromodulation.dt_seconds",
-                )
 
 
 @dataclass

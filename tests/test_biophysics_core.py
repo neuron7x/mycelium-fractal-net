@@ -14,8 +14,6 @@ import math
 import numpy as np
 import pytest
 
-torch = pytest.importorskip("torch")
-
 pytest.importorskip("hypothesis")
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -30,7 +28,7 @@ from mycelium_fractal_net import (
     estimate_fractal_dimension,
     simulate_mycelium_field,
 )
-from mycelium_fractal_net.model import MyceliumFractalNet
+# MyceliumFractalNet tests moved to tests/ml/test_biophysics_ml.py
 
 # === Constants for Testing ===
 # Physiological ion concentrations (mM)
@@ -423,110 +421,6 @@ class TestFractalDimension:
             # If no active cells at this threshold, the test still passes
             # as this is a valid simulation state
             pass
-
-
-class TestNetworkNumericalStability:
-    """Test neural network numerical stability under various conditions."""
-
-    def test_model_stability_1000_steps(self) -> None:
-        """Test model stability over 1000 forward passes."""
-        torch.manual_seed(42)
-
-        model = MyceliumFractalNet(input_dim=4, hidden_dim=32)
-        model.eval()
-
-        x = torch.randn(32, 4)
-
-        for step in range(1000):
-            x_in = x + torch.randn_like(x) * 0.01  # Small perturbation
-            out = model(x_in)
-
-            assert torch.isfinite(out).all(), f"NaN/Inf at step {step}"
-
-    def test_model_gradient_stability(self) -> None:
-        """Test gradient stability during training."""
-        torch.manual_seed(42)
-
-        model = MyceliumFractalNet(input_dim=4, hidden_dim=32)
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-        criterion = torch.nn.MSELoss()
-
-        x = torch.randn(32, 4)
-        y = torch.randn(32, 1)
-
-        for step in range(100):
-            optimizer.zero_grad()
-            out = model(x)
-            loss = criterion(out, y)
-            loss.backward()
-
-            # Check gradients are finite
-            for name, param in model.named_parameters():
-                if param.grad is not None:
-                    assert torch.isfinite(
-                        param.grad
-                    ).all(), f"Non-finite gradient in {name} at step {step}"
-
-            optimizer.step()
-
-    def test_model_with_extreme_inputs(self) -> None:
-        """Test model handles extreme input values."""
-        model = MyceliumFractalNet(input_dim=4, hidden_dim=32)
-        model.eval()
-
-        # Very large inputs
-        x_large = torch.ones(8, 4) * 100.0
-        out_large = model(x_large)
-        assert torch.isfinite(out_large).all(), "Model fails with large inputs"
-
-        # Very small inputs
-        x_small = torch.ones(8, 4) * 1e-6
-        out_small = model(x_small)
-        assert torch.isfinite(out_small).all(), "Model fails with small inputs"
-
-        # Negative inputs
-        x_neg = torch.ones(8, 4) * -100.0
-        out_neg = model(x_neg)
-        assert torch.isfinite(out_neg).all(), "Model fails with negative inputs"
-
-    def test_model_with_zero_input(self) -> None:
-        """Test model handles zero input."""
-        model = MyceliumFractalNet(input_dim=4, hidden_dim=32)
-        model.eval()
-
-        x = torch.zeros(8, 4)
-        out = model(x)
-
-        assert torch.isfinite(out).all(), "Model fails with zero input"
-        assert out.shape == (8, 1), f"Unexpected output shape: {out.shape}"
-
-
-class TestBatchProcessing:
-    """Test batch processing capabilities."""
-
-    @pytest.mark.parametrize("batch_size", [1, 4, 16, 64, 128])
-    def test_various_batch_sizes(self, batch_size: int) -> None:
-        """Test model handles various batch sizes."""
-        model = MyceliumFractalNet(input_dim=4, hidden_dim=32)
-        model.eval()
-
-        x = torch.randn(batch_size, 4)
-        out = model(x)
-
-        assert out.shape == (batch_size, 1), f"Wrong shape for batch_size={batch_size}"
-        assert torch.isfinite(out).all(), f"NaN/Inf for batch_size={batch_size}"
-
-    @pytest.mark.parametrize("input_dim", [2, 4, 8, 16, 32])
-    def test_various_input_dims(self, input_dim: int) -> None:
-        """Test model handles various input dimensions."""
-        model = MyceliumFractalNet(input_dim=input_dim, hidden_dim=32)
-        model.eval()
-
-        x = torch.randn(8, input_dim)
-        out = model(x)
-
-        assert out.shape == (8, 1), f"Wrong shape for input_dim={input_dim}"
-        assert torch.isfinite(out).all(), f"NaN/Inf for input_dim={input_dim}"
 
 
 class TestPhysicsConstants:

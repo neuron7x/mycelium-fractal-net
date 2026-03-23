@@ -125,7 +125,7 @@ Neuromodulation is an opt-in extension that does not alter the baseline simulati
 | `gabaa_tonic_extrasynaptic_delta_high_affinity` | Extrasynaptic delta-subunit GABA-A |
 | `serotonergic_reorganization_candidate` | 5-HT-driven plasticity reorganization |
 | `balanced_criticality_candidate` | Near-critical dynamics with balanced modulation |
-| `observation_noise_bold_like` | BOLD-like observation noise model |
+| `observation_noise_gaussian_temporal` | Gaussian temporal smoothing observation noise model |
 
 ## Frozen Surfaces
 

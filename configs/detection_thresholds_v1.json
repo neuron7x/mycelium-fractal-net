@@ -6,7 +6,7 @@
     "gabaa_tonic_muscimol_alpha1beta3",
     "serotonergic_reorganization_candidate",
     "balanced_criticality_candidate",
-    "observation_noise_bold_like",
+    "observation_noise_gaussian_temporal",
     "gabaa_tonic_extrasynaptic_delta_high_affinity"
   ],
   "evidence_normalization": {

@@ -4,7 +4,7 @@ import hashlib
 import json
 import tempfile
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 import numpy as np
 
@@ -42,7 +42,7 @@ def _to_config(spec: SimulationSpec) -> SimulationConfig:
     return SimulationConfig(**spec.as_runtime_dict())
 
 
-def _extract_neuromod_snapshot(meta: dict) -> NeuromodulationStateSnapshot | None:
+def _extract_neuromod_snapshot(meta: dict[str, Any]) -> NeuromodulationStateSnapshot | None:
     """Build typed snapshot from engine metadata if neuromodulation ran."""
     state = meta.get("neuromodulation_state")
     if state and isinstance(state, dict):
@@ -120,7 +120,7 @@ def simulate_history(
                 "history_cleanup_policy": "caller_removes_temp_path",
             }
         )
-        history_value = history_memmap
+        history_value: np.ndarray = history_memmap
     else:
         metadata["history_backend"] = "memory"
         history_value = history
@@ -153,11 +153,11 @@ def simulate_scenario(name: str) -> FieldSequence:
             alpha=0.12,
             spike_probability=0.35,
             neuromodulation=NeuromodulationSpec(
-                profile="observation_noise_bold_like",
+                profile="observation_noise_gaussian_temporal",
                 enabled=True,
                 dt_seconds=1.0,
                 observation_noise=ObservationNoiseSpec(
-                    profile="observation_noise_bold_like",
+                    profile="observation_noise_gaussian_temporal",
                     std=0.0012,
                     temporal_smoothing=0.35,
                 ),

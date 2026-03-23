@@ -57,7 +57,6 @@ MWC_C: float = MWC_K_R_UM / MWC_K_T_UM
 
 def mwc_fraction(
     concentration_um: float,
-    affinity_um: float,
     *,
     L0: float = MWC_L0,
     c: float = MWC_C,
@@ -66,35 +65,34 @@ def mwc_fraction(
 ) -> float:
     """Compute MWC open-state (R) fraction for a ligand-gated receptor.
 
-    The ``affinity_um`` parameter is accepted for backward compatibility
-    but is not used by the MWC calculation — the model uses ``K_R`` and
-    ``c`` (= K_R / K_T) instead.
-
     Parameters
     ----------
     concentration_um:
         Agonist concentration in μM. Must be ≥ 0.
-    affinity_um:
-        Legacy parameter (ignored in MWC model, kept for API compat).
     L0:
-        Allosteric constant [T]/[R] without agonist. Default: 5000.
+        Allosteric constant [T]/[R] without agonist.
+        Ref: Chang et al. 1996, Table 2. Default: 1000.
     c:
-        Affinity ratio K_R / K_T. Default: 0.015.
+        Affinity ratio K_R / K_T.
+        Ref: derived from K_R=0.3 μM, K_T=500 μM. Default: 0.0006.
     n:
-        Number of binding sites. Default: 2 (canonical GABA-A sites).
+        Number of agonist binding sites.
+        Ref: pentameric GABA-A with 2 canonical binding sites. Default: 2.
     K_R:
-        Dissociation constant for R state in μM. Default: 3.0.
+        Dissociation constant for R (open) state in μM.
+        Ref: Gielen & Bhatt 2019, muscimol on α1β3γ2. Default: 0.3.
 
     Returns
     -------
     float
         R-state fraction in [0, 1]. Monotonically increases with concentration.
-        At EC50 ~8-12 μM for default GABA-A α1β3γ2 parameters.
+        EC50 ~8-12 μM for default GABA-A α1β3γ2 parameters.
 
     References
     ----------
     Monod, Wyman & Changeux (1965) J Mol Biol 12:88-118
     Chang et al. (1996) Biophys J 71:2454-2468
+    Gielen & Bhatt (2019) Br J Pharmacol 176:2524-2537
     """
     if K_R <= 0.0 or L0 <= 0.0:
         return 0.0
@@ -171,7 +169,7 @@ def mwc_ec50(
     lo, hi = 0.0, K_R * 1e6  # search up to 1M * K_R
     for _ in range(200):
         mid = (lo + hi) / 2.0
-        val = mwc_fraction(mid, 0.0, L0=L0, c=c, n=n, K_R=K_R)
+        val = mwc_fraction(mid, L0=L0, c=c, n=n, K_R=K_R)
         if val < target:
             lo = mid
         else:

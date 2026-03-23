@@ -12,16 +12,14 @@ dependencies = [
   "numpy>=1.24",
   "sympy>=1.12",
   "pydantic>=2.0",
-  "fastapi>=0.100.0",
-  "pandas>=1.5.3,<3.0.0",
-  "pyarrow>=10.0.0",
-  "prometheus_client>=0.17.0",
   "cryptography>=44.0.0",
-  "websockets>=12.0",
-  "httpx>=0.24.0",
 ]
 
 [project.optional-dependencies]
+api = ["fastapi>=0.100.0", "httpx>=0.24.0", "uvicorn>=0.20.0"]
+data = ["pandas>=1.5.3,<3.0.0", "pyarrow>=10.0.0"]
+metrics = ["prometheus_client>=0.17.0"]
+ws = ["websockets>=12.0"]
 http = ["aiohttp>=3.9.4"]
 kafka = ["kafka-python>=2.0.0"]
 ml = ["torch>=2.0.0,<3.0.0"]
@@ -54,6 +52,13 @@ reporting = [
   "pytest-html>=4.1.1",
 ]
 full = [
+  "fastapi>=0.100.0",
+  "httpx>=0.24.0",
+  "uvicorn>=0.20.0",
+  "pandas>=1.5.3,<3.0.0",
+  "pyarrow>=10.0.0",
+  "prometheus_client>=0.17.0",
+  "websockets>=12.0",
   "aiohttp>=3.9.4",
   "kafka-python>=2.0.0",
   "torch>=2.0.0,<3.0.0",
@@ -69,7 +74,6 @@ full = [
   "isort>=5.12.0",
   "types-setuptools",
   "hypothesis>=6.0.0",
-  "uvicorn>=0.20.0",
   "locust>=2.20.0",
   "packaging>=21.0",
   "import-linter>=2.0",
@@ -245,37 +249,37 @@ pretty = true
 warn_return_any = true
 warn_unused_configs = true
 show_error_codes = true
+no_implicit_optional = true
+strict_equality = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = true
 
-# Core modules: strict mode enabled, no more ignore_errors
-# These modules MUST pass type checking
+# Core, analytics, neurochem: strict typing enforced — CI gate blocks merge
 [[tool.mypy.overrides]]
 module = [
     "mycelium_fractal_net.types.*",
     "mycelium_fractal_net.security.*",
+    "mycelium_fractal_net.core.*",
+    "mycelium_fractal_net.analytics.*",
+    "mycelium_fractal_net.neurochem.*",
 ]
 disallow_untyped_defs = true
 warn_return_any = true
+no_implicit_optional = true
+strict_equality = true
 
-# Modules in active type-migration: errors reported but not blocking
+# Frozen / transport / ML modules: errors reported but not blocking
 # Goal: remove this override entirely by v5.0
 [[tool.mypy.overrides]]
 module = [
     "mycelium_fractal_net.model",
     "mycelium_fractal_net.signal.*",
-    "mycelium_fractal_net.core.federated",
-    "mycelium_fractal_net.core.stdp",
-    "mycelium_fractal_net.core.turing",
     "mycelium_fractal_net.numerics.*",
     "mycelium_fractal_net.api",
     "mycelium_fractal_net.metrics",
     "mycelium_fractal_net.intelligence",
-    "mycelium_fractal_net.core.*",
-    "mycelium_fractal_net.analytics.*",
-    "mycelium_fractal_net.neurochem.*",
     "mycelium_fractal_net.pipelines.*",
     "mycelium_fractal_net.integration.*",
 ]

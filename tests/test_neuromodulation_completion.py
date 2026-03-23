@@ -71,7 +71,7 @@ def test_neuromodulation_spec_roundtrip() -> None:
                 coherence_bias=0.01,
             ),
             observation_noise=ObservationNoiseSpec(
-                profile="observation_noise_bold_like",
+                profile="observation_noise_gaussian_temporal",
                 std=0.0012,
                 temporal_smoothing=0.35,
             ),
@@ -142,11 +142,11 @@ def test_api_neuromodulation_surface() -> None:
             "steps": 8,
             "with_history": True,
             "neuromodulation": {
-                "profile": "observation_noise_bold_like",
+                "profile": "observation_noise_gaussian_temporal",
                 "enabled": True,
                 "dt_seconds": 1.0,
                 "observation_noise": {
-                    "profile": "observation_noise_bold_like",
+                    "profile": "observation_noise_gaussian_temporal",
                     "std": 0.0012,
                     "temporal_smoothing": 0.35,
                 },
@@ -155,7 +155,7 @@ def test_api_neuromodulation_surface() -> None:
     )
     assert response.status_code == 200
     payload = response.json()
-    assert payload["spec"]["neuromodulation"]["profile"] == "observation_noise_bold_like"
+    assert payload["spec"]["neuromodulation"]["profile"] == "observation_noise_gaussian_temporal"
 
 
 def test_neuromodulation_state_machine_bounds_and_local_offset() -> None:

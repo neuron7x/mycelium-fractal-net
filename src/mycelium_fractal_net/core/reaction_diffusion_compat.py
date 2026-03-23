@@ -123,11 +123,12 @@ def compat_apply_quantum_jitter(
     *,
     jitter_var: float,
 ) -> NDArray[np.floating[Any]]:
-    out = np.asarray(field, dtype=np.float64).copy()
+    out: NDArray[np.floating[Any]] = np.asarray(field, dtype=np.float64).copy()
     if float(jitter_var) <= 0.0:
         return out
     jitter = rng.normal(0.0, np.sqrt(float(jitter_var)), size=out.shape)
-    return np.asarray(out + jitter, dtype=np.float64)
+    result: NDArray[np.floating[Any]] = np.asarray(out + jitter, dtype=np.float64)
+    return result
 
 
 def compat_clamp_field(

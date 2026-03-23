@@ -10,11 +10,12 @@ Reference: MFN_MATH_MODEL.md Section 2 (Reaction-Diffusion Processes)
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
+from mycelium_fractal_net.neurochem.config_types import NeuromodulationConfig
 from mycelium_fractal_net.neurochem.kinetics import (
     compute_excitability_offset_v,
     step_neuromodulation_state,
@@ -73,27 +74,26 @@ from .reaction_diffusion_config import (  # noqa: F401
 )
 
 
-def _neuromod_get(spec: dict[str, Any] | None, key: str, default: Any = None) -> Any:
-    """Safely access neuromodulation config from dict or typed spec."""
-    if spec is None:
-        return default
-    if isinstance(spec, dict):
-        return spec.get(key, default)
-    return getattr(spec, key, default)
-
-
-def _neuromod_sub(spec: dict[str, Any] | None, key: str) -> dict[str, Any] | None:
-    """Get sub-spec (gabaa_tonic, serotonergic, observation_noise) from neuromod config."""
-    if spec is None:
-        return None
-    raw = _neuromod_get(spec, key)
-    if raw is None:
-        return None
-    if isinstance(raw, dict):
-        return raw
-    if hasattr(raw, "to_dict"):
-        return raw.to_dict()
-    return None
+__all__ = [
+    "ReactionDiffusionEngine",
+    # Re-exported from reaction_diffusion_config
+    "ALPHA_MAX", "ALPHA_MIN", "D_ACTIVATOR_MAX", "D_ACTIVATOR_MIN",
+    "D_INHIBITOR_MAX", "D_INHIBITOR_MIN", "DEFAULT_D_ACTIVATOR",
+    "DEFAULT_D_INHIBITOR", "DEFAULT_FIELD_ALPHA", "DEFAULT_QUANTUM_JITTER_VAR",
+    "DEFAULT_R_ACTIVATOR", "DEFAULT_R_INHIBITOR", "DEFAULT_TURING_THRESHOLD",
+    "FIELD_V_MAX", "FIELD_V_MIN", "GRID_SIZE_MAX", "GRID_SIZE_MIN",
+    "INITIAL_POTENTIAL_MEAN", "INITIAL_POTENTIAL_STD", "JITTER_VAR_MAX",
+    "JITTER_VAR_MIN", "MAX_STABLE_DIFFUSION", "R_ACTIVATOR_MAX",
+    "R_ACTIVATOR_MIN", "R_INHIBITOR_MAX", "R_INHIBITOR_MIN",
+    "TURING_THRESHOLD_MAX", "TURING_THRESHOLD_MIN",
+    "BoundaryCondition", "ReactionDiffusionConfig", "ReactionDiffusionMetrics",
+    "_validate_diffusion_coefficient",
+    # Re-exported from reaction_diffusion_compat
+    "compat_activator_inhibitor_step", "compat_apply_growth_event",
+    "compat_apply_quantum_jitter", "compat_apply_turing_to_field",
+    "compat_clamp_field", "compat_diffusion_step", "compat_full_step",
+    "compat_validate_cfl_condition",
+]
 
 
 class ReactionDiffusionEngine:
@@ -219,21 +219,10 @@ class ReactionDiffusionEngine:
         # Intrinsic field jitter
         intrinsic_enabled = bool(self.config.quantum_jitter)
         intrinsic_var = float(self.config.jitter_var)
-        if self.config.neuromodulation is not None:
-            intrinsic_enabled = bool(
-                _neuromod_get(
-                    self.config.neuromodulation,
-                    "intrinsic_field_jitter",
-                    intrinsic_enabled,
-                )
-            )
-            intrinsic_var = float(
-                _neuromod_get(
-                    self.config.neuromodulation,
-                    "intrinsic_field_jitter_var",
-                    intrinsic_var,
-                )
-            )
+        spec = self.config.neuromodulation
+        if spec is not None:
+            intrinsic_enabled = bool(spec.intrinsic_field_jitter)
+            intrinsic_var = float(spec.intrinsic_field_jitter_var)
         if intrinsic_enabled:
             self._field = self._field + self._rng.normal(
                 0, np.sqrt(intrinsic_var), size=self._field.shape
@@ -255,45 +244,45 @@ class ReactionDiffusionEngine:
     def _export_field(self) -> NDArray[np.floating]:
         if self._field is None:
             raise RuntimeError("Cannot export field: engine not initialized")
-        observed = self._field.copy()
+        observed: NDArray[np.floating] = self._field.copy()
         if self._neuro_state is None:
             return observed
         noise_gain = self._neuro_state.observation_noise_gain
         if np.any(noise_gain > 0):
-            observed = observed + self._rng.normal(0.0, noise_gain, size=observed.shape)
+            observed = np.asarray(
+                observed + self._rng.normal(0.0, noise_gain, size=observed.shape),
+                dtype=np.float64,
+            )
             observed = np.clip(observed, FIELD_V_MIN, FIELD_V_MAX)
         return observed
 
     def _apply_neuromodulation(self) -> None:
-        if self.config.neuromodulation is None:
+        spec = self.config.neuromodulation
+        if spec is None:
             return
         if self._field is None or self._activator is None:
             raise RuntimeError("Cannot apply neuromodulation: engine not initialized")
         if self._neuro_state is None:
             self._neuro_state = NeuromodulationState.zeros(self._field.shape)
-        spec = self.config.neuromodulation
-        if not bool(_neuromod_get(spec, "enabled", False)):
+        if not spec.enabled:
             return
-        gabaa = _neuromod_sub(spec, "gabaa_tonic")
-        serotonergic = _neuromod_sub(spec, "serotonergic")
-        observation_noise = _neuromod_sub(spec, "observation_noise")
         self._neuro_state = step_neuromodulation_state(
             self._neuro_state,
-            dt_seconds=float(_neuromod_get(spec, "dt_seconds", 1.0)),
+            dt_seconds=spec.dt_seconds,
             activator=self._activator.astype(np.float64),
             field=self._field.astype(np.float64),
-            gabaa=gabaa,
-            serotonergic=serotonergic,
-            observation_noise=observation_noise,
+            gabaa=spec.gabaa_tonic,
+            serotonergic=spec.serotonergic,
+            observation_noise=spec.observation_noise,
         )
+        rest_offset_mv = float(spec.gabaa_tonic.rest_offset_mv) if spec.gabaa_tonic is not None else 0.0
+        plasticity_scale = float(spec.serotonergic.plasticity_scale) if spec.serotonergic is not None else 1.0
         excitability_offset = compute_excitability_offset_v(
             self._neuro_state,
             activator=self._activator.astype(np.float64),
-            baseline_activation_offset_mv=float(
-                _neuromod_get(spec, "baseline_activation_offset_mv", 0.0)
-            ),
-            rest_offset_mv=float((gabaa or {}).get("rest_offset_mv", 0.0)),
-            plasticity_scale=float((serotonergic or {}).get("plasticity_scale", 1.0)),
+            baseline_activation_offset_mv=spec.baseline_activation_offset_mv,
+            rest_offset_mv=rest_offset_mv,
+            plasticity_scale=plasticity_scale,
         )
         centered = self._field - INITIAL_POTENTIAL_MEAN
         gain = np.clip(1.0 + self._neuro_state.effective_gain, 0.70, 1.30)
@@ -366,15 +355,13 @@ class ReactionDiffusionEngine:
         self._inhibitor = np.clip(self._inhibitor, 0.0, 1.0)
 
     def _compute_laplacian(self, field: NDArray[np.floating]) -> NDArray[np.floating]:
-        return cast(
-            NDArray[np.floating[Any]],
-            numerics_compute_laplacian(
-                field,
-                boundary=self.config.boundary_condition,
-                check_stability=False,
-                use_accel=self.config.accel_laplacian,
-            ),
+        result: NDArray[np.floating] = numerics_compute_laplacian(
+            field,
+            boundary=self.config.boundary_condition.value,  # type: ignore[arg-type]
+            check_stability=False,
+            use_accel=self.config.accel_laplacian,
         )
+        return result
 
     def _check_stability(self, step: int) -> None:
         for name, arr in [

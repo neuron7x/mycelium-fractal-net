@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Any
 
 _REQUIRED_TOP_LEVEL = {
     "profile",
@@ -49,7 +50,7 @@ _REQUIRED_SEROTONERGIC = {
 _REQUIRED_OBSERVATION_NOISE = {"profile", "std", "temporal_smoothing"}
 
 
-def _baseline_profile(name: str, *, enabled: bool = False) -> dict:
+def _baseline_profile(name: str, *, enabled: bool = False) -> dict[str, Any]:
     return {
         "profile": name,
         "profile_id": name,
@@ -67,7 +68,7 @@ def _baseline_profile(name: str, *, enabled: bool = False) -> dict:
     }
 
 
-PROFILE_REGISTRY: dict[str, dict] = {
+PROFILE_REGISTRY: dict[str, dict[str, Any]] = {
     "baseline_nominal": {
         **_baseline_profile("baseline_nominal", enabled=False),
     },
@@ -168,10 +169,10 @@ PROFILE_REGISTRY: dict[str, dict] = {
             "complexity_gain_scale": 0.10,
         },
     },
-    "observation_noise_bold_like": {
-        **_baseline_profile("observation_noise_bold_like", enabled=True),
+    "observation_noise_gaussian_temporal": {
+        **_baseline_profile("observation_noise_gaussian_temporal", enabled=True),
         "observation_noise": {
-            "profile": "observation_noise_bold_like",
+            "profile": "observation_noise_gaussian_temporal",
             "std": 0.0012,
             "temporal_smoothing": 0.35,
         },
@@ -179,13 +180,13 @@ PROFILE_REGISTRY: dict[str, dict] = {
 }
 
 
-def _validate_required(name: str, payload: dict, required: set[str]) -> None:
+def _validate_required(name: str, payload: dict[str, Any], required: set[str]) -> None:
     missing = sorted(required - set(payload))
     if missing:
         raise ValueError(f"incomplete profile structure for {name}: missing {missing}")
 
 
-def validate_profile_registry(registry: dict[str, dict] | None = None) -> None:
+def validate_profile_registry(registry: dict[str, dict[str, Any]] | None = None) -> None:
     registry = PROFILE_REGISTRY if registry is None else registry
     for name, profile in registry.items():
         _validate_required(name, profile, _REQUIRED_TOP_LEVEL)
@@ -210,7 +211,22 @@ def list_profiles() -> list[str]:
     return sorted(PROFILE_REGISTRY)
 
 
-def get_profile(name: str) -> dict:
+_DEPRECATED_ALIASES: dict[str, str] = {
+    "observation_noise_bold_like": "observation_noise_gaussian_temporal",
+}
+
+
+def get_profile(name: str) -> dict[str, Any]:
+    if name in _DEPRECATED_ALIASES:
+        import warnings
+
+        new_name = _DEPRECATED_ALIASES[name]
+        warnings.warn(
+            f"Profile {name!r} is deprecated, use {new_name!r} instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        name = new_name
     if name not in PROFILE_REGISTRY:
         raise KeyError(f"unknown neuromodulation profile: {name}")
     profile = deepcopy(PROFILE_REGISTRY[name])

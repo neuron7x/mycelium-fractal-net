@@ -13,6 +13,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from mycelium_fractal_net.neurochem.config_types import NeuromodulationConfig
+
 
 @dataclass(frozen=True)
 class SimulationMetrics:
@@ -81,12 +83,16 @@ class SimulationConfig:
     quantum_jitter: bool = False
     jitter_var: float = 0.0005
     seed: int | None = None
-    neuromodulation: dict[str, Any] | None = None
+    neuromodulation: NeuromodulationConfig | None = None
 
     def __post_init__(self) -> None:
-        # Normalize: accept typed NeuromodulationSpec or dict
-        if self.neuromodulation is not None and hasattr(self.neuromodulation, "to_dict"):
-            self.neuromodulation = self.neuromodulation.to_dict()
+        # Normalize: accept typed NeuromodulationSpec, dict, or NeuromodulationConfig
+        if isinstance(self.neuromodulation, dict):
+            self.neuromodulation = NeuromodulationConfig.from_dict(self.neuromodulation)
+        elif self.neuromodulation is not None and not isinstance(self.neuromodulation, NeuromodulationConfig):
+            # Accept NeuromodulationSpec or any object with to_dict()
+            if hasattr(self.neuromodulation, "to_dict"):
+                self.neuromodulation = NeuromodulationConfig.from_dict(self.neuromodulation.to_dict())
         if not (4 <= self.grid_size <= 512):
             raise ValueError("grid_size must be in [4, 512]")
         if self.steps < 1:
@@ -99,10 +105,6 @@ class SimulationConfig:
             raise ValueError("turing_threshold must be in [0, 1]")
         if not (0.0 <= self.jitter_var <= 0.01):
             raise ValueError("jitter_var must be in [0, 0.01]")
-        if self.neuromodulation is not None:
-            dt_seconds = float(self.neuromodulation.get("dt_seconds", 1.0))
-            if dt_seconds <= 0:
-                raise ValueError("neuromodulation.dt_seconds must be > 0")
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -121,7 +123,7 @@ class SimulationConfig:
             "quantum_jitter": self.quantum_jitter,
             "jitter_var": self.jitter_var,
             "seed": self.seed,
-            "neuromodulation": self.neuromodulation,
+            "neuromodulation": self.neuromodulation.to_dict() if self.neuromodulation is not None else None,
         }
 
     @classmethod
@@ -198,7 +200,7 @@ class SimulationConfig:
             quantum_jitter=_parse_bool(data.get("quantum_jitter"), False),
             jitter_var=float(data.get("jitter_var", 0.0005)),
             seed=_parse_seed(seed_value),
-            neuromodulation=data.get("neuromodulation"),
+            neuromodulation=NeuromodulationConfig.from_dict(data["neuromodulation"]) if data.get("neuromodulation") is not None else None,
         )
 
 

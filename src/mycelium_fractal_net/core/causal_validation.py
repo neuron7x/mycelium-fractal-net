@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 
@@ -36,12 +36,10 @@ from mycelium_fractal_net.types.causal import (
     CausalValidationResult,
     ViolationCategory,
 )
-
-if TYPE_CHECKING:
-    from mycelium_fractal_net.types.detection import AnomalyEvent
-    from mycelium_fractal_net.types.features import MorphologyDescriptor
-    from mycelium_fractal_net.types.field import FieldSequence
-    from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
+from mycelium_fractal_net.types.detection import AnomalyEvent
+from mycelium_fractal_net.types.features import MorphologyDescriptor
+from mycelium_fractal_net.types.field import FieldSequence
+from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
 
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE: SIMULATE — biophysical field invariants
@@ -830,11 +828,11 @@ def ptb_002(seq: FieldSequence, det: AnomalyEvent) -> bool:
 
 
 def validate_causal_consistency(
-    sequence: Any,
-    descriptor: Any | None = None,
-    detection: Any | None = None,
-    forecast: Any | None = None,
-    comparison: Any | None = None,
+    sequence: FieldSequence,
+    descriptor: MorphologyDescriptor | None = None,
+    detection: AnomalyEvent | None = None,
+    forecast: ForecastResult | None = None,
+    comparison: ComparisonResult | None = None,
     *,
     mode: str = "strict",
 ) -> CausalValidationResult:

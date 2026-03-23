@@ -14,6 +14,9 @@ from mycelium_fractal_net.core.detection_config import (
     UNCERTAINTY_W_DESENSITIZATION,
     UNCERTAINTY_W_PLASTICITY,
 )
+# Numerical stability constants
+_NUMERICAL_DIVISOR_GUARD: float = 1e-12  # [PHYS] Prevents division by zero in OLS
+
 from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
 from mycelium_fractal_net.types.forecast import (
     ForecastResult,
@@ -70,7 +73,7 @@ def _project_from_window(window: np.ndarray, horizon: int, damping: float) -> np
     if window.shape[0] >= 3:
         # OLS estimate of phi: phi = sum(x_t * x_{t-1}) / sum(x_{t-1}^2)
         numerator = np.sum(centered[1:] * centered[:-1], axis=0)
-        denominator = np.sum(centered[:-1] ** 2, axis=0) + 1e-12
+        denominator = np.sum(centered[:-1] ** 2, axis=0) + _NUMERICAL_DIVISOR_GUARD
         phi = np.clip(numerator / denominator, -0.99, 0.99)
     else:
         # Fallback: use damping as phi proxy

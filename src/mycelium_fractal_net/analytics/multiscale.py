@@ -9,7 +9,8 @@ def _downsample(field: NDArray[np.float64], factor: int) -> NDArray[np.float64]:
     cols = field.shape[1] // factor
     trimmed = field[: rows * factor, : cols * factor]
     reshaped = trimmed.reshape(rows, factor, cols, factor)
-    return reshaped.mean(axis=(1, 3))
+    result: NDArray[np.float64] = reshaped.mean(axis=(1, 3))
+    return result
 
 
 def compute_multiscale_profile(field: NDArray[np.float64]) -> dict[str, float]:

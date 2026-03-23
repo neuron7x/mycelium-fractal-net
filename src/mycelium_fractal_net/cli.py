@@ -96,7 +96,7 @@ def _neuromod_from_args(args: argparse.Namespace) -> NeuromodulationSpec | None:
     if obs_profile:
         observation_noise = ObservationNoiseSpec(
             profile=obs_profile,
-            std=0.0012 if obs_profile == "observation_noise_bold_like" else 0.0005,
+            std=0.0012 if obs_profile == "observation_noise_gaussian_temporal" else 0.0005,
             temporal_smoothing=0.35,
         )
     return NeuromodulationSpec(

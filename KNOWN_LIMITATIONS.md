@@ -29,8 +29,9 @@ The following surfaces are frozen and excluded from the v1 release contract:
 
 ## Type Checking
 
-- `mypy strict` is enforced for `types/` and `security/` modules.
-- Core domain modules (`core/`, `analytics/`, `neurochem/`, `pipelines/`) report type errors but do not block CI. Migration to full strict typing is tracked for v5.0.
+- `mypy --strict` is enforced for `types/`, `security/`, `core/`, `analytics/`, and `neurochem/` modules.
+- Frozen modules (`turing.py`, `federated.py`, `stdp.py`) are excluded from strict checking due to torch dependencies.
+- CI blocks merge on any strict typing regression in core/analytics/neurochem.
 
 ## Causal Validation
 
@@ -41,11 +42,30 @@ The following surfaces are frozen and excluded from the v1 release contract:
 ## Neuromodulation
 
 - Occupancy conservation is enforced numerically (error < 1e-6) but not algebraically proven.
-- Observation noise model (`observation_noise_bold_like`) applies Gaussian temporal smoothing, not a hemodynamic response function. The name is aspirational — a true BOLD model requires HRF convolution (Buxton et al. 1998). Planned for v5.0.
+- Observation noise model (`observation_noise_gaussian_temporal`) applies Gaussian temporal smoothing, not a hemodynamic response function. A true BOLD model requires HRF convolution (Buxton et al. 1998). Planned for v5.0 under profile `observation_noise_hrf_bold`.
 - Profile parameter ranges are based on published literature but not independently calibrated.
+
+## Fractal Dimension
+
+- Box-counting fractal dimension (`D_box`) is estimated via log-log regression.
+- For grids smaller than 8x8 or when `D_r2 < 0.8`, the estimate is marked as `low_confidence`.
+- Low-confidence fractal estimates should not be treated as strong signals in detection scoring.
+
+## Sensitivity Analysis
+
+Threshold sensitivity sweep (±5%, ±10%, ±20%) identifies fragile decision thresholds:
+
+| Threshold | Fragility | Notes |
+|-----------|-----------|-------|
+| DYNAMIC_ANOMALY_BASELINE | Moderate | Label flips near boundary |
+| PATHOLOGICAL_NOISE_THRESHOLD | High | Regime-sensitive |
+| REORGANIZED_COMPLEXITY_THRESHOLD | Moderate | Interaction with plasticity |
+
+See `scripts/sensitivity_sweep.py` for the full report.
 
 ## Dependencies
 
 - `torch` is optional (`[ml]` extra). All core operations work without it.
 - `numba` is optional (`[accel]` extra). JIT acceleration for Laplacian computation only.
+- `fastapi`, `pandas`, `pyarrow`, `prometheus_client`, `websockets`, `httpx` are optional extras (`[api]`, `[data]`, `[metrics]`, `[ws]`). Core path requires only numpy, sympy, pydantic, cryptography.
 - Root compatibility imports (e.g., `import analytics`) are deprecated and will be removed in v5.0.

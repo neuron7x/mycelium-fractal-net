@@ -245,4 +245,4 @@ All `/v1/*` simulation endpoints accept a nested `neuromodulation` object. The s
 | `gabaa_tonic_extrasynaptic_delta_high_affinity` | Extrasynaptic GABA-A |
 | `serotonergic_reorganization_candidate` | Serotonergic plasticity |
 | `balanced_criticality_candidate` | Near-critical dynamics |
-| `observation_noise_bold_like` | BOLD-like noise model |
+| `observation_noise_gaussian_temporal` | Gaussian temporal smoothing noise model |

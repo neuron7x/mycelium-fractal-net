@@ -154,7 +154,7 @@ class ComparisonResult:
     cosine_similarity: float
     label: str
     nearest_structural_analog: str = "reference"
-    changed_dimensions: list[dict[str, float]] = field(default_factory=list)
+    changed_dimensions: list[dict[str, object]] = field(default_factory=list)
     drift_summary: dict[str, float] = field(default_factory=dict)
     topology_summary: dict[str, float] = field(default_factory=dict)
     topology_label: str = "nominal"

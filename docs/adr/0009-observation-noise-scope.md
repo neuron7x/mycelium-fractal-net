@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-The profile `observation_noise_bold_like` applies Gaussian noise with temporal smoothing. This is not a BOLD fMRI model — true BOLD requires hemodynamic response function (HRF) convolution per Buxton et al. (1998) Balloon model. The name oversells the capability.
+The profile `observation_noise_gaussian_temporal` applies Gaussian noise with temporal smoothing. This is not a BOLD fMRI model — true BOLD requires hemodynamic response function (HRF) convolution per Buxton et al. (1998) Balloon model. The name oversells the capability.
 
 ## Decision
 Keep the profile name for backward compatibility but:

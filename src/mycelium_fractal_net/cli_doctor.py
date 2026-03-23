@@ -156,7 +156,7 @@ def run_scenarios() -> str:
 
     scenarios = {
         "synthetic_morphology": "Pure Turing morphogenesis, no neuromodulation",
-        "sensor_grid_anomaly": "BOLD-like observation noise overlay",
+        "sensor_grid_anomaly": "Gaussian temporal smoothing observation noise overlay",
         "regime_transition": "Serotonergic reorganization candidate",
         "balanced_criticality": "GABA-A + serotonergic at criticality boundary",
         "inhibitory_stabilization": "GABA-A tonic muscimol (high inhibition)",

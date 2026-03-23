@@ -42,7 +42,10 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v4
       - run: uv sync --group dev --frozen
-      - run: uv run mypy src/mycelium_fractal_net/types/ src/mycelium_fractal_net/security/ --strict
+      - name: Strict types (types + security)
+        run: uv run mypy src/mycelium_fractal_net/types/ src/mycelium_fractal_net/security/ --strict
+      - name: Strict types (core + analytics + neurochem) — CI gate blocks merge
+        run: uv run mypy src/mycelium_fractal_net/core/ src/mycelium_fractal_net/analytics/ src/mycelium_fractal_net/neurochem/ --strict --exclude '(turing|federated|stdp)\.py'
 
   unit:
     name: Unit (${{ matrix.python-version }})
@@ -67,6 +70,21 @@ jobs:
           name: test-results-${{ matrix.python-version }}
           path: junit-*.xml
           retention-days: 30
+
+  core-only:
+    name: Core (no optional deps)
+    needs: [lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --group dev --frozen
+      - name: Core tests without ML/optional deps
+        run: uv run pytest tests/ -q --tb=short --timeout=300 --ignore=tests/ml/ -k "not slow and not benchmark"
 
   integration:
     name: Integration
@@ -140,7 +158,7 @@ jobs:
   ci-gate:
     name: CI Gate
     if: always()
-    needs: [lint, types, unit, integration, artifact-integrity, causal-gate, coverage]
+    needs: [lint, types, unit, core-only, integration, artifact-integrity, causal-gate, coverage]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all required jobs passed
@@ -149,6 +167,7 @@ jobs:
             "${{ needs.lint.result }}"
             "${{ needs.types.result }}"
             "${{ needs.unit.result }}"
+            "${{ needs.core-only.result }}"
             "${{ needs.integration.result }}"
             "${{ needs.artifact-integrity.result }}"
             "${{ needs.causal-gate.result }}"

@@ -94,7 +94,7 @@ def rule(
     category: str,
     rationale: str = "",
     falsifiable_by: str = "",
-) -> Callable:
+) -> Callable[..., RegisteredRule]:
     """Decorator that registers a causal rule with scientific metadata."""
     sev = CausalSeverity(severity)
     cat = ViolationCategory(category)
@@ -106,7 +106,7 @@ def rule(
         rationale=rationale,
     )
 
-    def decorator(fn: Callable) -> RegisteredRule:
+    def decorator(fn: Callable[..., Any]) -> RegisteredRule:
         registered = RegisteredRule(fn, id, spec, stage, sev, cat)
         _REGISTRY[id] = registered
         return registered

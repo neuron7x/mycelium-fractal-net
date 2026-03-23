@@ -188,12 +188,12 @@ def compute_morphology_descriptor(sequence: FieldSequence) -> MorphologyDescript
         version=_DESCRIPTOR_VERSION,
         embedding=embedding,
         features={k: float(v) for k, v in base.items()},
-        temporal=temporal,
+        temporal=temporal.to_dict(),
         multiscale=multiscale,
-        stability=stability,
-        complexity=complexity,
-        connectivity=connectivity,
-        neuromodulation=neuromodulation,
+        stability=stability.to_dict(),
+        complexity=complexity.to_dict(),
+        connectivity=connectivity.to_dict(),
+        neuromodulation=neuromodulation.to_dict(),
         metadata=metadata,
     )
     # Cache result; evict oldest if cache is full

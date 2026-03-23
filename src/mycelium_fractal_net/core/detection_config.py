@@ -86,7 +86,7 @@ def _load_config() -> dict[str, Any]:
     """Load and validate detection config from JSON. Returns empty dict on failure."""
     try:
         if _DETECTION_CONFIG_PATH.exists():
-            data = json.loads(_DETECTION_CONFIG_PATH.read_text(encoding="utf-8"))
+            data: dict[str, Any] = json.loads(_DETECTION_CONFIG_PATH.read_text(encoding="utf-8"))
             warnings = _validate_schema(data)
             for w in warnings:
                 logger.warning("Detection config: %s", w)

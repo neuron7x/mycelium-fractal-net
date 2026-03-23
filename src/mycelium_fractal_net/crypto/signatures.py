@@ -72,8 +72,17 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+import warnings
 from dataclasses import dataclass
 from typing import Optional, Tuple, Union
+
+warnings.warn(
+    "mycelium_fractal_net.crypto.signatures is deprecated. "
+    "Use mycelium_fractal_net.artifact_bundle for artifact signing instead. "
+    "This module will be removed in v5.0.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 # Ed25519 curve parameters
 _ED25519_D = (-121665 * pow(121666, 2**255 - 19 - 2, 2**255 - 19)) % (2**255 - 19)

@@ -117,9 +117,9 @@ def step_neuromodulation_state(
     dt_seconds: float,
     activator: NDArray[np.float64],
     field: NDArray[np.float64],
-    gabaa: GABAAKineticsConfig | dict | None,
-    serotonergic: SerotonergicKineticsConfig | dict | None,
-    observation_noise: ObservationNoiseConfig | dict | None,
+    gabaa: GABAAKineticsConfig | None,
+    serotonergic: SerotonergicKineticsConfig | None,
+    observation_noise: ObservationNoiseConfig | None,
 ) -> NeuromodulationState:
     shape = field.shape
     if state.occupancy_resting.shape != shape:
@@ -139,17 +139,17 @@ def step_neuromodulation_state(
         0.0, 1.0,
     )
 
-    if gabaa:
-        concentration = float(gabaa.get("agonist_concentration_um", 0.0))
-        rest_aff = float(gabaa.get("resting_affinity_um", 0.0))
-        active_aff = float(gabaa.get("active_affinity_um", rest_aff))
-        ligand_rest = mwc_fraction(concentration, rest_aff)
-        ligand_active = mwc_fraction(concentration, active_aff)
+    if gabaa is not None:
+        concentration = float(gabaa.agonist_concentration_um)
+        rest_aff = float(gabaa.resting_affinity_um)
+        active_aff = float(gabaa.active_affinity_um) if gabaa.active_affinity_um != 0.0 else rest_aff
+        ligand_rest = mwc_fraction(concentration)
+        ligand_active = mwc_fraction(concentration)
 
-        bind_rate = _rate(float(gabaa.get("k_on", DEFAULT_K_ON_HZ)), dt_seconds, DEFAULT_K_ON_HZ)
-        unbind_rate = _rate(float(gabaa.get("k_off", DEFAULT_K_OFF_HZ)), dt_seconds, DEFAULT_K_OFF_HZ)
-        des_rate = _rate(float(gabaa.get("desensitization_rate_hz", 0.0)), dt_seconds, DEFAULT_DES_RATE_HZ)
-        rec_rate = _rate(float(gabaa.get("recovery_rate_hz", 0.0)), dt_seconds, DEFAULT_REC_RATE_HZ)
+        bind_rate = _rate(float(gabaa.k_on), dt_seconds, DEFAULT_K_ON_HZ)
+        unbind_rate = _rate(float(gabaa.k_off), dt_seconds, DEFAULT_K_OFF_HZ)
+        des_rate = _rate(float(gabaa.desensitization_rate_hz), dt_seconds, DEFAULT_DES_RATE_HZ)
+        rec_rate = _rate(float(gabaa.recovery_rate_hz), dt_seconds, DEFAULT_REC_RATE_HZ)
 
         available_rest = np.clip(1.0 - occ_active - occ_des, 0.0, 1.0)
         bind_propensity = np.clip(
@@ -186,33 +186,33 @@ def step_neuromodulation_state(
         occ_active = np.zeros(shape, dtype=np.float64)
         occ_des = np.zeros(shape, dtype=np.float64)
 
-    plasticity_scale = float((serotonergic or {}).get("plasticity_scale", 1.0))
+    plasticity_scale = float(serotonergic.plasticity_scale) if serotonergic is not None else 1.0
     plasticity_drive = np.clip(
         np.abs(activator - np.mean(activator)) * PLASTICITY_DRIVE_SCALE * plasticity_scale, 0.0, 1.0
     )
-    if serotonergic:
+    if serotonergic is not None:
         plasticity_drive = _clip01(
-            plasticity_drive + float(serotonergic.get("reorganization_drive", 0.0))
+            plasticity_drive + float(serotonergic.reorganization_drive)
         )
         effective_gain = effective_serotonergic_gain(
             plasticity_drive,
-            float(serotonergic.get("gain_fluidity_coeff", 0.0)),
-            float(serotonergic.get("coherence_bias", 0.0)),
+            float(serotonergic.gain_fluidity_coeff),
+            float(serotonergic.coherence_bias),
         )
     else:
         effective_gain = np.zeros_like(field, dtype=np.float64)
 
-    tonic_scale = float((gabaa or {}).get("tonic_inhibition_scale", 1.0))
+    tonic_scale = float(gabaa.tonic_inhibition_scale) if gabaa is not None else 1.0
     effective_inhibition = effective_gabaa_shunt(
         occ_active,
-        float((gabaa or {}).get("shunt_strength", 0.0)) * tonic_scale,
+        float(gabaa.shunt_strength) * tonic_scale if gabaa is not None else 0.0,
     )
 
-    if observation_noise:
+    if observation_noise is not None:
         target_noise = np.full(
-            shape, max(0.0, float(observation_noise.get("std", 0.0))), dtype=np.float64
+            shape, max(0.0, float(observation_noise.std)), dtype=np.float64
         )
-        smoothing = float(np.clip(observation_noise.get("temporal_smoothing", 0.0), 0.0, 1.0))
+        smoothing = float(np.clip(observation_noise.temporal_smoothing, 0.0, 1.0))
         observation_noise_gain = state.observation_noise_gain * smoothing + target_noise * (
             1.0 - smoothing
         )

@@ -41,6 +41,32 @@ DIMENSION_MAX: float = 2.5
 BIOLOGICAL_DIMENSION_MIN: float = 1.4
 BIOLOGICAL_DIMENSION_MAX: float = 1.9
 
+# Fractal confidence thresholds
+FRACTAL_MIN_GRID_SIZE: int = 8       # Grids below this lack scale range
+FRACTAL_MIN_R2: float = 0.8          # R² below this = unstable regression
+FRACTAL_MIN_NUM_SCALES: int = 3      # Fewer scales = insufficient for fit
+
+
+def assess_fractal_confidence(
+    grid_size: int, num_scales: int, d_r2: float
+) -> str:
+    """Assess confidence in fractal dimension estimate.
+
+    Returns "high" or "low_confidence".
+    """
+    if grid_size < FRACTAL_MIN_GRID_SIZE:
+        return "low_confidence"
+    if num_scales < FRACTAL_MIN_NUM_SCALES:
+        return "low_confidence"
+    if d_r2 < FRACTAL_MIN_R2:
+        return "low_confidence"
+    return "high"
+
+
+def is_fractal_strong_signal(num_scales: int, d_r2: float) -> bool:
+    """Return True if fractal estimate is reliable enough for detection scoring."""
+    return num_scales >= FRACTAL_MIN_NUM_SCALES and d_r2 >= FRACTAL_MIN_R2
+
 
 @dataclass
 class FeatureConfig:
@@ -100,6 +126,7 @@ class FeatureVector:
     # Fractal features
     D_box: float = 0.0
     D_r2: float = 0.0
+    fractal_confidence: str = "high"  # metadata: "high" or "low_confidence"
 
     # Basic statistics (in mV)
     V_min: float = 0.0
