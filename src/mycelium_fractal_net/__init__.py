@@ -96,6 +96,25 @@ from .types.forecast import ComparisonResult, ForecastResult
 from .types.report import AnalysisReport
 
 
+def plan_intervention(
+    source: FieldSequence,
+    target_regime: str = "stable",
+    allowed_levers: list[str] | None = None,
+    budget: float = 10.0,
+    objective: str = "stabilize",
+    **kwargs: object,
+) -> "InterventionPlan":
+    """Plan an intervention to move toward a target regime.
+
+    >>> plan = mfn.plan_intervention(seq, target_regime="stable", budget=5.0)
+    >>> print(plan.best_candidate)
+    """
+    from .intervention import plan_intervention as _plan
+
+    return _plan(source, target_regime=target_regime, allowed_levers=allowed_levers,
+                 budget=budget, objective=objective, **kwargs)  # type: ignore[arg-type]
+
+
 def simulate(
     spec: SimulationSpec,
     *,
@@ -366,6 +385,7 @@ V1_SURFACE = (
     "forecast",
     "compare",
     "report",
+    "plan_intervention",
     "SimulationSpec",
     "NeuromodulationSpec",
     "GABAATonicSpec",

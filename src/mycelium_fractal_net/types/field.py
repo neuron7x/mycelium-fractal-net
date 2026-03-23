@@ -633,6 +633,26 @@ class FieldSequence:
         causal = validate_causal_consistency(self, detection=event)
         return explain_pipeline(event, causal=causal)
 
+    def stabilize(
+        self,
+        target_regime: str = "stable",
+        allowed_levers: list[str] | None = None,
+        budget: float = 10.0,
+    ) -> Any:
+        """Plan an intervention to stabilize this system.
+
+        Shorthand for mfn.plan_intervention(self, ...).
+
+        >>> plan = seq.stabilize()
+        >>> print(plan.best_candidate)
+        """
+        from mycelium_fractal_net.intervention import plan_intervention
+
+        return plan_intervention(
+            self, target_regime=target_regime,
+            allowed_levers=allowed_levers, budget=budget,
+        )
+
     # ─────────────────────────────────────────────────────────
 
     def to_dict(self, include_arrays: bool = False) -> dict[str, Any]:
