@@ -99,9 +99,10 @@ from .types.field import (
 from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
 from .types.report import AnalysisReport  # noqa: TC001
 
-from .core.diagnose import diagnose  # noqa: E402
+from .core.diagnose import diagnose, diagnose_streaming  # noqa: E402
 from .core.early_warning import early_warning  # noqa: E402
-from .types.diagnosis import DiagnosisReport  # noqa: E402
+from .core.watch import watch  # noqa: E402
+from .types.diagnosis import DiagnosisDiff, DiagnosisReport  # noqa: E402
 from .types.ews import CriticalTransitionWarning  # noqa: E402
 
 
@@ -402,7 +403,9 @@ V1_SURFACE = (
     "report",
     "plan_intervention",
     "diagnose",
+    "diagnose_streaming",
     "early_warning",
+    "watch",
     "SimulationSpec",
     "NeuromodulationSpec",
     "GABAATonicSpec",

@@ -1,14 +1,16 @@
 """diagnose() — single-call full diagnostic pipeline.
 
-Chains: extract → detect → early_warning → forecast → causal_validate
-        → plan_intervention (if not stable) → narrative
+Modes:
+- fast: skip intervention, permissive causal (lowest latency)
+- full: complete pipeline with intervention planning (default)
+- streaming: yields each step as it completes (for progress tracking)
 """
 
 from __future__ import annotations
 
 import math
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator, Literal
 
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
@@ -16,6 +18,12 @@ from mycelium_fractal_net.core.detect import detect_anomaly
 from mycelium_fractal_net.core.early_warning import early_warning
 from mycelium_fractal_net.core.forecast import forecast_next
 from mycelium_fractal_net.intervention import plan_intervention
+from mycelium_fractal_net.intervention.types import InterventionPlan
+from mycelium_fractal_net.types.causal import CausalValidationResult
+from mycelium_fractal_net.types.detection import AnomalyEvent
+from mycelium_fractal_net.types.ews import CriticalTransitionWarning
+from mycelium_fractal_net.types.features import MorphologyDescriptor
+from mycelium_fractal_net.types.forecast import ForecastResult
 from mycelium_fractal_net.types.diagnosis import (
     SEVERITY_CRITICAL,
     SEVERITY_INFO,
@@ -27,7 +35,7 @@ from mycelium_fractal_net.types.diagnosis import (
 if TYPE_CHECKING:
     from mycelium_fractal_net.types.field import FieldSequence
 
-__all__ = ["diagnose"]
+__all__ = ["diagnose", "diagnose_streaming"]
 
 
 def _compute_severity(
@@ -40,7 +48,7 @@ def _compute_severity(
         return SEVERITY_CRITICAL
     if anomaly_label == "anomalous" and ews_score >= 0.5:
         return SEVERITY_CRITICAL
-    if anomaly_label == "anomalous" or anomaly_label == "watch":
+    if anomaly_label in ("anomalous", "watch"):
         return SEVERITY_WARNING
     if ews_score >= 0.7:
         return SEVERITY_WARNING
@@ -96,9 +104,74 @@ def _build_narrative(
     return " ".join(lines)
 
 
+def _build_report(
+    seq: FieldSequence,
+    descriptor: MorphologyDescriptor,
+    anomaly: AnomalyEvent,
+    warning_obj: CriticalTransitionWarning,
+    forecast_result: ForecastResult,
+    causal: CausalValidationResult,
+    plan: InterventionPlan | None,
+    t_start: float,
+    forecast_horizon: int,
+    causal_mode: str,
+) -> DiagnosisReport:
+    """Assemble the final DiagnosisReport from pipeline outputs."""
+    severity = _compute_severity(
+        anomaly_label=anomaly.label,
+        anomaly_score=float(anomaly.score),
+        ews_score=warning_obj.ews_score,
+        causal_decision=causal.decision.value,
+    )
+
+    plan_changes: list[dict] | None = None
+    if plan is not None and plan.has_viable_plan and plan.best_candidate is not None:
+        plan_changes = [
+            {"name": ch.name, "from": float(ch.current_value), "to": float(ch.proposed_value)}
+            for ch in plan.best_candidate.proposed_changes
+        ]
+
+    narrative = _build_narrative(
+        severity=severity,
+        anomaly_label=anomaly.label,
+        anomaly_score=float(anomaly.score),
+        ews_transition_type=warning_obj.transition_type,
+        ews_score=warning_obj.ews_score,
+        ews_time=warning_obj.time_to_transition,
+        causal_decision=causal.decision.value,
+        has_plan=plan is not None and plan.has_viable_plan,
+        plan_changes=plan_changes,
+    )
+
+    elapsed_ms = (time.perf_counter() - t_start) * 1000.0
+    spec = seq.spec
+    metadata: dict = {
+        "diagnosis_time_ms": round(elapsed_ms, 2),
+        "causal_certificate": warning_obj.causal_certificate,
+        "grid_size": int(spec.grid_size) if spec else 0,
+        "steps": int(seq.history.shape[0]) if seq.history is not None else 0,
+        "seed": int(spec.seed) if spec and spec.seed is not None else 0,
+        "forecast_horizon": forecast_horizon,
+        "causal_mode": causal_mode,
+    }
+
+    return DiagnosisReport(
+        severity=severity,
+        anomaly=anomaly,
+        warning=warning_obj,
+        forecast=forecast_result,
+        causal=causal,
+        descriptor=descriptor,
+        plan=plan,
+        narrative=narrative,
+        metadata=metadata,
+    )
+
+
 def diagnose(
     seq: FieldSequence,
     *,
+    mode: Literal["fast", "full"] = "full",
     forecast_horizon: int = 8,
     intervention_budget: float = 10.0,
     intervention_max_candidates: int = 16,
@@ -108,13 +181,14 @@ def diagnose(
 ) -> DiagnosisReport:
     """Full diagnostic pipeline in one call.
 
-    Runs: extract → detect → early_warning → forecast → causal_validate
-          → plan_intervention (if severity >= warning) → narrative
-
     Parameters
     ----------
     seq : FieldSequence
         Output of mfn.simulate().
+    mode : "fast" | "full"
+        fast: skip intervention + permissive causal (low latency).
+        full: complete pipeline (default).
+        For streaming, use diagnose_streaming() instead.
     forecast_horizon : int
         Steps ahead for forecast.
     intervention_budget : float
@@ -131,14 +205,16 @@ def diagnose(
     Returns
     -------
     DiagnosisReport
-        Complete diagnostic with severity, anomaly, warning, forecast,
-        causal validation, intervention plan, and narrative.
     """
+    if mode == "fast":
+        skip_intervention = True
+        causal_mode = "permissive"
+
     t_start = time.perf_counter()
 
     descriptor = compute_morphology_descriptor(seq)
     anomaly = detect_anomaly(seq)
-    warning = early_warning(seq)
+    warning_obj = early_warning(seq)
     forecast = forecast_next(seq, horizon=forecast_horizon)
     causal = validate_causal_consistency(
         seq,
@@ -151,7 +227,7 @@ def diagnose(
     severity = _compute_severity(
         anomaly_label=anomaly.label,
         anomaly_score=float(anomaly.score),
-        ews_score=warning.ews_score,
+        ews_score=warning_obj.ews_score,
         causal_decision=causal.decision.value,
     )
 
@@ -168,45 +244,103 @@ def diagnose(
         except Exception:
             plan = None
 
-    plan_changes: list[dict] | None = None
-    if plan is not None and plan.has_viable_plan and plan.best_candidate is not None:
-        plan_changes = [
-            {"name": ch.name, "from": float(ch.current_value), "to": float(ch.proposed_value)}
-            for ch in plan.best_candidate.proposed_changes
-        ]
-
-    narrative = _build_narrative(
-        severity=severity,
-        anomaly_label=anomaly.label,
-        anomaly_score=float(anomaly.score),
-        ews_transition_type=warning.transition_type,
-        ews_score=warning.ews_score,
-        ews_time=warning.time_to_transition,
-        causal_decision=causal.decision.value,
-        has_plan=plan is not None and plan.has_viable_plan,
-        plan_changes=plan_changes,
+    return _build_report(
+        seq,
+        descriptor,
+        anomaly,
+        warning_obj,
+        forecast,
+        causal,
+        plan,
+        t_start,
+        forecast_horizon,
+        causal_mode,
     )
 
-    elapsed_ms = (time.perf_counter() - t_start) * 1000.0
-    spec = seq.spec
-    metadata: dict = {
-        "diagnosis_time_ms": round(elapsed_ms, 2),
-        "causal_certificate": warning.causal_certificate,
-        "grid_size": int(spec.grid_size) if spec else 0,
-        "steps": int(seq.history.shape[0]) if seq.history is not None else 0,
-        "seed": int(spec.seed) if spec and spec.seed is not None else 0,
-        "forecast_horizon": forecast_horizon,
-        "causal_mode": causal_mode,
-    }
 
-    return DiagnosisReport(
-        severity=severity,
-        anomaly=anomaly,
-        warning=warning,
-        forecast=forecast,
-        causal=causal,
+def diagnose_streaming(
+    seq: FieldSequence,
+    *,
+    forecast_horizon: int = 8,
+    intervention_budget: float = 10.0,
+    intervention_max_candidates: int = 16,
+    allowed_levers: list[str] | None = None,
+    causal_mode: str = "strict",
+) -> Generator[tuple[str, object], None, DiagnosisReport]:
+    """Streaming diagnostic — yields each pipeline step as it completes.
+
+    Yields (step_name, result) tuples as each stage finishes.
+    The final return value is the complete DiagnosisReport.
+
+    Usage::
+
+        gen = mfn.diagnose_streaming(seq)
+        try:
+            while True:
+                step, result = next(gen)
+                print(f"  {step}: done")
+        except StopIteration as e:
+            report = e.value
+            print(report.summary())
+
+    Or with a for loop (discards final report)::
+
+        for step, result in mfn.diagnose_streaming(seq):
+            print(f"  {step}: done")
+    """
+    t_start = time.perf_counter()
+
+    descriptor = compute_morphology_descriptor(seq)
+    yield ("extract", descriptor)
+
+    anomaly = detect_anomaly(seq)
+    yield ("anomaly", anomaly)
+
+    warning_obj = early_warning(seq)
+    yield ("warning", warning_obj)
+
+    forecast = forecast_next(seq, horizon=forecast_horizon)
+    yield ("forecast", forecast)
+
+    causal = validate_causal_consistency(
+        seq,
         descriptor=descriptor,
-        plan=plan,
-        narrative=narrative,
-        metadata=metadata,
+        detection=anomaly,
+        forecast=forecast,
+        mode=causal_mode,
+    )
+    yield ("causal", causal)
+
+    severity = _compute_severity(
+        anomaly_label=anomaly.label,
+        anomaly_score=float(anomaly.score),
+        ews_score=warning_obj.ews_score,
+        causal_decision=causal.decision.value,
+    )
+
+    plan = None
+    if severity in (SEVERITY_WARNING, SEVERITY_CRITICAL):
+        try:
+            plan = plan_intervention(
+                seq,
+                target_regime="stable",
+                allowed_levers=allowed_levers,
+                budget=intervention_budget,
+                max_candidates=intervention_max_candidates,
+            )
+            yield ("plan", plan)
+        except Exception:
+            plan = None
+
+    return _build_report(
+        seq,
+        descriptor,
+        anomaly,
+        warning_obj,
+        forecast,
+        causal,
+        plan,
+        t_start,
+        forecast_horizon,
+        causal_mode,
     )

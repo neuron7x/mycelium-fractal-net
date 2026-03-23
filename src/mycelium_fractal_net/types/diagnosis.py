@@ -121,3 +121,90 @@ class DiagnosisReport:
             f"ews={ews.transition_type}({ews.ews_score:.2f}) "
             f"causal={causal_ok}{plan_str}"
         )
+
+    def diff(self, other: DiagnosisReport) -> DiagnosisDiff:
+        """Compare this report with another and return what changed."""
+        return DiagnosisDiff(
+            severity_changed=self.severity != other.severity,
+            severity_before=self.severity,
+            severity_after=other.severity,
+            anomaly_label_changed=self.anomaly.label != other.anomaly.label,
+            anomaly_label_before=self.anomaly.label,
+            anomaly_label_after=other.anomaly.label,
+            anomaly_score_delta=round(other.anomaly.score - self.anomaly.score, 6),
+            ews_score_delta=round(other.warning.ews_score - self.warning.ews_score, 6),
+            ews_type_changed=self.warning.transition_type != other.warning.transition_type,
+            ews_type_before=self.warning.transition_type,
+            ews_type_after=other.warning.transition_type,
+            causal_changed=self.causal.decision != other.causal.decision,
+            causal_before=self.causal.decision.value,
+            causal_after=other.causal.decision.value,
+        )
+
+
+@dataclass(frozen=True)
+class DiagnosisDiff:
+    """Difference between two DiagnosisReport instances."""
+
+    severity_changed: bool
+    severity_before: str
+    severity_after: str
+    anomaly_label_changed: bool
+    anomaly_label_before: str
+    anomaly_label_after: str
+    anomaly_score_delta: float
+    ews_score_delta: float
+    ews_type_changed: bool
+    ews_type_before: str
+    ews_type_after: str
+    causal_changed: bool
+    causal_before: str
+    causal_after: str
+
+    @property
+    def has_changes(self) -> bool:
+        return (
+            self.severity_changed
+            or self.anomaly_label_changed
+            or self.ews_type_changed
+            or self.causal_changed
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "severity": {
+                "changed": self.severity_changed,
+                "before": self.severity_before,
+                "after": self.severity_after,
+            },
+            "anomaly_label": {
+                "changed": self.anomaly_label_changed,
+                "before": self.anomaly_label_before,
+                "after": self.anomaly_label_after,
+            },
+            "anomaly_score_delta": self.anomaly_score_delta,
+            "ews_score_delta": self.ews_score_delta,
+            "ews_type": {
+                "changed": self.ews_type_changed,
+                "before": self.ews_type_before,
+                "after": self.ews_type_after,
+            },
+            "causal": {
+                "changed": self.causal_changed,
+                "before": self.causal_before,
+                "after": self.causal_after,
+            },
+            "has_changes": self.has_changes,
+        }
+
+    def summary(self) -> str:
+        parts = []
+        if self.severity_changed:
+            parts.append(f"severity: {self.severity_before}→{self.severity_after}")
+        if self.anomaly_label_changed:
+            parts.append(f"anomaly: {self.anomaly_label_before}→{self.anomaly_label_after}")
+        if abs(self.ews_score_delta) > 0.01:
+            parts.append(f"ews: {self.ews_score_delta:+.3f}")
+        if self.causal_changed:
+            parts.append(f"causal: {self.causal_before}→{self.causal_after}")
+        return ", ".join(parts) if parts else "no changes"
