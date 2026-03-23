@@ -7,17 +7,19 @@ Every causal rule gets:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
-import pytest
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
-from mycelium_fractal_net.core.detect import detect_anomaly
 from mycelium_fractal_net.core.rule_registry import get_registry
-from mycelium_fractal_net.types.detection import AnomalyEvent, RegimeState
-from mycelium_fractal_net.types.features import MorphologyDescriptor
+from mycelium_fractal_net.types.detection import AnomalyEvent
 from mycelium_fractal_net.types.field import FieldSequence
-from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
+
+if TYPE_CHECKING:
+    from mycelium_fractal_net.types.features import MorphologyDescriptor
+    from mycelium_fractal_net.types.forecast import ForecastResult
 
 
 def _valid_seq() -> FieldSequence:
@@ -57,7 +59,7 @@ class TestSimulateRulesNegative:
 
     def test_sim001_nan_field_fails(self) -> None:
         """SIM-001: Field must be finite."""
-        field = np.full((16, 16), np.nan)
+        np.full((16, 16), np.nan)
         registry = get_registry()
         result = registry["SIM-001"].evaluate(
             FieldSequence(field=np.ones((16, 16)) * -0.07)  # valid for construction
@@ -196,8 +198,15 @@ class TestConformanceCompleteness:
     def test_all_stages_covered(self) -> None:
         registry = get_registry()
         stages = {r.stage for r in registry.values()}
-        expected = {"simulate", "extract", "detect", "forecast", "compare",
-                    "cross_stage", "perturbation"}
+        expected = {
+            "simulate",
+            "extract",
+            "detect",
+            "forecast",
+            "compare",
+            "cross_stage",
+            "perturbation",
+        }
         assert stages == expected, f"Missing stages: {expected - stages}"
 
     def test_rule_count(self) -> None:

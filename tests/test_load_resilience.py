@@ -25,17 +25,11 @@ class TestConcurrentDescriptorCache:
 
     def test_concurrent_cache_no_crash(self) -> None:
         """50 concurrent descriptor computations must not crash."""
-        specs = [
-            mfn.SimulationSpec(grid_size=16, steps=8, seed=i)
-            for i in range(50)
-        ]
+        specs = [mfn.SimulationSpec(grid_size=16, steps=8, seed=i) for i in range(50)]
         sequences = [mfn.simulate(spec) for spec in specs]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-            futures = [
-                pool.submit(compute_morphology_descriptor, seq)
-                for seq in sequences
-            ]
+            futures = [pool.submit(compute_morphology_descriptor, seq) for seq in sequences]
             results = [f.result(timeout=30) for f in futures]
 
         assert len(results) == 50
@@ -44,17 +38,11 @@ class TestConcurrentDescriptorCache:
     def test_cache_stays_bounded(self) -> None:
         """Cache must not exceed _CACHE_MAX_SIZE under concurrent writes."""
         _descriptor_cache.clear()
-        specs = [
-            mfn.SimulationSpec(grid_size=16, steps=8, seed=i)
-            for i in range(100)
-        ]
+        specs = [mfn.SimulationSpec(grid_size=16, steps=8, seed=i) for i in range(100)]
         sequences = [mfn.simulate(spec) for spec in specs]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-            futures = [
-                pool.submit(compute_morphology_descriptor, seq)
-                for seq in sequences
-            ]
+            futures = [pool.submit(compute_morphology_descriptor, seq) for seq in sequences]
             [f.result(timeout=30) for f in futures]
 
         assert len(_descriptor_cache) <= _CACHE_MAX_SIZE + 1  # +1 for race tolerance

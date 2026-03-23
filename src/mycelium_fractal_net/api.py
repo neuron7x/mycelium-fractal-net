@@ -964,7 +964,7 @@ def _sequence_from_payload(payload: V1FieldPayload) -> FieldSequence:
     if payload.spec is not None:
         spec = _spec_from_v1(payload.spec)
         return simulate_history(spec) if payload.spec.with_history else simulate_final(spec)
-    raise HTTPException(status_code=400, detail="Provide history, field, or spec") from e
+    raise HTTPException(status_code=400, detail="Provide history, field, or spec")
 
 
 @app.post("/v1/simulate")

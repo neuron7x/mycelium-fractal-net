@@ -22,9 +22,7 @@ def _hash_array(arr: np.ndarray) -> str:
 
 
 def _hash_dict(d: dict) -> str:
-    return hashlib.sha256(
-        json.dumps(d, sort_keys=True, default=str).encode()
-    ).hexdigest()[:16]
+    return hashlib.sha256(json.dumps(d, sort_keys=True, default=str).encode()).hexdigest()[:16]
 
 
 def _environment_info() -> dict:
@@ -44,10 +42,13 @@ def main() -> None:
     profiles = {
         "baseline": mfn.SimulationSpec(grid_size=32, steps=24, seed=42),
         "gabaa_tonic": mfn.SimulationSpec(
-            grid_size=32, steps=24, seed=42,
+            grid_size=32,
+            steps=24,
+            seed=42,
             neuromodulation=mfn.NeuromodulationSpec(
                 profile="gabaa_tonic_muscimol_alpha1beta3",
-                enabled=True, dt_seconds=1.0,
+                enabled=True,
+                dt_seconds=1.0,
                 gabaa_tonic=mfn.GABAATonicSpec(
                     profile="gabaa_tonic_muscimol_alpha1beta3",
                     agonist_concentration_um=0.85,
@@ -60,10 +61,13 @@ def main() -> None:
             ),
         ),
         "serotonergic": mfn.SimulationSpec(
-            grid_size=32, steps=24, seed=42,
+            grid_size=32,
+            steps=24,
+            seed=42,
             neuromodulation=mfn.NeuromodulationSpec(
                 profile="serotonergic_reorganization_candidate",
-                enabled=True, dt_seconds=1.0,
+                enabled=True,
+                dt_seconds=1.0,
                 serotonergic=mfn.SerotonergicPlasticitySpec(
                     profile="serotonergic_reorganization_candidate",
                     gain_fluidity_coeff=0.08,
@@ -73,11 +77,15 @@ def main() -> None:
             ),
         ),
         "balanced_criticality": mfn.SimulationSpec(
-            grid_size=32, steps=28, seed=113,
-            alpha=0.18, spike_probability=0.25,
+            grid_size=32,
+            steps=28,
+            seed=113,
+            alpha=0.18,
+            spike_probability=0.25,
             neuromodulation=mfn.NeuromodulationSpec(
                 profile="balanced_criticality_candidate",
-                enabled=True, dt_seconds=1.0,
+                enabled=True,
+                dt_seconds=1.0,
                 intrinsic_field_jitter=True,
                 intrinsic_field_jitter_var=0.0002,
                 gabaa_tonic=mfn.GABAATonicSpec(
@@ -120,26 +128,26 @@ def main() -> None:
         detection_hash = _hash_dict(det.to_dict())
         forecast_hash = _hash_dict(fc.to_dict())
 
-        results.append({
-            "profile": name,
-            "deterministic": deterministic,
-            "field_hash": field_hash1,
-            "descriptor_hash": descriptor_hash,
-            "detection_hash": detection_hash,
-            "forecast_hash": forecast_hash,
-            "causal_decision": cv.decision.value,
-            "detection_label": det.label,
-            "detection_score": round(det.score, 6),
-            "regime_label": det.regime.label if det.regime else "none",
-        })
+        results.append(
+            {
+                "profile": name,
+                "deterministic": deterministic,
+                "field_hash": field_hash1,
+                "descriptor_hash": descriptor_hash,
+                "detection_hash": detection_hash,
+                "forecast_hash": forecast_hash,
+                "causal_decision": cv.decision.value,
+                "detection_label": det.label,
+                "detection_score": round(det.score, 6),
+                "regime_label": det.regime.label if det.regime else "none",
+            }
+        )
 
         status = "DETERMINISTIC" if deterministic else "NON-DETERMINISTIC"
         print(f"    field={field_hash1} desc={descriptor_hash} det={detection_hash} [{status}]")
 
     env = _environment_info()
-    dep_hash = hashlib.sha256(
-        json.dumps(env, sort_keys=True).encode()
-    ).hexdigest()[:16]
+    dep_hash = hashlib.sha256(json.dumps(env, sort_keys=True).encode()).hexdigest()[:16]
 
     matrix = {
         "schema_version": "mfn-reproducibility-matrix-v1",

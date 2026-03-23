@@ -139,9 +139,13 @@ def build_explanation_trace(
         if score < THRESHOLD_FLOOR:
             decision_path.append(f"score {score:.4f} < threshold_floor {THRESHOLD_FLOOR} → nominal")
         elif score < WATCH_THRESHOLD_FLOOR:
-            decision_path.append(f"score {score:.4f} < watch_floor {WATCH_THRESHOLD_FLOOR} → nominal/watch boundary")
+            decision_path.append(
+                f"score {score:.4f} < watch_floor {WATCH_THRESHOLD_FLOOR} → nominal/watch boundary"
+            )
         elif score >= THRESHOLD_CEILING:
-            decision_path.append(f"score {score:.4f} >= threshold_ceiling {THRESHOLD_CEILING} → anomalous")
+            decision_path.append(
+                f"score {score:.4f} >= threshold_ceiling {THRESHOLD_CEILING} → anomalous"
+            )
         else:
             decision_path.append(f"score {score:.4f} in middle range → {label}")
 
@@ -166,7 +170,9 @@ def build_explanation_trace(
             regime_label=regime_label,
             confidence=detection.confidence,
             margin_to_flip=abs(margin),
-            contributing_features=list(detection.contributing_features) if hasattr(detection, "contributing_features") else [],
+            contributing_features=list(detection.contributing_features)
+            if hasattr(detection, "contributing_features")
+            else [],
         )
 
     fc_trace = None
@@ -174,7 +180,9 @@ def build_explanation_trace(
         fc_trace = ForecastTrace(
             input_features={},
             horizon=forecast.horizon,
-            uncertainty_components=forecast.uncertainty.to_dict() if hasattr(forecast, "uncertainty") and forecast.uncertainty else {},
+            uncertainty_components=forecast.uncertainty.to_dict()
+            if hasattr(forecast, "uncertainty") and forecast.uncertainty
+            else {},
         )
 
     cmp_trace = None
@@ -188,13 +196,19 @@ def build_explanation_trace(
     causal_trace = None
     if causal is not None:
         failed = [
-            {"rule_id": r.rule_id, "severity": r.severity.value,
-             "observed": str(r.observed), "expected": str(r.expected)}
-            for r in causal.rule_results if not r.passed and r.severity.value in ("error", "fatal")
+            {
+                "rule_id": r.rule_id,
+                "severity": r.severity.value,
+                "observed": str(r.observed),
+                "expected": str(r.expected),
+            }
+            for r in causal.rule_results
+            if not r.passed and r.severity.value in ("error", "fatal")
         ]
         warned = [
             {"rule_id": r.rule_id, "observed": str(r.observed)}
-            for r in causal.rule_results if not r.passed and r.severity.value == "warn"
+            for r in causal.rule_results
+            if not r.passed and r.severity.value == "warn"
         ]
         causal_trace = CausalTrace(
             rules_evaluated=len(causal.rule_results),

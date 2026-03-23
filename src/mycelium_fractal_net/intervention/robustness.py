@@ -45,7 +45,7 @@ def evaluate_robustness(
     total_count = 0
 
     for frac in _PERTURBATION_FRACTIONS[:n_perturbations]:
-        for pseed in range(min(_N_PERTURBATION_SEEDS, 2)):
+        for _pseed in range(min(_N_PERTURBATION_SEEDS, 2)):
             # Perturb each proposed value by ±frac * step
             perturbed_specs = []
             for spec in result.proposed_changes:

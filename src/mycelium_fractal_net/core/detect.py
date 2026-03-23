@@ -17,7 +17,9 @@ from mycelium_fractal_net.analytics.drift import morphology_drift
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.detection_config import (
     ANOMALY_CONFIDENCE_BASE as _ANOMALY_CONFIDENCE_BASE,
-    DETECTION_CONFIG_VERSION,  # re-exported for backward compat
+)
+from mycelium_fractal_net.core.detection_config import (  # noqa: F401
+    DETECTION_CONFIG_VERSION as DETECTION_CONFIG_VERSION,
 )
 from mycelium_fractal_net.core.detection_config import (
     ANOMALY_CONFIDENCE_MAX as _ANOMALY_CONFIDENCE_MAX,

@@ -90,10 +90,10 @@ from .types.field import (
     SimulationSpec,
 )
 
-from .types.detection import AnomalyEvent
-from .types.features import MorphologyDescriptor
-from .types.forecast import ComparisonResult, ForecastResult
-from .types.report import AnalysisReport
+from .types.detection import AnomalyEvent  # noqa: E402, TCH001
+from .types.features import MorphologyDescriptor  # noqa: E402, TCH001
+from .types.forecast import ComparisonResult, ForecastResult  # noqa: E402, TCH001
+from .types.report import AnalysisReport  # noqa: E402, TCH001
 
 
 def plan_intervention(
@@ -103,7 +103,7 @@ def plan_intervention(
     budget: float = 10.0,
     objective: str = "stabilize",
     **kwargs: object,
-) -> "InterventionPlan":
+) -> object:
     """Plan an intervention to move toward a target regime.
 
     >>> plan = mfn.plan_intervention(seq, target_regime="stable", budget=5.0)
@@ -111,8 +111,14 @@ def plan_intervention(
     """
     from .intervention import plan_intervention as _plan
 
-    return _plan(source, target_regime=target_regime, allowed_levers=allowed_levers,
-                 budget=budget, objective=objective, **kwargs)  # type: ignore[arg-type]
+    return _plan(
+        source,
+        target_regime=target_regime,
+        allowed_levers=allowed_levers,
+        budget=budget,
+        objective=objective,
+        **kwargs,
+    )  # type: ignore[arg-type]
 
 
 def simulate(

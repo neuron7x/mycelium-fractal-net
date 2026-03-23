@@ -63,35 +63,47 @@ class TestCrossScenarioParity:
 
     SCENARIOS = [
         ("baseline", mfn.SimulationSpec(grid_size=32, steps=24, seed=42)),
-        ("neuromod_gabaa", mfn.SimulationSpec(
-            grid_size=32, steps=24, seed=42,
-            neuromodulation=mfn.NeuromodulationSpec(
-                profile="gabaa_tonic_muscimol_alpha1beta3",
-                enabled=True, dt_seconds=1.0,
-                gabaa_tonic=mfn.GABAATonicSpec(
+        (
+            "neuromod_gabaa",
+            mfn.SimulationSpec(
+                grid_size=32,
+                steps=24,
+                seed=42,
+                neuromodulation=mfn.NeuromodulationSpec(
                     profile="gabaa_tonic_muscimol_alpha1beta3",
-                    agonist_concentration_um=0.85,
-                    resting_affinity_um=0.45,
-                    active_affinity_um=0.35,
-                    desensitization_rate_hz=0.05,
-                    recovery_rate_hz=0.02,
-                    shunt_strength=0.42,
+                    enabled=True,
+                    dt_seconds=1.0,
+                    gabaa_tonic=mfn.GABAATonicSpec(
+                        profile="gabaa_tonic_muscimol_alpha1beta3",
+                        agonist_concentration_um=0.85,
+                        resting_affinity_um=0.45,
+                        active_affinity_um=0.35,
+                        desensitization_rate_hz=0.05,
+                        recovery_rate_hz=0.02,
+                        shunt_strength=0.42,
+                    ),
                 ),
             ),
-        )),
-        ("neuromod_sero", mfn.SimulationSpec(
-            grid_size=32, steps=24, seed=42,
-            neuromodulation=mfn.NeuromodulationSpec(
-                profile="serotonergic_reorganization_candidate",
-                enabled=True, dt_seconds=1.0,
-                serotonergic=mfn.SerotonergicPlasticitySpec(
+        ),
+        (
+            "neuromod_sero",
+            mfn.SimulationSpec(
+                grid_size=32,
+                steps=24,
+                seed=42,
+                neuromodulation=mfn.NeuromodulationSpec(
                     profile="serotonergic_reorganization_candidate",
-                    gain_fluidity_coeff=0.08,
-                    reorganization_drive=0.12,
-                    coherence_bias=0.02,
+                    enabled=True,
+                    dt_seconds=1.0,
+                    serotonergic=mfn.SerotonergicPlasticitySpec(
+                        profile="serotonergic_reorganization_candidate",
+                        gain_fluidity_coeff=0.08,
+                        reorganization_drive=0.12,
+                        coherence_bias=0.02,
+                    ),
                 ),
             ),
-        )),
+        ),
     ]
 
     def test_each_scenario_deterministic(self) -> None:
@@ -100,7 +112,8 @@ class TestCrossScenarioParity:
             seq1 = mfn.simulate(spec)
             seq2 = mfn.simulate(spec)
             np.testing.assert_array_equal(
-                seq1.field, seq2.field,
+                seq1.field,
+                seq2.field,
                 err_msg=f"Scenario {name} not deterministic",
             )
 
@@ -125,6 +138,7 @@ class TestCrossScenarioParity:
             desc = mfn.extract(seq)
             d = desc.to_dict()
             from mycelium_fractal_net.types.features import MorphologyDescriptor
+
             restored = MorphologyDescriptor.from_dict(d)
             assert restored.version == desc.version, f"{name}: version mismatch"
             assert restored.features == desc.features, f"{name}: features mismatch"

@@ -649,8 +649,10 @@ class FieldSequence:
         from mycelium_fractal_net.intervention import plan_intervention
 
         return plan_intervention(
-            self, target_regime=target_regime,
-            allowed_levers=allowed_levers, budget=budget,
+            self,
+            target_regime=target_regime,
+            allowed_levers=allowed_levers,
+            budget=budget,
         )
 
     # ─────────────────────────────────────────────────────────

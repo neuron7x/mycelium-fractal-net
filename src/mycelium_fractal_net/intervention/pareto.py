@@ -8,7 +8,10 @@ Selects non-dominated candidates across three objectives:
 
 from __future__ import annotations
 
-from .types import CounterfactualResult
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .types import CounterfactualResult
 
 
 def _dominates(a: CounterfactualResult, b: CounterfactualResult) -> bool:

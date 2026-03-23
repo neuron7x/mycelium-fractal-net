@@ -14,9 +14,11 @@ class TestBundleSchemas:
 
     def test_schemas_generated(self) -> None:
         import subprocess
+
         subprocess.run(
             [".venv/bin/python", "scripts/generate_bundle_schemas.py"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
         schema_dir = Path("docs/contracts/schemas")
         assert schema_dir.exists()
@@ -27,9 +29,11 @@ class TestBundleSchemas:
         schema_dir = Path("docs/contracts/schemas")
         if not schema_dir.exists():
             import subprocess
+
             subprocess.run(
                 [".venv/bin/python", "scripts/generate_bundle_schemas.py"],
-                check=True, capture_output=True,
+                check=True,
+                capture_output=True,
             )
         for sf in schema_dir.glob("*.schema.json"):
             data = json.loads(sf.read_text())
@@ -46,7 +50,7 @@ class TestBundleReport:
         spec = mfn.SimulationSpec(grid_size=16, steps=8, seed=42)
         seq = mfn.simulate(spec)
         with tempfile.TemporaryDirectory() as tmpdir:
-            report = mfn.report(seq, tmpdir)
+            mfn.report(seq, tmpdir)
             # Find all JSON files in the report output
             json_files = list(Path(tmpdir).rglob("*.json"))
             assert len(json_files) >= 1, "Report should produce JSON artifacts"

@@ -45,7 +45,8 @@ def _collect_exports(file_path: Path) -> list[str]:
                 if isinstance(target, ast.Name) and target.id == "__all__":
                     if isinstance(node.value, (ast.List, ast.Tuple)):
                         return [
-                            elt.value for elt in node.value.elts
+                            elt.value
+                            for elt in node.value.elts
                             if isinstance(elt, ast.Constant) and isinstance(elt.value, str)
                         ]
     # Fallback: collect public class/function names
@@ -93,17 +94,16 @@ def main() -> None:
         internal = [i for i in imports if i.startswith("mycelium_fractal_net")]
         external = [i for i in imports if not i.startswith("mycelium_fractal_net") and "." not in i]
 
-        modules.append({
-            "module": mod_name,
-            "file": str(py_file.relative_to(SRC_ROOT.parents[1])),
-            "imports_internal": internal,
-            "imports_external": sorted(set(external)),
-            "exports": exports,
-            "symbols": [
-                {"name": e, "status": _classify_symbol(e, mod_name)}
-                for e in exports
-            ],
-        })
+        modules.append(
+            {
+                "module": mod_name,
+                "file": str(py_file.relative_to(SRC_ROOT.parents[1])),
+                "imports_internal": internal,
+                "imports_external": sorted(set(external)),
+                "exports": exports,
+                "symbols": [{"name": e, "status": _classify_symbol(e, mod_name)} for e in exports],
+            }
+        )
 
     # Build dependency graph (directed edges)
     dep_graph = {}

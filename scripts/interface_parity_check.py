@@ -24,11 +24,21 @@ from mycelium_fractal_net.core.causal_validation import validate_causal_consiste
 def _normalize(data: dict) -> dict:
     """Remove transient fields that differ between interfaces."""
     transient_keys = {
-        "run_id", "timestamp", "elapsed_time_s", "runtime_hash",
-        "config_fingerprint", "config_hash", "history_memmap_path",
-        "history_backend", "history_cleanup_policy", "artifacts",
-        "provenance_hash", "engine_version", "schema_version",
-        "runtime_version", "metadata",
+        "run_id",
+        "timestamp",
+        "elapsed_time_s",
+        "runtime_hash",
+        "config_fingerprint",
+        "config_hash",
+        "history_memmap_path",
+        "history_backend",
+        "history_cleanup_policy",
+        "artifacts",
+        "provenance_hash",
+        "engine_version",
+        "schema_version",
+        "runtime_version",
+        "metadata",
     }
     cleaned = {}
     for k, v in data.items():
@@ -44,9 +54,7 @@ def _normalize(data: dict) -> dict:
 
 
 def _hash_dict(d: dict) -> str:
-    return hashlib.sha256(
-        json.dumps(d, sort_keys=True, default=str).encode()
-    ).hexdigest()[:16]
+    return hashlib.sha256(json.dumps(d, sort_keys=True, default=str).encode()).hexdigest()[:16]
 
 
 def _run_sdk(scenario_name: str) -> dict:
@@ -56,10 +64,13 @@ def _run_sdk(scenario_name: str) -> dict:
     scenarios = {
         "baseline": mfn.SimulationSpec(grid_size=32, steps=24, seed=42),
         "neuromod": mfn.SimulationSpec(
-            grid_size=32, steps=24, seed=42,
+            grid_size=32,
+            steps=24,
+            seed=42,
             neuromodulation=mfn.NeuromodulationSpec(
                 profile="gabaa_tonic_muscimol_alpha1beta3",
-                enabled=True, dt_seconds=1.0,
+                enabled=True,
+                dt_seconds=1.0,
                 gabaa_tonic=mfn.GABAATonicSpec(
                     profile="gabaa_tonic_muscimol_alpha1beta3",
                     agonist_concentration_um=0.85,
@@ -86,18 +97,28 @@ def _run_cli(scenario_name: str) -> dict:
     """Run scenario via CLI subprocess and parse JSON output."""
     with tempfile.TemporaryDirectory() as tmpdir:
         cmd = [
-            sys.executable, "-m", "mycelium_fractal_net.cli",
+            sys.executable,
+            "-m",
+            "mycelium_fractal_net.cli",
             "report",
-            "--grid-size", "32",
-            "--steps", "24",
-            "--seed", "42",
-            "--output", tmpdir,
+            "--grid-size",
+            "32",
+            "--steps",
+            "24",
+            "--seed",
+            "42",
+            "--output",
+            tmpdir,
         ]
         if scenario_name == "neuromod":
             cmd.extend(["--profile", "gabaa_tonic_muscimol_alpha1beta3"])
 
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120, check=False,
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
         )
 
         # Find the report JSON in output directory

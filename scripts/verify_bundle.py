@@ -60,7 +60,9 @@ def verify_bundle(bundle_dir: str | Path) -> dict:
     results = {"ok": True, "artifacts": [], "errors": []}
 
     # Check manifest
-    manifest_candidates = list(bundle_dir.rglob("report.json")) + list(bundle_dir.rglob("manifest.json"))
+    manifest_candidates = list(bundle_dir.rglob("report.json")) + list(
+        bundle_dir.rglob("manifest.json")
+    )
     if not manifest_candidates:
         results["ok"] = False
         results["errors"].append("No manifest or report.json found")

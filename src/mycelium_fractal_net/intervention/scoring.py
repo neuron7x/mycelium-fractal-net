@@ -7,8 +7,10 @@ Deterministic: same inputs → same score.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from .types import CounterfactualResult
+if TYPE_CHECKING:
+    from .types import CounterfactualResult
 
 # ═══════════════════════════════════════════════════════════════
 #  Scoring weights — configurable, sum to 1.0

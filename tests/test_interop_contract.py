@@ -12,10 +12,8 @@ import numpy as np
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
-from mycelium_fractal_net.types.detection import AnomalyEvent
 from mycelium_fractal_net.types.features import MorphologyDescriptor
 from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
-from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
 
 
 def _pipeline():

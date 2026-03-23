@@ -41,22 +41,24 @@ def main() -> None:
 
     rules = []
     for rule_id, rule_obj in sorted(registry.items()):
-        rules.append({
-            "rule_id": rule_id,
-            "stage": rule_obj.stage,
-            "severity": rule_obj.severity.value,
-            "category": rule_obj.category.value,
-            "scientific_claim": rule_obj.spec.claim,
-            "math": rule_obj.spec.math,
-            "reference": rule_obj.spec.reference,
-            "falsifiable_by": rule_obj.spec.falsifiable_by,
-            "rationale": rule_obj.spec.rationale,
-            "expected_failure_mode": rule_obj.spec.falsifiable_by,
-            "test_coverage": test_coverage.get(rule_id, []),
-            "scenario_coverage": scenario_coverage.get(rule_id, []),
-            "has_test": len(test_coverage.get(rule_id, [])) > 0,
-            "has_falsification": bool(rule_obj.spec.falsifiable_by),
-        })
+        rules.append(
+            {
+                "rule_id": rule_id,
+                "stage": rule_obj.stage,
+                "severity": rule_obj.severity.value,
+                "category": rule_obj.category.value,
+                "scientific_claim": rule_obj.spec.claim,
+                "math": rule_obj.spec.math,
+                "reference": rule_obj.spec.reference,
+                "falsifiable_by": rule_obj.spec.falsifiable_by,
+                "rationale": rule_obj.spec.rationale,
+                "expected_failure_mode": rule_obj.spec.falsifiable_by,
+                "test_coverage": test_coverage.get(rule_id, []),
+                "scenario_coverage": scenario_coverage.get(rule_id, []),
+                "has_test": len(test_coverage.get(rule_id, [])) > 0,
+                "has_falsification": bool(rule_obj.spec.falsifiable_by),
+            }
+        )
 
     matrix = {
         "schema_version": "mfn-causal-conformance-v1",

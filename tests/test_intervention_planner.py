@@ -9,7 +9,6 @@ from __future__ import annotations
 import hashlib
 import json
 
-import numpy as np
 import pytest
 
 import mycelium_fractal_net as mfn
@@ -19,7 +18,6 @@ from mycelium_fractal_net.intervention import (
     InterventionSpec,
     PlausibilityTag,
     ScoringWeights,
-    get_all_levers,
     get_lever,
     list_levers,
     plan_intervention,
@@ -153,7 +151,7 @@ class TestSearchSpace:
         c1 = build_candidates(["diffusion_alpha"], {}, budget=5.0, seed=42)
         c2 = build_candidates(["diffusion_alpha"], {}, budget=5.0, seed=42)
         assert len(c1) == len(c2)
-        for a, b in zip(c1, c2):
+        for a, b in zip(c1, c2, strict=False):
             assert tuple(s.proposed_value for s in a) == tuple(s.proposed_value for s in b)
 
     def test_candidates_respect_bounds(self) -> None:
@@ -212,7 +210,8 @@ class TestScoring:
         s1 = compute_composite_score(r, 0.5, "stable", 10.0, w1)
         s2 = compute_composite_score(r, 0.5, "stable", 10.0, w2)
         # Different weights → different scores
-        assert isinstance(s1, float) and isinstance(s2, float)
+        assert isinstance(s1, float)
+        assert isinstance(s2, float)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -326,7 +325,7 @@ class TestDeterminism:
             seed=42,
         )
         assert len(plan1.candidates) == len(plan2.candidates)
-        for a, b in zip(plan1.candidates, plan2.candidates):
+        for a, b in zip(plan1.candidates, plan2.candidates, strict=False):
             assert a.composite_score == b.composite_score
 
     def test_golden_hash(self) -> None:

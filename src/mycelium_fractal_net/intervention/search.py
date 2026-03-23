@@ -54,7 +54,7 @@ def build_candidates(
         for combo in itertools.product(*value_lists):
             specs = []
             total_cost = 0.0
-            for name, value in zip(lever_names, combo):
+            for name, value in zip(lever_names, combo, strict=False):
                 lever = get_lever(name)
                 current = current_values.get(name, lever.default)
                 cost = lever.cost(value)
@@ -101,10 +101,10 @@ def build_candidates(
     # Deduplicate and limit
     seen: set[tuple[float, ...]] = set()
     unique: list[tuple[InterventionSpec, ...]] = []
-    for combo in all_combos:
-        key = tuple(s.proposed_value for s in combo)
+    for candidate_combo in all_combos:
+        key = tuple(s.proposed_value for s in candidate_combo)
         if key not in seen:
             seen.add(key)
-            unique.append(combo)
+            unique.append(candidate_combo)
     unique.sort(key=lambda c: sum(s.cost for s in c))
     return unique[:max_candidates]

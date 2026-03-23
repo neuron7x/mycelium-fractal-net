@@ -116,7 +116,7 @@ def reload_config() -> str:
     Call this after updating detection_thresholds_v1.json at runtime.
     Thread-safe: module-level assignments are atomic in CPython.
     """
-    global _CFG, CONFIG_HASH  # noqa: PLW0603
+    global _CFG, CONFIG_HASH
     _CFG = _load_config()
     CONFIG_HASH = _config_hash()
     logger.info("Detection config reloaded, hash=%s", CONFIG_HASH)

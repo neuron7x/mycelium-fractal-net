@@ -16,9 +16,11 @@ class TestArchitectureLedger:
         path = Path("artifacts/architecture_ledger.json")
         if not path.exists():
             import subprocess
+
             subprocess.run(
                 [".venv/bin/python", "scripts/generate_architecture_ledger.py"],
-                check=True, capture_output=True,
+                check=True,
+                capture_output=True,
             )
         return json.loads(path.read_text())
 
@@ -38,9 +40,7 @@ class TestArchitectureLedger:
             if ".core." in mod["module"] and "compat" not in mod["module"]:
                 ext = set(mod["imports_external"])
                 violations = ext & forbidden_in_core
-                assert not violations, (
-                    f"{mod['module']} imports forbidden deps: {violations}"
-                )
+                assert not violations, f"{mod['module']} imports forbidden deps: {violations}"
 
     def test_frozen_modules_identified(self) -> None:
         ledger = self._load_ledger()
