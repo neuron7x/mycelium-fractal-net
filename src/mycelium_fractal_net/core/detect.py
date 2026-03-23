@@ -55,7 +55,7 @@ from mycelium_fractal_net.core.detection_config import (
     CRITICALITY_AMPLIFICATION as _CRITICALITY_AMPLIFICATION,
 )
 from mycelium_fractal_net.core.detection_config import (
-    DETECTION_CONFIG_VERSION as DETECTION_CONFIG_VERSION,
+    DETECTION_CONFIG_VERSION as DETECTION_CONFIG_VERSION,  # noqa: PLC0414  # re-export
 )
 from mycelium_fractal_net.core.detection_config import (
     DYNAMIC_ANOMALY_BASELINE as _DYNAMIC_ANOMALY_BASELINE,

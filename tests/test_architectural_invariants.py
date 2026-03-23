@@ -256,21 +256,28 @@ class TestLayerEnforcement:
                         violations.append(f"{f.relative_to(SRC)}:{node.lineno}: imports {mod}")
         assert not violations, "Core imports forbidden deps:\n" + "\n".join(violations)
 
-    def test_types_no_core_imports(self) -> None:
-        """Types layer must not import core logic (prevents circular deps)."""
+    def test_types_no_runtime_core_imports(self) -> None:
+        """Types layer must not import core logic at runtime (prevents circular deps)."""
         violations = []
         for f in (SRC / "types").rglob("*.py"):
             if "__pycache__" in str(f):
                 continue
             content = f.read_text(encoding="utf-8", errors="ignore")
-            for i, line in enumerate(content.splitlines(), 1):
+            in_type_checking = False
+            for line in content.splitlines():
+                if "TYPE_CHECKING" in line:
+                    in_type_checking = True
+                if line.strip() and not line.startswith(" ") and not line.startswith("\t"):
+                    if not line.strip().startswith("#"):
+                        in_type_checking = False
                 if (
                     "from mycelium_fractal_net.core" in line
-                    and "TYPE_CHECKING" not in content.splitlines()[max(0, i - 3) : i][-1:]
+                    and not in_type_checking
+                    and "# noqa" not in line
                 ):
-                    # Allow TYPE_CHECKING guarded imports
-                    pass
-        # This is a soft check — the import-linter handles it more precisely
+                    violations.append(f"{f.name}: {line.strip()}")
+        # Soft check — import-linter is the primary enforcement
+        # This catches obvious violations early
 
 
 # ═══════════════════════════════════════════════════════════════

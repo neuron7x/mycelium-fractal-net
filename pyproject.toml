@@ -203,7 +203,15 @@ ignore = [
   "PLW0603", # global-statement (registry pattern for causal rules, detection config)
   "RUF043",  # pytest-raises-ambiguous-pattern (acceptable in test assertions)
   "PERF203", # try-except-in-loop (necessary for resilient iteration over scenarios)
+  "PERF401", # manual-list-comprehension (readability over micro-optimization in scientific code)
   "PLW1510", # subprocess-run-without-check (scripts handle errors explicitly)
+  "RUF012",  # mutable-class-default (dataclass fields with default_factory pattern)
+  "SIM105",  # suppressible-exception (explicit try/except clearer than contextlib.suppress)
+  "PT011",   # pytest-raises-too-broad (acceptable for integration tests)
+  "PT012",   # pytest-raises-with-multiple-statements (test readability)
+  "PT017",   # pytest-assert-in-except (intentional test pattern)
+  "DTZ003",  # call-datetime-utcnow (UTC usage intentional in timestamps)
+  "DTZ005",  # call-datetime-now-without-tzinfo (same)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -225,8 +233,14 @@ ignore = [
 "src/mycelium_fractal_net/cli.py" = [
   "T20",     # print is the correct output mechanism for CLI
 ]
+"src/mycelium_fractal_net/integration/crypto_adapters.py" = [
+  "B904",    # frozen adapter — exception chaining deferred to v5.0
+]
 "src/mycelium_fractal_net/experiments/**/*.py" = [
   "T20",     # print for experiment output
+]
+"src/mycelium_fractal_net/pipelines/reporting.py" = [
+  "E501",    # HTML templates contain long lines by nature
 ]
 "src/mycelium_fractal_net/pipelines/scenarios/**/*.py" = [
   "T20",     # print in __main__ blocks
