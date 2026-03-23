@@ -34,6 +34,8 @@ class HDVEncoder:
     def __init__(
         self, n_features: int, D: int = DEFAULT_D, sigma: float = 1.0, seed: int = 42
     ) -> None:
+        if sigma <= 0 or not np.isfinite(sigma):
+            sigma = 1.0
         self.n_features = n_features
         self.D = D
         rng = np.random.default_rng(seed)
@@ -41,14 +43,18 @@ class HDVEncoder:
         self._b = rng.uniform(0, 2 * np.pi, D)
 
     def encode(self, features: np.ndarray) -> np.ndarray:
-        x = np.asarray(features, dtype=np.float64).ravel()
+        x = np.nan_to_num(
+            np.asarray(features, dtype=np.float64).ravel(),
+            nan=0.0,
+            posinf=10.0,
+            neginf=-10.0,
+        )
         padded = np.zeros(self.n_features)
         n = min(len(x), self.n_features)
         padded[:n] = x[:n]
-        # NaN/overflow safety: replace non-finite with 0, clip extreme values
-        padded = np.where(np.isfinite(padded), padded, 0.0)
         padded = np.clip(padded, -1e6, 1e6)
         projection = self._omega @ padded + self._b
+        projection = np.nan_to_num(projection, nan=0.0, posinf=np.pi, neginf=-np.pi)
         raw = np.sign(np.cos(projection))
         # Guarantee ±1 output (sign(0)=0 → map to +1)
         return np.where(raw == 0.0, 1.0, raw).astype(np.float32)
@@ -95,6 +101,13 @@ class BioMemory:
         if len(self._episodes) >= self.capacity:
             old = self._episodes.pop(0)
             self._superposition -= old.hdv.astype(np.float64)
+            self._dirty = True  # eviction: full rebuild needed
+        elif self._hdv_matrix is not None and not self._dirty:
+            # Append-only fast path: extend matrix without full rebuild
+            new_row = hdv.astype(np.float32).reshape(1, -1)
+            self._hdv_matrix = np.vstack([self._hdv_matrix, new_row])
+        else:
+            self._dirty = True
         self._episodes.append(entry)
         self._superposition += hdv.astype(np.float64)
         self._total_stored += 1

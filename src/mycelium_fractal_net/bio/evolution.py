@@ -72,14 +72,37 @@ def params_to_bio_config(params: np.ndarray) -> Any:
 
 
 def compute_fitness(bio_report: Any, diagnosis: Any) -> float:
-    kappa = float(bio_report.anastomosis.get("connectivity_mean", 0.0))
+    """Additive fitness — each component contributes independently.
+
+    Components (all in [0, 1], weighted sum):
+        ews_stability:   1 - ews_score (lower EWS = more stable = better)
+        causal:          causal gate pass rate
+        transport_diff:  physarum conductivity differentiation
+        growth:          hyphal density growth proxy
+        spiking_ok:      FHN spiking near optimal 8%
+    """
     ews = float(diagnosis.warning.ews_score) if diagnosis else 0.5
     causal_val = diagnosis.causal.decision.value if diagnosis else "degraded"
-    causal_score = {"pass": 1.0, "degraded": 0.7, "fail": 0.3}.get(causal_val, 0.5)
+    causal = {"pass": 1.0, "degraded": 0.7, "fail": 0.0}.get(causal_val, 0.5)
+
     spiking = float(bio_report.fhn.get("spiking_fraction", 0.0))
-    spiking_score = max(0.0, 1.0 - abs(spiking - 0.10) * 6.0)
-    fitness = (kappa * 5.0 + 0.1) * (1.0 - 0.4 * ews) * causal_score * (0.6 + 0.4 * spiking_score)
-    return float(np.clip(fitness, 0.0, 1.0))
+    spiking_ok = max(0.0, 1.0 - abs(spiking - 0.08) * 5.0)
+
+    d_max = float(bio_report.physarum.get("conductivity_max", 1.0))
+    d_mean = float(bio_report.physarum.get("conductivity_mean", 1.0))
+    transport_diff = min(1.0, max(0.0, (d_max - d_mean) / (d_mean + 1e-6)))
+
+    hyphae = float(bio_report.anastomosis.get("hyphal_density_mean", 0.0))
+    growth = min(1.0, hyphae * 200.0)
+
+    f = (
+        0.30 * (1.0 - ews)
+        + 0.25 * causal
+        + 0.20 * transport_diff
+        + 0.15 * growth
+        + 0.10 * spiking_ok
+    )
+    return float(np.clip(f, 0.0, 1.0))
 
 
 @dataclass

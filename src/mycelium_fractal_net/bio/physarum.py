@@ -194,7 +194,19 @@ class PhysarumEngine:
 
         b_fixed = b.copy()
         b_fixed[0] = 0.0
-        p_flat, _ = cg(L_csr, b_fixed, x0=state.p.ravel(), atol=1e-8, maxiter=500)
+
+        if N <= 32:
+            # Direct solver: deterministic, lower variance than iterative CG
+            from scipy.sparse.linalg import splu
+
+            try:
+                lu = splu(L_csr.tocsc())
+                p_flat = lu.solve(b_fixed)
+            except Exception:
+                p_flat, _ = cg(L_csr, b_fixed, x0=state.p.ravel(), atol=1e-8, maxiter=500)
+        else:
+            p_flat, _ = cg(L_csr, b_fixed, x0=state.p.ravel(), atol=1e-8, maxiter=500)
+
         state.p = p_flat.reshape(N, N)
         return state
 
