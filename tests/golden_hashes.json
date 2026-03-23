@@ -16,5 +16,11 @@
     "descriptor": "cb58257a360d33ba",
     "detection_score": 0.228463,
     "detection_label": "watch"
+  },
+  "balanced_criticality": {
+    "field": "e0f579fbf0c056a4",
+    "descriptor": "4031821d7d45c854",
+    "detection_score": 0.182041,
+    "detection_label": "nominal"
   }
 }

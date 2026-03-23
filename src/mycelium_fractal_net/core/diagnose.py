@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 import time
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Generator, Literal
 
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
@@ -68,7 +68,7 @@ def _build_narrative(
     ews_time: float,
     causal_decision: str,
     has_plan: bool,
-    plan_changes: list[dict] | None,
+    plan_changes: list[dict[str, Any]] | None,
 ) -> str:
     lines: list[str] = []
 
@@ -126,7 +126,7 @@ def _build_report(
         causal_decision=causal.decision.value,
     )
 
-    plan_changes: list[dict] | None = None
+    plan_changes: list[dict[str, Any]] | None = None
     if plan is not None and plan.has_viable_plan and plan.best_candidate is not None:
         plan_changes = [
             {"name": ch.name, "from": float(ch.current_value), "to": float(ch.proposed_value)}
@@ -147,7 +147,7 @@ def _build_report(
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000.0
     spec = seq.spec
-    metadata: dict = {
+    metadata: dict[str, object] = {
         "diagnosis_time_ms": round(elapsed_ms, 2),
         "causal_certificate": warning_obj.causal_certificate,
         "grid_size": int(spec.grid_size) if spec else 0,
