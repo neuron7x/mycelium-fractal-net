@@ -30,10 +30,9 @@ MAX_EXEMPT_MODULE_LOC = 1400
 
 # Modules exempt from MAX_MODULE_LOC but subject to MAX_EXEMPT_MODULE_LOC
 LOC_EXEMPT = {
-    "model.py": 1350,  # ML model (frozen, removal v5.0) — current: 1329
-    "api.py": 1100,  # Will be split in v5.0 — current: 1062
-    "causal_validation.py": 1050,  # Living spec — current: 1021
-    "config.py": 850,  # Validation logic — current: 810
+    # model.py DECOMPOSED → model_pkg/ (13 LOC re-export wrapper)
+    "causal_validation.py": 1050,  # Living spec document — current: 1021
+    "api.py": 950,  # WS handlers kept, V1 extracted — current: 937
     "denoise_1d.py": 800,  # Frozen signal — current: 767
     "legacy_features.py": 800,  # Legacy compat — current: 766
     "generate_dataset.py": 650,  # Experiment tooling — current: 596
@@ -132,7 +131,13 @@ class TestComplexityBudget:
         violations = json.loads(result.stdout)
         # Filter to non-exempt modules
         # Exempt: config validators, api websocket, legacy union-find, causal gate
-        exempt_files = ["config.py", "api.py", "legacy_features.py", "causal_validation.py"]
+        exempt_files = [
+            "config.py",
+            "config_validation.py",
+            "api.py",
+            "legacy_features.py",
+            "causal_validation.py",
+        ]
         real_violations = [
             f"{v['filename'].split('/')[-1]}:{v['location']['row']}: {v['message']}"
             for v in violations
