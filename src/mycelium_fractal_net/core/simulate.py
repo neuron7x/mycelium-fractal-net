@@ -84,8 +84,25 @@ def _persist_history_memmap(
     mm = np.lib.format.open_memmap(path, mode="w+", dtype=np.float64, shape=history.shape)
     mm[:] = history.astype(np.float64, copy=False)
     mm.flush()
-    readonly = np.load(path, mmap_mode="r+")
+    del mm  # Close the write handle to prevent fd leak
+    readonly = np.load(path, mmap_mode="r")
     return readonly, str(path)
+
+
+def cleanup_history_memmap(memmap_path: str | Path) -> None:
+    """Clean up memmap history file and its parent temp directory.
+
+    Call this when the FieldSequence is no longer needed to prevent
+    /tmp accumulation under sustained load.
+    """
+    import shutil
+
+    p = Path(memmap_path)
+    if p.exists():
+        p.unlink(missing_ok=True)
+    parent = p.parent
+    if parent.name.startswith("mfn-history-") and parent.exists():
+        shutil.rmtree(parent, ignore_errors=True)
 
 
 def simulate_final(spec: SimulationSpec) -> FieldSequence:

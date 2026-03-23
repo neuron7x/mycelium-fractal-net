@@ -268,10 +268,16 @@ async def metrics_fallback(path: str, request: Request) -> Response:
 
 @app.post("/validate", response_model=ValidateResponse)
 async def validate(request: ValidateRequest) -> ValidateResponse:
-    """Run validation cycle and return metrics."""
+    """Run validation cycle and return metrics.
+
+    CPU-bound validation runs in a thread pool to avoid blocking the event loop.
+    """
+    import asyncio
+
     try:
         ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
-        return run_validation_adapter(request, ctx)
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, run_validation_adapter, request, ctx)
     except Exception as e:
         logger.error(f"Validation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -279,10 +285,16 @@ async def validate(request: ValidateRequest) -> ValidateResponse:
 
 @app.post("/simulate", response_model=SimulateResponse)
 async def simulate(request: SimulateRequest) -> SimulateResponse:
-    """Simulate mycelium field."""
+    """Simulate mycelium field.
+
+    CPU-bound simulation runs in a thread pool to avoid blocking the event loop.
+    """
+    import asyncio
+
     try:
         ctx = ServiceContext(seed=request.seed, mode=ExecutionMode.API)
-        return run_simulation_adapter(request, ctx)
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, run_simulation_adapter, request, ctx)
     except Exception as e:
         logger.error(f"Simulation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -957,15 +969,23 @@ def _sequence_from_payload(payload: V1FieldPayload) -> FieldSequence:
 
 @app.post("/v1/simulate")
 async def v1_simulate(request: V1SimulationRequest) -> dict:
+    import asyncio
+
     spec = _spec_from_v1(request)
-    seq = simulate_history(spec) if request.with_history else simulate_final(spec)
+    loop = asyncio.get_running_loop()
+    fn = simulate_history if request.with_history else simulate_final
+    seq = await loop.run_in_executor(None, fn, spec)
     return seq.to_dict(include_arrays=True)
 
 
 @app.post("/v1/extract")
 async def v1_extract(payload: V1FieldPayload) -> dict:
+    import asyncio
+
     seq = _sequence_from_payload(payload)
-    return {"descriptor": compute_morphology_descriptor(seq).to_dict()}
+    loop = asyncio.get_running_loop()
+    desc = await loop.run_in_executor(None, compute_morphology_descriptor, seq)
+    return {"descriptor": desc.to_dict()}
 
 
 @app.post("/v1/detect")

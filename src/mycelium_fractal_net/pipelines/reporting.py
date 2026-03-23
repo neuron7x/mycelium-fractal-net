@@ -271,9 +271,25 @@ def build_analysis_report(
     comparison_sequence: FieldSequence | None = None,
     export_symbolic_context: bool = True,
 ) -> AnalysisReport:
+    import logging as _log
+
+    _report_logger = _log.getLogger(__name__)
+
     descriptor = compute_morphology_descriptor(sequence)
-    detection = detect_anomaly(sequence)
-    forecast = forecast_next(sequence, horizon=horizon)
+    try:
+        detection = detect_anomaly(sequence)
+    except Exception:
+        _report_logger.warning("Detection failed, using fallback", exc_info=True)
+        from mycelium_fractal_net.types.detection import AnomalyEvent
+
+        detection = AnomalyEvent(score=0.0, label="error", confidence=0.0)
+    try:
+        forecast = forecast_next(sequence, horizon=horizon)
+    except Exception:
+        _report_logger.warning("Forecast failed, using fallback", exc_info=True)
+        from mycelium_fractal_net.types.forecast import ForecastResult
+
+        forecast = ForecastResult(horizon=horizon)
     forecast_final = (
         np.asarray(forecast.predicted_states[-1], dtype=np.float64)
         if forecast.predicted_states

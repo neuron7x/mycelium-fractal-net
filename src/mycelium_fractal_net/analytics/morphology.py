@@ -143,20 +143,24 @@ def _neuromodulation_metrics(sequence: FieldSequence) -> NeuromodulationFeatures
     )
 
 
+import threading
+
 _descriptor_cache: dict[str, MorphologyDescriptor] = {}
 _CACHE_MAX_SIZE = 64
+_cache_lock = threading.Lock()
 
 
 def compute_morphology_descriptor(sequence: FieldSequence) -> MorphologyDescriptor:
     """Compute morphology descriptor with automatic caching by runtime_hash.
 
-    Eliminates redundant recomputation when the same FieldSequence is
-    analyzed by detect, forecast, compare, and report in a single pipeline.
+    Thread-safe LRU cache eliminates redundant recomputation when the same
+    FieldSequence is analyzed by detect, forecast, compare, and report.
     """
     cache_key = sequence.runtime_hash
-    cached = _descriptor_cache.get(cache_key)
-    if cached is not None:
-        return cached
+    with _cache_lock:
+        cached = _descriptor_cache.get(cache_key)
+        if cached is not None:
+            return cached
 
     field_data = sequence.history if sequence.history is not None else sequence.field
     base = compute_features(field_data).to_dict()
@@ -202,9 +206,10 @@ def compute_morphology_descriptor(sequence: FieldSequence) -> MorphologyDescript
         neuromodulation=neuromodulation.to_dict(),
         metadata=metadata,
     )
-    # Cache result; evict oldest if cache is full
-    if len(_descriptor_cache) >= _CACHE_MAX_SIZE:
-        oldest_key = next(iter(_descriptor_cache))
-        del _descriptor_cache[oldest_key]
-    _descriptor_cache[cache_key] = result
+    # Cache result; thread-safe eviction
+    with _cache_lock:
+        if len(_descriptor_cache) >= _CACHE_MAX_SIZE:
+            oldest_key = next(iter(_descriptor_cache))
+            del _descriptor_cache[oldest_key]
+        _descriptor_cache[cache_key] = result
     return result

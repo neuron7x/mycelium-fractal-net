@@ -110,6 +110,19 @@ _CFG = _load_config()
 CONFIG_HASH = _config_hash()
 
 
+def reload_config() -> str:
+    """Reload detection thresholds from disk. Returns new config hash.
+
+    Call this after updating detection_thresholds_v1.json at runtime.
+    Thread-safe: module-level assignments are atomic in CPython.
+    """
+    global _CFG, CONFIG_HASH  # noqa: PLW0603
+    _CFG = _load_config()
+    CONFIG_HASH = _config_hash()
+    logger.info("Detection config reloaded, hash=%s", CONFIG_HASH)
+    return CONFIG_HASH
+
+
 def _get(section: str, key: str, default: float) -> float:
     """Get a threshold value from config, falling back to hardcoded default."""
     try:
