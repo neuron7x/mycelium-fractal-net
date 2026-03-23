@@ -132,11 +132,14 @@ Forecast field evolution.
 ```json
 {
   "horizon": 4,
+  "version": "mfn-forecast-result-v1",
+  "method": "adaptive_descriptor_extrapolation",
   "predicted_states": ["..."],
-  "uncertainty_envelope": ["..."],
-  "structural_error": 0.039,
-  "damping": 0.87,
-  "benchmark_metrics": { "..." : "..." }
+  "uncertainty_envelope": { "plasticity_index": 0.0, "..." : "..." },
+  "benchmark_metrics": {
+    "forecast_structural_error": 0.0005,
+    "adaptive_damping": 0.85
+  }
 }
 ```
 

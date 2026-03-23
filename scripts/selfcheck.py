@@ -96,6 +96,20 @@ def main() -> None:
     )
     results["invariants"] = ok
 
+    # 6b. Docs↔runtime (examples must execute)
+    ok, _ = _run(
+        "Docs examples",
+        [VENV, "-m", "pytest", "tests/test_docs_examples.py", "-v", "--timeout=60"],
+    )
+    results["docs_examples"] = ok
+
+    # 6c. Golden hashes
+    ok, _ = _run(
+        "Golden hashes",
+        [VENV, "-m", "pytest", "tests/test_golden_hashes.py", "-v", "--timeout=60"],
+    )
+    results["golden_hashes"] = ok
+
     # 7. Core tests
     ok, _ = _run(
         "Core tests",

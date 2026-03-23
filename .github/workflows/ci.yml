@@ -127,6 +127,12 @@ jobs:
         run: uv run python scripts/interface_parity_check.py
       - name: Architectural invariants
         run: uv run pytest tests/test_architectural_invariants.py -v --timeout=60
+      - name: Docs↔runtime contract (examples must execute)
+        run: uv run pytest tests/test_docs_examples.py -v --timeout=60
+      - name: Golden hash regression
+        run: uv run pytest tests/test_golden_hashes.py -v --timeout=60
+      - name: Schema↔code sync
+        run: uv run pytest tests/test_schema_code_sync.py -v --timeout=60
 
   causal-gate:
     name: Causal Gate

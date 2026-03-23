@@ -25,15 +25,18 @@ MAX_TYPE_IGNORE_COMMENTS = 1  # 1 allowed: BoundaryCondition enum compat in engi
 MAX_FROZEN_LOC = 3500  # Frozen surface area budget
 CORE_COVERAGE_FLOOR = 80.0  # Branch coverage minimum
 
-# Modules exempt from LOC limit (frozen/legacy, will be removed in v5.0)
+# Hard cap for exempt modules — even exempt files cannot grow without bound
+MAX_EXEMPT_MODULE_LOC = 1400
+
+# Modules exempt from MAX_MODULE_LOC but subject to MAX_EXEMPT_MODULE_LOC
 LOC_EXEMPT = {
-    "model.py",  # ML model (frozen, removal v5.0)
-    "api.py",  # Will be split in v5.0
-    "causal_validation.py",  # Living spec document, complexity inherent
-    "config.py",  # Validation logic, candidate for split
-    "denoise_1d.py",  # Frozen signal processing
-    "legacy_features.py",  # Legacy compat layer
-    "generate_dataset.py",  # Experiment tooling
+    "model.py": 1350,  # ML model (frozen, removal v5.0) — current: 1329
+    "api.py": 1100,  # Will be split in v5.0 — current: 1062
+    "causal_validation.py": 1050,  # Living spec — current: 1021
+    "config.py": 850,  # Validation logic — current: 810
+    "denoise_1d.py": 800,  # Frozen signal — current: 767
+    "legacy_features.py": 800,  # Legacy compat — current: 766
+    "generate_dataset.py": 650,  # Experiment tooling — current: 596
 }
 
 FROZEN_PATHS = [
@@ -81,6 +84,22 @@ class TestModuleSizeBudget:
             if loc > MAX_MODULE_LOC:
                 violations.append(f"{f.relative_to(SRC)}: {loc} LOC (max {MAX_MODULE_LOC})")
         assert not violations, "Modules exceeding LOC budget:\n" + "\n".join(violations)
+
+    def test_exempt_modules_within_their_cap(self) -> None:
+        """Exempt modules have per-file caps. They cannot grow silently."""
+        violations = []
+        for f in SRC.rglob("*.py"):
+            if "__pycache__" in str(f):
+                continue
+            if f.name in LOC_EXEMPT:
+                loc = _count_loc(f)
+                cap = LOC_EXEMPT[f.name]
+                if loc > cap:
+                    violations.append(
+                        f"{f.name}: {loc} LOC (cap {cap}). "
+                        "Split the module or raise the cap with justification."
+                    )
+        assert not violations, "Exempt modules exceeded their cap:\n" + "\n".join(violations)
 
 
 # ═══════════════════════════════════════════════════════════════

@@ -32,7 +32,7 @@ seq = mfn.simulate(mfn.SimulationSpec(grid_size=64, steps=32, seed=42))
 
 seq.detect()       # → AnomalyEvent(label=nominal, score=0.18, confidence=0.79)
 seq.extract()      # → MorphologyDescriptor(57-dim embedding, 6 feature groups)
-seq.forecast(4)    # → ForecastResult(horizon=4, structural_error=0.039)
+seq.forecast(4)    # → ForecastResult(h=4, method=adaptive_descriptor_extrapolation, error=0.000)
 seq.compare(seq)   # → ComparisonResult(label=near-identical, distance=0.0)
 ```
 
