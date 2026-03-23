@@ -205,14 +205,14 @@ class ReactionDiffusionEngine:
 
         for step in range(steps):
             self._simulation_step(step, turing_enabled)
-            if return_history:
-                history[step] = self._export_field()  # type: ignore[index]
+            if return_history and history is not None:
+                history[step] = self._export_field()
             self._metrics.steps_computed += 1
 
         self._update_field_metrics()
 
-        if return_history:
-            return history, self._metrics  # type: ignore[return-value]
+        if return_history and history is not None:
+            return history, self._metrics
         return self._export_field().copy(), self._metrics
 
     def _simulation_step(self, step: int, turing_enabled: bool) -> None:
@@ -388,7 +388,7 @@ class ReactionDiffusionEngine:
     def _compute_laplacian(self, field: NDArray[np.floating]) -> NDArray[np.floating]:
         result: NDArray[np.floating] = numerics_compute_laplacian(
             field,
-            boundary=self.config.boundary_condition.value,  # type: ignore[arg-type]
+            boundary=self.config.boundary_condition.value,  # type: ignore[arg-type]  # BoundaryCondition enum compat
             check_stability=False,
             use_accel=self.config.accel_laplacian,
         )

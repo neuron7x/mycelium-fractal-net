@@ -74,8 +74,15 @@ from .pipelines import (
     run_forecast_pipeline,
     run_scenario,
 )
-from .types.detection import RegimeState
-from .types.features import FEATURE_COUNT, FEATURE_NAMES
+from .types.detection import (
+    AnomalyEvent,  # noqa: TC001
+    RegimeState,
+)
+from .types.features import (
+    FEATURE_COUNT,
+    FEATURE_NAMES,
+    MorphologyDescriptor,  # noqa: TC001
+)
 from .types.field import (
     BoundaryCondition,
     FieldHistory,
@@ -89,11 +96,8 @@ from .types.field import (
     SerotonergicPlasticitySpec,
     SimulationSpec,
 )
-
-from .types.detection import AnomalyEvent  # noqa: E402, TCH001
-from .types.features import MorphologyDescriptor  # noqa: E402, TCH001
-from .types.forecast import ComparisonResult, ForecastResult  # noqa: E402, TCH001
-from .types.report import AnalysisReport  # noqa: E402, TCH001
+from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
+from .types.report import AnalysisReport  # noqa: TC001
 
 
 def plan_intervention(

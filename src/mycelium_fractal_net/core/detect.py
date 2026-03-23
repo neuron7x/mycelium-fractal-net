@@ -18,9 +18,6 @@ from mycelium_fractal_net.analytics.morphology import compute_morphology_descrip
 from mycelium_fractal_net.core.detection_config import (
     ANOMALY_CONFIDENCE_BASE as _ANOMALY_CONFIDENCE_BASE,
 )
-from mycelium_fractal_net.core.detection_config import (  # noqa: F401
-    DETECTION_CONFIG_VERSION as DETECTION_CONFIG_VERSION,
-)
 from mycelium_fractal_net.core.detection_config import (
     ANOMALY_CONFIDENCE_MAX as _ANOMALY_CONFIDENCE_MAX,
 )
@@ -56,6 +53,9 @@ from mycelium_fractal_net.core.detection_config import (
 )
 from mycelium_fractal_net.core.detection_config import (
     CRITICALITY_AMPLIFICATION as _CRITICALITY_AMPLIFICATION,
+)
+from mycelium_fractal_net.core.detection_config import (
+    DETECTION_CONFIG_VERSION as DETECTION_CONFIG_VERSION,
 )
 from mycelium_fractal_net.core.detection_config import (
     DYNAMIC_ANOMALY_BASELINE as _DYNAMIC_ANOMALY_BASELINE,
