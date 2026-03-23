@@ -108,6 +108,12 @@ from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
 from .types.inverse import InverseSynthesisResult
 from .types.report import AnalysisReport  # noqa: TC001
 
+# Bio extension — fungal mechanisms (requires scipy)
+try:
+    from .bio import BioConfig, BioExtension, BioReport  # noqa: F401
+except ImportError:
+    pass  # scipy not available in minimal install
+
 
 def plan_intervention(
     source: FieldSequence,
