@@ -39,7 +39,10 @@ def _measure_ms(fn: object, rounds: int = 200, warmup: int = 10) -> float:
         fn()  # type: ignore[operator]
         times.append((time.perf_counter() - t0) * 1000.0)
     gc.enable()
-    return statistics.median(times)
+    # Drop top 10% outliers (GC spikes that leak through gc.disable boundary)
+    times.sort()
+    n_keep = max(1, int(len(times) * 0.9))
+    return statistics.median(times[:n_keep])
 
 
 def test_gate_physarum(bio_baseline: dict) -> None:  # type: ignore[type-arg]

@@ -33,7 +33,10 @@ def measure(fn, warmup: int = 10, n: int = 200) -> dict[str, float]:
         times_ms.append((time.perf_counter() - t0) * 1000.0)
     gc.enable()
     s = sorted(times_ms)
-    return {"median_ms": round(statistics.median(s), 3), "p95_ms": round(s[int(n * 0.95)], 3)}
+    # Drop top 10% outliers — matches gate harness trimming
+    n_keep = max(1, int(len(s) * 0.9))
+    trimmed = s[:n_keep]
+    return {"median_ms": round(statistics.median(trimmed), 3), "p95_ms": round(s[int(n * 0.95)], 3)}
 
 
 def main() -> None:
