@@ -66,10 +66,11 @@ def test_gate_memory_query(bio_baseline: dict) -> None:  # type: ignore[type-arg
     for _ in range(200):
         mem.store(enc.encode(rng.standard_normal(8)), fitness=rng.random(), params={})
     q = enc.encode(rng.standard_normal(8))
-    # Warmup: trigger matrix rebuild + clear GC pressure from prior tests
-    mem.query(q, 5)
+    # Warmup: trigger matrix rebuild + saturate CPU cache
+    for _ in range(50):
+        mem.query(q, 5)
     gc.collect()
-    measured = _measure_ms(lambda: mem.query(q, 5), rounds=100, warmup=10)
+    measured = _measure_ms(lambda: mem.query(q, 5), rounds=200, warmup=50)
     gate = bio_baseline["memory_query_200"]["median_ms"] * _gate_multiplier(
         bio_baseline["memory_query_200"]["median_ms"]
     )

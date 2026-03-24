@@ -20,6 +20,7 @@ Computational contracts (enforced by benchmark gates):
 
 from .anastomosis import AnastomosisConfig, AnastomosisEngine, AnastomosisState
 from .chemotaxis import ChemotaxisConfig, ChemotaxisEngine, ChemotaxisState
+from .compute_reserve import ComputeBudget, ComputeMode, GlycogenStore, ReserveConfig
 from .dispersal import DispersalConfig, SporeDispersalEngine, SporeDispersalState
 from .evolution import (
     PARAM_BOUNDS,
@@ -62,6 +63,7 @@ __all__ = [
     "BasinStabilityAnalyzer",
     "BioConfig",
     "BioExtension",
+    "ComputeBudget",
     "BioMemory",
     "BioReport",
     "FieldActiveInference",
