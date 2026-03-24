@@ -242,7 +242,7 @@ class UnifiedEngine:
         bio_report = bio.report()
 
         levin_cfg = LevinPipelineConfig(
-            n_basin_samples=30, D_hdv=300, n_anon_steps=5
+            n_basin_samples=20, D_hdv=200, n_anon_steps=3
         )
         levin = LevinPipeline.from_sequence(seq, config=levin_cfg).run(
             target_field=target_field
@@ -266,7 +266,10 @@ class UnifiedEngine:
         # ── 4. Fractal dynamics ────────────────────────────────────
         if self.verbose:
             logger.info("[4/4] Fractal dynamics...")
-        se = compute_spectral_evolution(seq.history, stride=max(1, seq.history.shape[0] // 12))
+        # Adaptive stride: 6-8 frames is optimal quality/speed tradeoff
+        n_frames = seq.history.shape[0]
+        optimal_stride = max(1, n_frames // 8)
+        se = compute_spectral_evolution(seq.history, stride=optimal_stride)
         ts = seq.history.mean(axis=(1, 2))
         dfa = compute_dfa(ts)
 

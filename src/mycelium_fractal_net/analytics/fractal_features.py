@@ -449,10 +449,8 @@ def compute_multifractal_spectrum(
 ) -> MultifractalSpectrum:
     """Compute Chhabra-Jensen multifractal singularity spectrum for 2D field.
 
-    Uses dyadic box-counting with q-weighted measures. < 30ms for N=32.
+    Uses dyadic box-counting with q-weighted measures and batch regression.
     """
-    from scipy.stats import linregress as _linregress
-
     if q_values is None:
         q_values = np.linspace(-3, 5, 17)
 
@@ -474,38 +472,55 @@ def compute_multifractal_spectrum(
             r_squared=np.zeros(len(q_values)),
         )
 
-    alpha_q = np.zeros(len(q_values))
-    f_q = np.zeros(len(q_values))
-    r2 = np.zeros(len(q_values))
+    n_q = len(q_values)
+    n_s = len(sizes)
 
-    for qi, q in enumerate(q_values):
-        ma_vals: list[float] = []
-        mf_vals: list[float] = []
-        for eps in sizes:
-            sums = np.add.reduceat(
-                np.add.reduceat(f, np.arange(0, N, eps), axis=0),
-                np.arange(0, N, eps),
-                axis=1,
-            )
-            p_arr = (sums / sums.sum()).ravel()
-            p_arr = p_arr[p_arr > 1e-20]
+    # Pre-compute box sums for all scales once (avoid repeated reduceat)
+    box_sums: list[np.ndarray] = []
+    for eps in sizes:
+        sums = np.add.reduceat(
+            np.add.reduceat(f, np.arange(0, N, eps), axis=0),
+            np.arange(0, N, eps),
+            axis=1,
+        )
+        box_sums.append(sums)
 
+    # Build Ma and Mf matrices: (n_q, n_s) — all q-values × all scales
+    Ma = np.zeros((n_q, n_s))
+    Mf = np.zeros((n_q, n_s))
+
+    for si, sums in enumerate(box_sums):
+        p_arr = (sums / sums.sum()).ravel()
+        p_arr = p_arr[p_arr > 1e-20]
+        log_p = np.log(p_arr)
+
+        for qi, q in enumerate(q_values):
             if abs(q) < 1e-6:
                 mu = np.ones_like(p_arr) / len(p_arr)
             else:
                 pq = p_arr**q
                 mu = pq / pq.sum()
+            Ma[qi, si] = float(np.sum(mu * log_p))
+            Mf[qi, si] = float(np.sum(mu * np.log(mu + 1e-30)))
 
-            ma_vals.append(float(np.sum(mu * np.log(p_arr))))
-            mf_vals.append(float(np.sum(mu * np.log(mu + 1e-30))))
+    # Batch linear regression: vectorized slope + R² for all q at once
+    log_eps = np.log(np.array(sizes, dtype=float))
+    x_mean = log_eps.mean()
+    x_var = np.sum((log_eps - x_mean) ** 2)
 
-        log_eps = np.log(np.array(sizes, dtype=float))
-        reg_a = _linregress(log_eps, np.array(ma_vals))
-        reg_f = _linregress(log_eps, np.array(mf_vals))
+    def _batch_slopes(Y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """Compute slope and R² for each row of Y vs log_eps."""
+        y_mean = Y.mean(axis=1, keepdims=True)
+        slopes = ((Y - y_mean) * (log_eps - x_mean)).sum(axis=1) / x_var
+        y_pred = y_mean.ravel()[:, None] + slopes[:, None] * (log_eps - x_mean)
+        ss_res = np.sum((Y - y_pred) ** 2, axis=1)
+        ss_tot = np.sum((Y - y_mean) ** 2, axis=1)
+        r2_arr = np.where(ss_tot > 1e-30, 1.0 - ss_res / ss_tot, 0.0)
+        return slopes, r2_arr
 
-        alpha_q[qi] = reg_a.slope
-        f_q[qi] = reg_f.slope
-        r2[qi] = min(reg_a.rvalue**2, reg_f.rvalue**2)
+    alpha_q, r2_a = _batch_slopes(Ma)
+    f_q, r2_f = _batch_slopes(Mf)
+    r2 = np.minimum(r2_a, r2_f)
 
     return MultifractalSpectrum(alpha_q=alpha_q, f_q=f_q, q_values=q_values, r_squared=r2)
 
