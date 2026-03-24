@@ -72,8 +72,10 @@ class BioMemory:
         self._episodes: list[MemoryEntry] = []
         self._superposition = np.zeros(encoder.D, dtype=np.float64)
         self._total_stored = 0
-        self._hdv_matrix: np.ndarray | None = None
-        self._dirty = True
+        # Pre-allocated matrix: capacity × D, filled up to _mat_len
+        self._hdv_matrix = np.empty((capacity, encoder.D), dtype=np.float32)
+        self._mat_len = 0  # number of valid rows in _hdv_matrix
+        self._dirty = False
 
     @property
     def size(self) -> int:
@@ -102,22 +104,26 @@ class BioMemory:
             old = self._episodes.pop(0)
             self._superposition -= old.hdv.astype(np.float64)
             self._dirty = True  # eviction: full rebuild needed
-        elif self._hdv_matrix is not None and not self._dirty:
-            # Append-only fast path: extend matrix without full rebuild
-            new_row = hdv.astype(np.float32).reshape(1, -1)
-            self._hdv_matrix = np.vstack([self._hdv_matrix, new_row])
-        else:
-            self._dirty = True
         self._episodes.append(entry)
         self._superposition += hdv.astype(np.float64)
         self._total_stored += 1
-        self._dirty = True
+
+        if not self._dirty:
+            # Fast path: write directly into pre-allocated matrix
+            idx = self._mat_len
+            if idx < self.capacity:
+                self._hdv_matrix[idx] = hdv.astype(np.float32)
+                self._mat_len = idx + 1
 
     def _rebuild_matrix(self) -> None:
-        if not self._episodes:
-            self._hdv_matrix = None
+        n = len(self._episodes)
+        if n == 0:
+            self._mat_len = 0
             return
-        self._hdv_matrix = np.stack([ep.hdv for ep in self._episodes], axis=0).astype(np.float64)
+        # Refill pre-allocated buffer
+        for i, ep in enumerate(self._episodes):
+            self._hdv_matrix[i] = ep.hdv.astype(np.float32)
+        self._mat_len = n
 
     def query(
         self, query_hdv: np.ndarray, k: int = 5
@@ -127,9 +133,12 @@ class BioMemory:
         if self._dirty:
             self._rebuild_matrix()
             self._dirty = False
-        if self._hdv_matrix is None:
+        n_rows = self._mat_len
+        if n_rows == 0:
             return []
-        sims = (self._hdv_matrix @ query_hdv.astype(np.float64)) / self.encoder.D
+        # Use only valid rows (slice, no copy)
+        mat = self._hdv_matrix[:n_rows]
+        sims = (mat @ query_hdv.astype(np.float32)) / self.encoder.D
         n = min(k, len(sims))
         if n >= len(sims):
             top_idx = np.argsort(sims)[::-1][:n]
