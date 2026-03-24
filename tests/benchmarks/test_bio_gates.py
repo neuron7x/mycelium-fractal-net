@@ -98,3 +98,20 @@ def test_gate_bio_step(bio_baseline: dict) -> None:  # type: ignore[type-arg]
         bio_baseline["bio_step_16"]["median_ms"]
     )
     assert measured <= gate, f"bio_step REGRESSION: {measured:.1f}ms > {gate:.1f}ms"
+
+
+def test_gate_unified_engine(bio_baseline: dict) -> None:  # type: ignore[type-arg]
+    """UnifiedEngine.analyze() must not regress beyond 3× calibrated baseline."""
+    from mycelium_fractal_net.core.unified_engine import UnifiedEngine
+
+    seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=20, seed=42))
+    engine = UnifiedEngine()
+    engine.analyze(seq)  # warmup
+    measured = _measure_ms(lambda: engine.analyze(seq), rounds=3, warmup=1)
+    if "unified_engine_32" in bio_baseline:
+        gate = bio_baseline["unified_engine_32"]["median_ms"] * _gate_multiplier(
+            bio_baseline["unified_engine_32"]["median_ms"]
+        )
+    else:
+        gate = 3000.0  # conservative fallback: 3 seconds
+    assert measured <= gate, f"unified REGRESSION: {measured:.0f}ms > {gate:.0f}ms"

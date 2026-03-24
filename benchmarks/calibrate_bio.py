@@ -87,6 +87,16 @@ def main() -> None:
     baselines["meta_single_eval"] = {**r, "unit": "ms/eval"}
     print(f"  meta_eval: {r['median_ms']}ms")
 
+    # UnifiedEngine (full system)
+    from mycelium_fractal_net.core.unified_engine import UnifiedEngine
+
+    seq32 = mfn.simulate(mfn.SimulationSpec(grid_size=32, steps=60, seed=42))
+    engine = UnifiedEngine()
+    engine.analyze(seq32)  # warmup
+    r = measure(lambda: engine.analyze(seq32), warmup=1, n=5)
+    baselines["unified_engine_32"] = {**r, "unit": "ms/analyze"}
+    print(f"  unified: {r['median_ms']}ms")
+
     out = {
         "_note": "Calibrated baselines. Recalibrate: python benchmarks/calibrate_bio.py",
         "_python": f"{sys.version_info.major}.{sys.version_info.minor}",

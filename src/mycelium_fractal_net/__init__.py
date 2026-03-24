@@ -115,6 +115,24 @@ except ImportError:
     pass  # scipy not available in minimal install
 
 
+def full_analyze(
+    seq: FieldSequence,
+    target_field: Any = None,
+    verbose: bool = False,
+) -> Any:
+    """Full system analysis in one call.
+
+    Integrates core diagnosis + bio + Levin + fractal arsenal + fractal dynamics.
+
+    >>> report = mfn.full_analyze(seq)
+    >>> print(report.summary())
+    >>> print(report.interpretation())
+    """
+    from .core.unified_engine import UnifiedEngine
+
+    return UnifiedEngine(verbose=verbose).analyze(seq, target_field=target_field)
+
+
 def plan_intervention(
     source: FieldSequence,
     target_regime: str = "stable",
@@ -413,6 +431,7 @@ V1_SURFACE = (
     "plan_intervention",
     "diagnose",
     "diagnose_streaming",
+    "full_analyze",
     "early_warning",
     "watch",
     "SimulationSpec",
