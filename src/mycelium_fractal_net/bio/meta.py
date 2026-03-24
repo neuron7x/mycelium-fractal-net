@@ -108,7 +108,7 @@ class MetaOptimizer:
         return result
 
     def memory_aware_evaluate(self, params: np.ndarray) -> tuple[float, bool]:
-        """Memory aware evaluate."""
+        """Evaluate with HDV memory cache — returns (fitness, was_cached)."""
         self._total_queries += 1
         hdv = self.encoder.encode(self._norm(params))
         fam = self.memory.superposition_familiarity(hdv)
@@ -134,7 +134,7 @@ class MetaOptimizer:
         sigma0: float = 0.3,
         verbose: bool = True,
     ) -> MetaOptimizerResult:
-        """Run."""
+        """Run memory-augmented CMA-ES optimization."""
         t0 = time.perf_counter()
         n = len(PARAM_NAMES)
         _lo, _hi = PARAM_BOUNDS[:, 0], PARAM_BOUNDS[:, 1]

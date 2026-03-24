@@ -22,12 +22,15 @@ Design principles:
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -190,9 +193,7 @@ class ComputeBudget:
             self._calls_since_mode_change = 0
             self._mode_switches += 1
             if self.config.verbose:
-                print(  # noqa: T201
-                    f"[ComputeBudget] {old_mode.value} -> {new_mode.value}: {reason}"
-                )
+                logger.info("%s -> %s: %s", old_mode.value, new_mode.value, reason)
         return reason
 
     def warmup(
@@ -203,7 +204,7 @@ class ComputeBudget:
     ) -> None:
         """Pre-synthesize glycogen (call at startup or idle time)."""
         if self.config.verbose:
-            print("[ComputeBudget] Synthesizing glycogen reserve...")  # noqa: T201
+            logger.info("Synthesizing glycogen reserve...")
         t0 = time.perf_counter()
         L = laplacian_fn(D_h, D_v)
         L_dense = L.toarray() if hasattr(L, "toarray") else np.asarray(L)
@@ -211,9 +212,7 @@ class ComputeBudget:
         self.store.store_eigen(D_h, D_v, eigenvalues, eigenvectors)
         elapsed = (time.perf_counter() - t0) * 1000
         if self.config.verbose:
-            print(  # noqa: T201
-                f"[ComputeBudget] Glycogen synthesized in {elapsed:.0f}ms"
-            )
+            logger.info("Glycogen synthesized in %.0fms", elapsed)
 
     def eigen(
         self,

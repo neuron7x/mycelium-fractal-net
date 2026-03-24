@@ -18,7 +18,7 @@ __all__ = ["DispersalConfig", "SporeDispersalEngine", "SporeDispersalState"]
 
 @dataclass(frozen=True)
 class DispersalConfig:
-    """Configuration for dispersal config."""
+    """Fat-tailed spore dispersal parameters (Nathan et al. 2012)."""
 
     alpha_levy: float = 1.5
     r_min: float = 1.0
@@ -30,7 +30,7 @@ class DispersalConfig:
 
 @dataclass(slots=True)
 class SporeDispersalState:
-    """State container for spore dispersal state."""
+    """Spore dispersal state: bank, airborne, and germination fields."""
 
     spore_bank: np.ndarray
     spore_air: np.ndarray
@@ -50,7 +50,7 @@ class SporeDispersalState:
 
 
 class SporeDispersalEngine:
-    """Spore dispersal engine."""
+    """Fat-tailed Levy flight spore dispersal engine."""
 
     def __init__(self, N: int, config: DispersalConfig | None = None) -> None:
         self.N = N

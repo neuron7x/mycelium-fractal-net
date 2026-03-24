@@ -18,7 +18,7 @@ __all__ = ["ChemotaxisConfig", "ChemotaxisEngine", "ChemotaxisState"]
 
 @dataclass(frozen=True)
 class ChemotaxisConfig:
-    """Configuration for chemotaxis config."""
+    """Keller-Segel chemotaxis parameters (1970)."""
 
     D_rho: float = 0.1
     D_c: float = 1.0
@@ -34,7 +34,7 @@ class ChemotaxisConfig:
 
 @dataclass(slots=True)
 class ChemotaxisState:
-    """State container for chemotaxis state."""
+    """Chemotaxis state: cell density, chemoattractant, and flux."""
 
     rho: np.ndarray
     c: np.ndarray
@@ -62,7 +62,7 @@ class ChemotaxisState:
 
 
 class ChemotaxisEngine:
-    """Chemotaxis engine."""
+    """Keller-Segel chemotactic gradient-following engine."""
 
     def __init__(self, N: int, config: ChemotaxisConfig | None = None) -> None:
         self.N = N

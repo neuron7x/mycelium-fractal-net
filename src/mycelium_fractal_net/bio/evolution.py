@@ -53,7 +53,7 @@ DEFAULT_PARAMS = np.array([1.0, 0.01, 0.05, 0.05, 0.13, 1.0, 2.0, 1.5])
 
 
 def params_to_bio_config(params: np.ndarray) -> Any:
-    """Params to bio config."""
+    """Convert flat parameter vector to BioConfig with NaN/Inf safety."""
     from mycelium_fractal_net.bio.anastomosis import AnastomosisConfig
     from mycelium_fractal_net.bio.chemotaxis import ChemotaxisConfig
     from mycelium_fractal_net.bio.dispersal import DispersalConfig
@@ -150,7 +150,7 @@ class BioEvolutionOptimizer:
         self.seed = seed
 
     def evaluate(self, params: np.ndarray) -> float:
-        """Evaluate."""
+        """Evaluate fitness of a parameter vector via simulation."""
         from mycelium_fractal_net.bio.extension import BioExtension
         from mycelium_fractal_net.core.diagnose import diagnose
         from mycelium_fractal_net.core.simulate import simulate_history
@@ -173,7 +173,7 @@ class BioEvolutionOptimizer:
         sigma0: float = 0.3,
         verbose: bool = True,
     ) -> BioEvolutionResult:
-        """Run."""
+        """Run CMA-ES optimization over the parameter space."""
         t0 = time.perf_counter()
         n = len(PARAM_NAMES)
         history: list[dict[str, Any]] = []

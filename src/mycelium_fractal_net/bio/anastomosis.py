@@ -22,7 +22,7 @@ _LAPLACIAN = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float64)
 
 @dataclass(frozen=True)
 class AnastomosisConfig:
-    """Configuration for anastomosis config."""
+    """Hyphal anastomosis parameters (Glass et al. 2004)."""
 
     D_tip: float = 0.05
     R_growth: float = 0.001
@@ -36,7 +36,7 @@ class AnastomosisConfig:
 
 @dataclass(slots=True)
 class AnastomosisState:
-    """State container for anastomosis state."""
+    """Hyphal network state: tip density, hyphal density, and connectivity."""
 
     C: np.ndarray
     B: np.ndarray
@@ -59,7 +59,7 @@ class AnastomosisState:
 
 
 class AnastomosisEngine:
-    """Anastomosis engine."""
+    """Hyphal anastomosis engine: tip growth, branching, and fusion."""
 
     def __init__(self, N: int, config: AnastomosisConfig | None = None) -> None:
         self.N = N

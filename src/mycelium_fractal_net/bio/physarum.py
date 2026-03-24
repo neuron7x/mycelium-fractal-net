@@ -27,7 +27,7 @@ DEFAULT_I0 = 1.0
 
 @dataclass(frozen=True)
 class PhysarumConfig:
-    """Configuration for physarum config."""
+    """Physarum adaptive conductivity parameters (Tero et al. 2007)."""
 
     gamma: float = DEFAULT_GAMMA
     alpha: float = DEFAULT_ALPHA
@@ -38,7 +38,7 @@ class PhysarumConfig:
 
 @dataclass
 class PhysarumState:
-    """State container for physarum state."""
+    """Physarum network state: conductivity, pressure, and flux fields."""
 
     D_h: np.ndarray
     D_v: np.ndarray
@@ -71,7 +71,7 @@ class PhysarumState:
 
 
 class PhysarumEngine:
-    """Physarum engine."""
+    """Physarum polycephalum adaptive transport network solver."""
 
     def __init__(self, N: int, config: PhysarumConfig | None = None) -> None:
         self.N = N

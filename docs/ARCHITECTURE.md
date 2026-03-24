@@ -31,6 +31,13 @@ The architecture follows a strict layered design where each layer may only depen
 │  analytics/morphology · connectivity · temporal          │
 │  Feature computation. Stateless transformations.         │
 ├─────────────────────────────────────────────────────────┤
+│  Bio Extension                                          │
+│  bio/physarum · anastomosis · fhn · chemotaxis ·        │
+│  dispersal · morphospace · memory_anonymization ·       │
+│  persuasion · levin_pipeline · compute_reserve          │
+│  8 peer-reviewed mechanisms + Levin cognitive framework │
+│  + adaptive compute reserve. 15 public symbols.         │
+├─────────────────────────────────────────────────────────┤
 │  Neurochem                                              │
 │  neurochem/kinetics · mwc · state · profiles            │
 │  Biophysical kinetics. No simulation ownership.          │
@@ -51,7 +58,7 @@ The architecture follows a strict layered design where each layer may only depen
 
 ## Boundary Policies
 
-Seven import contracts are enforced by `import-linter` in CI and pre-commit:
+Eight import contracts are enforced by `import-linter` in CI and pre-commit:
 
 | # | Contract | Policy |
 |---|----------|--------|

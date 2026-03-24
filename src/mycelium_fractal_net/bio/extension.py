@@ -29,7 +29,7 @@ __all__ = ["BioConfig", "BioExtension", "BioReport"]
 
 @dataclass(frozen=True)
 class BioConfig:
-    """Configuration for bio config."""
+    """Unified configuration for all 5 bio mechanisms."""
 
     physarum: PhysarumConfig = field(default_factory=PhysarumConfig)
     anastomosis: AnastomosisConfig = field(default_factory=AnastomosisConfig)
@@ -48,7 +48,7 @@ class BioConfig:
 
 @dataclass(frozen=True)
 class BioReport:
-    """Bio report."""
+    """Unified report from all bio mechanisms for one timestep."""
 
     physarum: dict[str, Any]
     anastomosis: dict[str, Any]
@@ -132,7 +132,7 @@ class BioExtension:
 
     @classmethod
     def from_sequence(cls, seq: FieldSequence, config: BioConfig | None = None) -> BioExtension:
-        """From sequence."""
+        """Construct BioExtension from a FieldSequence."""
         config = config or BioConfig()
         field = seq.field.astype(np.float64)
         N = field.shape[0]
@@ -223,7 +223,7 @@ class BioExtension:
         )
 
     def report(self) -> BioReport:
-        """Report."""
+        """Generate unified report of current bio state."""
         t0 = time.perf_counter()
         return BioReport(
             physarum=self.physarum_state.to_dict(),
@@ -237,9 +237,9 @@ class BioExtension:
         )
 
     def effective_diffusion(self, base_D: float = 0.18) -> np.ndarray:
-        """Effective diffusion."""
+        """Compute effective diffusion coefficient from Physarum conductivity."""
         return base_D * (1.0 + 2.0 * self.anastomosis_state.kappa)
 
     def conductivity_map(self) -> np.ndarray:
-        """Conductivity map."""
+        """Return the Physarum conductivity map for the current state."""
         return self.physarum_state.conductivity_map()

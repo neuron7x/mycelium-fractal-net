@@ -17,6 +17,7 @@ Integrates with DiagnosisReport via report.to_dict() → metadata field.
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -25,6 +26,8 @@ if TYPE_CHECKING:
     import numpy as np
 
 __all__ = ["LevinPipeline", "LevinPipelineConfig", "LevinReport"]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -223,7 +226,7 @@ class LevinPipeline:
         )
 
         if verbose:
-            print("  [1/3] Morphospace...")  # noqa: T201
+            logger.info("[1/3] Morphospace...")
 
         morph_cfg = MorphospaceConfig(
             n_components=cfg.n_pca_components,
@@ -252,7 +255,7 @@ class LevinPipeline:
         from .physarum import PhysarumEngine
 
         if verbose:
-            print("  [2/3] Memory Anonymization...")  # noqa: T201
+            logger.info("[2/3] Memory Anonymization...")
 
         N = self.N
         enc = HDVFieldEncoder(D=cfg.D_hdv, neighborhood=1, seed=cfg.seed)
@@ -278,7 +281,7 @@ class LevinPipeline:
         from .persuasion import FieldActiveInference, PersuadabilityAnalyzer
 
         if verbose:
-            print("  [3/3] Persuasion...")  # noqa: T201
+            logger.info("[3/3] Persuasion...")
 
         persuad_analyzer = PersuadabilityAnalyzer()
         persuad_result = persuad_analyzer.from_field_history(

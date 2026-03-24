@@ -66,7 +66,7 @@ def main() -> None:
 
     # 5. mypy strict
     ok, _ = _run(
-        "mypy strict (core)",
+        "mypy strict (core + bio)",
         [
             VENV,
             "-m",
@@ -75,7 +75,9 @@ def main() -> None:
             "src/mycelium_fractal_net/analytics/",
             "src/mycelium_fractal_net/neurochem/",
             "src/mycelium_fractal_net/intervention/",
+            "src/mycelium_fractal_net/bio/",
             "--strict",
+            "--ignore-missing-imports",
             "--exclude",
             "(turing|federated|stdp)\\.py",
         ],

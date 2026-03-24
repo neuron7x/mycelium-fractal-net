@@ -20,7 +20,7 @@ __all__ = ["FHNConfig", "FHNEngine", "FHNState"]
 
 @dataclass(frozen=True)
 class FHNConfig:
-    """Configuration for f h n config."""
+    """FitzHugh-Nagumo excitable dynamics parameters."""
 
     a: float = 0.13
     b: float = 0.013
@@ -35,7 +35,7 @@ class FHNConfig:
 
 @dataclass(slots=True)
 class FHNState:
-    """State container for f h n state."""
+    """FitzHugh-Nagumo state: activator and recovery variables."""
 
     u: np.ndarray
     v: np.ndarray
@@ -57,7 +57,7 @@ class FHNState:
 
 
 class FHNEngine:
-    """F h n engine."""
+    """FitzHugh-Nagumo excitable signaling engine."""
 
     def __init__(self, N: int, config: FHNConfig | None = None) -> None:
         self.N = N
