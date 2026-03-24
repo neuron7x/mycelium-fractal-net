@@ -240,6 +240,9 @@ class UnifiedEngine:
         target_field: np.ndarray | None = None,
     ) -> SystemReport:
         """Run all subsystems and return unified report."""
+        from .input_guards import validate_field_sequence
+
+        validate_field_sequence(seq, "UnifiedEngine.analyze(seq)")
         t_start = time.perf_counter()
 
         # ── 1. Core diagnosis ──────────────────────────────────────
