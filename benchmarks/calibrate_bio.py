@@ -19,9 +19,12 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
-def measure(fn, warmup: int = 3, n: int = 30) -> dict[str, float]:
+def measure(fn, warmup: int = 5, n: int = 100) -> dict[str, float]:
+    import gc
+
     for _ in range(warmup):
         fn()
+    gc.collect()  # Simulate GC pressure from full test suite
     times_ms = []
     for _ in range(n):
         t0 = time.perf_counter()

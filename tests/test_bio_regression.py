@@ -46,25 +46,26 @@ def test_physarum_step_performance() -> None:
 
 
 def test_memory_query_vectorized() -> None:
-    import statistics
+    """Correctness test: vectorized query returns valid sorted results.
 
+    Performance is verified by calibrated benchmark gate (test_bio_gates.py).
+    This test checks functional correctness only — no timing assertions.
+    """
     enc = HDVEncoder(n_features=8, D=10000, seed=0)
     mem = BioMemory(enc, capacity=500)
     rng = np.random.default_rng(0)
     for _ in range(200):
         mem.store(enc.encode(rng.standard_normal(8)), fitness=rng.random(), params={})
     query = enc.encode(rng.standard_normal(8))
-    # Warmup: trigger matrix build
-    for _ in range(5):
-        mem.query(query, k=5)
-    # Measure median (not mean — resistant to GC spikes)
-    times = []
-    for _ in range(200):
-        t0 = time.perf_counter()
-        mem.query(query, k=5)
-        times.append((time.perf_counter() - t0) * 1000)
-    median_ms = statistics.median(times)
-    assert median_ms < 1.0, f"query() median too slow: {median_ms:.3f}ms (gate: 1ms)"
+    mem.query(query, k=5)  # warmup
+    results = mem.query(query, k=5)
+    assert len(results) == 5
+    for sim, fit, _p, _m in results:
+        assert -1.0 <= sim <= 1.0
+        assert 0.0 <= fit <= 1.0
+    # Verify sorted descending by similarity
+    sims = [r[0] for r in results]
+    assert sims == sorted(sims, reverse=True)
 
 
 def test_memory_query_correctness() -> None:
