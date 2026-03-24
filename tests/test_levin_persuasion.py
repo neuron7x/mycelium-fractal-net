@@ -15,7 +15,7 @@ from mycelium_fractal_net.bio.persuasion import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def target_field() -> np.ndarray:
     return np.random.default_rng(42).standard_normal((8, 8))
 
@@ -29,7 +29,8 @@ def test_free_energy_basic(target_field: np.ndarray) -> None:
     assert isinstance(result, FreeEnergyResult)
     # At target: accuracy high, complexity low, free energy low
     assert result.accuracy <= 0.0  # MSE-based, ≤0 by construction
-    assert result.free_energy >= 0.0 or True  # Can be negative at target
+    # Free energy can be negative at exact target (accuracy dominates)
+    assert np.isfinite(result.free_energy)
 
 
 def test_free_energy_at_target_minimal(target_field: np.ndarray) -> None:

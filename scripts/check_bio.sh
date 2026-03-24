@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/check_bio.sh — unified bio quality gate
-# Works on clean clone: uv sync --group dev && bash scripts/check_bio.sh
+# Works on clean clone: uv sync --group dev --extra bio && bash scripts/check_bio.sh
 set -e
 
 RUN="${RUN:-uv run python}"

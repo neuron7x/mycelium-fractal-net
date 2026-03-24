@@ -24,14 +24,6 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
-# Guard: ensure pandas is available with clear error message
-try:
-    import pandas as pd
-except ModuleNotFoundError as exc:
-    raise RuntimeError(
-        "pandas is required for dataset generation. Install with: pip install 'mycelium-fractal-net[data]'"
-    ) from exc
-
 from mycelium_fractal_net.core.reaction_diffusion_engine import (
     ReactionDiffusionConfig,
     ReactionDiffusionEngine,
@@ -500,6 +492,13 @@ def run_scenario(
             f"({n_failed}/{n_configs} failed)"
         )
 
+    try:
+        import pandas as pd
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "pandas is required for dataset generation. "
+            "Install with: pip install 'mycelium-fractal-net[data]'"
+        ) from exc
     df = pd.DataFrame(all_rows)
     _atomic_write(df, output_path, config.output_format)
 

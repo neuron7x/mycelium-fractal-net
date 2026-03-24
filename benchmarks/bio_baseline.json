@@ -1,30 +1,30 @@
 {
   "_note": "Calibrated baselines. Recalibrate: python benchmarks/calibrate_bio.py",
-  "_python": "3.12",
-  "_measured_at": "2026-03-24T11:21:16.551661+00:00",
+  "_python": "3.13",
+  "_measured_at": "2026-03-24T13:43:38.103200+00:00",
   "physarum_step_32": {
-    "median_ms": 3.182,
-    "p95_ms": 4.542,
+    "median_ms": 2.979,
+    "p95_ms": 3.359,
     "unit": "ms/step"
   },
   "memory_query_200": {
-    "median_ms": 2.904,
-    "p95_ms": 6.955,
+    "median_ms": 0.042,
+    "p95_ms": 0.055,
     "unit": "ms/query"
   },
   "hdv_encode": {
-    "median_ms": 0.164,
-    "p95_ms": 0.187,
+    "median_ms": 0.216,
+    "p95_ms": 0.244,
     "unit": "ms/encode"
   },
   "bio_step_16": {
-    "median_ms": 1.819,
-    "p95_ms": 4.082,
+    "median_ms": 1.679,
+    "p95_ms": 2.035,
     "unit": "ms/step"
   },
   "meta_single_eval": {
-    "median_ms": 8.655,
-    "p95_ms": 10.066,
+    "median_ms": 7.864,
+    "p95_ms": 8.099,
     "unit": "ms/eval"
   }
 }

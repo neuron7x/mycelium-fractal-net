@@ -6,9 +6,9 @@
 <h3 align="center">Reaction-diffusion analytics with causal validation and adaptive bio physics</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-1964_passed-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-2033_passed-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
-  <img src="https://img.shields.io/badge/bio_mechanisms-5-orange?style=flat-square" alt="Bio" />
+  <img src="https://img.shields.io/badge/bio_mechanisms-8-orange?style=flat-square" alt="Bio" />
   <img src="https://img.shields.io/badge/import_contracts-8/8-blue?style=flat-square" alt="Contracts" />
   <img src="https://img.shields.io/badge/Python-≥3.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="License" /></a>

@@ -14,7 +14,7 @@ from mycelium_fractal_net.bio.morphospace import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def history_3d() -> np.ndarray:
     """Synthetic (T, N, N) field history with gradual drift."""
     rng = np.random.default_rng(42)

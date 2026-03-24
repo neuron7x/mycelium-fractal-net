@@ -13,13 +13,13 @@ from mycelium_fractal_net.bio.memory_anonymization import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def small_field() -> np.ndarray:
     """4×4 synthetic field."""
     return np.random.default_rng(42).standard_normal((4, 4))
 
 
-@pytest.fixture()
+@pytest.fixture
 def conductivities() -> tuple[np.ndarray, np.ndarray]:
     """Physarum-like conductivities for 4×4 grid."""
     rng = np.random.default_rng(42)
