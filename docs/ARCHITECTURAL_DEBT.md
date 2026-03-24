@@ -1,25 +1,31 @@
 # Architectural Debt Register
 
-## Active Debt
+## Resolved
 
-| Module | Current LOC | Cap | Issue | Target |
-|--------|-------------|-----|-------|--------|
-| `causal_validation.py` | 1021 | 1050 | Living spec — 46 rules + orchestrator | Accept: monolith justified |
-| `api.py` | 937 | 950 | WS handlers still inline | v5.0: extract WS to separate service |
-| Frozen surface | 3317 | 3500 | crypto/ + signal/ + federated/stdp/turing | v5.0: remove |
+| Item | Was | Now | Commit |
+|------|-----|-----|--------|
+| model.py monolith | 1329 LOC | 13 LOC (4 modules) | `e11d005` |
+| config.py monolith | 810 LOC | 318 LOC + validation | `e11d005` |
+| api.py monolith | 1062 LOC | 937 + api_v1.py | `e11d005` |
+| Flat fitness function | f≈0.045 all configs | Additive discriminating | `41dd323` |
+| Memory query O(N) loop | 1.4ms interleaved | 0.07ms pre-allocated | `78b059a` |
+| Physarum rebuild matrix | 28.9ms/step | 3.0ms sparse cached | `845cce2` |
+| NaN propagation | Silent leak | np.where guard | `58bb8c9` |
+| BioMemory dirty flag | Unconditional rebuild | Append fast path | `78b059a` |
 
-## Resolved Debt
+## Active
 
-| Module | Was | Now | Action |
-|--------|-----|-----|--------|
-| `model.py` | 1329 LOC | 13 LOC (re-export) | Split into model_pkg/ (4 modules, max 433 LOC) |
-| `config.py` | 810 LOC | 318 LOC | Validation extracted to config_validation.py |
-| `api.py` | 1062 LOC | 937 LOC | V1 endpoints extracted to api_v1.py |
+| Item | Current | Cap | Target |
+|------|---------|-----|--------|
+| causal_validation.py | 1021 LOC | 1050 | Accept: living spec pattern |
+| api.py | 937 LOC | 950 | v5.0: extract WS handlers |
+| Frozen surface | ~2300 LOC | 3500 | v5.0: remove crypto + frozen modules |
+| Benchmark calibration | Local baselines | CI baselines | CI recalibration on merge |
 
 ## Rules
 
-1. No new module may exceed 800 LOC without explicit exemption
-2. Exempt modules have per-file caps — growth requires cap raise with justification
-3. Frozen surface budget: 3500 LOC — additions require removal elsewhere
-4. New subsystems must be in their own package with `__init__.py` boundary
-5. Cross-layer imports require whitelist entry in `.importlinter`
+1. No module > 800 LOC without exemption + per-file cap
+2. Baseline updates require before/after numbers + commit message justification
+3. Performance gates use calibrated baselines × 3.0 multiplier
+4. All gates must pass on clean CI run to close protocol
+5. hypothesis is mandatory in test environment

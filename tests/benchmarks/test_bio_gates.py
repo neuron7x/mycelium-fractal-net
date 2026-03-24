@@ -50,7 +50,9 @@ def test_gate_memory_query(bio_baseline: dict) -> None:  # type: ignore[type-arg
     for _ in range(200):
         mem.store(enc.encode(rng.standard_normal(8)), fitness=rng.random(), params={})
     q = enc.encode(rng.standard_normal(8))
-    measured = _measure_ms(lambda: mem.query(q, 5), rounds=50)
+    # Warmup: trigger matrix rebuild before measurement
+    mem.query(q, 5)
+    measured = _measure_ms(lambda: mem.query(q, 5), rounds=50, warmup=5)
     gate = bio_baseline["memory_query_200"]["median_ms"] * REGRESSION_MULTIPLIER
     assert measured <= gate, f"memory REGRESSION: {measured:.2f}ms > {gate:.2f}ms"
 
