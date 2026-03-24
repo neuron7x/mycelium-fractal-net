@@ -213,7 +213,17 @@ class UnifiedEngine:
     def __init__(self, bio_steps: int = 3, verbose: bool = False) -> None:
         self.bio_steps = bio_steps
         self.verbose = verbose
-        self._memory: Any = None  # DiagnosticMemory, lazy-loaded
+        self._memory: Any = None
+        self._metacognition: Any = None
+
+    @property
+    def metacognition(self) -> Any:
+        """Metacognitive layer — self-awareness of epistemic state."""
+        if self._metacognition is None:
+            from .metacognition import MetaCognitiveLayer
+
+            self._metacognition = MetaCognitiveLayer()
+        return self._metacognition
 
     @property
     def memory(self) -> Any:
