@@ -3,7 +3,7 @@
 Verify core operations complete within baseline + 3x margin.
 If any of these fail, a performance regression has been introduced.
 
-Baseline: configs/benchmark_baseline.json
+Baseline: benchmarks/bio_baseline.json
 """
 
 from __future__ import annotations

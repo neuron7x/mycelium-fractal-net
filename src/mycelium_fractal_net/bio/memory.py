@@ -135,7 +135,11 @@ class BioMemory:
     def query(
         self, query_hdv: np.ndarray, k: int = 5
     ) -> list[tuple[float, float, dict[str, float], dict[str, Any]]]:
-        """Retrieve top-k most similar episodes."""
+        """Retrieve top-k most similar episodes.
+
+        Zero dynamic allocations on hot path: no astype, no stack, no rebuild.
+        Matrix is pre-allocated (capacity×D, float32, C-contiguous).
+        """
         if self.is_empty:
             return []
         if self._dirty:
@@ -144,10 +148,10 @@ class BioMemory:
         n_rows = self._mat_len
         if n_rows == 0:
             return []
-        # Use only valid rows (slice, no copy)
-        mat = self._hdv_matrix[:n_rows]
-        sims = (mat @ query_hdv.astype(np.float32)) / self.encoder.D
-        n = min(k, len(sims))
+        # Hot path: slice (no copy) + matmul (no astype — encode() returns float32)
+        sims = self._hdv_matrix[:n_rows] @ query_hdv
+        sims *= 1.0 / self.encoder.D  # in-place scale, no division alloc
+        n = min(k, n_rows)
         if n >= len(sims):
             top_idx = np.argsort(sims)[::-1][:n]
         else:

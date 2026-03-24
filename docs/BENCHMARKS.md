@@ -85,7 +85,7 @@ Perturbation tests verify that anomaly and regime labels are stable under noise 
 
 ## Baseline Configuration
 
-Baseline parameters are stored in `configs/benchmark_baseline.json`. Benchmark gates compare measured values against baseline with margin to detect regressions.
+Baseline parameters are stored in `benchmarks/bio_baseline.json`. Benchmark gates compare measured values against baseline with margin to detect regressions.
 
 ## Artifacts
 

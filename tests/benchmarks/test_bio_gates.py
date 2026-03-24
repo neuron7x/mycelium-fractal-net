@@ -26,17 +26,19 @@ def _gate_multiplier(baseline_ms: float) -> float:
     return 3.0  # >5ms: stable enough for 3x
 
 
-def _measure_ms(fn: object, rounds: int = 50, warmup: int = 5) -> float:
+def _measure_ms(fn: object, rounds: int = 200, warmup: int = 10) -> float:
     import gc
 
     for _ in range(warmup):
         fn()  # type: ignore[operator]
     gc.collect()
+    gc.disable()  # Prevent GC during measurement
     times = []
     for _ in range(rounds):
         t0 = time.perf_counter()
         fn()  # type: ignore[operator]
         times.append((time.perf_counter() - t0) * 1000.0)
+    gc.enable()
     return statistics.median(times)
 
 

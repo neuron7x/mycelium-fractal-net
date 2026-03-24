@@ -147,7 +147,7 @@ The following modules are frozen and not part of the v1 release contract:
 | `configs/causal_validation_v1.json` | Causal rule parameters and severity levels |
 | `configs/crypto.yaml` | Ed25519 signing seed and key derivation |
 | `configs/{small,medium,large,prod,staging,dev}.json` | Environment-specific simulation presets |
-| `configs/benchmark_baseline.json` | Performance baseline for regression detection |
+| `benchmarks/bio_baseline.json` | Performance baseline for regression detection |
 
 ## Decision Records
 

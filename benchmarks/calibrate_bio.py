@@ -19,17 +19,19 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
-def measure(fn, warmup: int = 5, n: int = 100) -> dict[str, float]:
+def measure(fn, warmup: int = 10, n: int = 200) -> dict[str, float]:
     import gc
 
     for _ in range(warmup):
         fn()
-    gc.collect()  # Simulate GC pressure from full test suite
+    gc.collect()
+    gc.disable()  # Match gate harness: no GC during measurement
     times_ms = []
     for _ in range(n):
         t0 = time.perf_counter()
         fn()
         times_ms.append((time.perf_counter() - t0) * 1000.0)
+    gc.enable()
     s = sorted(times_ms)
     return {"median_ms": round(statistics.median(s), 3), "p95_ms": round(s[int(n * 0.95)], 3)}
 

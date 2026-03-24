@@ -3,7 +3,7 @@
 # Works on clean clone: uv sync --group dev && bash scripts/check_bio.sh
 set -e
 
-RUN="${RUN:-.venv/bin/python}"
+RUN="${RUN:-uv run python}"
 echo "=== BIO QUALITY GATE ==="
 echo "runner: $RUN"
 echo ""
