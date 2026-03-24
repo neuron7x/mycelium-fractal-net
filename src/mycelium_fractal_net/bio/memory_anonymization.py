@@ -1,0 +1,288 @@
+"""Memory Anonymization — gap junction diffusion on HDV memory matrix.
+
+Ref: Levin (2023) Cognitive agency in unconventional computing substrates
+     Levin (2019) The Computational Boundary of a "Self"
+     Mathews et al. (2017) Gap junctional signaling in pattern regulation
+
+Core equation:
+    dM/dt = -α · L_g · M    (graph heat equation on HDV memory matrix)
+
+L_g is the gap junction Laplacian built from Physarum conductivities (D_h, D_v).
+α controls diffusion rate. The heat kernel smooths memory representations,
+creating collective "anonymous" memory from individual cellular memories.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
+from scipy.sparse import csr_matrix, diags
+
+__all__ = [
+    "AnonymizationConfig",
+    "AnonymizationMetrics",
+    "GapJunctionDiffuser",
+    "HDVFieldEncoder",
+]
+
+
+@dataclass(frozen=True)
+class AnonymizationConfig:
+    """Configuration for memory anonymization."""
+
+    alpha: float = 0.1
+    dt: float = 0.01
+    n_diffusion_steps: int = 10
+    min_conductance: float = 1e-6
+    normalize_laplacian: bool = True
+
+
+@dataclass
+class AnonymizationMetrics:
+    """Metrics from a diffusion pass."""
+
+    entropy_before: float
+    entropy_after: float
+    anonymization_score: float
+    effective_rank_before: int
+    effective_rank_after: int
+    spectral_gap: float
+    n_cells: int
+    n_steps: int
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
+        return {
+            "entropy_before": round(self.entropy_before, 4),
+            "entropy_after": round(self.entropy_after, 4),
+            "anonymization_score": round(self.anonymization_score, 4),
+            "effective_rank_before": self.effective_rank_before,
+            "effective_rank_after": self.effective_rank_after,
+            "spectral_gap": round(self.spectral_gap, 6),
+            "n_cells": self.n_cells,
+            "n_steps": self.n_steps,
+        }
+
+
+class HDVFieldEncoder:
+    """Encode N×N field as per-cell HDV memory matrix (N², D).
+
+    Each cell's local neighborhood is encoded into a hyperdimensional
+    vector, producing a matrix where rows are cells and columns are
+    HDV dimensions.
+    """
+
+    def __init__(self, D: int = 1000, neighborhood: int = 1, seed: int = 42) -> None:
+        self.D = D
+        self.neighborhood = neighborhood
+        self._rng = np.random.default_rng(seed)
+        self._projections: dict[int, np.ndarray] = {}
+
+    def _get_projection(self, n_features: int) -> np.ndarray:
+        """Get or create cached random projection matrix."""
+        if n_features not in self._projections:
+            rng = np.random.default_rng(self._rng.integers(0, 2**31))
+            self._projections[n_features] = rng.standard_normal((self.D, n_features))
+        return self._projections[n_features]
+
+    def encode(self, field: np.ndarray) -> np.ndarray:
+        """Encode N×N field → (N², D) HDV memory matrix.
+
+        Each cell encodes its local (2*neighborhood+1)² patch.
+        """
+        N, M = field.shape
+        k = self.neighborhood
+        padded = np.pad(field, k, mode="wrap")
+        patch_size = (2 * k + 1) ** 2
+        W = self._get_projection(patch_size)
+
+        n_cells = N * M
+        memory = np.empty((n_cells, self.D), dtype=np.float64)
+
+        for i in range(N):
+            for j in range(M):
+                patch = padded[i : i + 2 * k + 1, j : j + 2 * k + 1].ravel()
+                projection = W @ patch
+                memory[i * M + j] = np.sign(np.cos(projection))
+
+        # Clean NaN from sign(cos(extreme))
+        np.nan_to_num(memory, copy=False, nan=1.0)
+        return memory
+
+
+class GapJunctionDiffuser:
+    """Diffuse HDV memory matrix via gap junction Laplacian.
+
+    Uses Physarum conductivities (D_h, D_v) as gap junction weights
+    to build a graph Laplacian, then applies the heat equation:
+        M(t+dt) = M(t) - α · dt · L_g · M(t)
+    """
+
+    def __init__(self, config: AnonymizationConfig | None = None) -> None:
+        self.config = config or AnonymizationConfig()
+
+    def build_laplacian(self, D_h: np.ndarray, D_v: np.ndarray) -> csr_matrix:
+        """Build gap junction graph Laplacian from Physarum conductivities.
+
+        D_h: (N, N-1) horizontal conductivities
+        D_v: (N-1, N) vertical conductivities
+
+        Returns: (N², N²) sparse Laplacian L_g where
+            L_g[i,j] = -w_ij for neighbors
+            L_g[i,i] = sum of neighbor weights
+        """
+        N_rows = D_h.shape[0]
+        N_cols = D_v.shape[1]
+        n_cells = N_rows * N_cols
+        min_c = self.config.min_conductance
+
+        rows: list[int] = []
+        cols: list[int] = []
+        data: list[float] = []
+        diag = np.zeros(n_cells)
+
+        # Horizontal edges
+        for i in range(N_rows):
+            for j in range(N_cols - 1):
+                w = float(max(D_h[i, j], min_c))
+                u = i * N_cols + j
+                v = i * N_cols + j + 1
+                rows.extend([u, v])
+                cols.extend([v, u])
+                data.extend([-w, -w])
+                diag[u] += w
+                diag[v] += w
+
+        # Vertical edges
+        for i in range(N_rows - 1):
+            for j in range(N_cols):
+                w = float(max(D_v[i, j], min_c))
+                u = i * N_cols + j
+                v = (i + 1) * N_cols + j
+                rows.extend([u, v])
+                cols.extend([v, u])
+                data.extend([-w, -w])
+                diag[u] += w
+                diag[v] += w
+
+        L = csr_matrix((data, (rows, cols)), shape=(n_cells, n_cells))
+        L = L + diags(diag, 0, shape=(n_cells, n_cells), format="csr")
+
+        if self.config.normalize_laplacian:
+            d_inv_sqrt = np.where(diag > 0, 1.0 / np.sqrt(diag), 0.0)
+            D_inv = diags(d_inv_sqrt, 0, shape=(n_cells, n_cells), format="csr")
+            L = D_inv @ L @ D_inv
+
+        return L
+
+    def diffuse(
+        self,
+        memory: np.ndarray,
+        D_h: np.ndarray,
+        D_v: np.ndarray,
+    ) -> tuple[np.ndarray, AnonymizationMetrics]:
+        """Apply gap junction diffusion to HDV memory matrix.
+
+        Args:
+            memory: (N², D) HDV memory matrix
+            D_h: (N, N-1) horizontal conductivities from Physarum
+            D_v: (N-1, N) vertical conductivities from Physarum
+
+        Returns:
+            (diffused_memory, metrics)
+        """
+        L = self.build_laplacian(D_h, D_v)
+        n_cells = memory.shape[0]
+
+        # Pre-diffusion metrics
+        entropy_before = self._matrix_entropy(memory)
+        rank_before = self._effective_rank(memory)
+
+        # Spectral gap (second smallest eigenvalue of L)
+        spectral_gap = self._spectral_gap(L, n_cells)
+
+        # Heat equation: explicit Euler
+        M = memory.astype(np.float64).copy()
+        alpha = self.config.alpha
+        dt = self.config.dt
+
+        for _ in range(self.config.n_diffusion_steps):
+            M = M - alpha * dt * (L @ M)
+
+        # Re-binarize to ±1 HDV
+        M = np.sign(M)
+        np.nan_to_num(M, copy=False, nan=1.0)
+
+        # Post-diffusion metrics
+        entropy_after = self._matrix_entropy(M)
+        rank_after = self._effective_rank(M)
+
+        # Anonymization score: normalized entropy increase
+        max_entropy = np.log(n_cells) if n_cells > 1 else 1.0
+        anon_score = (entropy_after - entropy_before) / max(max_entropy, 1e-12)
+        anon_score = float(np.clip(anon_score, 0.0, 1.0))
+
+        metrics = AnonymizationMetrics(
+            entropy_before=entropy_before,
+            entropy_after=entropy_after,
+            anonymization_score=anon_score,
+            effective_rank_before=rank_before,
+            effective_rank_after=rank_after,
+            spectral_gap=spectral_gap,
+            n_cells=n_cells,
+            n_steps=self.config.n_diffusion_steps,
+        )
+        return M, metrics
+
+    @staticmethod
+    def _matrix_entropy(M: np.ndarray) -> float:
+        """Shannon entropy of row-wise similarity distribution."""
+        n = M.shape[0]
+        if n < 2:
+            return 0.0
+        # Use a subsample for large matrices
+        if n > 100:
+            idx = np.linspace(0, n - 1, 100, dtype=int)
+            M_sub = M[idx]
+        else:
+            M_sub = M
+        # Pairwise cosine similarities → distribution
+        norms = np.linalg.norm(M_sub, axis=1, keepdims=True)
+        norms = np.maximum(norms, 1e-12)
+        M_normed = M_sub / norms
+        sims = M_normed @ M_normed.T
+        # Convert to probability distribution (shift to positive)
+        sims_flat = ((sims + 1.0) / 2.0).ravel()
+        sims_flat = sims_flat[sims_flat > 0]
+        sims_flat = sims_flat / sims_flat.sum()
+        return float(-np.sum(sims_flat * np.log(sims_flat + 1e-30)))
+
+    @staticmethod
+    def _effective_rank(M: np.ndarray) -> int:
+        """Effective rank via singular value threshold."""
+        if M.shape[0] < 2:
+            return 1
+        try:
+            s = np.linalg.svd(M[:100] if M.shape[0] > 100 else M, compute_uv=False)
+            threshold = s[0] * 1e-3
+            return int(np.sum(s > threshold))
+        except np.linalg.LinAlgError:
+            return 1
+
+    @staticmethod
+    def _spectral_gap(L: csr_matrix, n_cells: int) -> float:
+        """Approximate spectral gap (algebraic connectivity)."""
+        if n_cells < 3:
+            return 0.0
+        try:
+            from scipy.sparse.linalg import eigsh
+
+            k = min(3, n_cells - 1)
+            eigenvalues = eigsh(L, k=k, which="SM", return_eigenvectors=False)
+            eigenvalues = np.sort(np.real(eigenvalues))
+            # Spectral gap = second smallest eigenvalue
+            return float(eigenvalues[1]) if len(eigenvalues) > 1 else 0.0
+        except Exception:
+            return 0.0
