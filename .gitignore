@@ -130,3 +130,8 @@ artifacts/
 *.npy
 *.npz
 *.memmap
+
+# Generated outputs
+experiments/actual_output.json
+results/
+benchmarks/stress_output.txt

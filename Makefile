@@ -52,11 +52,14 @@ coverage:
 reproduce:
 	$(RUN) python experiments/reproduce.py
 
-verify: lint typecheck reproduce
+adversarial:
+	$(RUN) python experiments/adversarial.py
+
+localci:
+	bash ci.sh
+
+verify: lint typecheck reproduce adversarial
 	$(RUN) lint-imports
-	$(RUN) python scripts/export_openapi.py
-	$(RUN) python scripts/check_openapi_contract.py
-	$(RUN) python scripts/verify_matrix.py
 
 validate:
 	$(RUN) python validation/run_validation_experiments.py

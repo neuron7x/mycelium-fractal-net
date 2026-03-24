@@ -171,10 +171,32 @@ jobs:
           path: coverage.xml
           retention-days: 30
 
+  verify:
+    name: Reproduce + Adversarial
+    needs: [lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --group dev --extra bio
+      - name: Canonical reproduction
+        run: uv run python experiments/reproduce.py
+      - name: Adversarial validation
+        run: uv run python experiments/adversarial.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verify-results
+          path: |
+            experiments/actual_output.json
+            results/adversarial_results.json
+          retention-days: 30
+
   ci-gate:
     name: CI Gate
     if: always()
-    needs: [lint, types, unit, core-only, integration, artifact-integrity, causal-gate, coverage]
+    needs: [lint, types, unit, core-only, integration, artifact-integrity, causal-gate, coverage, verify]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all required jobs passed
@@ -188,6 +210,7 @@ jobs:
             "${{ needs.artifact-integrity.result }}"
             "${{ needs.causal-gate.result }}"
             "${{ needs.coverage.result }}"
+            "${{ needs.verify.result }}"
           )
           for r in "${results[@]}"; do
             if [[ "$r" != "success" ]]; then

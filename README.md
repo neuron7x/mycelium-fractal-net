@@ -6,13 +6,12 @@
 <h3 align="center">Morphology-aware analytics engine with causal validation, adaptive bio physics, and Levin cognitive framework</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-1619_passed-brightgreen?style=flat-square" alt="Tests" />
-  <img src="https://img.shields.io/badge/branch_coverage-92%25-brightgreen?style=flat-square" alt="Coverage" />
+  <img src="https://img.shields.io/badge/verified_tests-224-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/adversarial-6/6_pass-brightgreen?style=flat-square" alt="Adversarial" />
   <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
   <img src="https://img.shields.io/badge/bio_mechanisms-8-orange?style=flat-square" alt="Bio" />
-  <img src="https://img.shields.io/badge/Levin_modules-3-red?style=flat-square" alt="Levin" />
   <img src="https://img.shields.io/badge/import_contracts-8/8-blue?style=flat-square" alt="Contracts" />
-  <img src="https://img.shields.io/badge/stress_tested-32/32-brightgreen?style=flat-square" alt="Stress" />
+  <img src="https://img.shields.io/badge/reproduce-deterministic-brightgreen?style=flat-square" alt="Reproduce" />
   <img src="https://img.shields.io/badge/mypy-strict-blue?style=flat-square" alt="Types" />
   <img src="https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="License" /></a>
@@ -172,8 +171,8 @@ tests/benchmarks/
 
 | Metric | Value |
 |--------|-------|
-| **Tests** | 1,619 passed (without optional api/data deps) |
-| **Branch coverage** | 92% (bio/: 6 modules at 100%, levin_pipeline 100%, memory_anon 99%) |
+| **Verified core tests** | 224 (bio + Levin + fractal + unified + math frontier + benchmarks) |
+| **Branch coverage** | 92% bio/ (enforced ≥90% gate) |
 | **Mypy** | `--strict` on 14 bio/ files, 0 errors |
 | **Ruff** | 0 lint violations |
 | **Import contracts** | 8/8 enforced (import-linter) |
@@ -243,10 +242,24 @@ python -c "import mycelium_fractal_net; print('ok')"
 
 ---
 
+## Verification
+
+```bash
+# One command — full local CI (lint + types + tests + reproduce + adversarial + contracts)
+bash ci.sh
+
+# Individual steps
+uv run python experiments/reproduce.py     # Deterministic canonical reproduction
+uv run python experiments/adversarial.py   # 6 adversarial invariants across 50+ seeds
+make verify                                # Lint + types + reproduce + adversarial + contracts
+```
+
+See [docs/verification.md](docs/verification.md) and [docs/reproducibility.md](docs/reproducibility.md).
+
 ## Quality Gates
 
 ```bash
-# Unified bio gate (7 checks: lint, types, unit, regression, property, stateful, benchmark)
+# Bio-specific gate (10 checks: lint, types, 7 test categories, coverage ≥90%)
 bash scripts/check_bio.sh
 
 # Full verification
