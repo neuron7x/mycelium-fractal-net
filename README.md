@@ -6,8 +6,8 @@
 <h3 align="center">Morphology-aware analytics engine with causal validation, adaptive bio physics, and Levin cognitive framework</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-2033_passed-brightgreen?style=flat-square" alt="Tests" />
-  <img src="https://img.shields.io/badge/branch_coverage-87%25-brightgreen?style=flat-square" alt="Coverage" />
+  <img src="https://img.shields.io/badge/tests-2065_passed-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/branch_coverage-92%25-brightgreen?style=flat-square" alt="Coverage" />
   <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
   <img src="https://img.shields.io/badge/bio_mechanisms-8-orange?style=flat-square" alt="Bio" />
   <img src="https://img.shields.io/badge/Levin_modules-3-red?style=flat-square" alt="Levin" />
@@ -172,8 +172,8 @@ tests/benchmarks/
 
 | Metric | Value |
 |--------|-------|
-| **Tests** | 2,033 passed |
-| **Branch coverage** | 87% (bio/ modules: levin_pipeline 100%, memory_anon 99%) |
+| **Tests** | 2,065 passed |
+| **Branch coverage** | 92% (bio/: 6 modules at 100%, levin_pipeline 100%, memory_anon 99%) |
 | **Mypy** | `--strict` on 14 bio/ files, 0 errors |
 | **Ruff** | 0 lint violations |
 | **Import contracts** | 8/8 enforced (import-linter) |
