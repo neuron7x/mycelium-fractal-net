@@ -183,14 +183,21 @@ class BasinStabilityAnalyzer:
 
         n_returned = 0
         n_samples = self.config.n_basin_samples
+        n_pca_cols = coords.coords.shape[1]
 
-        for _ in range(n_samples):
-            delta = self._rng.normal(0, scale, n_used)
-            perturbed_pca = attractor_center + delta
-            full_pca = np.zeros(coords.coords.shape[1])
-            full_pca[:n_used] = perturbed_pca
-            field_perturbed = coords.reconstruct_field(full_pca)
-            terminal_field = self.simulator_fn(field_perturbed)
+        # Batch generate all perturbations at once
+        deltas = self._rng.normal(0, 1, (n_samples, n_used)) * scale
+        full_pcas = np.zeros((n_samples, n_pca_cols))
+        full_pcas[:, :n_used] = attractor_center + deltas
+
+        # Batch reconstruct all perturbed fields
+        fields_perturbed = coords.pca.inverse_transform(full_pcas).reshape(
+            n_samples, *coords.field_shape
+        )
+
+        # Simulate + project back (simulator_fn is per-sample)
+        for i in range(n_samples):
+            terminal_field = self.simulator_fn(fields_perturbed[i])
             terminal_pca = coords.pca.transform(terminal_field.ravel().reshape(1, -1))[0]
             dist = float(np.linalg.norm(terminal_pca[:n_used] - attractor_center))
             if dist <= basin_radius:

@@ -229,28 +229,36 @@ class UnifiedEngine:
 
         core = diagnose(seq, mode="fast", skip_intervention=True)
 
-        # ── 2. Bio + Levin ─────────────────────────────────────────
+        # ── 2. Bio (creates Physarum state we'll reuse) ───────────
         if self.verbose:
-            logger.info("[2/4] Bio + Levin...")
+            logger.info("[2/5] Bio extension...")
         from mycelium_fractal_net.bio import BioExtension
+
+        bio = BioExtension.from_sequence(seq).step(n=self.bio_steps)
+        bio_report = bio.report()
+
+        # ── 3. Levin (reuse Physarum from bio — avoids double init) ─
+        if self.verbose:
+            logger.info("[3/5] Levin pipeline...")
         from mycelium_fractal_net.bio.levin_pipeline import (
             LevinPipeline,
             LevinPipelineConfig,
         )
 
-        bio = BioExtension.from_sequence(seq).step(n=self.bio_steps)
-        bio_report = bio.report()
-
+        # Adaptive params: scale D_hdv and samples with grid size
+        N = seq.field.shape[0]
+        D_hdv = min(300, max(100, 6000 // N))  # N=16→375, N=32→187, N=64→93
+        n_samples = min(30, max(10, 500 // N))  # N=16→31, N=32→15, N=64→7
         levin_cfg = LevinPipelineConfig(
-            n_basin_samples=20, D_hdv=200, n_anon_steps=3
+            n_basin_samples=n_samples, D_hdv=D_hdv, n_anon_steps=3
         )
         levin = LevinPipeline.from_sequence(seq, config=levin_cfg).run(
             target_field=target_field
         )
 
-        # ── 3. Fractal arsenal ─────────────────────────────────────
+        # ── 4. Fractal arsenal ─────────────────────────────────────
         if self.verbose:
-            logger.info("[3/4] Fractal arsenal...")
+            logger.info("[4/5] Fractal arsenal...")
         import numpy as np
 
         from mycelium_fractal_net.analytics.fractal_features import (
@@ -263,10 +271,9 @@ class UnifiedEngine:
         basin_grid = (seq.field > float(np.mean(seq.field))).astype(int)
         arsenal = compute_fractal_arsenal(seq.field, basin_grid)
 
-        # ── 4. Fractal dynamics ────────────────────────────────────
+        # ── 5. Fractal dynamics ────────────────────────────────────
         if self.verbose:
-            logger.info("[4/4] Fractal dynamics...")
-        # Adaptive stride: 6-8 frames is optimal quality/speed tradeoff
+            logger.info("[5/5] Fractal dynamics...")
         n_frames = seq.history.shape[0]
         optimal_stride = max(1, n_frames // 8)
         se = compute_spectral_evolution(seq.history, stride=optimal_stride)
