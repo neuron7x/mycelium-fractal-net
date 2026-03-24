@@ -93,6 +93,8 @@ class HDVFieldEncoder:
         """Encode N×N field → (N², D) HDV memory matrix.
 
         Each cell encodes its local (2*neighborhood+1)² patch.
+        Patches are z-score normalized to ensure discriminative encoding
+        regardless of field magnitude.
         """
         N, M = field.shape
         k = self.neighborhood
@@ -103,10 +105,17 @@ class HDVFieldEncoder:
         n_cells = N * M
         memory = np.empty((n_cells, self.D), dtype=np.float64)
 
+        # Global z-score normalization: ensures cos(W@patch) spans [-1,1]
+        # even for fields with tiny magnitude (e.g., early Turing patterns)
+        field_std = float(np.std(field))
+        field_mean = float(np.mean(field))
+        scale = field_std if field_std > 1e-12 else 1.0
+
         for i in range(N):
             for j in range(M):
                 patch = padded[i : i + 2 * k + 1, j : j + 2 * k + 1].ravel()
-                projection = W @ patch
+                patch_normed = (patch - field_mean) / scale
+                projection = W @ patch_normed
                 memory[i * M + j] = np.sign(np.cos(projection))
 
         # Clean NaN from sign(cos(extreme))
