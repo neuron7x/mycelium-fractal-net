@@ -296,12 +296,22 @@ class UnifiedEngine:
             S_B=levin.basin_stability,
         )
 
+        # ── Severity integration: fractal dynamics enhance core severity ──
+        severity = core.severity
+        # Escalate if fractal dynamics detect critical state that core missed
+        if dfa.is_critical and severity == "stable":
+            severity = "info"
+        if dfa.is_critical and se.is_collapsing and severity == "info":
+            severity = "warning"
+        if levin.basin_stability < 0.4 and severity in ("stable", "info"):
+            severity = "warning"
+
         # ── Assemble ───────────────────────────────────────────────
         elapsed = (time.perf_counter() - t_start) * 1000
 
         return SystemReport(
-            # Core
-            severity=core.severity,
+            # Core (with integrated severity)
+            severity=severity,
             anomaly_label=core.anomaly.label,
             anomaly_score=float(core.anomaly.score),
             ews_score=core.warning.ews_score,

@@ -216,9 +216,9 @@ def diagnose(
     t_start = time.perf_counter()
 
     descriptor = compute_morphology_descriptor(seq)
-    anomaly = detect_anomaly(seq)
+    anomaly = detect_anomaly(seq, descriptor=descriptor)
     warning_obj = early_warning(seq)
-    forecast = forecast_next(seq, horizon=forecast_horizon)
+    forecast = forecast_next(seq, horizon=forecast_horizon, descriptor=descriptor)
     causal = validate_causal_consistency(
         seq,
         descriptor=descriptor,

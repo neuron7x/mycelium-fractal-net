@@ -109,10 +109,13 @@ def _desensitization_lag(sequence: FieldSequence) -> float:
 
 
 def _roll_forward(
-    sequence: FieldSequence, horizon: int
+    sequence: FieldSequence,
+    horizon: int,
+    descriptor: object = None,
 ) -> tuple[np.ndarray, UncertaintyEnvelope, float]:
     damping = _adaptive_damping(sequence)
-    descriptor = compute_morphology_descriptor(sequence)
+    if descriptor is None:
+        descriptor = compute_morphology_descriptor(sequence)
     plasticity_index = float(descriptor.neuromodulation.get("plasticity_index", 0.0))
     connectivity_divergence = float(descriptor.connectivity.get("connectivity_divergence", 0.0))
     des_lag = _desensitization_lag(sequence)
@@ -147,9 +150,13 @@ def _roll_forward(
     return mean_projection, envelope, damping
 
 
-def forecast_next(sequence: FieldSequence, horizon: int = 8) -> ForecastResult:
+def forecast_next(
+    sequence: FieldSequence,
+    horizon: int = 8,
+    descriptor: object = None,
+) -> ForecastResult:
     horizon = max(1, int(horizon))
-    stack, uncertainty_envelope, damping = _roll_forward(sequence, horizon)
+    stack, uncertainty_envelope, damping = _roll_forward(sequence, horizon, descriptor=descriptor)
     final = stack[-1]
     trajectory: list[TrajectoryStep] = []
     for frame in stack:
@@ -171,7 +178,8 @@ def forecast_next(sequence: FieldSequence, horizon: int = 8) -> ForecastResult:
                 field_mean_mV=float(np.mean(frame) * 1000.0),
             )
         )
-    descriptor = compute_morphology_descriptor(sequence)
+    if descriptor is None:
+        descriptor = compute_morphology_descriptor(sequence)
     last_step = trajectory[-1]
     descriptor_shift = float(abs(last_step.D_box - descriptor.features.get("D_box", 0.0)))
     activity_shift = float(abs(last_step.f_active - descriptor.features.get("f_active", 0.0)))

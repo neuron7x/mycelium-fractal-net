@@ -392,8 +392,12 @@ def detect_regime_shift(sequence: FieldSequence) -> RegimeState:
     )
 
 
-def detect_anomaly(sequence: FieldSequence) -> AnomalyEvent:
-    descriptor = compute_morphology_descriptor(sequence)
+def detect_anomaly(
+    sequence: FieldSequence,
+    descriptor: MorphologyDescriptor | None = None,
+) -> AnomalyEvent:
+    if descriptor is None:
+        descriptor = compute_morphology_descriptor(sequence)
     regime = detect_regime_shift(sequence)
     cpts = detect_change_points(sequence.history)
     evidence = {
