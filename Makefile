@@ -49,7 +49,10 @@ coverage:
 #  Verification & validation
 # ═══════════════════════════════════════════════════════════════
 
-verify: lint typecheck
+reproduce:
+	$(RUN) python experiments/reproduce.py
+
+verify: lint typecheck reproduce
 	$(RUN) lint-imports
 	$(RUN) python scripts/export_openapi.py
 	$(RUN) python scripts/check_openapi_contract.py

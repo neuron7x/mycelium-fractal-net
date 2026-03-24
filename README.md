@@ -6,7 +6,7 @@
 <h3 align="center">Morphology-aware analytics engine with causal validation, adaptive bio physics, and Levin cognitive framework</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-2065_passed-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-1619_passed-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/branch_coverage-92%25-brightgreen?style=flat-square" alt="Coverage" />
   <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
   <img src="https://img.shields.io/badge/bio_mechanisms-8-orange?style=flat-square" alt="Bio" />
@@ -172,7 +172,7 @@ tests/benchmarks/
 
 | Metric | Value |
 |--------|-------|
-| **Tests** | 2,065 passed |
+| **Tests** | 1,619 passed (without optional api/data deps) |
 | **Branch coverage** | 92% (bio/: 6 modules at 100%, levin_pipeline 100%, memory_anon 99%) |
 | **Mypy** | `--strict` on 14 bio/ files, 0 errors |
 | **Ruff** | 0 lint violations |
