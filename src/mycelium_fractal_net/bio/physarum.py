@@ -178,7 +178,7 @@ class PhysarumEngine:
 
         # Build data vector from precomputed structure (no Python loop over grid)
         data = np.zeros(len(self._rows), dtype=np.float64)
-        for idx, (i, j, node, nb, direction) in enumerate(self._edge_map):
+        for idx, (i, j, _node, _nb, direction) in enumerate(self._edge_map):
             d = state.D_h[i, j] if direction == "h" else state.D_v[i, j]
             base = idx * 4
             data[base] = d  # L[node, node] += d

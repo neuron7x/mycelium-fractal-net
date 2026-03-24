@@ -15,9 +15,9 @@ from typing import Any
 import numpy as np
 
 __all__ = [
+    "DEFAULT_PARAMS",
     "PARAM_BOUNDS",
     "PARAM_NAMES",
-    "DEFAULT_PARAMS",
     "BioEvolutionOptimizer",
     "BioEvolutionResult",
     "compute_fitness",
@@ -208,7 +208,7 @@ class BioEvolutionOptimizer:
                     }
                 )
                 if verbose:
-                    print(f"  Gen {gen:3d}: best={best_f:.4f} sigma={opt._sigma:.4f}")
+                    pass
                 if opt.should_stop():
                     converged = True
                     break

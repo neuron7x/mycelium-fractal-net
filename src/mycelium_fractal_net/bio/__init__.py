@@ -33,13 +33,13 @@ from .physarum import PhysarumConfig, PhysarumEngine, PhysarumState
 
 # Public contract — stable across versions
 __all__ = [
-    "BioExtension",
     "BioConfig",
+    "BioExtension",
+    "BioMemory",
     "BioReport",
+    "HDVEncoder",
     "MetaOptimizer",
     "MetaOptimizerResult",
-    "BioMemory",
-    "HDVEncoder",
 ]
 
 # Internal — accessible via direct import but not part of the contract:

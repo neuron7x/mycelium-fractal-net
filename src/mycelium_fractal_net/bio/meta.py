@@ -131,7 +131,7 @@ class MetaOptimizer:
     ) -> MetaOptimizerResult:
         t0 = time.perf_counter()
         n = len(PARAM_NAMES)
-        lo, hi = PARAM_BOUNDS[:, 0], PARAM_BOUNDS[:, 1]
+        _lo, _hi = PARAM_BOUNDS[:, 0], PARAM_BOUNDS[:, 1]
         history: list[dict[str, Any]] = []
         best_f, best_p = 0.0, DEFAULT_PARAMS.copy()
         total_evals = 0
@@ -175,10 +175,7 @@ class MetaOptimizer:
                     }
                 )
                 if verbose:
-                    print(
-                        f"  Gen {gen:3d}: best={best_f:.4f} sigma={opt._sigma:.4f} "
-                        f"cache={ch}/{opt.population_size} mem={self.memory.size}"
-                    )
+                    pass
                 if opt.should_stop():
                     converged = True
                     break

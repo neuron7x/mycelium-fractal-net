@@ -22,7 +22,8 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # Hypothesis profiles: fast (PR), ci (default), full (nightly)
     try:
-        from hypothesis import HealthCheck, settings as h_settings
+        from hypothesis import HealthCheck
+        from hypothesis import settings as h_settings
 
         h_settings.register_profile(
             "fast",

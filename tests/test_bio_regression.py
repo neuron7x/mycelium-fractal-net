@@ -5,7 +5,6 @@ from __future__ import annotations
 import time
 
 import numpy as np
-import pytest
 
 from mycelium_fractal_net.bio.evolution import (
     DEFAULT_PARAMS,
