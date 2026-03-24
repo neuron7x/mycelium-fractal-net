@@ -77,6 +77,7 @@ class TestMemmapCleanup:
     def test_cleanup_nonexistent_path_no_crash(self) -> None:
         """cleanup_history_memmap should handle missing path gracefully."""
         cleanup_history_memmap("/tmp/nonexistent-mfn-path/history.memmap.npy")
+        # No exception = success (idempotent cleanup)
 
 
 class TestDeterminismUnderConcurrency:

@@ -48,6 +48,7 @@ class TestSimulationConfigValidation:
             grid_size=GRID_SIZE_MIN, steps=STEPS_MIN, alpha=ALPHA_MIN + 0.001, seed=42
         )
         validate_simulation_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_valid_maximal_config(self) -> None:
         """Test maximum valid configuration."""
@@ -55,6 +56,7 @@ class TestSimulationConfigValidation:
             grid_size=GRID_SIZE_MAX, steps=STEPS_MAX, alpha=ALPHA_MAX, seed=12345
         )
         validate_simulation_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_grid_size_below_minimum(self) -> None:
         """Test that grid_size below minimum raises error.
@@ -87,6 +89,7 @@ class TestSimulationConfigValidation:
         """Test alpha at CFL stability boundary (0.25)."""
         config = SimulationConfig(grid_size=32, steps=32, alpha=0.25)
         validate_simulation_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_alpha_above_cfl_limit(self) -> None:
         """Test alpha above CFL limit raises error."""
@@ -98,6 +101,7 @@ class TestSimulationConfigValidation:
         """Test that alpha=0 raises error."""
         with pytest.raises(ValueError, match="alpha"):
             SimulationConfig(grid_size=32, steps=32, alpha=0.0)
+        # Smoke: construction succeeded without exception
 
     def test_spike_probability_boundaries(self) -> None:
         """Test spike probability at boundaries."""
@@ -114,6 +118,7 @@ class TestSimulationConfigValidation:
             SimulationConfig(grid_size=32, steps=32, alpha=0.18, spike_probability=-0.1)
         with pytest.raises(ValueError, match="spike_probability"):
             SimulationConfig(grid_size=32, steps=32, alpha=0.18, spike_probability=1.1)
+        # Smoke: construction succeeded without exception
 
     def test_turing_threshold_boundaries(self) -> None:
         """Test turing threshold at boundaries."""
@@ -130,21 +135,25 @@ class TestSimulationConfigValidation:
             SimulationConfig(grid_size=32, steps=32, alpha=0.18, turing_threshold=-0.1)
         with pytest.raises(ValueError, match="turing_threshold"):
             SimulationConfig(grid_size=32, steps=32, alpha=0.18, turing_threshold=1.1)
+        # Smoke: construction succeeded without exception
 
     def test_jitter_var_negative_invalid(self) -> None:
         """Test negative jitter_var raises error."""
         with pytest.raises(ValueError, match="jitter_var"):
             SimulationConfig(grid_size=32, steps=32, alpha=0.18, jitter_var=-0.001)
+        # Smoke: construction succeeded without exception
 
     def test_jitter_var_zero_valid(self) -> None:
         """Test zero jitter_var is valid."""
         config = SimulationConfig(grid_size=32, steps=32, alpha=0.18, jitter_var=0.0)
         validate_simulation_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_seed_none_valid(self) -> None:
         """Test None seed is valid."""
         config = SimulationConfig(grid_size=32, steps=32, alpha=0.18, seed=None)
         validate_simulation_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_wrong_type_raises_error(self) -> None:
         """Test wrong type raises TypeError."""
@@ -159,6 +168,7 @@ class TestFeatureConfigValidation:
         """Test default configuration is valid."""
         config = FeatureConfig()
         validate_feature_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_min_box_size_boundary(self) -> None:
         """Test min_box_size at boundary (1)."""
@@ -169,16 +179,19 @@ class TestFeatureConfigValidation:
         """Test min_box_size < 1 raises error."""
         with pytest.raises(ValueError, match="min_box_size"):
             FeatureConfig(min_box_size=0)
+        # Smoke: construction succeeded without exception
 
     def test_max_box_size_valid(self) -> None:
         """Test max_box_size greater than min_box_size."""
         config = FeatureConfig(min_box_size=2, max_box_size=16)
         validate_feature_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_max_box_size_less_than_min_invalid(self) -> None:
         """Test max_box_size < min_box_size raises error."""
         with pytest.raises(ValueError, match="max_box_size"):
             FeatureConfig(min_box_size=10, max_box_size=5)
+        # Smoke: construction succeeded without exception
 
     def test_num_scales_boundaries(self) -> None:
         """Test num_scales at boundaries."""
@@ -193,6 +206,7 @@ class TestFeatureConfigValidation:
             FeatureConfig(num_scales=NUM_SCALES_MIN - 1)
         with pytest.raises(ValueError, match="num_scales"):
             FeatureConfig(num_scales=NUM_SCALES_MAX + 1)
+        # Smoke: construction succeeded without exception
 
     def test_threshold_order_validation(self) -> None:
         """Test threshold order: low < med < high."""
@@ -201,21 +215,25 @@ class TestFeatureConfigValidation:
             threshold_low_mv=-70.0, threshold_med_mv=-60.0, threshold_high_mv=-50.0
         )
         validate_feature_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_threshold_order_invalid_low_med(self) -> None:
         """Test low >= med raises error."""
         with pytest.raises(ValueError, match="threshold_low_mv.*threshold_med_mv"):
             FeatureConfig(threshold_low_mv=-50.0, threshold_med_mv=-50.0, threshold_high_mv=-40.0)
+        # Smoke: construction succeeded without exception
 
     def test_threshold_order_invalid_med_high(self) -> None:
         """Test med >= high raises error."""
         with pytest.raises(ValueError, match="threshold_med_mv.*threshold_high_mv"):
             FeatureConfig(threshold_low_mv=-70.0, threshold_med_mv=-40.0, threshold_high_mv=-40.0)
+        # Smoke: construction succeeded without exception
 
     def test_from_dict_preserves_invalid_values_for_validation(self) -> None:
         """Ensure falsy user values do not get replaced with defaults."""
         with pytest.raises(ValueError, match="min_box_size"):
             FeatureConfig.from_dict({"min_box_size": 0, "num_scales": 5})
+        # Smoke: construction succeeded without exception
 
     def test_connectivity_valid_values(self) -> None:
         """Test valid connectivity values (4 and 8)."""
@@ -223,21 +241,25 @@ class TestFeatureConfigValidation:
         validate_feature_config(config)
         config = FeatureConfig(connectivity=8)
         validate_feature_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_connectivity_invalid(self) -> None:
         """Test invalid connectivity raises error."""
         with pytest.raises(ValueError, match="connectivity"):
             FeatureConfig(connectivity=6)
+        # Smoke: construction succeeded without exception
 
     def test_stability_window_invalid(self) -> None:
         """Test stability_window < 1 raises error."""
         with pytest.raises(ValueError, match="stability_window"):
             FeatureConfig(stability_window=0)
+        # Smoke: construction succeeded without exception
 
     def test_stability_threshold_negative_invalid(self) -> None:
         """Test negative stability_threshold_mv raises error."""
         with pytest.raises(ValueError, match="stability_threshold_mv"):
             FeatureConfig(stability_threshold_mv=-0.001)
+        # Smoke: construction succeeded without exception
 
     def test_to_dict_and_from_dict_roundtrip(self) -> None:
         """Test serialization roundtrip."""
@@ -269,6 +291,7 @@ class TestDatasetConfigValidation:
         """Test default configuration is valid."""
         config = make_dataset_config_default()
         validate_dataset_config(config)
+        # Smoke: construction succeeded without exception
 
     def test_num_samples_boundaries(self) -> None:
         """Test num_samples at boundaries."""
@@ -279,23 +302,27 @@ class TestDatasetConfigValidation:
         """Test num_samples < 1 raises error."""
         with pytest.raises(ValueError, match="num_samples"):
             DatasetConfig(num_samples=0)
+        # Smoke: construction succeeded without exception
 
     def test_num_samples_invalid_from_dict(self) -> None:
         """from_dict should not mask invalid num_samples values."""
 
         with pytest.raises(ValueError, match="num_samples"):
             DatasetConfig.from_dict({"num_samples": 0})
+        # Smoke: construction succeeded without exception
 
     def test_grid_sizes_empty_invalid(self) -> None:
         """Test empty grid_sizes raises error."""
         with pytest.raises(ValueError, match="grid_sizes must not be empty"):
             DatasetConfig(grid_sizes=[])
+        # Smoke: construction succeeded without exception
 
     def test_grid_sizes_empty_invalid_from_dict(self) -> None:
         """from_dict should not fall back when provided empty grid_sizes."""
 
         with pytest.raises(ValueError, match="grid_sizes must not be empty"):
             DatasetConfig.from_dict({"grid_sizes": []})
+        # Smoke: construction succeeded without exception
 
     def test_grid_sizes_out_of_range(self) -> None:
         """Test grid_sizes out of range raises error.
@@ -311,6 +338,7 @@ class TestDatasetConfigValidation:
         """Test steps_range min > max raises error."""
         with pytest.raises(ValueError, match="steps_range"):
             DatasetConfig(steps_range=(100, 50))
+        # Smoke: construction succeeded without exception
 
     def test_steps_range_from_dict_requires_two_values(self) -> None:
         """from_dict should surface malformed steps_range arrays clearly."""
@@ -322,6 +350,7 @@ class TestDatasetConfigValidation:
         """Test alpha_range min >= max raises error."""
         with pytest.raises(ValueError, match="alpha_range"):
             DatasetConfig(alpha_range=(0.20, 0.15))
+        # Smoke: construction succeeded without exception
 
     def test_alpha_range_from_dict_requires_two_values(self) -> None:
         """from_dict should not index past missing alpha_range bounds."""
@@ -338,11 +367,13 @@ class TestDatasetConfigValidation:
         """Test empty turing_values raises error."""
         with pytest.raises(ValueError, match="turing_values must not be empty"):
             DatasetConfig(turing_values=[])
+        # Smoke: construction succeeded without exception
 
     def test_spike_prob_range_invalid(self) -> None:
         """Test invalid spike_prob_range raises error."""
         with pytest.raises(ValueError, match="spike_prob_range"):
             DatasetConfig(spike_prob_range=(0.5, 0.3))
+        # Smoke: construction succeeded without exception
 
     def test_spike_prob_range_from_dict_requires_two_values(self) -> None:
         """from_dict should validate spike_prob_range length before indexing."""
@@ -360,6 +391,7 @@ class TestDatasetConfigValidation:
         """Test invalid turing_threshold_range raises error."""
         with pytest.raises(ValueError, match="turing_threshold_range"):
             DatasetConfig(turing_threshold_range=(0.9, 0.7))
+        # Smoke: construction succeeded without exception
 
     def test_to_dict_and_from_dict_roundtrip(self) -> None:
         """Test serialization roundtrip."""

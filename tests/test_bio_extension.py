@@ -78,7 +78,9 @@ def test_anastomosis_grows(base_seq: mfn.FieldSequence) -> None:
 
 def test_to_dict_json_safe(base_seq: mfn.FieldSequence) -> None:
     d = BioExtension.from_sequence(base_seq).step(n=1).report().to_dict()
-    json.dumps(d)
+    s = json.dumps(d)
+    assert len(s) > 50
+    assert "physarum" in s
 
 
 def test_skip_mechanisms(base_seq: mfn.FieldSequence) -> None:
