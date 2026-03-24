@@ -4,7 +4,7 @@
   "metrics": {
     "causal_rules": 46,
     "causal_stages": 7,
-    "import_contracts": 7,
+    "import_contracts": 8,
     "embedding_dims": 57,
     "feature_groups_active": 6,
     "feature_groups_reserved": 2,

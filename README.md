@@ -3,27 +3,26 @@
 </p>
 
 <h1 align="center">MyceliumFractalNet</h1>
-<h3 align="center">Morphology-aware Field Intelligence Engine</h3>
+<h3 align="center">Reaction-diffusion analytics with causal validation and adaptive bio physics</h3>
 
 <p align="center">
-  Deterministic simulation, feature extraction, anomaly detection, and causal verification<br />
-  for reaction-diffusion systems with biophysical kinetics.
+  <img src="https://img.shields.io/badge/tests-1964_passed-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
+  <img src="https://img.shields.io/badge/bio_mechanisms-5-orange?style=flat-square" alt="Bio" />
+  <img src="https://img.shields.io/badge/import_contracts-8/8-blue?style=flat-square" alt="Contracts" />
+  <img src="https://img.shields.io/badge/Python-≥3.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="License" /></a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-1731_passed-brightgreen?style=flat-square" alt="Tests" />
-  <img src="https://img.shields.io/badge/coverage-82%25-green?style=flat-square" alt="Coverage" />
-  <img src="https://img.shields.io/badge/causal_rules-46-blue?style=flat-square" alt="Causal Rules" />
-  <img src="https://img.shields.io/badge/import_contracts-7/7-blue?style=flat-square" alt="Import Contracts" />
-  <img src="https://img.shields.io/badge/Python-≥3.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="License" /></a>
+  <code>pip install mycelium-fractal-net && python -m mycelium_fractal_net</code>
 </p>
 
 ---
 
 ## Overview
 
-MFN simulates biological pattern formation on a 2D lattice, extracts morphological features, classifies regimes, forecasts field evolution, compares states, and **proves that every conclusion is causally consistent** before publishing it.
+MFN simulates biological pattern formation, extracts morphological features, classifies regimes, forecasts evolution, and **proves that every conclusion is causally consistent** through 46 executable rules with DOI references.
 
 ```python
 import mycelium_fractal_net as mfn
@@ -293,7 +292,7 @@ Available profiles: `baseline_nominal` · `gabaa_tonic_muscimol_alpha1beta3` · 
 | Test modules | 108 |
 | Frozen dataclasses | 30 |
 | Causal rules | 46 |
-| Import contracts | 7/7 enforced |
+| Import contracts | 8/8 enforced |
 | Named constants | 62 (zero magic numbers in detection) |
 | CI jobs | 9 (lint, typecheck, import-contracts, test matrix, coverage, security, OpenAPI, validation, benchmark) |
 | Python matrix | 3.10 · 3.11 · 3.12 · 3.13 |
