@@ -213,6 +213,16 @@ class UnifiedEngine:
     def __init__(self, bio_steps: int = 3, verbose: bool = False) -> None:
         self.bio_steps = bio_steps
         self.verbose = verbose
+        self._memory: Any = None  # DiagnosticMemory, lazy-loaded
+
+    @property
+    def memory(self) -> Any:
+        """Diagnostic memory — accumulates intelligence across runs."""
+        if self._memory is None:
+            from .diagnostic_memory import DiagnosticMemory
+
+            self._memory = DiagnosticMemory()
+        return self._memory
 
     def analyze(
         self,
@@ -326,3 +336,37 @@ class UnifiedEngine:
             grid_size=seq.field.shape[0],
             n_frames=seq.history.shape[0] if seq.history is not None else 1,
         )
+
+    def learn(self, n_seeds: int = 100, grid_size: int = 32, steps: int = 30) -> dict[str, Any]:
+        """Run N simulations, accumulate observations, extract intelligence.
+
+        Returns learned rules, calibrated thresholds, and correlations.
+        """
+        import mycelium_fractal_net as mfn
+
+        logger.info("Learning from %d simulations (N=%d, T=%d)...", n_seeds, grid_size, steps)
+        for seed in range(n_seeds):
+            seq = mfn.simulate(mfn.SimulationSpec(grid_size=grid_size, steps=steps, seed=seed))
+            report = self.analyze(seq)
+            self.memory.observe(report)
+
+        rules = self.memory.extract_rules()
+        thresholds = self.memory.calibrate_thresholds()
+        correlations = self.memory.correlation_matrix()
+
+        # Find strongest correlations (exclude self-correlation)
+        strong: list[tuple[str, str, float]] = []
+        for ki, row in correlations.items():
+            for kj, r in row.items():
+                if ki < kj and abs(r) > 0.5:
+                    strong.append((ki, kj, r))
+        strong.sort(key=lambda x: -abs(x[2]))
+
+        return {
+            "n_observations": self.memory.size,
+            "rules": [r.to_dict() for r in rules],
+            "thresholds": thresholds.to_dict(),
+            "top_correlations": [
+                {"a": a, "b": b, "r": round(r, 3)} for a, b, r in strong[:10]
+            ],
+        }
