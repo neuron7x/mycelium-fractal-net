@@ -37,8 +37,8 @@ class LevinPipelineConfig:
     perturbation_scale: float = 0.3
     # Memory anonymization
     D_hdv: int = 500
-    alpha_diffusion: float = 0.3
-    n_anon_steps: int = 5
+    alpha_diffusion: float = 3.0
+    n_anon_steps: int = 10
     # Persuasion
     n_gramian_modes: int = 10
     # General
@@ -58,19 +58,39 @@ class LevinReport:
     # Memory Anonymization
     anonymity_score: float
     cosine_anonymity: float
-    spectral_gap: float
+    fiedler_value: float
 
     # Persuasion
     persuadability_score: float
-    gramian_log_det: float
+    log_det_gramian: float
     n_controllable_modes: int
-    free_energy: float
+    free_energy_final: float
     intervention_level: str
 
     # Meta
     compute_time_ms: float
     grid_size: int
     n_frames: int
+
+    @property
+    def min_control_energy(self) -> float:
+        """Minimum control energy (proxy via free energy)."""
+        return self.free_energy_final
+
+    @property
+    def spectral_gap(self) -> float:
+        """Alias for fiedler_value."""
+        return self.fiedler_value
+
+    @property
+    def gramian_log_det(self) -> float:
+        """Alias for log_det_gramian."""
+        return self.log_det_gramian
+
+    @property
+    def free_energy(self) -> float:
+        """Alias for free_energy_final."""
+        return self.free_energy_final
 
     def summary(self) -> str:
         """Single-line summary of all Levin metrics."""
@@ -80,10 +100,10 @@ class LevinReport:
             f"S_B={self.basin_stability:.2f}\u00b1{self.basin_error:.2f} "
             f"traj={self.trajectory_length:.1f} | "
             f"anon={self.cosine_anonymity:.3f} "
-            f"fiedler={self.spectral_gap:.4f} | "
+            f"fiedler={self.fiedler_value:.4f} | "
             f"persuade={self.persuadability_score:.3f} "
             f"modes={self.n_controllable_modes} "
-            f"F={self.free_energy:.4f} "
+            f"F={self.free_energy_final:.4f} "
             f"({self.compute_time_ms:.0f}ms)"
         )
 
@@ -99,13 +119,13 @@ class LevinReport:
             "memory_anonymization": {
                 "anonymity_score": round(self.anonymity_score, 4),
                 "cosine_anonymity": round(self.cosine_anonymity, 4),
-                "spectral_gap": round(self.spectral_gap, 6),
+                "fiedler_value": round(self.fiedler_value, 6),
             },
             "persuasion": {
                 "persuadability_score": round(self.persuadability_score, 4),
-                "gramian_log_det": round(self.gramian_log_det, 4),
+                "log_det_gramian": round(self.log_det_gramian, 4),
                 "n_controllable_modes": self.n_controllable_modes,
-                "free_energy": round(self.free_energy, 6),
+                "free_energy_final": round(self.free_energy_final, 6),
                 "intervention_level": self.intervention_level,
             },
             "meta": {
@@ -248,7 +268,7 @@ class LevinPipeline:
 
         anon_cfg = AnonymizationConfig(
             alpha=cfg.alpha_diffusion,
-            dt=0.01,
+            dt=0.1,
             n_diffusion_steps=cfg.n_anon_steps,
         )
         diffuser = GapJunctionDiffuser(anon_cfg)
@@ -280,11 +300,11 @@ class LevinPipeline:
             trajectory_length=coords.trajectory_length(),
             anonymity_score=anon_metrics.anonymization_score,
             cosine_anonymity=anon_metrics.cosine_anonymity,
-            spectral_gap=anon_metrics.spectral_gap,
+            fiedler_value=anon_metrics.spectral_gap,
             persuadability_score=persuad_result.persuadability_score,
-            gramian_log_det=persuad_result.gramian_det_log,
+            log_det_gramian=persuad_result.gramian_det_log,
             n_controllable_modes=persuad_result.n_controllable_modes,
-            free_energy=fe_result.free_energy,
+            free_energy_final=fe_result.free_energy,
             intervention_level=persuad_result.intervention_level.name,
             compute_time_ms=elapsed,
             grid_size=N,

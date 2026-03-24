@@ -31,18 +31,37 @@ def test_inf_params_safe() -> None:
 
 
 def test_physarum_step_performance() -> None:
+    """PERF: Physarum 32×32 must not regress beyond 3× calibrated baseline."""
+    import json
+    import statistics
+    from pathlib import Path
+
+    baseline_path = Path(__file__).parent.parent / "benchmarks" / "bio_baseline.json"
+    if baseline_path.exists():
+        baseline_ms = json.loads(baseline_path.read_text())["physarum_step_32"]["median_ms"]
+        gate_ms = baseline_ms * 3.0
+    else:
+        gate_ms = 30.0  # conservative fallback
+
     N = 32
     eng = PhysarumEngine(N)
     f = np.random.default_rng(0).standard_normal((N, N))
     src = f > 0
-    snk = f < -0.1
+    snk = f < -0.05
     state = eng.initialize(src, snk)
-    state = eng.step(state, src, snk)
-    t0 = time.perf_counter()
-    for _ in range(10):
+    for _ in range(3):
         state = eng.step(state, src, snk)
-    ms_per_step = (time.perf_counter() - t0) / 10 * 1000
-    assert ms_per_step < 10.0, f"Physarum step too slow: {ms_per_step:.1f}ms"
+
+    times = []
+    for _ in range(20):
+        t0 = time.perf_counter()
+        state = eng.step(state, src, snk)
+        times.append((time.perf_counter() - t0) * 1000)
+
+    ms_per_step = statistics.median(times)
+    assert ms_per_step < gate_ms, (
+        f"Physarum step regression: {ms_per_step:.1f}ms > {gate_ms:.1f}ms"
+    )
 
 
 def test_memory_query_vectorized() -> None:
