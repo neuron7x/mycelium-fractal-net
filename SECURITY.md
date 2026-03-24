@@ -50,7 +50,7 @@ The following are in scope:
 - **Secret scanning**: Gitleaks configured (`.gitleaks.toml`)
 - **Dependency auditing**: `pip-audit` in CI pipeline
 - **Static analysis**: Bandit security linter in CI and pre-commit
-- **Import boundaries**: 7 enforced contracts prevent privilege escalation across module layers
+- **Import boundaries**: 8 enforced contracts prevent privilege escalation across module layers
 
 ### Cryptography
 

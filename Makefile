@@ -33,7 +33,7 @@ lint:
 	$(RUN) ruff format --check src/ tests/ scripts/ benchmarks/
 
 typecheck:
-	$(RUN) mypy src/mycelium_fractal_net/types/ src/mycelium_fractal_net/security/ --strict
+	$(RUN) mypy src/mycelium_fractal_net/types/ src/mycelium_fractal_net/security/ src/mycelium_fractal_net/core/ src/mycelium_fractal_net/analytics/ src/mycelium_fractal_net/neurochem/ src/mycelium_fractal_net/bio/ --strict --ignore-missing-imports
 
 security:
 	$(RUN) bandit -r src/mycelium_fractal_net/ -c pyproject.toml -q

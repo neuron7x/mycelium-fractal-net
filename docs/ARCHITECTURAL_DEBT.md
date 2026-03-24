@@ -17,6 +17,13 @@ Updated: 2026-03-24
 | Version drift | 22 stale "4.1.0" refs | All "4.2.0" + golden hashes regenerated | `917f739` |
 | Benchmark flaky gates | Hardcoded ms thresholds | Calibrated baselines + adaptive multiplier | `current` |
 | Regression/gate metric split | Different measurement methods | Unified: regression=correctness, gate=performance | `current` |
+| HDV degenerate encoding | All-+1 for small fields | z-score patch normalization | `23b1631` |
+| pandas eager import | Base import crashes without [data] | Lazy import in run_scenario() | `c11703b` |
+| sklearn missing from deps | morphospace ImportError on clean install | Added scikit-learn to bio extras | `c11703b` |
+| Levin Three modules | Not implemented | morphospace + memory_anonymization + persuasion + pipeline | `dc6abc9` |
+| ComputeBudget | No adaptive compute | Glycogen reserve: 8280× eigen speedup under load | `e1e9c65` |
+| Stress test coverage | No hardware stress test | 32/32 operations, 0 leaks, sub-quadratic scaling | `1ac3602` |
+| Vectorized HDV/Laplacian | Python loops in encode + build_laplacian | stride_tricks + mgrid, 1.9× speedup | `1ac3602` |
 
 ## Active
 

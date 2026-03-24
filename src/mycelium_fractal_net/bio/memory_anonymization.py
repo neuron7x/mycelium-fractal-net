@@ -100,7 +100,7 @@ class HDVFieldEncoder:
         k = self.neighborhood
         padded = np.pad(field, k, mode="wrap")
         patch_width = 2 * k + 1
-        patch_size = patch_width ** 2
+        patch_size = patch_width**2
         W = self._get_projection(patch_size)
 
         # Z-score normalization

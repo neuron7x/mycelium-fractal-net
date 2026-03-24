@@ -163,7 +163,7 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v4
       - run: uv sync --group dev --frozen
-      - run: uv run pytest tests/ --cov=mycelium_fractal_net --cov-branch --cov-report=xml:coverage.xml --cov-report=term-missing --cov-fail-under=80 -q
+      - run: uv run pytest tests/ --cov=mycelium_fractal_net --cov-branch --cov-report=xml:coverage.xml --cov-report=term-missing --cov-fail-under=85 -q
       - uses: actions/upload-artifact@v4
         if: always()
         with:

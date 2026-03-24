@@ -8,10 +8,10 @@ Every PR and release must pass all gates below. No exceptions. No manual overrid
 |---|------|---------|-----------|
 | 1 | Lint | `ruff check src/ tests/` | 0 errors |
 | 2 | Format | `ruff format --check` | 0 diffs |
-| 3 | Type check | `mypy --strict` (types/, security/) | 0 errors |
+| 3 | Type check | `mypy --strict` (types/, security/, core/, analytics/, neurochem/, bio/) | 0 errors |
 | 4 | Unit tests | `pytest tests/` | 0 failures |
-| 5 | Coverage | `pytest --cov --cov-fail-under=80` | ≥ 80% branch |
-| 6 | Import contracts | `lint-imports` | 7/7 KEPT |
+| 5 | Coverage | `pytest --cov --cov-fail-under=85` | ≥ 85% branch |
+| 6 | Import contracts | `lint-imports` | 8/8 KEPT |
 | 7 | Docs drift | `scripts/docs_drift_check.py` | 0 failures |
 | 8 | Security | `bandit -r src/` | 0 medium/high |
 
