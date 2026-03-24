@@ -18,6 +18,8 @@ __all__ = ["DispersalConfig", "SporeDispersalEngine", "SporeDispersalState"]
 
 @dataclass(frozen=True)
 class DispersalConfig:
+    """Configuration for dispersal config."""
+
     alpha_levy: float = 1.5
     r_min: float = 1.0
     release_threshold: float = 0.5
@@ -28,6 +30,8 @@ class DispersalConfig:
 
 @dataclass(slots=True)
 class SporeDispersalState:
+    """State container for spore dispersal state."""
+
     spore_bank: np.ndarray
     spore_air: np.ndarray
     germination_sites: np.ndarray
@@ -35,6 +39,7 @@ class SporeDispersalState:
     step_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
         return {
             "airborne_spores_total": float(np.sum(self.spore_air)),
             "banked_spores_total": float(np.sum(self.spore_bank)),
@@ -45,11 +50,14 @@ class SporeDispersalState:
 
 
 class SporeDispersalEngine:
+    """Spore dispersal engine."""
+
     def __init__(self, N: int, config: DispersalConfig | None = None) -> None:
         self.N = N
         self.config = config or DispersalConfig()
 
     def initialize(self) -> SporeDispersalState:
+        """Initialize state from input field."""
         N = self.N
         return SporeDispersalState(
             spore_bank=np.zeros((N, N), dtype=np.float64),
@@ -63,6 +71,7 @@ class SporeDispersalEngine:
         hyphal_density: np.ndarray,
         rng: np.random.Generator,
     ) -> SporeDispersalState:
+        """Advance one timestep."""
         cfg = self.config
         N = self.N
         release_mask = hyphal_density > cfg.release_threshold

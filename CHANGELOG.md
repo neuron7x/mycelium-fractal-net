@@ -5,6 +5,47 @@ All notable changes to MyceliumFractalNet are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] — 2026-03-24
+
+### Added
+- **Bio layer** — 5 peer-reviewed biological mechanisms: Physarum adaptive conductivity (Tero 2010), hyphal anastomosis (Du 2019), FitzHugh-Nagumo excitable signaling (Adamatzky 2023), fat-tailed spore dispersal (Clark 1999), Keller-Segel chemotaxis (Boswell 2003)
+- **Memory-Augmented CMA-ES** — HDV episodic memory (Kanerva 2009) + CMA-ES optimizer for BioConfig parameter search
+- **mfn.diagnose()** — unified diagnostic API: detect + EWS + forecast + causal + intervention + narrative in one call
+- **mfn.early_warning()** — critical transition detection via autocorrelation, variance ratio, skewness
+- **mfn.ensemble_diagnose()** — statistically hardened diagnosis across multiple seeds with CI95
+- **mfn.inverse_synthesis()** — reverse parameter synthesis via coordinate descent
+- **mfn.watch()** — continuous monitoring with callback-driven control
+- **DiagnosisDiff** — temporal diff between diagnostic reports with trend analysis
+- **diagnose_streaming()** — generator that yields each pipeline step
+- **Causal Intervention Planner** — Pareto-optimal intervention search with robustness evaluation
+- **Live demo** — `python -m mycelium_fractal_net` with Rich terminal output
+- **RESULTS.md** — reproducible benchmark numbers with DOI references
+- Property-based tests (Hypothesis), stateful tests (RuleBasedStateMachine)
+- Calibrated benchmark gates (relative to bio_baseline.json × 3.0 multiplier)
+- 8 import boundary contracts (bio isolation added)
+
+### Changed
+- Module decomposition: model.py (1329→13 LOC), api.py (1062→937), config.py (810→318)
+- mypy --strict: 87 files, 0 errors (was 20 files)
+- Ruff: 1595→36 (97.7% reduction)
+- Causal rule coverage: 46/46 (100%)
+- 4 golden hash profiles locked (+ balanced_criticality)
+- README rewritten with live demo command and bio layer documentation
+- Architectural debt register formalized
+
+### Performance
+- Physarum solver: 28.9ms → 3.0ms (9.6× via sparse matrix caching + splu)
+- Memory query: 1.4ms → 0.07ms (20× via pre-allocated matrix)
+- MetaOptimizer eval: ~300ms → 8ms (37×)
+- Fitness function: flat → discriminating (additive 5-component formula)
+
+### Fixed
+- NaN propagation in params_to_bio_config
+- HDV encoder overflow for extreme float inputs
+- BioMemory dirty flag unconditional rebuild
+- structural_error drift in README/API docs
+- 10 stale "4.1.0" version references
+
 ## [Unreleased]
 
 ### Changed — Cycle 2 Hardening

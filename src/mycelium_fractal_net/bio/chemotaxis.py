@@ -18,6 +18,8 @@ __all__ = ["ChemotaxisConfig", "ChemotaxisEngine", "ChemotaxisState"]
 
 @dataclass(frozen=True)
 class ChemotaxisConfig:
+    """Configuration for chemotaxis config."""
+
     D_rho: float = 0.1
     D_c: float = 1.0
     chi0: float = 2.0
@@ -32,12 +34,15 @@ class ChemotaxisConfig:
 
 @dataclass(slots=True)
 class ChemotaxisState:
+    """State container for chemotaxis state."""
+
     rho: np.ndarray
     c: np.ndarray
     source_map: np.ndarray
     step_count: int = 0
 
     def gradient_alignment(self) -> float:
+        """Gradient alignment."""
         drho_y, drho_x = np.gradient(self.rho)
         dc_y, dc_x = np.gradient(self.c)
         dot = drho_x * dc_x + drho_y * dc_y
@@ -45,6 +50,7 @@ class ChemotaxisState:
         return float(np.mean(dot / norm))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
         return {
             "rho_mean": float(np.mean(self.rho)),
             "rho_max": float(np.max(self.rho)),
@@ -56,6 +62,8 @@ class ChemotaxisState:
 
 
 class ChemotaxisEngine:
+    """Chemotaxis engine."""
+
     def __init__(self, N: int, config: ChemotaxisConfig | None = None) -> None:
         self.N = N
         self.config = config or ChemotaxisConfig()
@@ -65,6 +73,7 @@ class ChemotaxisEngine:
         source_map: np.ndarray,
         initial_rho: np.ndarray | None = None,
     ) -> ChemotaxisState:
+        """Initialize state from input field."""
         N = self.N
         rho = (
             np.ones((N, N), dtype=np.float64) * 0.01 if initial_rho is None else initial_rho.copy()
@@ -74,6 +83,7 @@ class ChemotaxisEngine:
         )
 
     def step(self, state: ChemotaxisState) -> ChemotaxisState:
+        """Advance one timestep."""
         cfg = self.config
         rho, c = state.rho, state.c
         lap_rho = (

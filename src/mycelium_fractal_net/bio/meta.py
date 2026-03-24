@@ -34,6 +34,8 @@ CACHE_THRESHOLD = 0.75
 
 @dataclass
 class MetaOptimizerResult:
+    """Meta optimizer result."""
+
     evolution_result: BioEvolutionResult
     cache_hits: int
     total_queries: int
@@ -42,6 +44,7 @@ class MetaOptimizerResult:
     speedup_ratio: float
 
     def summary(self) -> str:
+        """Summary."""
         er = self.evolution_result
         return (
             f"[META-OPT] best={er.best_fitness:.4f} evals={er.total_evaluations} "
@@ -50,6 +53,7 @@ class MetaOptimizerResult:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
         d = self.evolution_result.to_dict()
         d.update(
             {
@@ -104,6 +108,7 @@ class MetaOptimizer:
         return result
 
     def memory_aware_evaluate(self, params: np.ndarray) -> tuple[float, bool]:
+        """Memory aware evaluate."""
         self._total_queries += 1
         hdv = self.encoder.encode(self._norm(params))
         fam = self.memory.superposition_familiarity(hdv)
@@ -129,6 +134,7 @@ class MetaOptimizer:
         sigma0: float = 0.3,
         verbose: bool = True,
     ) -> MetaOptimizerResult:
+        """Run."""
         t0 = time.perf_counter()
         n = len(PARAM_NAMES)
         _lo, _hi = PARAM_BOUNDS[:, 0], PARAM_BOUNDS[:, 1]

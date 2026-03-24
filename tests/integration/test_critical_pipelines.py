@@ -395,7 +395,7 @@ class TestAPIEndpoints:
         # Test instantiation
         health = HealthResponse()
         assert health.status == "healthy"
-        assert health.version == "4.1.0"
+        assert health.version == "4.2.0"
 
         nernst_req = NernstRequest(
             z_valence=1,

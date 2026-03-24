@@ -53,6 +53,7 @@ DEFAULT_PARAMS = np.array([1.0, 0.01, 0.05, 0.05, 0.13, 1.0, 2.0, 1.5])
 
 
 def params_to_bio_config(params: np.ndarray) -> Any:
+    """Params to bio config."""
     from mycelium_fractal_net.bio.anastomosis import AnastomosisConfig
     from mycelium_fractal_net.bio.chemotaxis import ChemotaxisConfig
     from mycelium_fractal_net.bio.dispersal import DispersalConfig
@@ -107,6 +108,8 @@ def compute_fitness(bio_report: Any, diagnosis: Any) -> float:
 
 @dataclass
 class BioEvolutionResult:
+    """Bio evolution result."""
+
     best_params: np.ndarray
     best_fitness: float
     best_config: Any
@@ -116,12 +119,14 @@ class BioEvolutionResult:
     elapsed_seconds: float
 
     def summary(self) -> str:
+        """Summary."""
         return (
             f"[EVOLUTION] best={self.best_fitness:.4f} evals={self.total_evaluations} "
             f"gen={len(self.generation_history)} ({self.elapsed_seconds:.1f}s)"
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
         return {
             "best_params": {
                 PARAM_NAMES[i]: float(self.best_params[i]) for i in range(len(PARAM_NAMES))
@@ -134,6 +139,8 @@ class BioEvolutionResult:
 
 
 class BioEvolutionOptimizer:
+    """Bio evolution optimizer."""
+
     def __init__(
         self, grid_size: int = 16, steps: int = 20, bio_steps: int = 5, seed: int = 42
     ) -> None:
@@ -143,6 +150,7 @@ class BioEvolutionOptimizer:
         self.seed = seed
 
     def evaluate(self, params: np.ndarray) -> float:
+        """Evaluate."""
         from mycelium_fractal_net.bio.extension import BioExtension
         from mycelium_fractal_net.core.diagnose import diagnose
         from mycelium_fractal_net.core.simulate import simulate_history
@@ -165,6 +173,7 @@ class BioEvolutionOptimizer:
         sigma0: float = 0.3,
         verbose: bool = True,
     ) -> BioEvolutionResult:
+        """Run."""
         t0 = time.perf_counter()
         n = len(PARAM_NAMES)
         history: list[dict[str, Any]] = []

@@ -22,6 +22,8 @@ _LAPLACIAN = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float64)
 
 @dataclass(frozen=True)
 class AnastomosisConfig:
+    """Configuration for anastomosis config."""
+
     D_tip: float = 0.05
     R_growth: float = 0.001
     gamma_anastomosis: float = 0.05
@@ -34,6 +36,8 @@ class AnastomosisConfig:
 
 @dataclass(slots=True)
 class AnastomosisState:
+    """State container for anastomosis state."""
+
     C: np.ndarray
     B: np.ndarray
     Br: np.ndarray
@@ -41,6 +45,7 @@ class AnastomosisState:
     step_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
         return {
             "tip_density_mean": float(np.mean(self.C)),
             "tip_density_max": float(np.max(self.C)),
@@ -54,11 +59,14 @@ class AnastomosisState:
 
 
 class AnastomosisEngine:
+    """Anastomosis engine."""
+
     def __init__(self, N: int, config: AnastomosisConfig | None = None) -> None:
         self.N = N
         self.config = config or AnastomosisConfig()
 
     def initialize(self, initial_tip_field: np.ndarray) -> AnastomosisState:
+        """Initialize state from input field."""
         N = self.N
         C = np.clip(initial_tip_field, 0.0, 1.0).astype(np.float64)
         return AnastomosisState(
@@ -69,6 +77,7 @@ class AnastomosisEngine:
         )
 
     def step(self, state: AnastomosisState) -> AnastomosisState:
+        """Advance one timestep."""
         cfg = self.config
         C, B = state.C, state.B
         lap_C = convolve(C, _LAPLACIAN, mode="wrap").astype(np.float64)

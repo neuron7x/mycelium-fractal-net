@@ -149,7 +149,7 @@ def _get_cors_origins() -> list[str]:
 app = FastAPI(
     title="MyceliumFractalNet API",
     description="Bio-inspired adaptive network with fractal dynamics",
-    version="4.1.0",
+    version="4.2.0",
 )
 
 # Get API configuration

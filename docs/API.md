@@ -32,7 +32,7 @@ Returns engine status and version.
 ```json
 {
   "status": "healthy",
-  "engine_version": "4.1.0",
+  "engine_version": "4.2.0",
   "api_version": "v1",
   "uptime_seconds": 42.5
 }

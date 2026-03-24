@@ -29,6 +29,8 @@ __all__ = ["BioConfig", "BioExtension", "BioReport"]
 
 @dataclass(frozen=True)
 class BioConfig:
+    """Configuration for bio config."""
+
     physarum: PhysarumConfig = field(default_factory=PhysarumConfig)
     anastomosis: AnastomosisConfig = field(default_factory=AnastomosisConfig)
     fhn: FHNConfig = field(default_factory=FHNConfig)
@@ -46,6 +48,8 @@ class BioConfig:
 
 @dataclass(frozen=True)
 class BioReport:
+    """Bio report."""
+
     physarum: dict[str, Any]
     anastomosis: dict[str, Any]
     fhn: dict[str, Any]
@@ -56,6 +60,7 @@ class BioReport:
     field_shape: tuple[int, int]
 
     def summary(self) -> str:
+        """Summary."""
         p = self.physarum
         a = self.anastomosis
         f = self.fhn
@@ -71,6 +76,7 @@ class BioReport:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
         return {
             "physarum": self.physarum,
             "anastomosis": self.anastomosis,
@@ -126,6 +132,7 @@ class BioExtension:
 
     @classmethod
     def from_sequence(cls, seq: FieldSequence, config: BioConfig | None = None) -> BioExtension:
+        """From sequence."""
         config = config or BioConfig()
         field = seq.field.astype(np.float64)
         N = field.shape[0]
@@ -163,6 +170,7 @@ class BioExtension:
         )
 
     def step(self, n: int = 1) -> BioExtension:
+        """Advance one timestep."""
         ext = self
         for _ in range(n):
             ext = ext._single_step()
@@ -215,6 +223,7 @@ class BioExtension:
         )
 
     def report(self) -> BioReport:
+        """Report."""
         t0 = time.perf_counter()
         return BioReport(
             physarum=self.physarum_state.to_dict(),
@@ -228,7 +237,9 @@ class BioExtension:
         )
 
     def effective_diffusion(self, base_D: float = 0.18) -> np.ndarray:
+        """Effective diffusion."""
         return base_D * (1.0 + 2.0 * self.anastomosis_state.kappa)
 
     def conductivity_map(self) -> np.ndarray:
+        """Conductivity map."""
         return self.physarum_state.conductivity_map()

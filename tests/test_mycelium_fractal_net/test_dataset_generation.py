@@ -417,6 +417,6 @@ class TestToRecord:
         assert record["random_seed"] == 42
         assert record["D_box"] == 1.5
         assert record["V_mean"] == -70.0
-        assert record["mfn_version"] == "4.1.0"
+        assert record["mfn_version"] == "4.2.0"
         assert record["timestamp"] == "2025-01-01T00:00:00Z"
         assert record["growth_events"] == 10

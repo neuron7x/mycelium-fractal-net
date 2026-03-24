@@ -8,6 +8,7 @@ import numpy as np
 def load_dataset(path: str):
     try:
         import pandas as pd
+
         return pd.read_parquet(path)
     except Exception:
         data = np.load(path, allow_pickle=True)
@@ -17,6 +18,7 @@ def load_dataset(path: str):
 def compute_descriptive_stats(dataset):
     try:
         import pandas as pd
+
         if isinstance(dataset, pd.DataFrame):
             return dataset.describe(include="all")
     except Exception:

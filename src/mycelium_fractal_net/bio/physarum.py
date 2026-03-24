@@ -27,6 +27,8 @@ DEFAULT_I0 = 1.0
 
 @dataclass(frozen=True)
 class PhysarumConfig:
+    """Configuration for physarum config."""
+
     gamma: float = DEFAULT_GAMMA
     alpha: float = DEFAULT_ALPHA
     mu: float = DEFAULT_MU
@@ -36,6 +38,8 @@ class PhysarumConfig:
 
 @dataclass
 class PhysarumState:
+    """State container for physarum state."""
+
     D_h: np.ndarray
     D_v: np.ndarray
     p: np.ndarray
@@ -46,6 +50,7 @@ class PhysarumState:
     step_count: int = 0
 
     def conductivity_map(self) -> np.ndarray:
+        """Conductivity map."""
         N = self.D_h.shape[0]
         c = np.zeros((N, N))
         c[:, :-1] += self.D_h
@@ -55,6 +60,7 @@ class PhysarumState:
         return c / 4.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
         return {
             "conductivity_mean": float(np.mean(self.D_h) + np.mean(self.D_v)) / 2,
             "conductivity_max": float(max(np.max(self.D_h), np.max(self.D_v))),
@@ -65,6 +71,8 @@ class PhysarumState:
 
 
 class PhysarumEngine:
+    """Physarum engine."""
+
     def __init__(self, N: int, config: PhysarumConfig | None = None) -> None:
         self.N = N
         self.config = config or PhysarumConfig()
@@ -104,6 +112,7 @@ class PhysarumEngine:
         sink_mask: np.ndarray,
         rng: np.random.Generator | None = None,
     ) -> PhysarumState:
+        """Initialize state from input field."""
         N = self.N
         D_h = np.ones((N, N - 1), dtype=np.float64)
         D_v = np.ones((N - 1, N), dtype=np.float64)
@@ -130,6 +139,7 @@ class PhysarumEngine:
         source_mask: np.ndarray,
         sink_mask: np.ndarray,
     ) -> PhysarumState:
+        """Advance one timestep."""
         b = self._build_source_vector(source_mask, sink_mask)
         cfg = self.config
         if cfg.use_sigmoid:

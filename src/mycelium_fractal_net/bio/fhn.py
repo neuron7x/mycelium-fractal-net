@@ -20,6 +20,8 @@ __all__ = ["FHNConfig", "FHNEngine", "FHNState"]
 
 @dataclass(frozen=True)
 class FHNConfig:
+    """Configuration for f h n config."""
+
     a: float = 0.13
     b: float = 0.013
     c1: float = 0.26
@@ -33,6 +35,8 @@ class FHNConfig:
 
 @dataclass(slots=True)
 class FHNState:
+    """State container for f h n state."""
+
     u: np.ndarray
     v: np.ndarray
     mask: np.ndarray
@@ -40,6 +44,7 @@ class FHNState:
     step_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-safe dict."""
         active = self.mask if np.any(self.mask) else np.ones_like(self.u, dtype=bool)
         return {
             "u_mean": float(np.mean(self.u[active])),
@@ -52,6 +57,8 @@ class FHNState:
 
 
 class FHNEngine:
+    """F h n engine."""
+
     def __init__(self, N: int, config: FHNConfig | None = None) -> None:
         self.N = N
         self.config = config or FHNConfig()
@@ -61,6 +68,7 @@ class FHNEngine:
         hyphal_mask: np.ndarray,
         rng: np.random.Generator | None = None,
     ) -> FHNState:
+        """Initialize state from input field."""
         if rng is None:
             rng = np.random.default_rng(0)
         N = self.N
@@ -78,6 +86,7 @@ class FHNEngine:
         state: FHNState,
         hyphal_mask: np.ndarray | None = None,
     ) -> FHNState:
+        """Advance one timestep."""
         cfg = self.config
         mask = hyphal_mask.astype(bool) if hyphal_mask is not None else state.mask
         u, v = state.u.copy(), state.v.copy()

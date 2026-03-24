@@ -21,6 +21,8 @@ DEFAULT_D = 10_000
 
 @dataclass
 class MemoryEntry:
+    """Memory entry."""
+
     hdv: np.ndarray
     fitness: float
     params: dict[str, float]
@@ -43,6 +45,7 @@ class HDVEncoder:
         self._b = rng.uniform(0, 2 * np.pi, D)
 
     def encode(self, features: np.ndarray) -> np.ndarray:
+        """Encode."""
         x = np.nan_to_num(
             np.asarray(features, dtype=np.float64).ravel(),
             nan=0.0,
@@ -60,6 +63,7 @@ class HDVEncoder:
         return np.where(raw == 0.0, 1.0, raw).astype(np.float32)
 
     def similarity(self, a: np.ndarray, b: np.ndarray) -> float:
+        """Similarity."""
         return float(np.dot(a, b)) / self.D
 
 
@@ -79,10 +83,12 @@ class BioMemory:
 
     @property
     def size(self) -> int:
+        """Size."""
         return len(self._episodes)
 
     @property
     def is_empty(self) -> bool:
+        """Is empty."""
         return len(self._episodes) == 0
 
     def store(
@@ -93,6 +99,7 @@ class BioMemory:
         metadata: dict[str, Any] | None = None,
         step: int = 0,
     ) -> None:
+        """Store an episode in memory."""
         entry = MemoryEntry(
             hdv=hdv.copy(),
             fitness=float(fitness),
@@ -128,6 +135,7 @@ class BioMemory:
     def query(
         self, query_hdv: np.ndarray, k: int = 5
     ) -> list[tuple[float, float, dict[str, float], dict[str, Any]]]:
+        """Retrieve top-k most similar episodes."""
         if self.is_empty:
             return []
         if self._dirty:
@@ -156,6 +164,7 @@ class BioMemory:
         ]
 
     def superposition_familiarity(self, query_hdv: np.ndarray) -> float:
+        """Superposition familiarity."""
         if self.is_empty:
             return 0.0
         sp_norm = self._superposition / (np.linalg.norm(self._superposition) + 1e-12)
@@ -163,6 +172,7 @@ class BioMemory:
         return float(np.clip((raw + 1.0) / 2.0, 0.0, 1.0))
 
     def predict_fitness(self, query_hdv: np.ndarray, k: int = 5) -> float:
+        """Predict fitness."""
         if self.is_empty:
             return 0.0
         results = self.query(query_hdv, k=min(k, self.size))
@@ -173,14 +183,17 @@ class BioMemory:
         return float(np.dot(weights, fits))
 
     def best_known_fitness(self) -> float:
+        """Best known fitness."""
         return max((ep.fitness for ep in self._episodes), default=0.0)
 
     def best_known_params(self) -> dict[str, float]:
+        """Best known params."""
         if self.is_empty:
             return {}
         return dict(max(self._episodes, key=lambda e: e.fitness).params)
 
     def fitness_landscape(self) -> dict[str, float]:
+        """Fitness landscape."""
         if self.is_empty:
             return {}
         f = [ep.fitness for ep in self._episodes]
