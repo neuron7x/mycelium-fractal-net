@@ -254,6 +254,9 @@ ignore = [
 "src/mycelium_fractal_net/cli.py" = [
   "T20",     # print is the correct output mechanism for CLI
 ]
+"src/mycelium_fractal_net/__main__.py" = [
+  "T20",     # print is the correct output for CLI entrypoint
+]
 "src/mycelium_fractal_net/integration/crypto_adapters.py" = [
   "B904",    # frozen adapter — exception chaining deferred to v5.0
 ]

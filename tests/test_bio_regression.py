@@ -156,7 +156,7 @@ def test_memory_query_no_latency_spikes() -> None:
         times.append((time.perf_counter() - t0) * 1000)
     med = statistics.median(times)
     p99 = sorted(times)[990]
-    spike_ratio = p99 / max(med, 0.001)
+    p99 / max(med, 0.001)
     # GC/OS scheduling can cause ~100x spikes on short operations (0.04ms → 4ms)
     # Gate on absolute p99 instead of ratio
     assert p99 < 10.0, f"Latency spike: p99={p99:.2f}ms (gate: 10ms)"

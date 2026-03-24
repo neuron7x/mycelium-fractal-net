@@ -6,7 +6,6 @@ Falls back to plain text if Rich is not installed.
 
 from __future__ import annotations
 
-import sys
 import time
 
 
