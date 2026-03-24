@@ -94,33 +94,40 @@ class HDVFieldEncoder:
 
         Each cell encodes its local (2*neighborhood+1)² patch.
         Patches are z-score normalized to ensure discriminative encoding
-        regardless of field magnitude.
+        regardless of field magnitude. Fully vectorized — no Python loops.
         """
         N, M = field.shape
         k = self.neighborhood
         padded = np.pad(field, k, mode="wrap")
-        patch_size = (2 * k + 1) ** 2
+        patch_width = 2 * k + 1
+        patch_size = patch_width ** 2
         W = self._get_projection(patch_size)
 
-        n_cells = N * M
-        memory = np.empty((n_cells, self.D), dtype=np.float64)
-
-        # Global z-score normalization: ensures cos(W@patch) spans [-1,1]
-        # even for fields with tiny magnitude (e.g., early Turing patterns)
+        # Z-score normalization
         field_std = float(np.std(field))
         field_mean = float(np.mean(field))
         scale = field_std if field_std > 1e-12 else 1.0
 
-        for i in range(N):
-            for j in range(M):
-                patch = padded[i : i + 2 * k + 1, j : j + 2 * k + 1].ravel()
-                patch_normed = (patch - field_mean) / scale
-                projection = W @ patch_normed
-                memory[i * M + j] = np.sign(np.cos(projection))
+        # Extract all patches at once using stride tricks
+        # patches shape: (N, M, patch_width, patch_width)
+        strides = padded.strides
+        patches = np.lib.stride_tricks.as_strided(
+            padded,
+            shape=(N, M, patch_width, patch_width),
+            strides=(strides[0], strides[1], strides[0], strides[1]),
+        ).copy()  # copy to ensure contiguous memory
+
+        # Reshape to (N*M, patch_size) and normalize
+        all_patches = patches.reshape(N * M, patch_size)
+        all_patches = (all_patches - field_mean) / scale
+
+        # Batch projection: (N*M, patch_size) @ (patch_size, D) → (N*M, D)
+        projections = all_patches @ W.T
+        memory = np.sign(np.cos(projections))
 
         # Clean NaN from sign(cos(extreme))
         np.nan_to_num(memory, copy=False, nan=1.0)
-        return memory
+        return np.asarray(memory)
 
 
 class GapJunctionDiffuser:
@@ -143,42 +150,39 @@ class GapJunctionDiffuser:
         Returns: (N², N²) sparse Laplacian L_g where
             L_g[i,j] = -w_ij for neighbors
             L_g[i,i] = sum of neighbor weights
+
+        Fully vectorized — no Python loops.
         """
         N_rows = D_h.shape[0]
         N_cols = D_v.shape[1]
         n_cells = N_rows * N_cols
         min_c = self.config.min_conductance
 
-        rows: list[int] = []
-        cols: list[int] = []
-        data: list[float] = []
+        # Horizontal edges: (i, j) -- (i, j+1) for all i, j<N_cols-1
+        w_h = np.maximum(D_h.ravel(), min_c)  # (N_rows * (N_cols-1),)
+        ii, jj = np.mgrid[:N_rows, : N_cols - 1]
+        u_h = (ii * N_cols + jj).ravel()
+        v_h = (ii * N_cols + jj + 1).ravel()
+
+        # Vertical edges: (i, j) -- (i+1, j) for all i<N_rows-1, j
+        w_v = np.maximum(D_v.ravel(), min_c)  # ((N_rows-1) * N_cols,)
+        ii2, jj2 = np.mgrid[: N_rows - 1, :N_cols]
+        u_v = (ii2 * N_cols + jj2).ravel()
+        v_v = ((ii2 + 1) * N_cols + jj2).ravel()
+
+        # Assemble: each edge contributes 2 off-diagonal entries
+        rows_arr = np.concatenate([u_h, v_h, u_v, v_v])
+        cols_arr = np.concatenate([v_h, u_h, v_v, u_v])
+        data_arr = np.concatenate([-w_h, -w_h, -w_v, -w_v])
+
+        L = csr_matrix((data_arr, (rows_arr, cols_arr)), shape=(n_cells, n_cells))
+
+        # Diagonal: sum of weights per node
         diag = np.zeros(n_cells)
-
-        # Horizontal edges
-        for i in range(N_rows):
-            for j in range(N_cols - 1):
-                w = float(max(D_h[i, j], min_c))
-                u = i * N_cols + j
-                v = i * N_cols + j + 1
-                rows.extend([u, v])
-                cols.extend([v, u])
-                data.extend([-w, -w])
-                diag[u] += w
-                diag[v] += w
-
-        # Vertical edges
-        for i in range(N_rows - 1):
-            for j in range(N_cols):
-                w = float(max(D_v[i, j], min_c))
-                u = i * N_cols + j
-                v = (i + 1) * N_cols + j
-                rows.extend([u, v])
-                cols.extend([v, u])
-                data.extend([-w, -w])
-                diag[u] += w
-                diag[v] += w
-
-        L = csr_matrix((data, (rows, cols)), shape=(n_cells, n_cells))
+        np.add.at(diag, u_h, w_h)
+        np.add.at(diag, v_h, w_h)
+        np.add.at(diag, u_v, w_v)
+        np.add.at(diag, v_v, w_v)
         L = L + diags(diag, 0, shape=(n_cells, n_cells), format="csr")
 
         if self.config.normalize_laplacian:
