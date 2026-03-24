@@ -288,9 +288,19 @@ class PersuadabilityAnalyzer:
         # Symmetrize (numerical errors)
         W_c = (W_c + W_c.T) / 2.0
 
-        # Eigendecomposition
-        eigvals = np.linalg.eigvalsh(W_c)
-        eigvals = np.maximum(eigvals, 0.0)  # Clip numerical negatives
+        # Eigendecomposition: sparse eigsh for N>256, dense otherwise
+        if n > 256:
+            from scipy.sparse import csr_matrix as _csr
+            from scipy.sparse.linalg import eigsh as _eigsh
+
+            k_eig = min(n - 1, 50)
+            W_sparse = _csr(W_c)
+            eigvals = _eigsh(W_sparse, k=k_eig, which="LM", return_eigenvectors=False)
+            eigvals = np.sort(np.real(eigvals))[::-1]
+            eigvals = np.maximum(eigvals, 0.0)
+        else:
+            eigvals = np.linalg.eigvalsh(W_c)
+            eigvals = np.maximum(eigvals, 0.0)
 
         trace = float(np.sum(eigvals))
         log_det = float(np.sum(np.log(eigvals + 1e-30)))

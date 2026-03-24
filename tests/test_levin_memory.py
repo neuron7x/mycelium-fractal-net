@@ -170,6 +170,7 @@ def test_metrics_valid(
     assert metrics.effective_rank_before >= 1
     assert metrics.effective_rank_after >= 1
     assert 0.0 <= metrics.anonymization_score <= 1.0
+    assert 0.0 <= metrics.cosine_anonymity <= 1.0
 
 
 def test_metrics_to_dict(
@@ -184,6 +185,7 @@ def test_metrics_to_dict(
     d = metrics.to_dict()
     assert "entropy_before" in d
     assert "anonymization_score" in d
+    assert "cosine_anonymity" in d
     assert isinstance(d["n_cells"], int)
 
 

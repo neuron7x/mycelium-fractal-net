@@ -175,8 +175,11 @@ class BasinStabilityAnalyzer:
         scale = self.config.perturbation_scale * pca_stds
 
         last_frames = coords.coords[-5:, :n_used]
-        basin_radius = float(np.max(np.linalg.norm(last_frames - attractor_center, axis=1)) * 2.0)
-        basin_radius = max(basin_radius, 1e-6)
+        raw_radius = float(np.max(np.linalg.norm(last_frames - attractor_center, axis=1)) * 2.0)
+        # Sigma guard: prevent zero radius for fast-converging systems
+        # Min radius = 1% of dominant PCA std
+        min_radius = float(pca_stds[0]) * 0.01 if len(pca_stds) > 0 else 1e-4
+        basin_radius = max(raw_radius, min_radius)
 
         n_returned = 0
         n_samples = self.config.n_basin_samples

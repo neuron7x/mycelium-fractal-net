@@ -1,12 +1,13 @@
 """Bio extension for MyceliumFractalNet.
 
-Public surface (13 symbols, stable contract):
+Public surface (14 symbols, stable contract):
     BioExtension, BioConfig, BioReport
     MetaOptimizer, MetaOptimizerResult
     BioMemory, HDVEncoder
     MorphospaceBuilder, BasinStabilityAnalyzer
     GapJunctionDiffuser, HDVFieldEncoder
     FieldActiveInference, PersuadabilityAnalyzer
+    LevinPipeline
 
 Hard dependencies: numpy (always), scipy (Physarum + Levin), sklearn (morphospace)
 Import budget: bio/ must not import from integration/, api/, cli/
@@ -30,6 +31,7 @@ from .evolution import (
 )
 from .extension import BioConfig, BioExtension, BioReport
 from .fhn import FHNConfig, FHNEngine, FHNState
+from .levin_pipeline import LevinPipeline, LevinPipelineConfig, LevinReport
 from .memory import BioMemory, HDVEncoder, MemoryEntry
 from .memory_anonymization import (
     AnonymizationConfig,
@@ -66,6 +68,7 @@ __all__ = [
     "GapJunctionDiffuser",
     "HDVEncoder",
     "HDVFieldEncoder",
+    "LevinPipeline",
     "MetaOptimizer",
     "MetaOptimizerResult",
     "MorphospaceBuilder",
