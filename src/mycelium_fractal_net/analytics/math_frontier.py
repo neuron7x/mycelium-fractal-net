@@ -13,6 +13,7 @@ import numpy as np
 
 from .causal_emergence import (
     compute_causal_emergence,
+    discretize_field_pca,
     discretize_turing_field,
 )
 from .fisher_information import FIMResult, compute_fim
@@ -88,22 +89,20 @@ def run_math_frontier(
     # 1. TDA
     topo = compute_tda(seq.field, min_persistence_frac=0.005)
 
-    # 2. W2 trajectory speed
-    w2_speed = wasserstein_distance(seq.history[0], seq.field, method="sliced")
+    # 2. W2 trajectory speed (sinkhorn for N<=64, sliced for N>64)
+    w2_speed = wasserstein_distance(seq.history[0], seq.field, method="auto")
 
-    # 3. Causal Emergence — multi-scale TPM
+    # 3. Causal Emergence — PCA-based discretization replaces per-frame heuristic
     n_steps = seq.history.shape[0]
-    states_micro = np.array([
-        discretize_turing_field(seq.history[t]) for t in range(n_steps)
-    ])
+    states_micro = discretize_field_pca(seq.history, n_macro_states=4)
     tpm_micro = np.zeros((4, 4))
     for t in range(len(states_micro) - 1):
         tpm_micro[states_micro[t], states_micro[t + 1]] += 1
     row_s = tpm_micro.sum(axis=1, keepdims=True)
     row_s[row_s < 1] = 1
     tpm_micro /= row_s
-    first_state = int(states_micro[0])
-    states_macro = (states_micro != first_state).astype(int)
+    # Macro: 2-state coarsening (lower vs upper half of PCA states)
+    states_macro = (states_micro >= 2).astype(int)
     tpm_macro = np.zeros((2, 2))
     for t in range(len(states_macro) - 1):
         tpm_macro[states_macro[t], states_macro[t + 1]] += 1

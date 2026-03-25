@@ -32,6 +32,7 @@ FeatureArray = NDArray[np.float64]
 from .causal_emergence import (
     CausalEmergenceResult,
     compute_causal_emergence,
+    discretize_field_pca,
     effective_information,
 )
 from .fisher_information import FIMResult, compute_fim, natural_gradient_step
@@ -45,6 +46,7 @@ from .fractal_arsenal import (
     compute_fractal_arsenal,
     compute_lacunarity,
     compute_multifractal_spectrum,
+    finite_size_scaling_study,
 )
 from .math_frontier import MathFrontierReport, run_math_frontier
 from .rmt_spectral import RMTDiagnostics, rmt_diagnostics
@@ -74,12 +76,14 @@ __all__ = [
     "compute_basin_fractality",
     "compute_box_counting_dimension",
     "compute_causal_emergence",
+    "discretize_field_pca",
     "compute_dlambda_dt",
     "compute_fim",
     "compute_fractal_arsenal",
     "compute_fractal_features",
     "compute_lacunarity",
     "compute_multifractal_spectrum",
+    "finite_size_scaling_study",
     "compute_tda",
     "effective_information",
     "natural_gradient_step",

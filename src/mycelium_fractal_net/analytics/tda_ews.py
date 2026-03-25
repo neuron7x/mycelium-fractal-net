@@ -2,6 +2,7 @@
 
 Ref: Spector, Harrington & Gaffney (2025) Bull.Math.Biol. DOI:10.1007/s11538-025-01552-9
      Mittal & Gupta (2017) Chaos 27:051102 DOI:10.1063/1.4983840
+     Fasy et al. (2014) Annals of Statistics 42:2301 (bootstrap confidence bands)
 """
 
 from __future__ import annotations
@@ -43,8 +44,22 @@ class TopologicalSignature:
 def compute_tda(
     field: np.ndarray,
     min_persistence_frac: float = 0.005,
+    periodic: bool = False,
 ) -> TopologicalSignature:
-    """Compute persistent homology for 2D field. < 5ms for N=32."""
+    """Compute persistent homology for 2D field. < 5ms for N=32.
+
+    Args:
+        field:                N x N array
+        min_persistence_frac: minimum lifetime fraction to keep (default 0.005)
+        periodic:             use PeriodicCubicalComplex for toroidal BC.
+                              NOTE: Periodic BC changes topology fundamentally --
+                              beta_0 counts components on torus (subtract 1 for
+                              background), beta_1 includes torus holes (beta_1>=2
+                              for connected patterns).
+                              Use False (default) for standard Euclidean analysis.
+                              Use True only if RD simulation used periodic BC AND
+                              you want torus topology.
+    """
     import gudhi
 
     f = np.asarray(field, dtype=np.float64)
@@ -52,13 +67,19 @@ def compute_tda(
     if f_range < 1e-12:
         return TopologicalSignature(0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, "indeterminate")
 
-    # Superlevel filtration: invert so high-activation → low filtration value.
+    # Superlevel filtration: invert so high-activation -> low filtration value.
     # Required for MFN fields which are inhibitor-dominant (all-negative activator).
     f_sup = f.max() - f
     f_norm = f_sup / (f_sup.max() + 1e-12)
     min_pers = min_persistence_frac
 
-    cc = gudhi.CubicalComplex(top_dimensional_cells=f_norm)
+    if periodic:
+        cc = gudhi.PeriodicCubicalComplex(
+            top_dimensional_cells=f_norm,
+            periodic_dimensions=[True, True],
+        )
+    else:
+        cc = gudhi.CubicalComplex(top_dimensional_cells=f_norm)
     cc.compute_persistence()
     pairs = cc.persistence()
 

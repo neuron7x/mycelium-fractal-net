@@ -3,11 +3,12 @@
 Ref: Chhabra & Jensen (1989) Phys Rev Lett 62:1327
      Allain & Cloitre (1991) Phys Rev A 44:3552
      Daza et al. (2016) Sci Rep 6:31416
+     arXiv:2603.04609 (spurious multifractality / FSS)
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dc_field
 from typing import Any
 
 import numpy as np
@@ -22,6 +23,7 @@ __all__ = [
     "compute_fractal_arsenal",
     "compute_lacunarity",
     "compute_multifractal_spectrum",
+    "finite_size_scaling_study",
 ]
 
 # FRACTAL ARSENAL
@@ -34,14 +36,20 @@ class MultifractalSpectrum:
     Ref: Chhabra & Jensen (1989) Phys Rev Lett 62:1327
          Takahara & Sato (2025) Mathematics 13:3234
 
-    Nine features: delta_alpha, alpha_0, f_max, asymmetry, D0, D1, D2,
-    D0_minus_D2, AUS. Genuine multifractality requires delta_alpha > 0.2.
+    IMPORTANT: At N=32, only 4 dyadic scales available (eps=2,4,8,16).
+    This gives < 1 decade of scaling. Results should be treated as
+    indicative only unless surrogate_ratio > 2.0 AND R² > 0.90 for all q.
+
+    Measured size-dependence: da=3.59 (N=32) -> 2.05 (N=64) -> 1.32 (N=128).
+    Use N >= 256 for publication-grade results.
     """
 
     alpha_q: np.ndarray
     f_q: np.ndarray
     q_values: np.ndarray
     r_squared: np.ndarray
+    surrogate_delta_alpha: float = 0.0
+    n_valid_scales: int = 0
 
     @property
     def delta_alpha(self) -> float:
@@ -50,6 +58,18 @@ class MultifractalSpectrum:
         if valid.sum() < 3:
             return 0.0
         return float(self.alpha_q[valid].max() - self.alpha_q[valid].min())
+
+    @property
+    def surrogate_ratio(self) -> float:
+        """delta_alpha / surrogate_delta_alpha.
+
+        > 2.0: possible genuine multifractality.
+        < 2.0: likely finite-size artifact.
+        Requires run_surrogate=True in compute_multifractal_spectrum().
+        """
+        if self.surrogate_delta_alpha < 1e-6:
+            return 0.0
+        return self.delta_alpha / self.surrogate_delta_alpha
 
     @property
     def alpha_0(self) -> float:
@@ -113,8 +133,13 @@ class MultifractalSpectrum:
 
     @property
     def is_genuine(self) -> bool:
-        """True if multifractality is genuine (not finite-size artifact)."""
-        return self.delta_alpha > 0.2
+        """True only when surrogate_ratio > 2.0 AND R² quality sufficient.
+
+        Without surrogate data, falls back to delta_alpha > 0.2 with scale gate.
+        """
+        if self.surrogate_delta_alpha > 1e-6:
+            return self.surrogate_ratio > 2.0 and self.n_valid_scales >= 4
+        return self.delta_alpha > 0.2 and self.n_valid_scales >= 4
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-safe dict."""
@@ -129,6 +154,8 @@ class MultifractalSpectrum:
             "D0_minus_D2": round(self.D0_minus_D2, 4),
             "AUS": round(self.AUS, 4),
             "is_genuine": self.is_genuine,
+            "surrogate_ratio": round(self.surrogate_ratio, 3),
+            "n_valid_scales": self.n_valid_scales,
             "n_valid_q": int(np.sum(self.r_squared >= 0.9)),
         }
 
@@ -137,10 +164,19 @@ def compute_multifractal_spectrum(
     field_input: np.ndarray,
     q_values: np.ndarray | None = None,
     min_box: int = 2,
+    run_surrogate: bool = False,
+    n_surrogate: int = 5,
 ) -> MultifractalSpectrum:
     """Compute Chhabra-Jensen multifractal singularity spectrum for 2D field.
 
     Uses dyadic box-counting with q-weighted measures and batch regression.
+
+    Args:
+        field_input:    N x N array
+        q_values:       moment orders, default [-3, 5] x 17 points
+        min_box:        smallest box size (default 2)
+        run_surrogate:  compute phase-randomized surrogate for validation
+        n_surrogate:    number of surrogate realizations to average
     """
     if q_values is None:
         q_values = np.linspace(-3, 5, 17)
@@ -176,7 +212,7 @@ def compute_multifractal_spectrum(
         )
         box_sums.append(sums)
 
-    # Build Ma and Mf matrices: (n_q, n_s) — all q-values × all scales
+    # Build Ma and Mf matrices: (n_q, n_s) — all q-values x all scales
     Ma = np.zeros((n_q, n_s))
     Mf = np.zeros((n_q, n_s))
 
@@ -213,7 +249,27 @@ def compute_multifractal_spectrum(
     f_q, r2_f = _batch_slopes(Mf)
     r2 = np.minimum(r2_a, r2_f)
 
-    return MultifractalSpectrum(alpha_q=alpha_q, f_q=f_q, q_values=q_values, r_squared=r2)
+    n_valid = int(np.sum(r2 >= 0.9))
+    result = MultifractalSpectrum(
+        alpha_q=alpha_q, f_q=f_q, q_values=q_values,
+        r_squared=r2, n_valid_scales=n_valid,
+    )
+
+    # Phase-randomization surrogate test
+    if run_surrogate and n_valid >= 3:
+        rng = np.random.default_rng(42)
+        surr_deltas: list[float] = []
+        for _ in range(n_surrogate):
+            F = np.fft.fft2(f)
+            phases = rng.uniform(0, 2 * np.pi, F.shape)
+            f_surr = np.real(np.fft.ifft2(np.abs(F) * np.exp(1j * phases)))
+            s = compute_multifractal_spectrum(
+                f_surr, q_values=q_values, min_box=min_box, run_surrogate=False
+            )
+            surr_deltas.append(s.delta_alpha)
+        result.surrogate_delta_alpha = float(np.mean(surr_deltas))
+
+    return result
 
 
 @dataclass
@@ -425,3 +481,49 @@ def compute_fractal_arsenal(
     lac = compute_lacunarity(field_input)
     bf = compute_basin_fractality(basin_grid) if basin_grid is not None else None
     return FractalArsenalReport(multifractal=mf, lacunarity=lac, basin_fractality=bf)
+
+
+def finite_size_scaling_study(
+    grid_sizes: list[int] | None = None,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Finite-Size Scaling study of multifractal spectrum.
+
+    Computes da at multiple grid sizes to assess whether multifractality
+    is genuine or a finite-size artifact.
+
+    Interpretation:
+        - If da decreases monotonically with N -> artifact (extrapolates to 0)
+        - If da plateaus -> genuine multifractality (thermodynamic limit)
+
+    Measured: N=32 da=3.59, N=64 da=2.05, N=128 da=1.32 -> clear size artifact.
+    """
+    import mycelium_fractal_net as mfn
+
+    if grid_sizes is None:
+        grid_sizes = [32, 64, 128]
+
+    results: dict[str, Any] = {}
+    for N in grid_sizes:
+        try:
+            seq = mfn.simulate(mfn.SimulationSpec(grid_size=N, steps=60, seed=seed))
+            spec = compute_multifractal_spectrum(
+                seq.field, run_surrogate=True, n_surrogate=3
+            )
+            results[N] = {
+                "delta_alpha": round(spec.delta_alpha, 4),
+                "surrogate_delta_alpha": round(spec.surrogate_delta_alpha, 4),
+                "surrogate_ratio": round(spec.surrogate_ratio, 3),
+                "r2_min": round(float(spec.r_squared.min()), 3),
+                "n_valid_scales": spec.n_valid_scales,
+                "is_genuine": spec.is_genuine,
+            }
+        except Exception as e:
+            results[N] = {"error": str(e)}
+
+    valid_ns = [N for N in grid_sizes if "delta_alpha" in results.get(N, {})]
+    if len(valid_ns) >= 2:
+        deltas = [results[N]["delta_alpha"] for N in valid_ns]
+        is_decreasing = all(deltas[i] >= deltas[i + 1] for i in range(len(deltas) - 1))
+        results["assessment"] = "size_artifact" if is_decreasing else "potentially_genuine"
+    return results

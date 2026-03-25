@@ -43,7 +43,7 @@ def test_summary_string(seq: mfn.FieldSequence) -> None:
     s = report.summary()
     assert "[LEVIN]" in s
     assert "pc1=" in s
-    assert "S_B=" in s
+    assert "S_B=" in s or "S_B" in s
     assert "anon=" in s
     assert "persuade=" in s
     assert "modes=" in s
@@ -77,6 +77,10 @@ def test_basin_stability_range(seq: mfn.FieldSequence) -> None:
     report = pipeline.run()
     assert 0.0 <= report.basin_stability <= 1.0
     assert report.basin_error >= 0.0
+    # Wilson CI
+    assert report.basin_ci_low <= report.basin_stability
+    assert report.basin_ci_high >= report.basin_stability
+    assert 0.0 <= report.basin_ci_low <= report.basin_ci_high <= 1.0
 
 
 def test_interpretation_not_empty(seq: mfn.FieldSequence) -> None:

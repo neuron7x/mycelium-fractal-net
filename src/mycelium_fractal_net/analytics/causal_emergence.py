@@ -17,6 +17,7 @@ from scipy.stats import entropy as scipy_entropy
 __all__ = [
     "CausalEmergenceResult",
     "compute_causal_emergence",
+    "discretize_field_pca",
     "discretize_turing_field",
     "effective_information",
 ]
@@ -32,6 +33,8 @@ class CausalEmergenceResult:
     best_scale: str
     determinism: float
     degeneracy: float
+    is_reliable: bool = True
+    state_coverage: float = 1.0
 
     def to_dict(self) -> dict[str, Any]:
         """Return JSON-serializable dict with EI, CE, and emergence flag."""
@@ -41,6 +44,8 @@ class CausalEmergenceResult:
             "CE_macro": round(self.CE_macro, 4),
             "best_scale": self.best_scale,
             "is_causally_emergent": self.CE_macro > 0.01,
+            "is_reliable": self.is_reliable,
+            "state_coverage": round(self.state_coverage, 3),
         }
 
 
@@ -59,7 +64,11 @@ def compute_causal_emergence(
     tpm_micro: np.ndarray,
     tpm_macro: np.ndarray | None = None,
 ) -> CausalEmergenceResult:
-    """Compute EI and CE at micro and macro scales."""
+    """Compute EI and CE at micro and macro scales.
+
+    Includes reliability check: fraction of states with >= 5 transitions.
+    If coverage < 75%, result is marked unreliable.
+    """
     EI_micro = effective_information(tpm_micro)
     EI_macro = effective_information(tpm_macro) if tpm_macro is not None else EI_micro
     CE_macro = EI_macro - EI_micro
@@ -69,9 +78,15 @@ def compute_causal_emergence(
     determinism = float(scipy_entropy(avg_out + 1e-12, base=2))
     degeneracy = float(np.mean(scipy_entropy((tpm_micro + 1e-12).T, base=2)))
 
+    # Coverage check: fraction of states with >= 5 transitions
+    row_sums = tpm_micro.sum(axis=1)
+    n_covered = int(np.sum(row_sums >= 5))
+    coverage = n_covered / max(tpm_micro.shape[0], 1)
+
     return CausalEmergenceResult(
         EI_micro=EI_micro, EI_macro=EI_macro, CE_macro=CE_macro,
         best_scale=best, determinism=determinism, degeneracy=degeneracy,
+        is_reliable=coverage >= 0.75, state_coverage=coverage,
     )
 
 
@@ -79,6 +94,9 @@ def discretize_turing_field(field: np.ndarray) -> int:
     """Discretize field into 4 macro states using power spectrum (rotation-invariant).
 
     0=homogeneous, 1=spots, 2=stripes, 3=chaotic.
+
+    NOTE: This per-frame heuristic collapses most Turing simulations to
+    state 1 (spots). For CE analysis, use discretize_field_pca() instead.
     """
     f = np.asarray(field, dtype=np.float64)
     std = float(np.std(f))
@@ -113,3 +131,57 @@ def discretize_turing_field(field: np.ndarray) -> int:
     if std > 0.04 and coherence < 3.0:
         return 3  # chaotic
     return 1  # spots
+
+
+def discretize_field_pca(
+    history: np.ndarray,
+    n_macro_states: int = 4,
+    method: str = "kmeans",
+) -> np.ndarray:
+    """Discretize field history into macro states using PCA + clustering.
+
+    Replaces the per-frame anisotropy heuristic (discretize_turing_field)
+    that collapsed 60 simulation steps to just 2 states ({0:3, 1:57}).
+
+    PCA projects field snapshots onto first 5 PCs, then clusters in
+    PC-space. This preserves spatial structure instead of discarding it
+    via thresholds on std/anisotropy.
+
+    Args:
+        history:        (T, N, N) field history from FieldSequence
+        n_macro_states: number of discrete states (default 4)
+        method:         'kmeans' or 'quantile' (fallback, no sklearn needed)
+
+    Returns:
+        (T,) integer array of macro state labels [0, n_macro_states)
+    """
+    T = history.shape[0]
+    flat = history.reshape(T, -1).astype(np.float64)
+    flat -= flat.mean(axis=0, keepdims=True)
+
+    # Economy SVD for PCA — handle T < D case efficiently
+    n_components = min(5, T, flat.shape[1])
+    if T < flat.shape[1]:
+        C = flat @ flat.T
+        eigvals, eigvecs = np.linalg.eigh(C)
+        idx = np.argsort(eigvals)[::-1][:n_components]
+        proj = eigvecs[:, idx]
+    else:
+        _U, _S, Vt = np.linalg.svd(flat, full_matrices=False)
+        proj = flat @ Vt[:n_components].T
+
+    if method == "kmeans":
+        try:
+            from sklearn.cluster import KMeans
+            km = KMeans(n_clusters=n_macro_states, n_init=10, random_state=42)
+            return km.fit_predict(proj).astype(int)
+        except ImportError:
+            method = "quantile"
+
+    # Quantile fallback on PC1 (no sklearn needed)
+    pc1 = proj[:, 0]
+    quantiles = np.linspace(0, 100, n_macro_states + 1)
+    bins = np.percentile(pc1, quantiles)
+    bins[0] -= 1e-10
+    bins[-1] += 1e-10
+    return np.clip(np.digitize(pc1, bins[1:-1]), 0, n_macro_states - 1).astype(int)

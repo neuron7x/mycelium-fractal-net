@@ -82,6 +82,20 @@ class MorphospaceCoords:
         }
 
 
+def _wilson_ci(p: float, n: int, z: float = 1.96) -> tuple[float, float]:
+    """Wilson score confidence interval for binomial proportion.
+
+    More accurate than +/-SE for proportions near 0 or 1.
+    Ref: Wilson (1927) JASA.
+    """
+    if n == 0:
+        return 0.0, 1.0
+    denom = 1 + z**2 / n
+    center = (p + z**2 / (2 * n)) / denom
+    margin = z * np.sqrt(p * (1 - p) / n + z**2 / (4 * n**2)) / denom
+    return max(0.0, center - margin), min(1.0, center + margin)
+
+
 @dataclass
 class BasinStabilityResult:
     """Monte Carlo basin stability (Menck et al. 2013)."""
@@ -93,6 +107,8 @@ class BasinStabilityResult:
     error_bound: float
     compute_time_ms: float
     attractor_center: np.ndarray
+    ci_low: float = 0.0
+    ci_high: float = 1.0
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-safe dict."""
@@ -100,6 +116,8 @@ class BasinStabilityResult:
             "attractor_id": self.attractor_id,
             "basin_stability": round(self.basin_stability, 4),
             "error_bound": round(self.error_bound, 4),
+            "ci_low": round(self.ci_low, 4),
+            "ci_high": round(self.ci_high, 4),
             "n_samples": self.n_samples,
             "n_returned": self.n_returned,
             "compute_time_ms": round(self.compute_time_ms, 1),
@@ -205,6 +223,7 @@ class BasinStabilityAnalyzer:
 
         s_b = n_returned / max(n_samples, 1)
         error = float(np.sqrt(s_b * (1 - s_b) / max(n_samples, 1)))
+        ci_lo, ci_hi = _wilson_ci(s_b, n_samples)
         elapsed = (time.perf_counter() - t0) * 1000
 
         return BasinStabilityResult(
@@ -215,4 +234,6 @@ class BasinStabilityAnalyzer:
             error_bound=error,
             compute_time_ms=elapsed,
             attractor_center=attractor_center,
+            ci_low=ci_lo,
+            ci_high=ci_hi,
         )

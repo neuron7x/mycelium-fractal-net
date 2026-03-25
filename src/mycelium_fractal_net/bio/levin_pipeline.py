@@ -36,7 +36,7 @@ class LevinPipelineConfig:
 
     # Morphospace
     n_pca_components: int = 5
-    n_basin_samples: int = 50
+    n_basin_samples: int = 500
     perturbation_scale: float = 0.3
     # Memory anonymization
     D_hdv: int = 500
@@ -70,10 +70,14 @@ class LevinReport:
     free_energy_final: float
     intervention_level: str
 
+    # Basin CI
+    basin_ci_low: float = 0.0
+    basin_ci_high: float = 1.0
+
     # Meta
-    compute_time_ms: float
-    grid_size: int
-    n_frames: int
+    compute_time_ms: float = 0.0
+    grid_size: int = 0
+    n_frames: int = 0
 
     @property
     def min_control_energy(self) -> float:
@@ -100,7 +104,7 @@ class LevinReport:
         return (
             f"[LEVIN] "
             f"pc1={self.morphospace_pc1_variance:.3f} "
-            f"S_B={self.basin_stability:.2f}\u00b1{self.basin_error:.2f} "
+            f"S_B={self.basin_stability:.3f} [{self.basin_ci_low:.3f},{self.basin_ci_high:.3f}] "
             f"traj={self.trajectory_length:.1f} | "
             f"anon={self.cosine_anonymity:.3f} "
             f"fiedler={self.fiedler_value:.4f} | "
@@ -117,6 +121,8 @@ class LevinReport:
                 "pc1_variance": round(self.morphospace_pc1_variance, 4),
                 "basin_stability": round(self.basin_stability, 4),
                 "basin_error": round(self.basin_error, 4),
+                "basin_ci_low": round(self.basin_ci_low, 4),
+                "basin_ci_high": round(self.basin_ci_high, 4),
                 "trajectory_length": round(self.trajectory_length, 2),
             },
             "memory_anonymization": {
@@ -306,6 +312,8 @@ class LevinPipeline:
             morphospace_pc1_variance=float(coords.explained_variance[0]),
             basin_stability=basin_result.basin_stability,
             basin_error=basin_result.error_bound,
+            basin_ci_low=basin_result.ci_low,
+            basin_ci_high=basin_result.ci_high,
             trajectory_length=coords.trajectory_length(),
             anonymity_score=anon_metrics.anonymization_score,
             cosine_anonymity=anon_metrics.cosine_anonymity,
