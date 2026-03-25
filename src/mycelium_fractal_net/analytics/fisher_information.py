@@ -33,7 +33,7 @@ class FIMResult:
     precision_matrix: np.ndarray
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize."""
+        """Return JSON-serializable dict of FIM metrics."""
         return {
             "log_det": round(self.log_det, 4),
             "trace": round(self.trace, 4),

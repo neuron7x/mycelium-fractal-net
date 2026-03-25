@@ -34,7 +34,7 @@ class CausalEmergenceResult:
     degeneracy: float
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize."""
+        """Return JSON-serializable dict with EI, CE, and emergence flag."""
         return {
             "EI_micro": round(self.EI_micro, 4),
             "EI_macro": round(self.EI_macro, 4),

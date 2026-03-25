@@ -33,7 +33,7 @@ class RMTDiagnostics:
     spectral_gap: float
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize."""
+        """Return JSON-serializable dict of RMT spectral diagnostics."""
         return {
             "r_ratio": round(self.r_ratio, 4),
             "structure_type": self.structure_type,
@@ -71,7 +71,12 @@ def rmt_diagnostics(
             structure_type = "structured_Poisson"
 
     fiedler = float(evals_L[1]) if len(evals_L) > 1 else 0.0
-    spectral_gap = float(evals_L[1] / (evals_L[2] + 1e-12)) if len(evals_L) > 2 else 0.0
+    # Normalized spectral gap: (λ₃-λ₂)/λ₃. 0=uniform, 1=strong Fiedler mode
+    spectral_gap = (
+        float((evals_L[2] - evals_L[1]) / (evals_L[2] + 1e-12))
+        if len(evals_L) > 2
+        else 0.0
+    )
 
     if W_c is not None:
         k = W_c.shape[0]

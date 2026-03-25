@@ -28,7 +28,7 @@ class TopologicalSignature:
     pattern_type: str
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize."""
+        """Return JSON-serializable dict of topological metrics."""
         return {
             "beta_0": self.beta_0,
             "beta_1": self.beta_1,

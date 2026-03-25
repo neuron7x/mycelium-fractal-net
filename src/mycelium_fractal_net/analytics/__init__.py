@@ -34,6 +34,7 @@ from .causal_emergence import (
     compute_causal_emergence,
     effective_information,
 )
+from .fisher_information import FIMResult, compute_fim, natural_gradient_step
 from .fractal_arsenal import (
     BasinFractalityResult,
     FractalArsenalReport,
@@ -57,6 +58,7 @@ from .wasserstein_geometry import (
 __all__ = [
     "BasinFractalityResult",
     "CausalEmergenceResult",
+    "FIMResult",
     "FeatureArray",
     "FeatureVector",
     "FractalArsenalReport",
@@ -73,12 +75,14 @@ __all__ = [
     "compute_box_counting_dimension",
     "compute_causal_emergence",
     "compute_dlambda_dt",
+    "compute_fim",
     "compute_fractal_arsenal",
     "compute_fractal_features",
     "compute_lacunarity",
     "compute_multifractal_spectrum",
     "compute_tda",
     "effective_information",
+    "natural_gradient_step",
     "ot_basin_stability",
     "rmt_diagnostics",
     "run_math_frontier",

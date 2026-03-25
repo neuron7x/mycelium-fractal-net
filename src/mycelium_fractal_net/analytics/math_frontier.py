@@ -50,15 +50,21 @@ class MathFrontierReport:
             if self.fim
             else "FIM=skip"
         )
+        rmt_label = (
+            "struct" if self.rmt and "Poisson" in self.rmt.structure_type
+            else "random" if self.rmt and "GOE" in self.rmt.structure_type
+            else "inter" if self.rmt
+            else ""
+        )
         rmt = (
-            f"r={self.rmt.r_ratio:.3f}({self.rmt.structure_type[:8]})"
+            f"r={self.rmt.r_ratio:.3f}({rmt_label})"
             if self.rmt
             else "RMT=skip"
         )
         return f"[MATH] {topo} | {w2} | {ce} | {fim} | {rmt} ({self.compute_time_ms:.0f}ms)"
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize."""
+        """Return JSON-serializable dict of all frontier results."""
         return {
             "topology": self.topology.to_dict(),
             "w2_trajectory_speed": round(self.w2_trajectory_speed, 4),

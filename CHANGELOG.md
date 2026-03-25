@@ -5,6 +5,37 @@ All notable changes to MyceliumFractalNet are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.2] — 2026-03-25
+
+### Performance
+- `effective_information`: vectorized via `scipy_entropy(tpm.T)` — ~10× speedup
+- `wasserstein_distance`: grid coords LRU-cached per N — eliminates repeated meshgrid
+- `MorphologyDescriptor`: computed once per diagnose(), passed to detect/forecast (4.5× faster)
+- `UnifiedEngine.analyze()`: 440ms → 241ms for N=32
+
+### New features
+- `MetaCognitiveLayer`: self-consistency + confidence + Bayesian surprise detection
+- `DiagnosticMemory`: self-learning with predictive rules and threshold calibration
+- `run_math_frontier` accepts `run_fim`, `fim_simulate_fn`, `fim_theta` for FIM computation
+- `MathFrontierReport.fim` field — Fisher Information Matrix results
+- `natural_gradient_step` in public API — geometrically correct parameter optimization
+- `gram_signal_ratio` in `RMTDiagnostics` — signal/noise separation from Gramian
+
+### Fixes
+- TDA: superlevel filtration for all-negative MFN fields (β₀=3 β₁=1, was 0/0)
+- CE: multi-scale micro/macro TPM for non-zero causal emergence (CE=0.459)
+- `discretize_turing_field`: rotation-invariant power spectrum stripe detection
+- `math_frontier.summary()`: truncated `structur` → clean `struct`/`random`/`inter`
+- Input guards: NaN/Inf/shape validation at UnifiedEngine entry point
+- Severity integration: Hurst + spectral collapse escalate severity
+- Normalized spectral gap: (λ₃-λ₂)/λ₃ (was λ₂/λ₃ — uninformative)
+
+### Infrastructure
+- `ci.sh`: 6-gate local CI (lint → types → 271 tests → reproduce → adversarial → contracts)
+- `experiments/reproduce.py`: deterministic canonical output (hash b407b808c7c8a03f)
+- `experiments/adversarial.py`: 6 invariants across 50+ seeds
+- Version: 4.2.0 → 4.4.2
+
 ## [4.2.0] — 2026-03-24
 
 ### Added
