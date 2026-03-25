@@ -137,11 +137,13 @@ def _field_to_dist(field: np.ndarray) -> np.ndarray:
 def compute_hwi_components(
     field_current: np.ndarray,
     field_reference: np.ndarray,
+    fast: bool = False,
 ) -> HWIComponents:
     """Compute H, W2, I and HWI saturation M.
 
-    Uses exact EMD for W2 (N<=48) or sliced (N>48).
-    ~150ms for N=32.
+    Args:
+        fast: if True, use sliced W2 (~5ms) instead of exact EMD (~150ms).
+              Use for auto_heal loop where speed matters more than precision.
     """
     from .wasserstein_geometry import wasserstein_distance
 
@@ -153,7 +155,8 @@ def compute_hwi_components(
     H = max(H, 0.0)
 
     # W2
-    W2 = wasserstein_distance(field_current, field_reference, method="auto")
+    method = "sliced" if fast else "auto"
+    W2 = wasserstein_distance(field_current, field_reference, method=method)
 
     # I = Jensen-Shannon divergence (bounded, symmetric, stable Fisher proxy)
     # Replaces chi-squared which had CV=63% due to near-zero denominators.

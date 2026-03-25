@@ -108,7 +108,7 @@ class ReactionDiffusionConfig:
     check_stability: bool = True
     random_seed: int | None = None
     neuromodulation: NeuromodulationConfig | None = None
-    accel_laplacian: bool = False
+    accel_laplacian: bool = True
     alpha_guard_enabled: bool = True
     alpha_guard_threshold: float = 0.95
     soft_boundary_damping: float = 0.35

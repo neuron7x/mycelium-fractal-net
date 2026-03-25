@@ -341,7 +341,7 @@ def _diagnose_state(seq: FieldSequence) -> tuple:
 
     det = detect_anomaly(seq)
     ews = early_warning(seq)
-    hwi = compute_hwi_components(seq.history[0], seq.field)
+    hwi = compute_hwi_components(seq.history[0], seq.field, fast=True)
 
     is_anom = det.label in ("anomalous", "critical")
     is_ews = ews.ews_score > 0.5
@@ -425,8 +425,10 @@ def auto_heal(
     if verbose and len(selected) < len(all_levers):
         print(f"  [DA] Focused on {len(selected)}/{len(all_levers)} levers: {selected}")
 
+    # Fewer counterfactuals when model is confident
+    n_candidates = 32 if not mem.can_predict else max(8, int(32 * _DA_STATE.level))
     plan = plan_intervention(seq, target_regime=target_regime, budget=da_budget,
-                             allowed_levers=selected)
+                             allowed_levers=selected, max_candidates=n_candidates)
     best = plan.best_candidate
 
     if best is None or not plan.has_viable_plan:
