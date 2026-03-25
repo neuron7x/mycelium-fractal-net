@@ -153,8 +153,11 @@ class ExperienceMemory:
         }
 
 
-# Global experience memory — persists across calls within process
+# Global state — persists across calls within process
 _MEMORY = ExperienceMemory()
+
+from .neurochem.dopamine import DopamineState, compute_dopamine, modulate_plasticity
+_DA_STATE = DopamineState()
 
 
 @dataclass
@@ -191,6 +194,10 @@ class HealResult:
     prediction_error: float | None = None
     experience_count: int = 0
 
+    # Dopamine
+    dopamine_level: float = 0.0
+    dopamine_plasticity: float = 1.0
+
     # Meta
     compute_time_ms: float = 0.0
 
@@ -204,18 +211,19 @@ class HealResult:
 
         status = "HEALED" if self.healed else "FAILED"
         dm = self.delta_M if self.delta_M is not None else 0
-        da = self.delta_anomaly if self.delta_anomaly is not None else 0
+        d_anom = self.delta_anomaly if self.delta_anomaly is not None else 0
         pred = ""
         if self.prediction_used and self.prediction_error is not None:
             pred = f" pred_err={self.prediction_error:.3f}"
+        da_str = f" DA={self.dopamine_level:.2f}" if self.dopamine_level > 0 else ""
         exp = f" exp={self.experience_count}" if self.experience_count > 0 else ""
         return (
             f"[HEAL] {status} | "
             f"M: {self.M_before:.3f} -> {self.M_after:.3f} (dM={dm:+.3f}) | "
             f"anomaly: {self.anomaly_score_before:.3f} -> {self.anomaly_score_after:.3f} "
-            f"(d={da:+.3f}) | "
+            f"(d={d_anom:+.3f}) | "
             f"severity: {self.severity_before} -> {self.severity_after}"
-            f"{pred}{exp} ({self.compute_time_ms:.0f}ms)"
+            f"{pred}{da_str}{exp} ({self.compute_time_ms:.0f}ms)"
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -249,6 +257,8 @@ class HealResult:
                 "predicted_M_after": round(self.predicted_M_after, 6) if self.predicted_M_after is not None else None,
                 "prediction_error": round(self.prediction_error, 6) if self.prediction_error is not None else None,
                 "experience_count": self.experience_count,
+                "dopamine_level": round(self.dopamine_level, 4),
+                "dopamine_plasticity": round(self.dopamine_plasticity, 4),
             },
             "compute_time_ms": round(self.compute_time_ms, 1),
         }
@@ -432,7 +442,15 @@ def auto_heal(
             print(f"  [LEARN] Predicted M_after={predicted_M:.4f}, actual={hwi_after.M:.4f}, "
                   f"error={prediction_error:.4f}, R²={r2:.3f}")
 
-    # ── 8. LEARN — store experience ───────────────────────────────
+    # ── 8. DOPAMINE — prediction error → plasticity modulation ────
+    global _DA_STATE
+    pe_for_da = prediction_error if prediction_error is not None else abs(delta_M)
+    _DA_STATE = compute_dopamine(pe_for_da, _DA_STATE)
+    if verbose:
+        print(f"  [DA] level={_DA_STATE.level:.3f} RPE={_DA_STATE.rpe:.4f} "
+              f"plasticity={_DA_STATE.plasticity_scale:.2f}")
+
+    # ── 9. LEARN — store experience ───────────────────────────────
     mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
 
     if verbose:
@@ -465,5 +483,7 @@ def auto_heal(
         predicted_M_after=predicted_M,
         prediction_error=prediction_error,
         experience_count=mem.size,
+        dopamine_level=_DA_STATE.level,
+        dopamine_plasticity=_DA_STATE.plasticity_scale,
         compute_time_ms=elapsed,
     )
