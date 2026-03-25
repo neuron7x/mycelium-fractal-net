@@ -318,7 +318,17 @@ def auto_heal(
         print(f"  M={hwi_before.M:.4f} anomaly={det_before.label}({det_before.score:.3f}) "
               f"ews={ews_before.ews_score:.3f} severity={severity_before}")
 
-    # ── 2. DECIDE ───────────────────────────────────────────────
+    # ── 2. DOPAMINE STATE FROM PREVIOUS CYCLE ───────────────────
+    # DA modulates exploration BEFORE planning, not after.
+    global _DA_STATE
+    da_budget = budget * (0.5 + 0.5 * _DA_STATE.plasticity_scale / 3.0)
+    # High DA → expand budget up to 1.5x. Low DA → baseline budget.
+    if verbose and _DA_STATE.n_updates > 0:
+        print(f"  [DA] prior level={_DA_STATE.level:.3f} "
+              f"plasticity={_DA_STATE.plasticity_scale:.2f} "
+              f"budget={budget:.1f}->{da_budget:.1f}")
+
+    # ── 3. DECIDE ───────────────────────────────────────────────
     needs_healing = severity_before in ("warning", "critical") or det_before.label == "anomalous"
 
     if not needs_healing:
@@ -343,11 +353,11 @@ def auto_heal(
             compute_time_ms=elapsed,
         )
 
-    # ── 3. PLAN ─────────────────────────────────────────────────
+    # ── 4. PLAN (DA-modulated budget) ──────────────────────────
     if verbose:
         print("[HEAL] Planning intervention...")
 
-    plan = plan_intervention(seq, target_regime=target_regime, budget=budget)
+    plan = plan_intervention(seq, target_regime=target_regime, budget=da_budget)
     best = plan.best_candidate
 
     if best is None or not plan.has_viable_plan:
@@ -382,7 +392,7 @@ def auto_heal(
         for c in changes:
             print(f"  {c['name']}: {c['from']} -> {c['to']}")
 
-    # ── 4. ACT — re-simulate with intervention parameters ──────
+    # ── 5. ACT — re-simulate with intervention parameters ──────
     if verbose:
         print("[HEAL] Applying intervention (re-simulating)...")
 
@@ -392,7 +402,7 @@ def auto_heal(
     modified_spec = _apply_interventions(seq.spec, best.proposed_changes)
     seq_after = simulate_history(modified_spec)
 
-    # ── 5. VERIFY — re-diagnose ────────────────────────────────
+    # ── 6. VERIFY — re-diagnose ────────────────────────────────
     if verbose:
         print("[HEAL] Verifying...")
 
@@ -413,7 +423,7 @@ def auto_heal(
     anomaly_improved = det_after.score <= det_before.score + 0.01
     healed = sev_improved and anomaly_improved
 
-    # ── 6. BUILD FEATURE VECTOR ─────────────────────────────────
+    # ── 7. BUILD FEATURE VECTOR ─────────────────────────────────
     mem = memory if memory is not None else _MEMORY
 
     spec = seq.spec
@@ -424,12 +434,15 @@ def auto_heal(
         "turing_threshold": spec.turing_threshold if spec else 0.75,
         "jitter_var": spec.jitter_var if spec else 0.0,
         "spike_probability": spec.spike_probability if spec else 0.25,
+        # Dopamine state — so Ridge learns when DA matters
+        "dopamine_level": _DA_STATE.level,
+        "dopamine_rpe": _DA_STATE.rpe,
     }
     # Add intervention deltas
     for s in best.proposed_changes:
         feat[f"delta_{s.name}"] = s.proposed_value - s.current_value
 
-    # ── 7. PREDICT (if model available) ───────────────────────────
+    # ── 8. PREDICT (if model available) ───────────────────────────
     prediction_used = False
     predicted_M = None
     prediction_error = None
@@ -442,15 +455,14 @@ def auto_heal(
             print(f"  [LEARN] Predicted M_after={predicted_M:.4f}, actual={hwi_after.M:.4f}, "
                   f"error={prediction_error:.4f}, R²={r2:.3f}")
 
-    # ── 8. DOPAMINE — prediction error → plasticity modulation ────
-    global _DA_STATE
+    # ── 9. DOPAMINE UPDATE — this cycle's error → next cycle's planning
     pe_for_da = prediction_error if prediction_error is not None else abs(delta_M)
     _DA_STATE = compute_dopamine(pe_for_da, _DA_STATE)
     if verbose:
         print(f"  [DA] level={_DA_STATE.level:.3f} RPE={_DA_STATE.rpe:.4f} "
               f"plasticity={_DA_STATE.plasticity_scale:.2f}")
 
-    # ── 9. LEARN — store experience ───────────────────────────────
+    # ── 10. LEARN — store experience ──────────────────────────────
     mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
 
     if verbose:
