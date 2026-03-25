@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -15,9 +15,13 @@ from .causal_emergence import (
     compute_causal_emergence,
     discretize_turing_field,
 )
+from .fisher_information import FIMResult, compute_fim
 from .rmt_spectral import RMTDiagnostics, rmt_diagnostics
 from .tda_ews import TopologicalSignature, compute_tda
 from .wasserstein_geometry import wasserstein_distance
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = ["MathFrontierReport", "run_math_frontier"]
 
@@ -29,6 +33,7 @@ class MathFrontierReport:
     topology: TopologicalSignature
     w2_trajectory_speed: float
     causal_emergence_score: float
+    fim: FIMResult | None
     rmt: RMTDiagnostics | None
     compute_time_ms: float
 
@@ -40,12 +45,17 @@ class MathFrontierReport:
         )
         w2 = f"W2={self.w2_trajectory_speed:.4f}"
         ce = f"CE={self.causal_emergence_score:.4f}"
+        fim = (
+            f"FIM={self.fim.epistemic_value:.3f}"
+            if self.fim
+            else "FIM=skip"
+        )
         rmt = (
             f"r={self.rmt.r_ratio:.3f}({self.rmt.structure_type[:8]})"
             if self.rmt
             else "RMT=skip"
         )
-        return f"[MATH] {topo} | {w2} | {ce} | {rmt} ({self.compute_time_ms:.0f}ms)"
+        return f"[MATH] {topo} | {w2} | {ce} | {fim} | {rmt} ({self.compute_time_ms:.0f}ms)"
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize."""
@@ -53,6 +63,7 @@ class MathFrontierReport:
             "topology": self.topology.to_dict(),
             "w2_trajectory_speed": round(self.w2_trajectory_speed, 4),
             "causal_emergence": round(self.causal_emergence_score, 4),
+            "fim": self.fim.to_dict() if self.fim else None,
             "rmt": self.rmt.to_dict() if self.rmt else None,
             "compute_time_ms": round(self.compute_time_ms, 1),
         }
@@ -61,8 +72,11 @@ class MathFrontierReport:
 def run_math_frontier(
     seq: Any,
     run_rmt: bool = True,
+    run_fim: bool = False,
+    fim_simulate_fn: Callable[[np.ndarray], np.ndarray] | None = None,
+    fim_theta: np.ndarray | None = None,
 ) -> MathFrontierReport:
-    """Run all 5 mechanisms on a FieldSequence. ~100ms for N=32."""
+    """Run all 5 mechanisms on a FieldSequence. ~300ms for N=32."""
     t0 = time.perf_counter()
 
     # 1. TDA
@@ -76,15 +90,12 @@ def run_math_frontier(
     states_micro = np.array([
         discretize_turing_field(seq.history[t]) for t in range(n_steps)
     ])
-    # Micro TPM: 4-state discretization
     tpm_micro = np.zeros((4, 4))
     for t in range(len(states_micro) - 1):
         tpm_micro[states_micro[t], states_micro[t + 1]] += 1
     row_s = tpm_micro.sum(axis=1, keepdims=True)
     row_s[row_s < 1] = 1
     tpm_micro /= row_s
-    # Macro TPM: 2-state (first-seen state vs all others)
-    # This always produces a 2-class split regardless of distribution
     first_state = int(states_micro[0])
     states_macro = (states_micro != first_state).astype(int)
     tpm_macro = np.zeros((2, 2))
@@ -96,8 +107,16 @@ def run_math_frontier(
     ce_result = compute_causal_emergence(tpm_micro, tpm_macro=tpm_macro)
     ce_score = float(ce_result.CE_macro)
 
-    # 4. RMT (from Physarum Laplacian)
-    rmt_result = None
+    # 4. FIM (optional — expensive)
+    fim_result: FIMResult | None = None
+    if run_fim and fim_simulate_fn is not None and fim_theta is not None:
+        try:
+            fim_result = compute_fim(fim_simulate_fn, fim_theta)
+        except Exception:  # noqa: S110
+            pass  # FIM may fail for degenerate parameter spaces
+
+    # 5. RMT
+    rmt_result: RMTDiagnostics | None = None
     if run_rmt:
         try:
             from mycelium_fractal_net.bio.memory_anonymization import GapJunctionDiffuser
@@ -114,13 +133,14 @@ def run_math_frontier(
             L = diff.build_laplacian(phys.D_h, phys.D_v).toarray()
             rmt_result = rmt_diagnostics(L)
         except Exception:  # noqa: S110
-            pass  # RMT requires bio extras — graceful skip
+            pass  # RMT requires bio extras
 
     elapsed = (time.perf_counter() - t0) * 1000
     return MathFrontierReport(
         topology=topo,
         w2_trajectory_speed=w2_speed,
         causal_emergence_score=ce_score,
+        fim=fim_result,
         rmt=rmt_result,
         compute_time_ms=elapsed,
     )

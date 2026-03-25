@@ -6,17 +6,24 @@ Ref: Ito et al. (2025) Phys.Rev.Research 7:033011
 
 from __future__ import annotations
 
+import functools
+
 import numpy as np
 
 __all__ = ["ot_basin_stability", "wasserstein_distance", "wasserstein_trajectory_speed"]
 
 
-def _field_to_distribution(field: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Convert 2D field to (coords, weights) for OT."""
-    N = field.shape[0]
+@functools.lru_cache(maxsize=8)
+def _grid_coords(N: int) -> np.ndarray:
+    """Pre-computed (N², 2) coordinate grid for OT. Cached per grid size."""
     x = np.arange(N, dtype=np.float64)
     xx, yy = np.meshgrid(x, x)
-    coords = np.stack([xx.ravel(), yy.ravel()], axis=1)
+    return np.ascontiguousarray(np.stack([xx.ravel(), yy.ravel()], axis=1))
+
+
+def _field_to_distribution(field: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Convert 2D field to (coords, weights). Coords cached per grid size."""
+    coords = _grid_coords(field.shape[0])
     w = np.abs(field).ravel().astype(np.float64) + 1e-12
     w /= w.sum()
     return coords, w

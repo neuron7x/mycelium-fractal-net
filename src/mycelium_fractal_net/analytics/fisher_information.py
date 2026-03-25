@@ -17,7 +17,7 @@ import numpy as np
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-__all__ = ["FIMResult", "compute_fim"]
+__all__ = ["FIMResult", "compute_fim", "natural_gradient_step"]
 
 
 @dataclass
@@ -85,3 +85,27 @@ def compute_fim(
         cma_init_cov=cma_cov,
         precision_matrix=F,
     )
+
+
+def natural_gradient_step(
+    simulate_fn: Callable[[np.ndarray], np.ndarray],
+    loss_fn: Callable[[np.ndarray], float],
+    theta: np.ndarray,
+    lr: float = 0.01,
+    sigma: float = 0.01,
+    eps: float = 1e-4,
+) -> tuple[np.ndarray, FIMResult]:
+    """Natural gradient: delta_theta = -lr * F^-1 * grad_L.
+
+    Geometrically correct for statistical manifolds:
+    small steps near bifurcation (large F), large steps in flat regions.
+    """
+    fim = compute_fim(simulate_fn, theta, sigma=sigma, eps=eps)
+    grad = np.zeros(len(theta))
+    for i in range(len(theta)):
+        tp, tm = theta.copy(), theta.copy()
+        tp[i] += eps
+        tm[i] -= eps
+        grad[i] = (loss_fn(simulate_fn(tp)) - loss_fn(simulate_fn(tm))) / (2 * eps)
+    nat_grad = np.linalg.solve(fim.F + np.eye(len(theta)) * 1e-6, grad)
+    return theta - lr * nat_grad, fim

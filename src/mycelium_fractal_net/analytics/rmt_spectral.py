@@ -28,6 +28,7 @@ class RMTDiagnostics:
     mp_threshold: float
     n_signal_dims: int
     noise_fraction: float
+    gram_signal_ratio: float
     fiedler_value: float
     spectral_gap: float
 
@@ -39,6 +40,7 @@ class RMTDiagnostics:
             "mp_threshold": round(self.mp_threshold, 6),
             "n_signal_dims": self.n_signal_dims,
             "noise_fraction": round(self.noise_fraction, 4),
+            "gram_signal_ratio": round(self.gram_signal_ratio, 4),
             "fiedler_value": round(self.fiedler_value, 6),
             "spectral_gap": round(self.spectral_gap, 4),
         }
@@ -81,10 +83,12 @@ def rmt_diagnostics(
         signal_evals = evals_W[evals_W > lam_plus]
         n_signal = len(signal_evals)
         noise_frac = 1.0 - n_signal / max(k, 1)
+        signal_ratio = float(signal_evals.sum() / (evals_W.sum() + 1e-12))
     else:
         lam_plus = 0.0
         n_signal = 0
         noise_frac = 1.0
+        signal_ratio = 0.0
 
     return RMTDiagnostics(
         r_ratio=r_ratio,
@@ -92,6 +96,7 @@ def rmt_diagnostics(
         mp_threshold=lam_plus,
         n_signal_dims=n_signal,
         noise_fraction=noise_frac,
+        gram_signal_ratio=signal_ratio,
         fiedler_value=fiedler,
         spectral_gap=spectral_gap,
     )

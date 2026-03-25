@@ -45,12 +45,13 @@ class CausalEmergenceResult:
 
 
 def effective_information(tpm: np.ndarray) -> float:
-    """EI(T) = H(avg_output) - avg_H(rows). Hoel et al. (2013) Eq. 1."""
+    """EI(T) = H(<T>) - <H(T_i)>. Vectorized. Hoel et al. (2013) Eq. 1."""
     tpm = np.asarray(tpm, dtype=np.float64)
     tpm = tpm / (tpm.sum(axis=1, keepdims=True) + 1e-12)
     avg_output = tpm.mean(axis=0)
     H_avg = float(scipy_entropy(avg_output + 1e-12, base=2))
-    avg_H = float(np.mean([scipy_entropy(tpm[i] + 1e-12, base=2) for i in range(tpm.shape[0])]))
+    row_H: np.ndarray = scipy_entropy((tpm + 1e-12).T, base=2)
+    avg_H = float(np.mean(row_H))
     return max(H_avg - avg_H, 0.0)
 
 
@@ -66,9 +67,7 @@ def compute_causal_emergence(
 
     avg_out = tpm_micro.mean(axis=0)
     determinism = float(scipy_entropy(avg_out + 1e-12, base=2))
-    degeneracy = float(np.mean([
-        scipy_entropy(tpm_micro[i] + 1e-12, base=2) for i in range(tpm_micro.shape[0])
-    ]))
+    degeneracy = float(np.mean(scipy_entropy((tpm_micro + 1e-12).T, base=2)))
 
     return CausalEmergenceResult(
         EI_micro=EI_micro, EI_macro=EI_macro, CE_macro=CE_macro,
@@ -77,17 +76,40 @@ def compute_causal_emergence(
 
 
 def discretize_turing_field(field: np.ndarray) -> int:
-    """Discretize field into 4 macro states: 0=homo, 1=spots, 2=stripes, 3=chaos."""
-    std = float(np.std(field))
-    if std < 0.01:
+    """Discretize field into 4 macro states using power spectrum (rotation-invariant).
+
+    0=homogeneous, 1=spots, 2=stripes, 3=chaotic.
+    """
+    f = np.asarray(field, dtype=np.float64)
+    std = float(np.std(f))
+    if std < 0.005:
         return 0
-    grad_x = np.diff(field, axis=1)
-    grad_y = np.diff(field, axis=0)
-    gx_std = float(np.std(np.abs(grad_x)))
-    gy_std = float(np.std(np.abs(grad_y)))
-    anisotropy = gx_std / (gy_std + 1e-6)
-    if anisotropy > 1.5 or anisotropy < 0.67:
-        return 2
-    if float(np.var(field)) > 0.01:
-        return 3
-    return 1
+
+    # Power spectrum for rotation-invariant stripe detection
+    F = np.fft.fft2(f - f.mean())
+    psd = np.abs(np.fft.fftshift(F)) ** 2
+    N = f.shape[0]
+    cy, cx = N // 2, N // 2
+
+    # Full (N,N) coordinate grids for masking
+    yy, xx = np.mgrid[:N, :N]
+    r = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
+    ring_mask = (r >= N // 6) & (r <= N // 3)
+    ring_psd = psd[ring_mask]
+
+    if len(ring_psd) == 0:
+        return 1
+
+    coherence = float(np.max(ring_psd)) / (float(np.mean(ring_psd)) + 1e-12)
+
+    angles = np.arctan2((yy - cy)[ring_mask], (xx - cx)[ring_mask])
+    half1 = ring_psd[np.abs(angles) < np.pi / 2]
+    half2 = ring_psd[np.abs(angles) >= np.pi / 2]
+    if len(half1) > 0 and len(half2) > 0:
+        ratio = float(np.mean(half1)) / (float(np.mean(half2)) + 1e-12)
+        if ratio > 1.8 or ratio < 0.55:
+            return 2  # stripes
+
+    if std > 0.04 and coherence < 3.0:
+        return 3  # chaotic
+    return 1  # spots
