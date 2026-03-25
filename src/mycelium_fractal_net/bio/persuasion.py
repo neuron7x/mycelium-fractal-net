@@ -358,13 +358,20 @@ class PersuadabilityAnalyzer:
                 total_modes=k,
             )
 
-        # PCA to reduce dimensions
+        # PCA to reduce dimensions (use covariance trick when T < N²)
         X = history.reshape(T, n_flat).astype(np.float64)
         X_mean = X.mean(axis=0)
         X_centered = X - X_mean
 
-        _U, _S, Vt = np.linalg.svd(X_centered, full_matrices=False)
-        X_reduced = X_centered @ Vt[:k].T  # (T, k)
+        if n_flat > T:
+            # Covariance trick: SVD of (T,T) instead of (T,N²) — much faster
+            C = X_centered @ X_centered.T  # (T, T)
+            eigvals, eigvecs = np.linalg.eigh(C)
+            idx = np.argsort(eigvals)[::-1][:k]
+            X_reduced = eigvecs[:, idx] * np.sqrt(np.maximum(eigvals[idx], 0))
+        else:
+            _U, _S, Vt = np.linalg.svd(X_centered, full_matrices=False)
+            X_reduced = X_centered @ Vt[:k].T
 
         # Fit linear dynamics: x_{t+1} ≈ A·x_t
         X0 = X_reduced[:-1]  # (T-1, k)

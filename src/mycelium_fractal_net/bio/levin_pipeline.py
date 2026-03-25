@@ -213,6 +213,7 @@ class LevinPipeline:
         self,
         target_field: np.ndarray | None = None,
         verbose: bool = False,
+        physarum_state: Any = None,
     ) -> LevinReport:
         """Run full Levin pipeline and return unified report."""
         cfg = self.config
@@ -261,13 +262,16 @@ class LevinPipeline:
         enc = HDVFieldEncoder(D=cfg.D_hdv, neighborhood=1, seed=cfg.seed)
         memory_original = enc.encode(self.field)
 
-        # Physarum state for gap junction conductivities
-        eng = PhysarumEngine(N)
-        src = self.field > 0
-        snk = self.field < -0.05
-        phys = eng.initialize(src, snk)
-        for _ in range(3):
-            phys = eng.step(phys, src, snk)
+        # Physarum state: reuse if provided, otherwise compute
+        if physarum_state is not None:
+            phys = physarum_state
+        else:
+            eng = PhysarumEngine(N)
+            src = self.field > 0
+            snk = self.field < -0.05
+            phys = eng.initialize(src, snk)
+            for _ in range(3):
+                phys = eng.step(phys, src, snk)
 
         anon_cfg = AnonymizationConfig(
             alpha=cfg.alpha_diffusion,
@@ -283,9 +287,11 @@ class LevinPipeline:
         if verbose:
             logger.info("[3/3] Persuasion...")
 
-        persuad_analyzer = PersuadabilityAnalyzer()
+        persuad_analyzer = PersuadabilityAnalyzer(
+            n_integration_steps=20,  # 20 vs 50: 2.5× faster, sufficient precision
+        )
         persuad_result = persuad_analyzer.from_field_history(
-            self.history, n_modes=cfg.n_gramian_modes
+            self.history, n_modes=min(cfg.n_gramian_modes, 5)
         )
 
         # Active inference: free energy relative to target

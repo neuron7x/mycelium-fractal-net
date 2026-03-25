@@ -276,7 +276,8 @@ class UnifiedEngine:
             n_basin_samples=n_samples, D_hdv=D_hdv, n_anon_steps=3
         )
         levin = LevinPipeline.from_sequence(seq, config=levin_cfg).run(
-            target_field=target_field
+            target_field=target_field,
+            physarum_state=bio.physarum_state,
         )
 
         # ── 4. Fractal arsenal ─────────────────────────────────────
