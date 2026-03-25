@@ -26,7 +26,8 @@ $RUN -m pytest tests/test_bio_extension.py tests/test_bio_meta.py \
     tests/test_compute_reserve.py tests/test_bio_coverage_boost.py \
     tests/test_fractal_arsenal.py tests/test_fractal_dynamics.py \
     tests/test_unified_engine.py tests/test_diagnostic_memory.py \
-    tests/test_math_frontier.py \
+    tests/test_math_frontier.py tests/test_metacognition.py \
+    tests/test_input_guards.py tests/test_core_coverage_final.py \
     tests/benchmarks/test_bio_gates.py \
     -q --timeout=120
 echo "  OK"
