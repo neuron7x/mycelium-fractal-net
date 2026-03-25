@@ -24,6 +24,17 @@
 
 <br/>
 
+## Installation
+
+```bash
+pip install mycelium-fractal-net              # core (numpy + scipy)
+pip install mycelium-fractal-net[bio]         # + biological mechanisms
+pip install mycelium-fractal-net[accel]       # + numba JIT (5-17× faster)
+pip install mycelium-fractal-net[gpu]         # + CUDA (CuPy + PyTorch)
+pip install mycelium-fractal-net[science]     # + TDA, optimal transport
+pip install mycelium-fractal-net[bio,accel]   # recommended combo
+```
+
 ## Quickstart
 
 ```python
