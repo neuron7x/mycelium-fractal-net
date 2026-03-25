@@ -36,99 +36,120 @@ __all__ = ["ExperienceMemory", "HealResult", "auto_heal"]
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-@dataclass
-class _Experience:
-    """One (state, action, outcome) triple."""
-
-    # State before
-    M_before: float
-    anomaly_before: float
-    alpha: float
-    threshold: float
-
-    # Action (intervention deltas)
-    delta_alpha: float
-    delta_anomaly_target: float
-
-    # Outcome
-    M_after: float
-    anomaly_after: float
-    healed: bool
+_FEATURE_KEYS = [
+    "M_before", "anomaly_before",
+    "alpha", "turing_threshold", "jitter_var", "spike_probability",
+    "delta_alpha", "delta_spike", "delta_gabaa", "delta_sero_gain",
+]
 
 
 class ExperienceMemory:
-    """Accumulates auto_heal experiences. Predicts outcomes via k-NN.
+    """Accumulates (state, action, outcome) triples. Predicts via Ridge regression.
 
-    After min_experiences calls, predict() returns expected M_after
-    for a given (state, action) pair using the k nearest historical
-    experiences. Prediction error = where the system doesn't understand itself.
+    After min_experiences calls, a Ridge model predicts M_after from the
+    full feature vector. Feature importances reveal what the system has
+    learned about itself. R² measures depth of self-understanding.
+
+    Compression = understanding (Sutskever): the linear model IS the
+    system's compressed self-knowledge. Features it assigns high weight
+    are the ones it has discovered as causal.
     """
 
-    def __init__(self, min_experiences: int = 20, k: int = 3) -> None:
+    def __init__(self, min_experiences: int = 15) -> None:
         self.min_experiences = min_experiences
-        self.k = k
-        self._experiences: list[_Experience] = []
+        self._features: list[dict[str, float]] = []
+        self._M_after: list[float] = []
+        self._anomaly_after: list[float] = []
+        self._healed: list[bool] = []
+        self._model: Any = None
+        self._r2: float = 0.0
+        self._importances: dict[str, float] = {}
 
     @property
     def size(self) -> int:
-        return len(self._experiences)
+        return len(self._M_after)
 
     @property
     def can_predict(self) -> bool:
-        return self.size >= self.min_experiences
+        return self._model is not None
 
-    def store(self, exp: _Experience) -> None:
-        self._experiences.append(exp)
+    @property
+    def r_squared(self) -> float:
+        """How well the system understands itself. 1.0 = perfect self-model."""
+        return self._r2
 
-    def predict(
-        self, M_before: float, anomaly_before: float,
-        alpha: float, threshold: float,
-        delta_alpha: float,
-    ) -> tuple[float, float, float]:
-        """Predict (M_after, anomaly_after, confidence) from k nearest experiences.
+    @property
+    def feature_importances(self) -> dict[str, float]:
+        """What the system has discovered matters. Higher = more causal."""
+        return dict(self._importances)
 
-        Returns (predicted_M_after, predicted_anomaly_after, confidence).
-        Confidence = 1/(1 + mean_distance). Higher = more certain.
+    def store(self, features: dict[str, float], M_after: float,
+              anomaly_after: float, healed: bool) -> None:
+        self._features.append(features)
+        self._M_after.append(M_after)
+        self._anomaly_after.append(anomaly_after)
+        self._healed.append(healed)
+        # Refit model when we have enough data
+        if self.size >= self.min_experiences:
+            self._fit()
+
+    def _fit(self) -> None:
+        """Fit Ridge regression on accumulated experiences."""
+        from sklearn.linear_model import Ridge
+        from sklearn.preprocessing import StandardScaler
+
+        keys = list(self._features[0].keys())
+        X = np.array([[f.get(k, 0.0) for k in keys] for f in self._features])
+        y = np.array(self._M_after)
+
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        model = Ridge(alpha=1.0)
+        model.fit(X_scaled, y)
+        self._r2 = float(model.score(X_scaled, y))
+
+        # Feature importances: |coefficient| on scaled data = relative importance
+        abs_coef = np.abs(model.coef_)
+        total = abs_coef.sum() + 1e-12
+        self._importances = {k: round(float(c / total), 4) for k, c in zip(keys, abs_coef)}
+
+        # Store for prediction
+        self._model = model
+        self._scaler = scaler
+        self._keys = keys
+
+    def predict(self, features: dict[str, float]) -> tuple[float, float, float]:
+        """Predict M_after from features.
+
+        Returns (predicted_M_after, predicted_anomaly_after, R²).
+        R² = confidence (how well the model fits all past data).
         """
-        if not self.can_predict:
+        if self._model is None:
             return 0.0, 0.0, 0.0
 
-        query = np.array([M_before, anomaly_before, alpha, threshold, delta_alpha])
-        # Normalize: each feature scaled by its range in memory
-        states = np.array([
-            [e.M_before, e.anomaly_before, e.alpha, e.threshold, e.delta_alpha]
-            for e in self._experiences
-        ])
-        # Safe normalization
-        ranges = states.max(axis=0) - states.min(axis=0)
-        ranges = np.where(ranges > 1e-12, ranges, 1.0)
-        normed_states = (states - states.min(axis=0)) / ranges
-        normed_query = (query - states.min(axis=0)) / ranges
+        x = np.array([[features.get(k, 0.0) for k in self._keys]])
+        x_scaled = self._scaler.transform(x)
+        M_pred = float(self._model.predict(x_scaled)[0])
 
-        dists = np.linalg.norm(normed_states - normed_query, axis=1)
-        k = min(self.k, len(self._experiences))
-        nearest_idx = np.argpartition(dists, k)[:k]
+        # Anomaly: simple mean of past (Ridge on M only)
+        a_pred = float(np.mean(self._anomaly_after))
 
-        weights = 1.0 / (dists[nearest_idx] + 1e-6)
-        weights /= weights.sum()
-
-        M_pred = sum(weights[i] * self._experiences[nearest_idx[i]].M_after for i in range(k))
-        a_pred = sum(weights[i] * self._experiences[nearest_idx[i]].anomaly_after for i in range(k))
-        confidence = float(1.0 / (1.0 + np.mean(dists[nearest_idx])))
-
-        return float(M_pred), float(a_pred), confidence
+        return M_pred, a_pred, self._r2
 
     def stats(self) -> dict[str, Any]:
-        if not self._experiences:
+        if not self._M_after:
             return {"size": 0}
-        healed = sum(1 for e in self._experiences if e.healed)
-        Ms_after = [e.M_after for e in self._experiences]
+        healed = sum(self._healed)
         return {
             "size": self.size,
             "heal_rate": round(healed / self.size, 3),
-            "M_after_mean": round(float(np.mean(Ms_after)), 4),
-            "M_after_std": round(float(np.std(Ms_after)), 4),
+            "M_after_mean": round(float(np.mean(self._M_after)), 4),
+            "M_after_std": round(float(np.std(self._M_after)), 4),
             "can_predict": self.can_predict,
+            "r_squared": round(self._r2, 4),
+            "top_features": dict(sorted(self._importances.items(),
+                                        key=lambda x: -x[1])[:5]) if self._importances else {},
         }
 
 
@@ -382,42 +403,37 @@ def auto_heal(
     anomaly_improved = det_after.score <= det_before.score + 0.01
     healed = sev_improved and anomaly_improved
 
-    # ── 6. PREDICT (if memory available) ─────────────────────────
+    # ── 6. BUILD FEATURE VECTOR ─────────────────────────────────
     mem = memory if memory is not None else _MEMORY
+
+    spec = seq.spec
+    feat = {
+        "M_before": hwi_before.M,
+        "anomaly_before": float(det_before.score),
+        "alpha": spec.alpha if spec else 0.18,
+        "turing_threshold": spec.turing_threshold if spec else 0.75,
+        "jitter_var": spec.jitter_var if spec else 0.0,
+        "spike_probability": spec.spike_probability if spec else 0.25,
+    }
+    # Add intervention deltas
+    for s in best.proposed_changes:
+        feat[f"delta_{s.name}"] = s.proposed_value - s.current_value
+
+    # ── 7. PREDICT (if model available) ───────────────────────────
     prediction_used = False
     predicted_M = None
     prediction_error = None
 
-    alpha_val = seq.spec.alpha if seq.spec else 0.18
-    threshold_val = seq.spec.turing_threshold if seq.spec else 0.75
-    delta_alpha_val = 0.0
-    for s in best.proposed_changes:
-        if s.name == "diffusion_alpha":
-            delta_alpha_val = s.proposed_value - s.current_value
-
     if mem.can_predict:
-        predicted_M, _, confidence = mem.predict(
-            hwi_before.M, float(det_before.score),
-            alpha_val, threshold_val, delta_alpha_val,
-        )
+        predicted_M, _, r2 = mem.predict(feat)
         prediction_used = True
         prediction_error = abs(predicted_M - hwi_after.M)
         if verbose:
             print(f"  [LEARN] Predicted M_after={predicted_M:.4f}, actual={hwi_after.M:.4f}, "
-                  f"error={prediction_error:.4f}, confidence={confidence:.3f}")
+                  f"error={prediction_error:.4f}, R²={r2:.3f}")
 
-    # ── 7. LEARN — store experience ───────────────────────────────
-    mem.store(_Experience(
-        M_before=hwi_before.M,
-        anomaly_before=float(det_before.score),
-        alpha=alpha_val,
-        threshold=threshold_val,
-        delta_alpha=delta_alpha_val,
-        delta_anomaly_target=float(det_after.score - det_before.score),
-        M_after=hwi_after.M,
-        anomaly_after=float(det_after.score),
-        healed=healed,
-    ))
+    # ── 8. LEARN — store experience ───────────────────────────────
+    mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
 
     if verbose:
         print(f"  M: {hwi_before.M:.4f} -> {hwi_after.M:.4f} (dM={delta_M:+.4f})")
