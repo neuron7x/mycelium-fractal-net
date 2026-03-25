@@ -1,0 +1,74 @@
+"""Tests for auto_heal — closed cognitive loop."""
+
+from __future__ import annotations
+
+import json
+
+import numpy as np
+import pytest
+
+import mycelium_fractal_net as mfn
+
+
+@pytest.fixture(scope="module")
+def healthy() -> mfn.FieldSequence:
+    return mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=30, seed=42))
+
+
+@pytest.fixture(scope="module")
+def stressed() -> mfn.FieldSequence:
+    return mfn.simulate(mfn.SimulationSpec(
+        grid_size=16, steps=30, seed=42,
+        alpha=0.24, jitter_var=0.008, quantum_jitter=True,
+    ))
+
+
+def test_healthy_no_intervention(healthy: mfn.FieldSequence) -> None:
+    """Healthy system should not trigger healing."""
+    r = mfn.auto_heal(healthy)
+    assert isinstance(r, mfn.HealResult)
+    assert not r.needs_healing or not r.intervention_applied
+    assert r.M_before > 0
+    assert r.compute_time_ms > 0
+
+
+def test_stressed_triggers_healing(stressed: mfn.FieldSequence) -> None:
+    """Stressed system should trigger intervention."""
+    r = mfn.auto_heal(stressed)
+    assert r.needs_healing
+    assert r.intervention_applied
+    assert len(r.changes) > 0
+
+
+def test_heal_has_delta_M(stressed: mfn.FieldSequence) -> None:
+    """After healing, delta_M should exist."""
+    r = mfn.auto_heal(stressed)
+    if r.intervention_applied:
+        assert r.delta_M is not None
+        assert r.M_after is not None
+        assert r.delta_anomaly is not None
+
+
+def test_heal_anomaly_decreases(stressed: mfn.FieldSequence) -> None:
+    """Anomaly score should decrease after successful healing."""
+    r = mfn.auto_heal(stressed)
+    if r.healed:
+        assert r.anomaly_score_after <= r.anomaly_score_before + 0.02
+
+
+def test_heal_json_serializable(stressed: mfn.FieldSequence) -> None:
+    """HealResult must be JSON-serializable."""
+    r = mfn.auto_heal(stressed)
+    d = r.to_dict()
+    json.dumps(d)
+    assert "before" in d
+    assert "after" in d
+    assert "verification" in d
+
+
+def test_heal_summary(stressed: mfn.FieldSequence) -> None:
+    """Summary string must contain key info."""
+    r = mfn.auto_heal(stressed)
+    s = r.summary()
+    assert "[HEAL]" in s
+    assert "M:" in s or "healthy" in s.lower()

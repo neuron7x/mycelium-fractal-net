@@ -107,6 +107,7 @@ from .types.field import (
 from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
 from .types.inverse import InverseSynthesisResult
 from .types.report import AnalysisReport  # noqa: TC001
+from .auto_heal import HealResult, auto_heal
 
 # Bio extension — fungal mechanisms (requires scipy)
 try:
