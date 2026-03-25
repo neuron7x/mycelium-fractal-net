@@ -34,6 +34,8 @@ class PhysarumConfig:
     mu: float = DEFAULT_MU
     use_sigmoid: bool = False
     dt: float = 0.01
+    pressure_solver: str = "exact"
+    n_pressure_iters: int = 20
 
 
 @dataclass
@@ -181,20 +183,64 @@ class PhysarumEngine:
         return b
 
     def _solve_pressure(self, state: PhysarumState, b: np.ndarray) -> PhysarumState:
+        if self.config.pressure_solver == "jacobi":
+            return self._solve_pressure_jacobi(state, b)
+        return self._solve_pressure_exact(state, b)
+
+    def _solve_pressure_jacobi(self, state: PhysarumState, b: np.ndarray) -> PhysarumState:
+        """Jacobi iterative pressure solver — finite propagation speed.
+
+        Real Physarum polycephalum doesn't solve a global linear system.
+        Shuttle streaming propagates pressure at finite speed via local
+        peristaltic contractions. Jacobi iteration with limited steps
+        approximates this: pressure information travels ~n_iters cells
+        per timestep.
+        """
+        N = self.N
+        b_2d = b.reshape(N, N)
+        p = state.p.copy()
+        D_h, D_v = state.D_h, state.D_v  # (N, N-1) and (N-1, N)
+
+        for _ in range(self.config.n_pressure_iters):
+            num = np.zeros((N, N), dtype=np.float64)
+            denom = np.zeros((N, N), dtype=np.float64)
+
+            # Right neighbor: (i,j+1) with conductivity D_h[i,j]
+            num[:, :-1] += D_h * p[:, 1:]
+            denom[:, :-1] += D_h
+            # Left neighbor: (i,j-1) with conductivity D_h[i,j-1]
+            num[:, 1:] += D_h * p[:, :-1]
+            denom[:, 1:] += D_h
+            # Down neighbor: (i+1,j) with conductivity D_v[i,j]
+            num[:-1, :] += D_v * p[1:, :]
+            denom[:-1, :] += D_v
+            # Up neighbor: (i-1,j) with conductivity D_v[i-1,j]
+            num[1:, :] += D_v * p[:-1, :]
+            denom[1:, :] += D_v
+
+            num += b_2d
+            safe_denom = np.maximum(denom, 1e-12)
+            p = num / safe_denom
+            p[0, 0] = 0.0  # Reference pressure
+
+        state.p = p
+        return state
+
+    def _solve_pressure_exact(self, state: PhysarumState, b: np.ndarray) -> PhysarumState:
+        """Exact pressure solver via LU decomposition or CG."""
         from scipy.sparse import csr_matrix
 
         N = self.N
         n_nodes = N * N
 
-        # Build data vector from precomputed structure (no Python loop over grid)
         data = np.zeros(len(self._rows), dtype=np.float64)
         for idx, (i, j, _node, _nb, direction) in enumerate(self._edge_map):
             d = state.D_h[i, j] if direction == "h" else state.D_v[i, j]
             base = idx * 4
-            data[base] = d  # L[node, node] += d
-            data[base + 1] = -d  # L[node, nb] -= d
-            data[base + 2] = d  # L[nb, nb] += d
-            data[base + 3] = -d  # L[nb, node] -= d
+            data[base] = d
+            data[base + 1] = -d
+            data[base + 2] = d
+            data[base + 3] = -d
 
         L = csr_matrix((data, (self._rows, self._cols)), shape=(n_nodes, n_nodes))
         L = L.tolil()
@@ -206,7 +252,6 @@ class PhysarumEngine:
         b_fixed[0] = 0.0
 
         if N <= 32:
-            # Direct solver: deterministic, lower variance than iterative CG
             from scipy.sparse.linalg import splu
 
             try:

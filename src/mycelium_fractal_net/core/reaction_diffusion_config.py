@@ -42,6 +42,12 @@ JITTER_VAR_MAX: float = 0.01
 GRID_SIZE_MIN: int = 4
 GRID_SIZE_MAX: int = 1024
 
+# === STDP-like adaptive diffusivity (Bi & Poo 1998 analogy) ===
+# LTP: where Turing pattern is active, strengthen diffusion
+# LTD: where dormant, weaken diffusion (A-/A+ = 1.2, asymmetric for stability)
+ALPHA_LTP_RATE: float = 0.001
+ALPHA_LTD_RATE: float = 0.0012
+
 # === Stability Limits ===
 MAX_STABLE_DIFFUSION: float = 0.25
 
@@ -106,6 +112,7 @@ class ReactionDiffusionConfig:
     alpha_guard_enabled: bool = True
     alpha_guard_threshold: float = 0.95
     soft_boundary_damping: float = 0.35
+    adaptive_alpha: bool = False
 
     def __post_init__(self) -> None:
         # Accept dict for backward compatibility — convert to typed config

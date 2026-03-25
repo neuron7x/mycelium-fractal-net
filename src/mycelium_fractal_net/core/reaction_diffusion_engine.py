@@ -58,6 +58,8 @@ from .reaction_diffusion_config import (
     INITIAL_POTENTIAL_STD,
     JITTER_VAR_MAX,
     JITTER_VAR_MIN,
+    ALPHA_LTD_RATE,
+    ALPHA_LTP_RATE,
     MAX_STABLE_DIFFUSION,
     R_ACTIVATOR_MAX,
     R_ACTIVATOR_MIN,
@@ -135,6 +137,7 @@ class ReactionDiffusionEngine:
         self.config = config or ReactionDiffusionConfig()
         self._metrics = ReactionDiffusionMetrics()
         self._rng = np.random.default_rng(self.config.random_seed)
+        self._alpha_field: NDArray[np.floating] | None = None
         self._field: NDArray[np.floating] | None = None
         self._activator: NDArray[np.floating] | None = None
         self._inhibitor: NDArray[np.floating] | None = None
@@ -162,6 +165,7 @@ class ReactionDiffusionEngine:
         self._activator = None
         self._inhibitor = None
         self._neuro_state = None
+        self._alpha_field = None
         self._rng = np.random.default_rng(self.config.random_seed)
 
     def initialize_field(
@@ -178,6 +182,8 @@ class ReactionDiffusionEngine:
         self._activator = self._rng.uniform(0, 0.1, size=(n, n)).astype(np.float64)
         self._inhibitor = self._rng.uniform(0, 0.1, size=(n, n)).astype(np.float64)
         self._neuro_state = NeuromodulationState.zeros((n, n))
+        # Adaptive alpha field: each cell has its own diffusivity
+        self._alpha_field = np.full((n, n), self.config.alpha, dtype=np.float64)
         return self._field
 
     def simulate(
@@ -236,9 +242,14 @@ class ReactionDiffusionEngine:
             self._metrics.alpha_guard_triggers += 1
         for _ in range(substeps):
             laplacian = self._compute_laplacian(self._field)
-            self._field = self._field + self.config.alpha * effective_dt * laplacian
+            if self.config.adaptive_alpha and self._alpha_field is not None:
+                self._field = self._field + self._alpha_field * effective_dt * laplacian
+            else:
+                self._field = self._field + self.config.alpha * effective_dt * laplacian
             if turing_enabled:
                 self._turing_step(dt_scale=effective_dt)
+                if self.config.adaptive_alpha:
+                    self._adapt_alpha(dt_scale=effective_dt)
 
         # Neuromodulation
         self._apply_neuromodulation()
@@ -339,8 +350,13 @@ class ReactionDiffusionEngine:
         if not self.config.alpha_guard_enabled:
             return 1, 1.0
         threshold = float(np.clip(self.config.alpha_guard_threshold, 1e-6, 1.0))
+        alpha_max = (
+            float(np.max(self._alpha_field))
+            if self.config.adaptive_alpha and self._alpha_field is not None
+            else float(self.config.alpha)
+        )
         max_coeff = max(
-            float(self.config.alpha),
+            alpha_max,
             float(self.config.d_activator),
             float(self.config.d_inhibitor),
         )
@@ -349,6 +365,26 @@ class ReactionDiffusionEngine:
             return 1, 1.0
         substeps = int(np.ceil(max_coeff / allowed))
         return max(1, substeps), 1.0 / max(1, substeps)
+
+    def _adapt_alpha(self, dt_scale: float = 1.0) -> None:
+        """STDP-like adaptation of diffusivity field.
+
+        Where Turing pattern is active (activator > threshold):
+            strengthen diffusion (LTP) — pattern reinforces its own propagation.
+        Where dormant (activator < threshold):
+            weaken diffusion (LTD) — unused connections fade.
+
+        Asymmetric A-/A+ = 1.2 (Bi & Poo 1998): LTD slightly stronger
+        than LTP prevents runaway diffusion. Only genuinely active patterns
+        maintain high diffusivity.
+        """
+        if self._alpha_field is None or self._activator is None:
+            return
+        above = self._activator - self.config.turing_threshold
+        ltp = ALPHA_LTP_RATE * np.maximum(above, 0.0)
+        ltd = ALPHA_LTD_RATE * np.maximum(-above, 0.0)
+        self._alpha_field += (ltp - ltd) * dt_scale
+        np.clip(self._alpha_field, ALPHA_MIN, ALPHA_MAX, out=self._alpha_field)
 
     def _apply_soft_boundary_damping(
         self, field: NDArray[np.floating]
