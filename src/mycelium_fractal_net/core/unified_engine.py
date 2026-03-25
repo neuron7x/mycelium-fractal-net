@@ -65,22 +65,30 @@ class SystemReport:
     chi_invariant: float
     chi_interpretation: str
 
+    # JKO/HWI unified score
+    M_base: float = 0.0
+    M_full: float = 0.0
+    hwi_holds: bool = True
+    M_interpretation: str = "unknown"
+
     # Meta
-    compute_time_ms: float
-    compute_mode: str
-    grid_size: int
-    n_frames: int
+    compute_time_ms: float = 0.0
+    compute_mode: str = "normal"
+    grid_size: int = 0
+    n_frames: int = 0
 
     def summary(self) -> str:
         """Single-line system summary."""
         genuine = "GENUINE" if self.is_genuine_multifractal else "mono"
         critical = "CRITICAL" if self.is_critical_slowing else "stable"
         expanding = "expanding" if self.spectral_expanding else "collapsing"
+        hwi = "+" if self.hwi_holds else "!"
         return (
             f"[MFN] {self.severity} | "
+            f"M={self.M_full:.3f} HWI={hwi} | "
             f"anomaly={self.anomaly_label}({self.anomaly_score:.2f}) "
             f"ews={self.ews_score:.2f} causal={self.causal_decision} | "
-            f"S_B={self.basin_stability:.2f} anon={self.cosine_anonymity:.3f} "
+            f"S_B={self.basin_stability:.2f} "
             f"persuade={self.intervention_level} | "
             f"da={self.delta_alpha:.2f}({genuine}) H={self.hurst_exponent:.2f}({critical}) "
             f"chi={self.chi_invariant:.3f}({expanding}) "
@@ -90,6 +98,12 @@ class SystemReport:
     def interpretation(self) -> str:
         """Human-readable multi-line interpretation."""
         lines: list[str] = []
+
+        # Unified score M — the thermodynamic spine
+        lines.append(
+            f"Thermodynamic state: M={self.M_full:.3f} ({self.M_interpretation}). "
+            f"HWI {'satisfied' if self.hwi_holds else 'VIOLATED'}."
+        )
 
         # Core health
         if self.severity == "stable":
@@ -185,6 +199,12 @@ class SystemReport:
                 "spectral_expanding": self.spectral_expanding,
                 "chi_invariant": round(self.chi_invariant, 4),
                 "chi_interpretation": self.chi_interpretation,
+            },
+            "unified": {
+                "M_base": round(self.M_base, 6),
+                "M_full": round(self.M_full, 6),
+                "hwi_holds": self.hwi_holds,
+                "interpretation": self.M_interpretation,
             },
             "meta": {
                 "compute_time_ms": round(self.compute_time_ms, 1),
@@ -310,14 +330,39 @@ class UnifiedEngine:
             S_B=levin.basin_stability,
         )
 
-        # ── Severity integration: fractal dynamics enhance core severity ──
+        # ── 6. JKO/HWI unified score ────────────────────────────────
+        from mycelium_fractal_net.analytics.tda_ews import compute_tda
+        from mycelium_fractal_net.analytics.unified_score import compute_unified_score
+
+        topo = compute_tda(seq.field, min_persistence_frac=0.005)
+        try:
+            unified = compute_unified_score(
+                field_current=seq.history[0],
+                field_reference=seq.field,
+                CE=0.0,  # CE computed separately; M_base carries the physics
+                beta_0=topo.beta_0,
+                beta_1=topo.beta_1,
+            )
+            M_base = unified.M_base
+            M_full = unified.M_full
+            hwi_ok = unified.hwi.hwi_holds
+            M_interp = unified._interpret()
+        except Exception:
+            M_base = 0.0
+            M_full = 0.0
+            hwi_ok = True
+            M_interp = "unknown"
+
+        # ── Severity integration: fractal dynamics + M enhance core ──
         severity = core.severity
-        # Escalate if fractal dynamics detect critical state that core missed
         if dfa.is_critical and severity == "stable":
             severity = "info"
         if dfa.is_critical and se.is_collapsing and severity == "info":
             severity = "warning"
         if levin.basin_stability < 0.4 and severity in ("stable", "info"):
+            severity = "warning"
+        # HWI violation is a thermodynamic red flag
+        if not hwi_ok and severity in ("stable", "info"):
             severity = "warning"
 
         # ── Assemble ───────────────────────────────────────────────
@@ -354,6 +399,11 @@ class UnifiedEngine:
             spectral_expanding=not se.is_collapsing,
             chi_invariant=basin_inv.chi,
             chi_interpretation=basin_inv.chi_interpretation,
+            # JKO/HWI unified
+            M_base=M_base,
+            M_full=M_full,
+            hwi_holds=hwi_ok,
+            M_interpretation=M_interp,
             # Meta
             compute_time_ms=elapsed,
             compute_mode="normal",
