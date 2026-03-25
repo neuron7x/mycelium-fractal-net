@@ -269,6 +269,28 @@ def get_experience_memory() -> ExperienceMemory:
     return _MEMORY
 
 
+def _diagnose_state(seq: FieldSequence) -> tuple:
+    """Diagnose current state: returns (detection, ews, hwi, severity)."""
+    from .analytics.unified_score import compute_hwi_components
+    from .core.detect import detect_anomaly
+    from .core.early_warning import early_warning
+
+    det = detect_anomaly(seq)
+    ews = early_warning(seq)
+    hwi = compute_hwi_components(seq.history[0], seq.field)
+
+    is_anom = det.label in ("anomalous", "critical")
+    is_ews = ews.ews_score > 0.5
+    severity_map = {
+        (True, True): "critical",
+        (True, False): "warning",
+        (False, True): "warning",
+        (False, False): "stable" if ews.ews_score < 0.3 else "info",
+    }
+    severity = severity_map[(is_anom, is_ews)]
+    return det, ews, hwi, severity
+
+
 def auto_heal(
     seq: FieldSequence,
     target_regime: str = "stable",
@@ -276,22 +298,7 @@ def auto_heal(
     verbose: bool = False,
     memory: ExperienceMemory | None = None,
 ) -> HealResult:
-    """Closed cognitive loop: diagnose → predict → intervene → verify → learn.
-
-    1. OBSERVE:  take the current FieldSequence
-    2. DIAGNOSE: compute M, severity, anomaly
-    3. PREDICT:  if enough experience, predict outcome before simulation
-    4. DECIDE:   if needs intervention, plan it
-    5. ACT:      re-simulate with new parameters
-    6. VERIFY:   re-diagnose, compute ΔM, compare with prediction
-    7. LEARN:    store (state, action, outcome) in experience memory
-
-    After ~20 calls, the system predicts intervention outcomes from
-    experience. Prediction error reveals where self-understanding fails.
-    """
-    from .analytics.unified_score import compute_hwi_components
-    from .core.detect import detect_anomaly
-    from .core.early_warning import early_warning
+    """Closed cognitive loop: diagnose → predict → intervene → verify → learn."""
     from .intervention import plan_intervention
 
     t0 = time.perf_counter()
@@ -300,19 +307,7 @@ def auto_heal(
     if verbose:
         print("[HEAL] Diagnosing...")
 
-    det_before = detect_anomaly(seq)
-    ews_before = early_warning(seq)
-    hwi_before = compute_hwi_components(seq.history[0], seq.field)
-
-    severity_map = {
-        (True, True): "critical",
-        (True, False): "warning",
-        (False, True): "warning",
-        (False, False): "stable" if ews_before.ews_score < 0.3 else "info",
-    }
-    is_anomalous = det_before.label in ("anomalous", "critical")
-    is_ews_high = ews_before.ews_score > 0.5
-    severity_before = severity_map[(is_anomalous, is_ews_high)]
+    det_before, ews_before, hwi_before, severity_before = _diagnose_state(seq)
 
     if verbose:
         print(f"  M={hwi_before.M:.4f} anomaly={det_before.label}({det_before.score:.3f}) "
@@ -406,13 +401,7 @@ def auto_heal(
     if verbose:
         print("[HEAL] Verifying...")
 
-    det_after = detect_anomaly(seq_after)
-    ews_after = early_warning(seq_after)
-    hwi_after = compute_hwi_components(seq_after.history[0], seq_after.field)
-
-    is_anomalous_after = det_after.label in ("anomalous", "critical")
-    is_ews_high_after = ews_after.ews_score > 0.5
-    severity_after = severity_map[(is_anomalous_after, is_ews_high_after)]
+    det_after, ews_after, hwi_after, severity_after = _diagnose_state(seq_after)
 
     delta_M = hwi_after.M - hwi_before.M
     delta_anomaly = det_after.score - det_before.score
@@ -442,35 +431,22 @@ def auto_heal(
     for s in best.proposed_changes:
         feat[f"delta_{s.name}"] = s.proposed_value - s.current_value
 
-    # ── 8. PREDICT (if model available) ───────────────────────────
-    prediction_used = False
-    predicted_M = None
-    prediction_error = None
-
+    # ── 8. PREDICT + LEARN + DOPAMINE ────────────────────────────
+    prediction_used, predicted_M, prediction_error = False, None, None
     if mem.can_predict:
-        predicted_M, _, r2 = mem.predict(feat)
+        predicted_M, _, _ = mem.predict(feat)
         prediction_used = True
         prediction_error = abs(predicted_M - hwi_after.M)
-        if verbose:
-            print(f"  [LEARN] Predicted M_after={predicted_M:.4f}, actual={hwi_after.M:.4f}, "
-                  f"error={prediction_error:.4f}, R²={r2:.3f}")
 
-    # ── 9. DOPAMINE UPDATE — this cycle's error → next cycle's planning
     pe_for_da = prediction_error if prediction_error is not None else abs(delta_M)
     _DA_STATE = compute_dopamine(pe_for_da, _DA_STATE)
-    if verbose:
-        print(f"  [DA] level={_DA_STATE.level:.3f} RPE={_DA_STATE.rpe:.4f} "
-              f"plasticity={_DA_STATE.plasticity_scale:.2f}")
-
-    # ── 10. LEARN — store experience ──────────────────────────────
     mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
 
     if verbose:
         print(f"  M: {hwi_before.M:.4f} -> {hwi_after.M:.4f} (dM={delta_M:+.4f})")
         print(f"  anomaly: {det_before.score:.3f} -> {det_after.score:.3f}")
         print(f"  severity: {severity_before} -> {severity_after}")
-        print(f"  HEALED: {healed}")
-        print(f"  [LEARN] experiences={mem.size}")
+        print(f"  DA={_DA_STATE.level:.3f} exp={mem.size} HEALED={healed}")
 
     elapsed = (time.perf_counter() - t0) * 1000
 
