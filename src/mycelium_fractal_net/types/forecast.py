@@ -143,6 +143,12 @@ class ForecastResult:
         se = self.benchmark_metrics.get("forecast_structural_error", 0.0)
         return f"ForecastResult(h={self.horizon}, method={self.method}, error={se:.3f})"
 
+    def summary(self) -> str:
+        """Single-line forecast summary."""
+        se = self.benchmark_metrics.get("forecast_structural_error", 0.0)
+        unc = self.uncertainty_envelope.get("mean_uncertainty", 0.0)
+        return f"[FORECAST] h={self.horizon} method={self.method} error={se:.4f} unc={unc:.4f}"
+
     def to_dict(self) -> dict[str, Any]:
         return self.validate()
 

@@ -187,6 +187,17 @@ class MorphologyDescriptor:
         payload = self.flatten()
         return pd.Series(payload)
 
+    def summary(self) -> str:
+        """Single-line descriptor summary."""
+        n_feat = len(self.embedding)
+        inst = self.stability.get("instability_index", 0.0)
+        dbox = self.features.get("D_box", 0.0)
+        return (
+            f"[DESC] {n_feat} features | "
+            f"D_box={dbox:.2f} instability={inst:.3f} "
+            f"v={self.version}"
+        )
+
     def flatten(self) -> dict[str, float]:
         payload: dict[str, float] = {}
         payload.update(self.features)

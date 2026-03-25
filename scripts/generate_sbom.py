@@ -1,3 +1,4 @@
+"""Generate sbom."""
 from __future__ import annotations
 
 import hashlib

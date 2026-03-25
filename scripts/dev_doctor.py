@@ -1,3 +1,4 @@
+"""Dev doctor."""
 from __future__ import annotations
 
 import importlib

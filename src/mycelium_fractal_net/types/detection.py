@@ -95,6 +95,11 @@ class AnomalyEvent:
             f"confidence={self.confidence:.2f}{regime_str})"
         )
 
+    def summary(self) -> str:
+        """Single-line anomaly summary."""
+        regime = f" regime={self.regime.label}" if self.regime else ""
+        return f"[DETECT] {self.label}(score={self.score:.3f}, conf={self.confidence:.2f}){regime}"
+
     def to_dict(self) -> dict[str, Any]:
         payload = {
             "schema_version": "mfn-anomaly-event-v1",

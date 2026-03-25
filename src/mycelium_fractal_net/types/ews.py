@@ -17,6 +17,10 @@ class CriticalTransitionWarning:
     causal_certificate: str = ""
     indicators: dict[str, float] = field(default_factory=dict)
 
+    def summary(self) -> str:
+        """Single-line EWS summary."""
+        return f"[EWS] score={self.ews_score:.3f} type={self.transition_type} conf={self.confidence:.2f}"
+
     def to_dict(self) -> dict[str, Any]:
         import math
 

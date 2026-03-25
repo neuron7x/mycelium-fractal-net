@@ -1,3 +1,4 @@
+"""Release proof."""
 from __future__ import annotations
 
 import json

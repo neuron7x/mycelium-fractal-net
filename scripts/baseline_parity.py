@@ -1,3 +1,4 @@
+"""Baseline parity."""
 from __future__ import annotations
 
 import hashlib
