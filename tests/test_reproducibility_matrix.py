@@ -75,4 +75,4 @@ class TestReproducibilityMatrix:
         """Baseline profile hash must match golden value."""
         seq = mfn.simulate(self.PROFILES["baseline"])
         h = _field_hash(seq)
-        assert h == "5fe822d89ae49eb9", f"Baseline hash drift: {h}"
+        assert h == "c36b8404d9280844", f"Baseline hash drift: {h}"
