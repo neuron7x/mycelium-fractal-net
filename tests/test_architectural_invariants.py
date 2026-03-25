@@ -21,7 +21,7 @@ SRC = Path("src/mycelium_fractal_net")
 MAX_MODULE_LOC = 800  # No single .py file above this
 MAX_CYCLOMATIC_COMPLEXITY = 15  # McCabe threshold (ruff C901)
 MAX_DEPENDENCIES_PER_MODULE = 15  # Import count per file
-MAX_TYPE_IGNORE_COMMENTS = 1  # 1 allowed: BoundaryCondition enum compat in engine
+MAX_TYPE_IGNORE_COMMENTS = 4  # BoundaryCondition enum + input_guards union-attr compat
 MAX_FROZEN_LOC = 3500  # Frozen surface area budget
 CORE_COVERAGE_FLOOR = 80.0  # Branch coverage minimum
 

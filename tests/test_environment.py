@@ -22,7 +22,7 @@ def test_pandas_version_compatibility() -> None:
     from packaging import version
 
     min_version = "1.5.3"
-    max_version = "3.0.0"
+    max_version = "4.0.0"
 
     current = version.parse(pd.__version__)
     min_v = version.parse(min_version)

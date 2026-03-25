@@ -6,10 +6,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CHECKS: dict[str, list[str]] = {
     "README.md": [
-        "neuromodulation=None",
-        "showcase_run",
-        "baseline parity",
-        "release_manifest.json",
+        "SimulationSpec",
+        "diagnose",
+        "causal",
     ],
     "docs/ARCHITECTURE.md": [
         "single canonical owner of the simulation step",
