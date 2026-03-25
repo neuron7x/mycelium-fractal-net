@@ -56,6 +56,24 @@ print(math.summary())
 # [MATH] b0=3 b1=1 TP0=0.847 | W2=1.33 | CE=-0.12 | r=0.025(structur)
 ```
 
+### Auto-Heal: Closed Cognitive Loop
+
+```python
+# System detects problem → plans intervention → applies → verifies → learns
+result = mfn.auto_heal(stressed_seq)
+print(result.summary())
+# [HEAL] HEALED | M: 1.000 -> 0.514 (dM=-0.486) | anomaly: 0.494 -> 0.207
+```
+
+### Examples
+
+| Example | Description |
+|---------|-------------|
+| [`quickstart.py`](examples/quickstart.py) | Full pipeline in 43 lines |
+| [`critical_transition_detection.py`](examples/critical_transition_detection.py) | Detect → explain → intervene |
+| [`mfn_interactive_analysis.ipynb`](examples/mfn_interactive_analysis.ipynb) | Interactive Plotly notebook |
+| [`finance_regime_detection.py`](examples/finance_regime_detection.py) | Market regime detection |
+
 ---
 
 ## What Makes This Different

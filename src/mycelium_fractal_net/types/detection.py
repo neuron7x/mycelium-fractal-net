@@ -68,7 +68,7 @@ class RegimeState:
     def to_dict(self) -> dict[str, Any]:
         payload = {
             "schema_version": "mfn-regime-state-v1",
-            "runtime_version": "4.2.0",
+            "runtime_version": "4.4.2",
             "label": self.label,
             "score": float(self.score),
             "confidence": float(self.confidence),
@@ -98,7 +98,7 @@ class AnomalyEvent:
     def to_dict(self) -> dict[str, Any]:
         payload = {
             "schema_version": "mfn-anomaly-event-v1",
-            "runtime_version": "4.2.0",
+            "runtime_version": "4.4.2",
             "score": float(self.score),
             "label": self.label,
             "confidence": float(self.confidence),

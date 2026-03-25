@@ -668,7 +668,7 @@ class FieldSequence:
         ).hexdigest()[:16]
         data = {
             "schema_version": "mfn-field-sequence-v1",
-            "engine_version": "4.2.0",
+            "engine_version": "4.4.2",
             "grid_size": self.grid_size,
             "num_steps": self.num_steps,
             "has_history": self.has_history,

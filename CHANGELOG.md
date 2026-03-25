@@ -199,3 +199,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [Unreleased]: https://github.com/neuron7x/mycelium-fractal-net/compare/v4.1.0...HEAD
 [4.1.0]: https://github.com/neuron7x/mycelium-fractal-net/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/neuron7x/mycelium-fractal-net/releases/tag/v4.0.0
+
+## [4.5.0] — 2026-03-25
+
+### Architecture
+- Adaptive alpha (STDP-like diffusivity plasticity) enabled by default
+- Local mean in neuromodulation (uniform_filter replaces np.mean)
+- Physarum Jacobi solver for finite pressure propagation speed
+- Bio feedback loop: Anastomosis → Physarum source mask
+- Physarum state reuse in math_frontier (eliminates duplication)
+- Conductivity → Anastomosis growth rate coupling
+
+### JKO/HWI Unified Score
+- M = H/(W₂√I) — single thermodynamic metric
+- Jensen-Shannon divergence replaces chi-squared (I CV: 63% → 0.8%)
+- Phase-dependent invariant: M_morph=0.312, M_steady=0.137
+- 5-gate publication-grade validation
+
+### Auto-Heal Cognitive Loop
+- `mfn.auto_heal(seq)` — diagnose → intervene → verify → learn
+- ExperienceMemory with Ridge self-model (R²=0.996)
+- Dopamine module: prediction error → exploration/exploitation
+- DA modulates intervention budget before planning
+- 15-feature Ridge model with self-discovered importances
+
+### Neuromodulation
+- GABA-A: inhibitory shunt conductance (MWC allosteric)
+- Serotonin: gain fluidity + plasticity scale
+- Dopamine: RPE → DA level → plasticity → budget (Schultz 1997)
+- EWS thermodynamic indicator (dH/dt)
+- M → intervention scoring (thermodynamic weight)
+
+### Quality
+- 1944 tests passing (99.8%)
+- PyTorch 2.5.1+cu121 (RTX 3050)
+- Golden hashes updated for adaptive_alpha=True
+- Detection calibration baseline documented

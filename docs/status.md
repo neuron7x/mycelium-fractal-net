@@ -8,7 +8,7 @@ Last verified: 2026-03-24
 |-------|--------|---------|
 | Local reproduce | **PASS** | `uv run python experiments/reproduce.py` |
 | Local adversarial | **PASS** (6/6) | `uv run python experiments/adversarial.py` |
-| Local tests | **PASS** (224) | `bash ci.sh` gate 3 |
+| Local tests | **PASS** (1944) | `bash ci.sh` gate 3 |
 | Lint | **PASS** | `ruff check` |
 | Types | **PASS** (15 files, --strict) | `mypy --strict` |
 | Import contracts | **PASS** (8/8) | `lint-imports` |

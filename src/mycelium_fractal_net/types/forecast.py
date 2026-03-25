@@ -49,7 +49,7 @@ class _StrictForecastPayload(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema_version: str = "mfn-forecast-result-v1"
-    runtime_version: str = "4.2.0"
+    runtime_version: str = "4.4.2"
     version: str
     horizon: int = Field(gt=0)
     method: str = Field(min_length=1)
@@ -123,7 +123,7 @@ class ForecastResult:
     def _raw_payload(self) -> dict[str, Any]:
         return {
             "schema_version": "mfn-forecast-result-v1",
-            "runtime_version": "4.2.0",
+            "runtime_version": "4.4.2",
             "version": self.version,
             "horizon": int(self.horizon),
             "method": self.method,
@@ -170,7 +170,7 @@ class ComparisonResult:
     def to_dict(self) -> dict[str, Any]:
         payload = {
             "schema_version": "mfn-comparison-result-v1",
-            "runtime_version": "4.2.0",
+            "runtime_version": "4.4.2",
             "version": self.version,
             "distance": float(self.distance),
             "morphology_distance": float(self.distance),

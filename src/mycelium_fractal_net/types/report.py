@@ -29,7 +29,7 @@ class AnalysisReport:
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema_version": "mfn-analysis-report-v1",
-            "engine_version": "4.2.0",
+            "engine_version": "4.4.2",
             "run_id": self.run_id,
             "spec": None if self.spec is None else self.spec.to_dict(),
             "sequence": self.sequence.to_dict(include_arrays=False),
