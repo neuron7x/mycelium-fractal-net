@@ -199,7 +199,20 @@ class BioExtension:
                 a_s.C[:] += 0.05 * self.chemotaxis_state.rho
             if cfg.enable_dispersal and np.any(self.dispersal_state.germination_sites):
                 a_s.C[:] += self.dispersal_state.germination_sites.astype(float) * 0.05
-            a_s = self._a_engine.step(a_s)
+            # Physarum conductivity → Anastomosis growth rate:
+            # where transport is efficient, hyphae grow faster.
+            # Convert edge conductivities to per-cell mean.
+            cond_field = None
+            if cfg.enable_physarum:
+                N = self.N
+                cond_cell = np.zeros((N, N), dtype=np.float64)
+                count = np.zeros((N, N), dtype=np.float64)
+                cond_cell[:, :-1] += p_s.D_h; cond_cell[:, 1:] += p_s.D_h
+                count[:, :-1] += 1; count[:, 1:] += 1
+                cond_cell[:-1, :] += p_s.D_v; cond_cell[1:, :] += p_s.D_v
+                count[:-1, :] += 1; count[1:, :] += 1
+                cond_field = cond_cell / np.maximum(count, 1)
+            a_s = self._a_engine.step(a_s, conductivity_field=cond_field)
 
         c_s = self.chemotaxis_state
         if cfg.enable_chemotaxis:

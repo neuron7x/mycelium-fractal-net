@@ -82,8 +82,16 @@ def run_math_frontier(
     run_fim: bool = False,
     fim_simulate_fn: Callable[[np.ndarray], np.ndarray] | None = None,
     fim_theta: np.ndarray | None = None,
+    physarum_state: Any | None = None,
 ) -> MathFrontierReport:
-    """Run all 5 mechanisms on a FieldSequence. ~300ms for N=32."""
+    """Run all 5 mechanisms on a FieldSequence. ~300ms for N=32.
+
+    Args:
+        physarum_state: Pre-computed PhysarumState (with D_h, D_v).
+            If provided AND run_rmt=True, RMT uses this state's conductivity
+            directly instead of re-creating a Physarum engine from scratch.
+            Pass bio.physarum_state from BioExtension to avoid duplication.
+    """
     t0 = time.perf_counter()
 
     # 1. TDA
@@ -120,22 +128,31 @@ def run_math_frontier(
         except Exception:  # noqa: S110
             pass  # FIM may fail for degenerate parameter spaces
 
-    # 5. RMT
+    # 5. RMT — reuse physarum_state if provided, otherwise create fresh
     rmt_result: RMTDiagnostics | None = None
     if run_rmt:
         try:
             from mycelium_fractal_net.bio.memory_anonymization import GapJunctionDiffuser
-            from mycelium_fractal_net.bio.physarum import PhysarumEngine
 
-            N = seq.field.shape[0]
-            eng = PhysarumEngine(N)
-            src = seq.field > 0
-            snk = seq.field < -0.05
-            phys = eng.initialize(src, snk)
-            for _ in range(3):
-                phys = eng.step(phys, src, snk)
+            if physarum_state is not None:
+                # Reuse pre-computed conductivity — no duplicate Physarum init
+                D_h = physarum_state.D_h
+                D_v = physarum_state.D_v
+            else:
+                from mycelium_fractal_net.bio.physarum import PhysarumEngine
+
+                N = seq.field.shape[0]
+                eng = PhysarumEngine(N)
+                src = seq.field > 0
+                snk = seq.field < -0.05
+                phys = eng.initialize(src, snk)
+                for _ in range(3):
+                    phys = eng.step(phys, src, snk)
+                D_h = phys.D_h
+                D_v = phys.D_v
+
             diff = GapJunctionDiffuser()
-            L = diff.build_laplacian(phys.D_h, phys.D_v).toarray()
+            L = diff.build_laplacian(D_h, D_v).toarray()
             rmt_result = rmt_diagnostics(L)
         except Exception:  # noqa: S110
             pass  # RMT requires bio extras

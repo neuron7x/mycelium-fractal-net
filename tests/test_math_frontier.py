@@ -210,3 +210,78 @@ def test_frontier_performance(seq: mfn.FieldSequence) -> None:
     run_math_frontier(seq, run_rmt=True)
     ms = (time.perf_counter() - t0) * 1000
     assert ms < 1500, f"Too slow: {ms:.0f}ms"
+
+
+# ── PHYSARUM STATE REUSE ────────────────────────────────────────────────────
+
+
+def test_frontier_reuses_physarum_state(seq: mfn.FieldSequence) -> None:
+    """run_math_frontier with pre-computed physarum_state skips Physarum init."""
+    from mycelium_fractal_net.bio.physarum import PhysarumEngine
+
+    eng = PhysarumEngine(seq.field.shape[0])
+    src = seq.field > 0
+    snk = seq.field < -0.05
+    phys = eng.initialize(src, snk)
+    for _ in range(3):
+        phys = eng.step(phys, src, snk)
+
+    # With physarum_state: should produce RMT result using provided state
+    report_reused = run_math_frontier(seq, run_rmt=True, physarum_state=phys)
+    assert report_reused.rmt is not None
+    assert 0 <= report_reused.rmt.r_ratio <= 1
+
+    # Without physarum_state: should also work (backward compat)
+    report_fresh = run_math_frontier(seq, run_rmt=True, physarum_state=None)
+    assert report_fresh.rmt is not None
+
+    # Both should produce valid RMT — same structure type expected
+    assert report_reused.rmt.structure_type == report_fresh.rmt.structure_type
+
+
+def test_frontier_physarum_state_identity() -> None:
+    """Passing the SAME physarum_state produces identical RMT results."""
+    from mycelium_fractal_net.bio.physarum import PhysarumEngine
+
+    s = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=20, seed=42))
+    eng = PhysarumEngine(16)
+    src = s.field > 0
+    snk = s.field < -0.05
+    phys = eng.initialize(src, snk)
+    for _ in range(3):
+        phys = eng.step(phys, src, snk)
+
+    r1 = run_math_frontier(s, run_rmt=True, physarum_state=phys)
+    r2 = run_math_frontier(s, run_rmt=True, physarum_state=phys)
+    assert r1.rmt is not None and r2.rmt is not None
+    assert abs(r1.rmt.r_ratio - r2.rmt.r_ratio) < 1e-10
+
+
+# ── BIO CONDUCTIVITY → ANASTOMOSIS ─────────────────────────────────────────
+
+
+def test_bio_conductivity_feeds_anastomosis() -> None:
+    """Physarum conductivity modulates Anastomosis growth rate."""
+    from mycelium_fractal_net.bio import BioExtension
+
+    s = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=20, seed=42))
+
+    # Run with Physarum enabled (conductivity feeds growth)
+    bio_with = BioExtension.from_sequence(s).step(n=5)
+    B_with = bio_with.anastomosis_state.B.copy()
+
+    # Run with Physarum disabled (no conductivity feedback)
+    from mycelium_fractal_net.bio.extension import BioConfig
+    cfg_no_phys = BioConfig(enable_physarum=False)
+    bio_without = BioExtension.from_sequence(s, config=cfg_no_phys).step(n=5)
+    B_without = bio_without.anastomosis_state.B.copy()
+
+    # Both must be valid
+    assert np.all(np.isfinite(B_with))
+    assert np.all(np.isfinite(B_without))
+    assert np.all(B_with >= 0)
+    assert np.all(B_without >= 0)
+
+    # With conductivity feedback, growth should differ
+    assert not np.allclose(B_with, B_without, atol=1e-10), \
+        "Conductivity feedback should produce different growth patterns"

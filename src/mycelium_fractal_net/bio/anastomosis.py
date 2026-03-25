@@ -76,8 +76,19 @@ class AnastomosisEngine:
             kappa=np.zeros((N, N), dtype=np.float64),
         )
 
-    def step(self, state: AnastomosisState) -> AnastomosisState:
-        """Advance one timestep."""
+    def step(
+        self,
+        state: AnastomosisState,
+        conductivity_field: np.ndarray | None = None,
+    ) -> AnastomosisState:
+        """Advance one timestep.
+
+        Args:
+            conductivity_field: Per-cell transport efficiency from Physarum
+                (N×N, values >= 0). Where conductivity is high, growth rate
+                is amplified — hyphae grow faster along established transport
+                routes. If None, uniform growth rate (backward compatible).
+        """
         cfg = self.config
         C, B = state.C, state.B
         lap_C = convolve(C, _LAPLACIAN, mode="wrap").astype(np.float64)
@@ -89,7 +100,11 @@ class AnastomosisEngine:
         S_api = cfg.P_apical * cfg.P_active * C
         ana_sink = cfg.gamma_anastomosis * cfg.R_growth * B * C
         dC = cfg.D_tip * lap_C + S_lat + S_api - ana_sink
-        dB = cfg.R_growth * cfg.P_active * C
+        # Growth: modulated by local transport efficiency if available
+        growth_rate = cfg.R_growth * cfg.P_active
+        if conductivity_field is not None:
+            growth_rate = growth_rate * (1.0 + conductivity_field)
+        dB = growth_rate * C
         dBr = S_lat
         return AnastomosisState(
             C=np.clip(C + cfg.dt * dC, 0.0, 10.0),
