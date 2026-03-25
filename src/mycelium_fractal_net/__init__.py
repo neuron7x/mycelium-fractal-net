@@ -109,6 +109,15 @@ from .types.inverse import InverseSynthesisResult
 from .types.report import AnalysisReport  # noqa: TC001
 from .adapters import FieldAdapter
 from .auto_heal import ExperienceMemory, HealResult, auto_heal, get_experience_memory
+from .cognitive import (
+    benchmark_quick,
+    compare_many,
+    explain,
+    history,
+    plot_field,
+    sweep,
+    to_markdown,
+)
 
 # Bio extension — fungal mechanisms (requires scipy)
 try:
@@ -528,6 +537,14 @@ __all__ = list(V1_SURFACE) + [
     # Data loading
     "FieldAdapter",
     "load",
+    # Cognitive extensions
+    "benchmark_quick",
+    "compare_many",
+    "explain",
+    "history",
+    "plot_field",
+    "sweep",
+    "to_markdown",
     # Auto-heal + learning
     "HealResult",
     "ExperienceMemory",
