@@ -120,7 +120,7 @@ def full_analyze(
     seq: FieldSequence,
     target_field: Any = None,
     verbose: bool = False,
-) -> Any:
+) -> object:
     """Full system analysis in one call.
 
     Integrates core diagnosis + bio + Levin + fractal arsenal + fractal dynamics.
@@ -491,6 +491,22 @@ __all__ = list(V1_SURFACE) + [
     "SimulationResult",
     "StabilityError",
     "ValueOutOfRangeError",
+    # Auto-heal + learning
+    "HealResult",
+    "ExperienceMemory",
+    "auto_heal",
+    "get_experience_memory",
+    # Types used in pipeline
+    "BoundaryCondition",
+    "CriticalTransitionWarning",
+    "DiagnosisDiff",
+    "DiagnosisReport",
+    "EnsembleDiagnosisReport",
+    # Specs
+    "GABAATonicSpec",
+    "NeuromodulationSpec",
+    "ObservationNoiseSpec",
+    "SerotonergicPlasticitySpec",
     # Legacy stable functions (CPU-only)
     "compute_fractal_features",
     "compute_lyapunov_exponent",

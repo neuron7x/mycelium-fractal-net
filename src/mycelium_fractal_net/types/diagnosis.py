@@ -47,6 +47,7 @@ class DiagnosisReport:
     def to_dict(self) -> dict[str, Any]:
         """Serialise to plain dict (JSON-safe)."""
         result: dict[str, Any] = {
+            "schema_version": "mfn-diagnosis-report-v1",
             "severity": self.severity,
             "narrative": self.narrative,
             "metadata": dict(self.metadata),

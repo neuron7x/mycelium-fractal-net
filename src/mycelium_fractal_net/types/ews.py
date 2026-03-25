@@ -25,6 +25,7 @@ class CriticalTransitionWarning:
         import math
 
         return {
+            "schema_version": "mfn-ews-v1",
             "ews_score": self.ews_score,
             "transition_type": self.transition_type,
             "time_to_transition": self.time_to_transition
