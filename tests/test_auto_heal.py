@@ -72,3 +72,42 @@ def test_heal_summary(stressed: mfn.FieldSequence) -> None:
     s = r.summary()
     assert "[HEAL]" in s
     assert "M:" in s or "healthy" in s.lower()
+
+
+# ── EXPERIENCE MEMORY ─────────────────────────────────────────────────────
+
+
+def test_experience_memory_accumulates() -> None:
+    """Memory should grow with each heal call."""
+    mem = mfn.ExperienceMemory(min_experiences=3, k=2)
+    for seed in range(5):
+        seq = mfn.simulate(mfn.SimulationSpec(
+            grid_size=16, steps=20, seed=seed,
+            alpha=0.22, jitter_var=0.005, quantum_jitter=True,
+        ))
+        mfn.auto_heal(seq, memory=mem)
+    assert mem.size >= 3
+
+
+def test_experience_prediction_after_min() -> None:
+    """After min_experiences, prediction should kick in."""
+    mem = mfn.ExperienceMemory(min_experiences=3, k=2)
+    results = []
+    for seed in range(6):
+        seq = mfn.simulate(mfn.SimulationSpec(
+            grid_size=16, steps=20, seed=seed,
+            alpha=0.22, jitter_var=0.005, quantum_jitter=True,
+        ))
+        r = mfn.auto_heal(seq, memory=mem)
+        results.append(r)
+    # Later results should have prediction
+    has_prediction = any(r.prediction_used for r in results)
+    assert has_prediction, "Prediction should activate after min_experiences"
+
+
+def test_experience_stats() -> None:
+    """Stats should be well-formed."""
+    mem = mfn.ExperienceMemory(min_experiences=2, k=2)
+    s = mem.stats()
+    assert s["size"] == 0
+    assert not mem.can_predict
