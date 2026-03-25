@@ -126,10 +126,30 @@ def modulate_plasticity(
     current_plasticity: float,
     blend: float = 0.3,
 ) -> float:
-    """Blend dopamine-driven plasticity with current value.
-
-    blend=0.3: 70% current + 30% dopamine-driven.
-    Prevents sudden jumps while allowing gradual adaptation.
-    """
+    """Blend dopamine-driven plasticity with current value."""
     target = dopamine_state.plasticity_scale
     return current_plasticity * (1.0 - blend) + target * blend
+
+
+def select_levers(
+    dopamine_state: DopamineState,
+    all_levers: list[str],
+    top_levers: list[str],
+) -> list[str]:
+    """DA-modulated lever selection.
+
+    High DA (exploration) → use ALL levers.
+    Low DA (exploitation) → focus on top levers discovered by Ridge.
+    Transition is smooth: n_levers = len(top) + DA * (len(all) - len(top))
+    """
+    if not top_levers or dopamine_state.level > 0.7:
+        return all_levers  # explore: try everything
+    if dopamine_state.level < 0.3 and top_levers:
+        return top_levers  # exploit: focus on what works
+    # Blend: use top levers + some random extras proportional to DA
+    import numpy as np
+    n_extra = int(dopamine_state.level * (len(all_levers) - len(top_levers)))
+    others = [l for l in all_levers if l not in top_levers]
+    rng = np.random.default_rng(int(dopamine_state.level * 1000))
+    extras = list(rng.choice(others, size=min(n_extra, len(others)), replace=False)) if others and n_extra > 0 else []
+    return top_levers + extras

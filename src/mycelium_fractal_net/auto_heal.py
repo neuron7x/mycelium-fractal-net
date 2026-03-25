@@ -137,6 +137,55 @@ class ExperienceMemory:
 
         return M_pred, a_pred, self._r2
 
+    def recommend(self, state_features: dict[str, float],
+                  lever_names: list[str] | None = None,
+                  n_candidates: int = 20) -> dict[str, float] | None:
+        """Use the learned model to find the best intervention.
+
+        Instead of brute-force counterfactual, the Ridge model
+        evaluates many candidate interventions analytically.
+        Returns the delta values that MINIMIZE predicted M_after.
+        """
+        if not self.can_predict or self._model is None:
+            return None
+
+        rng = np.random.default_rng(42)
+        levers = lever_names or [k for k in self._keys if k.startswith("delta_")]
+        if not levers:
+            return None
+
+        best_M = float("inf")
+        best_deltas = None
+
+        for _ in range(n_candidates):
+            candidate = dict(state_features)
+            for lever in levers:
+                candidate[lever] = rng.uniform(-0.5, 0.5)
+            x = np.array([[candidate.get(k, 0.0) for k in self._keys]])
+            x_scaled = self._scaler.transform(x)
+            M_pred = float(self._model.predict(x_scaled)[0])
+            if M_pred < best_M:
+                best_M = M_pred
+                best_deltas = {k: candidate[k] for k in levers}
+
+        return best_deltas
+
+    @property
+    def top_levers(self) -> list[str]:
+        """Return top 2 levers by importance — for focused intervention."""
+        if not self._importances:
+            return []
+        sorted_imp = sorted(self._importances.items(), key=lambda x: -x[1])
+        return [k for k, _ in sorted_imp[:2] if k.startswith("delta_")]
+
+    @property
+    def best_known_intervention(self) -> dict[str, float] | None:
+        """Return the intervention from experience that gave lowest M_after."""
+        if not self._features:
+            return None
+        best_idx = int(np.argmin(self._M_after))
+        return {k: v for k, v in self._features[best_idx].items() if k.startswith("delta_")}
+
     def stats(self) -> dict[str, Any]:
         if not self._M_after:
             return {"size": 0}
@@ -150,6 +199,8 @@ class ExperienceMemory:
             "r_squared": round(self._r2, 4),
             "top_features": dict(sorted(self._importances.items(),
                                         key=lambda x: -x[1])[:5]) if self._importances else {},
+            "top_levers": self.top_levers,
+            "best_known_M": round(float(min(self._M_after)), 4) if self._M_after else None,
         }
 
 
@@ -361,11 +412,21 @@ def auto_heal(
             compute_time_ms=elapsed,
         )
 
-    # ── 4. PLAN (DA-modulated budget) ──────────────────────────
+    # ── 4. PLAN (DA-modulated budget + lever selection) ────────
     if verbose:
         print("[HEAL] Planning intervention...")
 
-    plan = plan_intervention(seq, target_regime=target_regime, budget=da_budget)
+    # DA selects which levers to try: high DA → all, low DA → top 2
+    from .neurochem.dopamine import select_levers
+    from .intervention import list_levers
+    all_levers = list_levers()
+    mem = memory if memory is not None else _MEMORY
+    selected = select_levers(_DA_STATE, all_levers, mem.top_levers)
+    if verbose and len(selected) < len(all_levers):
+        print(f"  [DA] Focused on {len(selected)}/{len(all_levers)} levers: {selected}")
+
+    plan = plan_intervention(seq, target_regime=target_regime, budget=da_budget,
+                             allowed_levers=selected)
     best = plan.best_candidate
 
     if best is None or not plan.has_viable_plan:
