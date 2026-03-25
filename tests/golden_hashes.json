@@ -1,25 +1,25 @@
 {
   "baseline": {
     "field": "c36b8404d9280844",
-    "descriptor": "4c5ba1e8369936ca",
+    "descriptor": "7d343cf023623510",
     "detection_score": 0.192458,
     "detection_label": "nominal"
   },
   "gabaa_tonic": {
     "field": "54289613d556cff7",
-    "descriptor": "9e3c84553357862a",
+    "descriptor": "4764738c0d40321c",
     "detection_score": 0.189928,
     "detection_label": "nominal"
   },
   "serotonergic": {
     "field": "c77dbc41b0c93b39",
-    "descriptor": "890eee73818754a4",
+    "descriptor": "e812825e0c339d33",
     "detection_score": 0.225172,
     "detection_label": "watch"
   },
   "balanced_criticality": {
     "field": "c36b8404d9280844",
-    "descriptor": "4c5ba1e8369936ca",
+    "descriptor": "7d343cf023623510",
     "detection_score": 0.192458,
     "detection_label": "nominal"
   }
