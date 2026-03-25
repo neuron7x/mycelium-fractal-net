@@ -178,18 +178,17 @@ tests/benchmarks/
 
 | Metric | Value |
 |--------|-------|
-| **Verified core tests** | 224 (bio + Levin + fractal + unified + math frontier + benchmarks) |
-| **Branch coverage** | 92% bio/ (enforced ≥90% gate) |
-| **Mypy** | `--strict` on 14 bio/ files, 0 errors |
+| **Verified core tests** | 261 (`bash ci.sh` gate 3) |
+| **Adversarial invariants** | 6/6 (50+ seeds, NaN/shape/bounds/determinism) |
+| **Branch coverage** | 92% bio/, 94% core (enforced ≥90% gate) |
+| **Mypy** | `--strict` on 15 bio/ files, 0 errors |
 | **Ruff** | 0 lint violations |
 | **Import contracts** | 8/8 enforced (import-linter) |
 | **Causal rules** | 46/46 verified |
-| **Stress tests** | 32/32 (grid 8→96, steps 30→1000, memory leak check) |
-| **Security** | pip-audit: 0 known vulnerabilities |
-| **Property tests** | Hypothesis-based invariant verification |
-| **Stateful tests** | RuleBasedStateMachine for BioMemory |
-| **Frozen dataclasses** | 30 (immutable type system) |
-| **Named constants** | 62 (zero magic numbers in detection) |
+| **Reproduce** | Deterministic (field hash `b407b808c7c8a03f`) |
+| **Security** | Input guards + pip-audit: 0 CVE |
+| **Metacognition** | Self-consistency + confidence + surprise detection |
+| **Self-learning** | DiagnosticMemory with predictive rules |
 
 ---
 

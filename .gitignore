@@ -135,3 +135,8 @@ artifacts/
 experiments/actual_output.json
 results/
 benchmarks/stress_output.txt
+
+# Build/temp outputs
+benchmarks/stress_output.txt
+*.pyc
+__pycache__/

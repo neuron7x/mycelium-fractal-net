@@ -63,6 +63,19 @@ Threshold sensitivity sweep (±5%, ±10%, ±20%) identifies fragile decision thr
 
 See `scripts/sensitivity_sweep.py` for the full report.
 
+## Bio Layer
+
+- Benchmark gates are hardware-dependent — recalibrate with `uv run python benchmarks/calibrate_bio.py` after changing machines.
+- `ComputeBudget` glycogen reserve stores eigendecompositions keyed by `(sum(D_h), sum(D_v), shape)` — hash collisions possible for very different networks with same sum. TTL=300s mitigates stale cache.
+- Memory anonymization `cosine_anonymity` at default pipeline parameters may be low (~0.05) for small grids. Increase `alpha_diffusion` for stronger effect.
+
+## Mathematical Frontier
+
+- TDA uses superlevel filtration (field inversion). For fields with positive activator, use `compute_tda(-field)` explicitly.
+- Causal emergence CE depends on discretization quality. With few unique states in trajectory, CE may underestimate true causal structure.
+- Fisher Information Matrix (`compute_fim`) requires 2×n_params PDE solves — expensive. Use `run_math_frontier(seq, run_fim=False)` for speed.
+- RMT r-ratio interpretation assumes Physarum Laplacian is the primary structure. Custom Laplacians may need different GOE/Poisson thresholds.
+
 ## Dependencies
 
 - `torch` is optional (`[ml]` extra). All core operations work without it.
