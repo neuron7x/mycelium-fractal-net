@@ -51,6 +51,13 @@ from .fractal_arsenal import (
 from .math_frontier import MathFrontierReport, run_math_frontier
 from .rmt_spectral import RMTDiagnostics, rmt_diagnostics
 from .tda_ews import TopologicalSignature, compute_tda, tda_ews_trajectory
+from .unified_score import (
+    HWIComponents,
+    UnifiedScore,
+    compute_hwi_components,
+    compute_unified_score,
+    hwi_trajectory,
+)
 from .wasserstein_geometry import (
     ot_basin_stability,
     wasserstein_distance,
@@ -93,4 +100,9 @@ __all__ = [
     "tda_ews_trajectory",
     "wasserstein_distance",
     "wasserstein_trajectory_speed",
+    "HWIComponents",
+    "UnifiedScore",
+    "compute_hwi_components",
+    "compute_unified_score",
+    "hwi_trajectory",
 ]

@@ -19,6 +19,7 @@ from .causal_emergence import (
 from .fisher_information import FIMResult, compute_fim
 from .rmt_spectral import RMTDiagnostics, rmt_diagnostics
 from .tda_ews import TopologicalSignature, compute_tda
+from .unified_score import UnifiedScore, compute_unified_score
 from .wasserstein_geometry import wasserstein_distance
 
 if TYPE_CHECKING:
@@ -36,6 +37,7 @@ class MathFrontierReport:
     causal_emergence_score: float
     fim: FIMResult | None
     rmt: RMTDiagnostics | None
+    unified: UnifiedScore | None
     compute_time_ms: float
 
     def summary(self) -> str:
@@ -62,7 +64,8 @@ class MathFrontierReport:
             if self.rmt
             else "RMT=skip"
         )
-        return f"[MATH] {topo} | {w2} | {ce} | {fim} | {rmt} ({self.compute_time_ms:.0f}ms)"
+        jko = self.unified.summary() if self.unified else "JKO=skip"
+        return f"[MATH] {topo} | {w2} | {ce} | {fim} | {rmt} | {jko} ({self.compute_time_ms:.0f}ms)"
 
     def to_dict(self) -> dict[str, Any]:
         """Return JSON-serializable dict of all frontier results."""
@@ -72,6 +75,7 @@ class MathFrontierReport:
             "causal_emergence": round(self.causal_emergence_score, 4),
             "fim": self.fim.to_dict() if self.fim else None,
             "rmt": self.rmt.to_dict() if self.rmt else None,
+            "unified": self.unified.to_dict() if self.unified else None,
             "compute_time_ms": round(self.compute_time_ms, 1),
         }
 
@@ -157,6 +161,19 @@ def run_math_frontier(
         except Exception:  # noqa: S110
             pass  # RMT requires bio extras
 
+    # 6. Unified JKO/HWI score
+    unified_result: UnifiedScore | None = None
+    try:
+        unified_result = compute_unified_score(
+            field_current=seq.history[0],
+            field_reference=seq.field,
+            CE=ce_score,
+            beta_0=topo.beta_0,
+            beta_1=topo.beta_1,
+        )
+    except Exception:  # noqa: S110
+        pass
+
     elapsed = (time.perf_counter() - t0) * 1000
     return MathFrontierReport(
         topology=topo,
@@ -164,5 +181,6 @@ def run_math_frontier(
         causal_emergence_score=ce_score,
         fim=fim_result,
         rmt=rmt_result,
+        unified=unified_result,
         compute_time_ms=elapsed,
     )
