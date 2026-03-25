@@ -16,6 +16,8 @@ def _run_rich() -> None:
     from rich.progress import Progress, SpinnerColumn, TextColumn
     from rich.table import Table
 
+    import mycelium_fractal_net as mfn
+
     console = Console()
     console.print()
     console.print(
@@ -26,8 +28,6 @@ def _run_rich() -> None:
         )
     )
     console.print()
-
-    import mycelium_fractal_net as mfn
     from mycelium_fractal_net.bio import BioExtension
 
     try:

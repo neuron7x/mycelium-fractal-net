@@ -6,7 +6,7 @@
 <h3 align="center">Morphology-aware analytics engine with causal validation, adaptive bio physics, and Levin cognitive framework</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/verified_tests-261-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/verified_tests-1955-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/adversarial-6/6_pass-brightgreen?style=flat-square" alt="Adversarial" />
   <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
   <img src="https://img.shields.io/badge/bio_mechanisms-8-orange?style=flat-square" alt="Bio" />
