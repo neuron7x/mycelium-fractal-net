@@ -203,10 +203,13 @@ def hwi_trajectory(
     history: np.ndarray,
     stride: int = 5,
 ) -> dict[str, np.ndarray]:
-    """Compute M(t) over FieldSequence history.
+    """Compute M(t) and dH/dt over FieldSequence history.
 
     Reference = history[-1] (steady state).
-    Returns dict with arrays: 'M', 'H', 'W2', 'I', 'timesteps'.
+    Returns dict with arrays: 'M', 'H', 'W2', 'I', 'dH_dt', 'timesteps'.
+
+    dH/dt < 0 at every step = system descending toward steady state.
+    dH_dt_negative_frac = fraction of steps where dH/dt < 0.
     """
     T = history.shape[0]
     rho_ss = history[-1]
@@ -224,7 +227,13 @@ def hwi_trajectory(
         W2_arr[idx] = hwi.W2
         I_arr[idx] = hwi.I
 
+    # dH/dt rate signal
+    dH_dt = np.diff(H_arr) / max(stride, 1)
+    dH_dt_neg_frac = float(np.sum(dH_dt < 0) / max(len(dH_dt), 1))
+
     return {
         "M": M_arr, "H": H_arr, "W2": W2_arr, "I": I_arr,
+        "dH_dt": dH_dt,
+        "dH_dt_negative_frac": dH_dt_neg_frac,
         "timesteps": np.array(frames),
     }
