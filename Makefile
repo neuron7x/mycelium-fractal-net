@@ -98,6 +98,7 @@ benchmark:
 	$(RUN) python benchmarks/benchmark_core.py
 	$(RUN) python benchmarks/benchmark_scalability.py
 	$(RUN) python benchmarks/benchmark_quality.py
+	$(RUN) python benchmarks/benchmark_cognitive.py
 
 api:
 	$(RUN) mfn api --host 127.0.0.1 --port 8000
