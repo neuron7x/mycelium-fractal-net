@@ -1,3 +1,4 @@
+"""Adaptive descriptor extrapolation forecast for field evolution."""
 from __future__ import annotations
 
 import numpy as np

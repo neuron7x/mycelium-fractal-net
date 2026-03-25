@@ -1,3 +1,4 @@
+"""Feature extraction from FieldSequence via MorphologyDescriptor."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

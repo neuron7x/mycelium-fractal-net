@@ -1,3 +1,4 @@
+"""Simulation entrypoints: simulate(), simulate_batch(), simulate_history()."""
 from __future__ import annotations
 
 import hashlib
