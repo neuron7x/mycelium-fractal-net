@@ -28,10 +28,11 @@ __all__ = ["early_warning"]
 _EWS_AUTOCORR_THRESHOLD: float = 0.85  # lag-1 autocorrelation approaching 1
 _EWS_VARIANCE_RATIO_THRESHOLD: float = 2.0  # variance doubling
 _EWS_SCORE_WEIGHTS: dict[str, float] = {
-    "autocorrelation": 0.4,
-    "variance_ratio": 0.3,
+    "autocorrelation": 0.30,
+    "variance_ratio": 0.25,
     "skewness_shift": 0.15,
     "field_range_expansion": 0.15,
+    "thermodynamic": 0.15,
 }
 
 
@@ -135,11 +136,25 @@ def early_warning(seq: FieldSequence) -> CriticalTransitionWarning:
     range_late = float(np.mean(ranges[mid:])) + 1e-15
     field_range_ratio = range_late / range_early
 
+    # Indicator 5: Thermodynamic — M(t) instability via KL divergence rate
+    # dH/dt oscillation signals thermodynamic instability without importing unified_score
+    kl_rates = []
+    for t in range(max(1, n_steps - 5), n_steps):
+        a_t = history[t].ravel().astype(np.float64)
+        a_t = a_t - a_t.min() + 1e-12
+        a_t = a_t / a_t.sum()
+        b_t = history[t - 1].ravel().astype(np.float64)
+        b_t = b_t - b_t.min() + 1e-12
+        b_t = b_t / b_t.sum()
+        kl_rates.append(float(np.sum(a_t * np.log(a_t / b_t))))
+    thermo_instability = float(np.std(kl_rates) / (np.mean(kl_rates) + 1e-12)) if kl_rates else 0.0
+
     # Normalize indicators to [0, 1]
     autocorr_norm = float(np.clip((autocorr - 0.5) / 0.5, 0.0, 1.0))  # 0.5→0, 1.0→1
     variance_norm = float(np.clip((variance_ratio - 1.0) / 3.0, 0.0, 1.0))  # 1→0, 4→1
     skewness_norm = float(np.clip(abs(skewness_late) / 2.0, 0.0, 1.0))  # 0→0, 2→1
     range_norm = float(np.clip((field_range_ratio - 1.0) / 2.0, 0.0, 1.0))  # 1→0, 3→1
+    thermo_norm = float(np.clip(thermo_instability / 2.0, 0.0, 1.0))  # 0→0, 2→1
 
     # Composite EWS score
     ews_score = (
@@ -147,6 +162,7 @@ def early_warning(seq: FieldSequence) -> CriticalTransitionWarning:
         + _EWS_SCORE_WEIGHTS["variance_ratio"] * variance_norm
         + _EWS_SCORE_WEIGHTS["skewness_shift"] * skewness_norm
         + _EWS_SCORE_WEIGHTS["field_range_expansion"] * range_norm
+        + _EWS_SCORE_WEIGHTS["thermodynamic"] * thermo_norm
     )
     ews_score = float(np.clip(ews_score, 0.0, 1.0))
 
@@ -180,5 +196,7 @@ def early_warning(seq: FieldSequence) -> CriticalTransitionWarning:
             "variance_norm": round(variance_norm, 4),
             "skewness_norm": round(skewness_norm, 4),
             "range_norm": round(range_norm, 4),
+            "thermo_instability": round(thermo_instability, 4),
+            "thermo_norm": round(thermo_norm, 4),
         },
     )

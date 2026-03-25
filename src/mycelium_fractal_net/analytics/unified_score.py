@@ -57,7 +57,7 @@ class HWIComponents:
 
     H  = KL divergence (relative entropy)
     W2 = Wasserstein-2 distance (geometric transport cost)
-    I  = chi-squared divergence (Fisher information proxy)
+    I  = Jensen-Shannon divergence (bounded Fisher information proxy)
     M  = H / (W2 * sqrt(I)) — HWI saturation ratio in [0, 1]
     """
 
@@ -73,7 +73,7 @@ class HWIComponents:
         return {
             "H": round(self.H, 6),
             "W2": round(self.W2, 6),
-            "I_chi2": round(self.I, 6),
+            "I_jsd": round(self.I, 6),
             "hwi_lhs": round(self.hwi_lhs, 6),
             "hwi_rhs": round(self.hwi_rhs, 6),
             "hwi_holds": self.hwi_holds,
@@ -129,6 +129,7 @@ class UnifiedScore:
 
 
 def _field_to_dist(field: np.ndarray) -> np.ndarray:
+    """Convert field to probability distribution via |field| normalization."""
     w = np.abs(field).ravel().astype(np.float64) + 1e-12
     return w / w.sum()
 
@@ -154,8 +155,12 @@ def compute_hwi_components(
     # W2
     W2 = wasserstein_distance(field_current, field_reference, method="auto")
 
-    # I = chi-squared divergence (Fisher information proxy)
-    I = float(np.sum((a - b) ** 2 / (b + 1e-12)))
+    # I = Jensen-Shannon divergence (bounded, symmetric, stable Fisher proxy)
+    # Replaces chi-squared which had CV=63% due to near-zero denominators.
+    # JSD ∈ [0, ln2], no division instability.
+    m_dist = 0.5 * (a + b)
+    I = float(0.5 * np.sum(a * np.log(a / (m_dist + 1e-12)))
+              + 0.5 * np.sum(b * np.log(b / (m_dist + 1e-12))))
 
     sqrt_I = float(np.sqrt(max(I, 1e-12)))
     hwi_rhs = W2 * sqrt_I

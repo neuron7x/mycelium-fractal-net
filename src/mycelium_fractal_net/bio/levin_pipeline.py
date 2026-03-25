@@ -22,8 +22,7 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    import numpy as np
+import numpy as np
 
 __all__ = ["LevinPipeline", "LevinPipelineConfig", "LevinReport"]
 
@@ -247,8 +246,21 @@ class LevinPipeline:
         terminal_field = self.field
 
         def fast_sim(perturbed: np.ndarray) -> np.ndarray:
-            alpha = 0.3
-            return perturbed * (1 - alpha) + terminal_field * alpha
+            """Short RD relaxation: 10 diffusion steps from perturbed state.
+
+            Replaces linear blend (alpha=0.3) with actual dynamics.
+            CFL-stable explicit Euler with 5-point Laplacian.
+            """
+            f = perturbed.copy().astype(np.float64)
+            alpha_d = 0.18  # default diffusion coefficient
+            for _ in range(10):
+                lap = (
+                    np.roll(f, 1, 0) + np.roll(f, -1, 0)
+                    + np.roll(f, 1, 1) + np.roll(f, -1, 1)
+                    - 4.0 * f
+                )
+                f = f + alpha_d * lap
+            return f
 
         basin_analyzer = BasinStabilityAnalyzer(simulator_fn=fast_sim, config=morph_cfg)
         basin_result = basin_analyzer.compute(coords)

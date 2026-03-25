@@ -112,7 +112,7 @@ class ReactionDiffusionConfig:
     alpha_guard_enabled: bool = True
     alpha_guard_threshold: float = 0.95
     soft_boundary_damping: float = 0.35
-    adaptive_alpha: bool = False
+    adaptive_alpha: bool = True
 
     def __post_init__(self) -> None:
         # Accept dict for backward compatibility — convert to typed config

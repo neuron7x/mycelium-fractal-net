@@ -191,6 +191,10 @@ class BioExtension:
 
         p_s = self.physarum_state
         if cfg.enable_physarum:
+            # Feedback: where hyphae exist, new nutrient sources emerge.
+            # Closes the biological loop: Physarum → growth → new sources → Physarum.
+            if cfg.enable_anastomosis and np.any(self.anastomosis_state.B > 0.05):
+                source_mask = source_mask | (self.anastomosis_state.B > 0.05)
             p_s = self._p_engine.step(p_s, source_mask, sink_mask)
 
         a_s = self.anastomosis_state

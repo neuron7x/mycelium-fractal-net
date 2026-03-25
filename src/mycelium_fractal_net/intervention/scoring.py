@@ -21,10 +21,11 @@ if TYPE_CHECKING:
 class ScoringWeights:
     """Weights for composite score components."""
 
-    regime_distance: float = 0.25
+    regime_distance: float = 0.20
     anomaly_reduction: float = 0.20
-    intervention_cost: float = 0.15
-    structural_drift: float = 0.15
+    thermodynamic: float = 0.15
+    intervention_cost: float = 0.10
+    structural_drift: float = 0.10
     uncertainty: float = 0.10
     causal_penalty: float = 0.10
     robustness: float = 0.05
@@ -33,6 +34,7 @@ class ScoringWeights:
         return (
             self.regime_distance
             + self.anomaly_reduction
+            + self.thermodynamic
             + self.intervention_cost
             + self.structural_drift
             + self.uncertainty
@@ -98,6 +100,21 @@ def _causal_penalty(result: CounterfactualResult) -> float:
     return 1.0
 
 
+def _thermodynamic_cost(result: CounterfactualResult) -> float:
+    """Thermodynamic efficiency loss. Uses M if available on detection_after.
+
+    0 = high M (efficient morphogenesis), 1 = low M (collapsed/stagnant).
+    Falls back to 0.5 if M not available.
+    """
+    if result.detection_after is None:
+        return 0.5
+    # M is stored on detection_after as attribute if computed upstream
+    m = getattr(result.detection_after, "M_score", None)
+    if m is not None and m > 0:
+        return max(0.0, 1.0 - m * 5.0)  # M=0.2 → cost=0.0, M=0 → cost=1.0
+    return 0.5  # Fallback: M not available
+
+
 def compute_composite_score(
     result: CounterfactualResult,
     source_score: float,
@@ -108,22 +125,25 @@ def compute_composite_score(
     """Compute composite score for an intervention candidate.
 
     Lower is better. All components in [0, 1].
+    Includes thermodynamic component (M-based) when available.
     """
     rd = _regime_distance(result, target_regime)
     ar = _anomaly_reduction(result, source_score)
+    tc = _thermodynamic_cost(result)
     ic = _cost_normalized(result, budget)
     sd = _structural_drift(result)
     cp = _causal_penalty(result)
-    rb = 1.0 - result.robustness_score  # Higher robustness = lower penalty
+    rb = 1.0 - result.robustness_score
 
     score = (
         weights.regime_distance * rd
         + weights.anomaly_reduction * ar
+        + weights.thermodynamic * tc
         + weights.intervention_cost * ic
         + weights.structural_drift * sd
         + weights.causal_penalty * cp
         + weights.robustness * rb
-        + weights.uncertainty * 0.5  # Default uncertainty when not computed
+        + weights.uncertainty * 0.5
     )
     return round(score, 6)
 

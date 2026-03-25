@@ -1,8 +1,9 @@
 """
-STDP Plasticity Module.
+STDP Plasticity Module (PyTorch ML layer).
 
-This module provides the public API for Spike-Timing Dependent Plasticity,
-a heterosynaptic learning rule based on neurophysiology.
+This module provides STDP for the PyTorch model pipeline (model_pkg/).
+For the core numpy simulation, STDP-like plasticity is implemented as
+adaptive diffusivity in reaction_diffusion_engine._adapt_alpha().
 
 Conceptual domain: Synaptic plasticity, learning rules
 
