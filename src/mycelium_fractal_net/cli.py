@@ -477,8 +477,24 @@ def cmd_scenarios(args: argparse.Namespace) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = build_parser().parse_args(list(argv) if argv is not None else None)
-    return int(args.func(args))
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    if not hasattr(args, "func"):
+        parser.print_help()
+        return 1
+    try:
+        return int(args.func(args))
+    except KeyboardInterrupt:
+        return 130
+    except (ValueError, TypeError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except FileNotFoundError as e:
+        print(f"File not found: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Unexpected error: {type(e).__name__}: {e}", file=sys.stderr)
+        return 2
 
 
 def api_entrypoint() -> None:

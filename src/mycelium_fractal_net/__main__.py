@@ -20,7 +20,7 @@ def _run_rich() -> None:
     console.print()
     console.print(
         Panel.fit(
-            "[bold white]MyceliumFractalNet[/bold white]  [dim]v4.2.0[/dim]\n"
+            f"[bold white]MyceliumFractalNet[/bold white]  [dim]v{mfn.__version__}[/dim]\n"
             "[dim]Reaction-diffusion analytics · Causal validation · Bio physics[/dim]",
             border_style="green",
         )
@@ -28,7 +28,13 @@ def _run_rich() -> None:
     console.print()
 
     import mycelium_fractal_net as mfn
-    from mycelium_fractal_net.bio import BioExtension, MetaOptimizer
+    from mycelium_fractal_net.bio import BioExtension
+
+    try:
+        from mycelium_fractal_net.bio import MetaOptimizer
+        _has_meta = True
+    except ImportError:
+        _has_meta = False
     from mycelium_fractal_net.types.field import SimulationSpec
 
     # Step 1: Simulate
@@ -141,19 +147,24 @@ def _run_rich() -> None:
     )
     console.print()
 
-    # Quick meta demo
-    console.print("[bold dim]MetaOptimizer (2 gen, grid=8, fast)...[/bold dim]")
-    meta = MetaOptimizer(grid_size=8, steps=10, bio_steps=2, seed=42)
-    result = meta.run(n_generations=2, population_size=4, verbose=False)
-
-    mt = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
-    mt.add_column(style="dim")
-    mt.add_column(style="bold yellow")
-    mt.add_row("Best fitness", f"{result.evolution_result.best_fitness:.4f}")
-    mt.add_row("Cache hits", f"{result.cache_hits}/{result.total_queries}")
-    mt.add_row("Memory episodes", str(result.memory_size))
-    mt.add_row("Time", f"{result.evolution_result.elapsed_seconds:.1f}s")
-    console.print(mt)
+    # Quick meta demo (optional — requires scipy + cmaes)
+    if _has_meta:
+        console.print("[bold dim]MetaOptimizer (2 gen, grid=8, fast)...[/bold dim]")
+        try:
+            meta = MetaOptimizer(grid_size=8, steps=10, bio_steps=2, seed=42)
+            result = meta.run(n_generations=2, population_size=4, verbose=False)
+            mt = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
+            mt.add_column(style="dim")
+            mt.add_column(style="bold yellow")
+            mt.add_row("Best fitness", f"{result.evolution_result.best_fitness:.4f}")
+            mt.add_row("Cache hits", f"{result.cache_hits}/{result.total_queries}")
+            mt.add_row("Memory episodes", str(result.memory_size))
+            mt.add_row("Time", f"{result.evolution_result.elapsed_seconds:.1f}s")
+            console.print(mt)
+        except Exception as e:
+            console.print(f"  [dim]MetaOptimizer skipped: {e}[/dim]")
+    else:
+        console.print("  [dim]MetaOptimizer requires: pip install -e '.[bio]'[/dim]")
     console.print()
     console.print("  [dim]github.com/neuron7x/mycelium-fractal-net[/dim]")
     console.print()
@@ -164,7 +175,7 @@ def _run_plain() -> None:
     from mycelium_fractal_net.bio import BioExtension
     from mycelium_fractal_net.types.field import SimulationSpec
 
-    print("\nMyceliumFractalNet v4.2.0\n")
+    print(f"\nMyceliumFractalNet v{mfn.__version__}\n")
     spec = SimulationSpec(grid_size=32, steps=60, seed=42)
     seq = mfn.simulate(spec)
     bio = BioExtension.from_sequence(seq).step(n=5)

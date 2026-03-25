@@ -1,26 +1,22 @@
-"""Allow running: python -m mycelium_fractal_net.core --manifest"""
+"""MFN core module CLI — causal validation manifest.
+
+Usage:
+    python -m mycelium_fractal_net.core --manifest   Display causal rules
+    python -m mycelium_fractal_net.core --json       JSON format
+    python -m mycelium_fractal_net.core --help       This message
+"""
 
 import sys
 
-if "--manifest" in sys.argv or "--json" in sys.argv:
-    # Delegate to causal_validation CLI
-    from mycelium_fractal_net.core import causal_validation as _cv
-
-    _cv_module = sys.modules[_cv.__name__]
-    # Re-run the CLI block
-    if "--manifest" in sys.argv:
-        from mycelium_fractal_net.core.rule_registry import print_manifest
-
-        print_manifest()
-    elif "--json" in sys.argv:
-        import json
-
-        from mycelium_fractal_net.core.rule_registry import manifest_dict
-
-        sys.stdout.write(json.dumps(manifest_dict(), indent=2) + "\n")
+if "--manifest" in sys.argv:
+    from mycelium_fractal_net.core.rule_registry import print_manifest
+    print_manifest()
+elif "--json" in sys.argv:
+    import json
+    from mycelium_fractal_net.core.rule_registry import manifest_dict
+    sys.stdout.write(json.dumps(manifest_dict(), indent=2) + "\n")
+elif "--help" in sys.argv or "-h" in sys.argv:
+    print(__doc__)
 else:
-    sys.stderr.write(
-        "Usage:\n"
-        "  python -m mycelium_fractal_net.core.causal_validation --manifest\n"
-        "  python -m mycelium_fractal_net.core.causal_validation --json\n"
-    )
+    print(__doc__, file=sys.stderr)
+    sys.exit(1)
