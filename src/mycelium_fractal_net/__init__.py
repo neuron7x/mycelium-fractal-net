@@ -108,7 +108,14 @@ from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
 from .types.inverse import InverseSynthesisResult
 from .types.report import AnalysisReport  # noqa: TC001
 from .adapters import FieldAdapter
+
+
 from .auto_heal import ExperienceMemory, HealResult, auto_heal, get_experience_memory
+
+
+# Bio is lazy-loaded via _LAZY_ATTRS (see below)
+
+
 from .cognitive import (
     benchmark_quick,
     compare_many,
@@ -119,11 +126,8 @@ from .cognitive import (
     to_markdown,
 )
 
-# Bio extension — fungal mechanisms (requires scipy)
-try:
-    from .bio import BioConfig, BioExtension, BioReport
-except ImportError:
-    pass  # scipy not available in minimal install
+# Bio extension — lazy import (scipy + sklearn are heavy)
+# Access via mfn.BioExtension, mfn.BioConfig, mfn.BioReport
 
 
 def full_analyze(
@@ -448,6 +452,12 @@ _LAZY_ATTRS = {
     "ValidationConfig": ("mycelium_fractal_net.model", "ValidationConfig"),
     "run_validation": ("mycelium_fractal_net.model", "run_validation"),
     "run_validation_cli": ("mycelium_fractal_net.model", "run_validation_cli"),
+    # Bio (heavy: scipy + sklearn)
+    "BioExtension": ("mycelium_fractal_net.bio", "BioExtension"),
+    "BioConfig": ("mycelium_fractal_net.bio", "BioConfig"),
+    "BioReport": ("mycelium_fractal_net.bio", "BioReport"),
+    # Auto-heal types
+    "HealResult": ("mycelium_fractal_net.auto_heal", "HealResult"),
 }
 
 

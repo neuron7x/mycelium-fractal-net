@@ -207,8 +207,11 @@ class ExperienceMemory:
 # Global state — persists across calls within process
 _MEMORY = ExperienceMemory()
 
-from .neurochem.dopamine import DopamineState, compute_dopamine, modulate_plasticity
-_DA_STATE = DopamineState()
+def _get_da_module():
+    from .neurochem.dopamine import DopamineState, compute_dopamine, modulate_plasticity
+    return DopamineState, compute_dopamine, modulate_plasticity
+
+_DA_STATE = None  # lazy init
 
 
 @dataclass
@@ -378,8 +381,10 @@ def auto_heal(
               f"ews={ews_before.ews_score:.3f} severity={severity_before}")
 
     # ── 2. DOPAMINE STATE FROM PREVIOUS CYCLE ───────────────────
-    # DA modulates exploration BEFORE planning, not after.
     global _DA_STATE
+    if _DA_STATE is None:
+        DopamineState, _, _ = _get_da_module()
+        _DA_STATE = DopamineState()
     da_budget = budget * (0.5 + 0.5 * _DA_STATE.plasticity_scale / 3.0)
     # High DA → expand budget up to 1.5x. Low DA → baseline budget.
     if verbose and _DA_STATE.n_updates > 0:
@@ -525,7 +530,8 @@ def auto_heal(
         prediction_error = abs(predicted_M - hwi_after.M)
 
     pe_for_da = prediction_error if prediction_error is not None else abs(delta_M)
-    _DA_STATE = compute_dopamine(pe_for_da, _DA_STATE)
+    _, compute_dopamine_fn, _ = _get_da_module()
+    _DA_STATE = compute_dopamine_fn(pe_for_da, _DA_STATE)
     mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
 
     if verbose:
