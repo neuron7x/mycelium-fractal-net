@@ -107,6 +107,7 @@ from .types.field import (
 from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
 from .types.inverse import InverseSynthesisResult
 from .types.report import AnalysisReport  # noqa: TC001
+from .adapters import FieldAdapter
 from .auto_heal import ExperienceMemory, HealResult, auto_heal, get_experience_memory
 
 # Bio extension — fungal mechanisms (requires scipy)
@@ -157,6 +158,39 @@ def plan_intervention(
         objective=objective,
         **kwargs,
     )  # type: ignore[arg-type]
+
+
+def load(
+    source: Any,
+    *,
+    normalize: bool = True,
+) -> FieldSequence:
+    """Load external data into the MFN pipeline.
+
+    Accepts numpy arrays (.npy), CSV files, or raw 2D/3D arrays.
+    Automatically normalizes to biophysical range if needed.
+
+    Parameters
+    ----------
+    source : np.ndarray | str | Path
+        - ndarray (H, W): single field frame
+        - ndarray (T, H, W): field with temporal history
+        - str/Path to .npy or .csv file
+    normalize : bool
+        Auto-rescale to biophysical range (default True).
+
+    Returns
+    -------
+    FieldSequence
+        Ready for: mfn.detect(seq), mfn.diagnose(seq), mfn.auto_heal(seq)
+
+    Examples
+    --------
+    >>> seq = mfn.load("microscopy_data.npy")
+    >>> print(mfn.diagnose(seq).summary())
+    >>> result = mfn.auto_heal(seq)
+    """
+    return FieldAdapter.load(source, normalize=normalize)
 
 
 def simulate(
@@ -491,6 +525,9 @@ __all__ = list(V1_SURFACE) + [
     "SimulationResult",
     "StabilityError",
     "ValueOutOfRangeError",
+    # Data loading
+    "FieldAdapter",
+    "load",
     # Auto-heal + learning
     "HealResult",
     "ExperienceMemory",
