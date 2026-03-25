@@ -71,16 +71,29 @@ def run_math_frontier(
     # 2. W2 trajectory speed
     w2_speed = wasserstein_distance(seq.history[0], seq.field, method="sliced")
 
-    # 3. Causal Emergence
+    # 3. Causal Emergence — multi-scale TPM
     n_steps = seq.history.shape[0]
-    states = np.array([discretize_turing_field(seq.history[t]) for t in range(n_steps)])
-    tpm = np.zeros((4, 4))
-    for t in range(len(states) - 1):
-        tpm[states[t], states[t + 1]] += 1
-    row_s = tpm.sum(axis=1, keepdims=True)
+    states_micro = np.array([
+        discretize_turing_field(seq.history[t]) for t in range(n_steps)
+    ])
+    # Micro TPM: 4-state discretization
+    tpm_micro = np.zeros((4, 4))
+    for t in range(len(states_micro) - 1):
+        tpm_micro[states_micro[t], states_micro[t + 1]] += 1
+    row_s = tpm_micro.sum(axis=1, keepdims=True)
     row_s[row_s < 1] = 1
-    tpm /= row_s
-    ce_result = compute_causal_emergence(tpm)
+    tpm_micro /= row_s
+    # Macro TPM: 2-state (first-seen state vs all others)
+    # This always produces a 2-class split regardless of distribution
+    first_state = int(states_micro[0])
+    states_macro = (states_micro != first_state).astype(int)
+    tpm_macro = np.zeros((2, 2))
+    for t in range(len(states_macro) - 1):
+        tpm_macro[states_macro[t], states_macro[t + 1]] += 1
+    row_m = tpm_macro.sum(axis=1, keepdims=True)
+    row_m[row_m < 1] = 1
+    tpm_macro /= row_m
+    ce_result = compute_causal_emergence(tpm_micro, tpm_macro=tpm_macro)
     ce_score = float(ce_result.CE_macro)
 
     # 4. RMT (from Physarum Laplacian)

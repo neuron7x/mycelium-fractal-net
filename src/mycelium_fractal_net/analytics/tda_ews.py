@@ -52,7 +52,10 @@ def compute_tda(
     if f_range < 1e-12:
         return TopologicalSignature(0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, "indeterminate")
 
-    f_norm = (f - f.min()) / f_range
+    # Superlevel filtration: invert so high-activation → low filtration value.
+    # Required for MFN fields which are inhibitor-dominant (all-negative activator).
+    f_sup = f.max() - f
+    f_norm = f_sup / (f_sup.max() + 1e-12)
     min_pers = min_persistence_frac
 
     cc = gudhi.CubicalComplex(top_dimensional_cells=f_norm)

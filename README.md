@@ -6,10 +6,11 @@
 <h3 align="center">Morphology-aware analytics engine with causal validation, adaptive bio physics, and Levin cognitive framework</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/verified_tests-224-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/verified_tests-261-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/adversarial-6/6_pass-brightgreen?style=flat-square" alt="Adversarial" />
   <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
   <img src="https://img.shields.io/badge/bio_mechanisms-8-orange?style=flat-square" alt="Bio" />
+  <img src="https://img.shields.io/badge/math_frontier-5_mechanisms-purple?style=flat-square" alt="Math" />
   <img src="https://img.shields.io/badge/import_contracts-8/8-blue?style=flat-square" alt="Contracts" />
   <img src="https://img.shields.io/badge/reproduce-deterministic-brightgreen?style=flat-square" alt="Reproduce" />
   <img src="https://img.shields.io/badge/mypy-strict-blue?style=flat-square" alt="Types" />
@@ -47,6 +48,12 @@ from mycelium_fractal_net.bio import LevinPipeline
 report = LevinPipeline.from_sequence(seq).run()
 print(report.summary())
 # [LEVIN] pc1=0.944 S_B=0.96±0.03 | anon=0.064 fiedler=0.0025 | persuade=0.521 modes=10
+
+# Mathematical frontier: topology + transport + causality + spectrum
+from mycelium_fractal_net.analytics import run_math_frontier
+math = run_math_frontier(seq)
+print(math.summary())
+# [MATH] b0=3 b1=1 TP0=0.847 | W2=1.33 | CE=-0.12 | r=0.025(structur)
 ```
 
 ---
