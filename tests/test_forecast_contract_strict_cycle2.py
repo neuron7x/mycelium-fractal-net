@@ -27,8 +27,8 @@ BENCHMARK_SPEC.loader.exec_module(benchmark_quality)
 def _valid_payload() -> dict[str, object]:
     return {
         "schema_version": "mfn-forecast-result-v1",
-        "runtime_version": "4.2.0",
-        "version": "4.2.0",
+        "runtime_version": "4.4.2",
+        "version": "4.4.2",
         "horizon": 4,
         "method": "linearized-structural-drift",
         "uncertainty_envelope": {"low": 0.1, "high": 0.2},
@@ -83,7 +83,7 @@ def test_validate_forecast_payload_rejects_empty_required_maps(field_name: str) 
 def test_forecast_result_to_dict_enforces_strict_contract() -> None:
     with pytest.raises(ValidationError, match="forecast_structural_error"):
         ForecastResult(
-            version="4.2.0",
+            version="4.4.2",
             horizon=4,
             method="linearized-structural-drift",
             uncertainty_envelope={"low": 0.1, "high": 0.2},

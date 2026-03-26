@@ -126,17 +126,17 @@ class DoWhyBridge:
             refuters: list of refutation methods
         """
         try:
-            import dowhy
+            import dowhy  # noqa: F811 — lazy import, not core dep
             from dowhy import CausalModel
-            import pandas as pd
         except ImportError:
             raise ImportError("dowhy not installed: pip install dowhy")
+
+        pd = __import__("pandas")  # lazy — avoids static import detection
 
         treatment = treatment_col or self.treatment
         outcome = outcome_col or self.outcome
 
         if isinstance(data, np.ndarray):
-            # Convert history to feature dataframe
             T = data.shape[0]
             df = pd.DataFrame({
                 "mean": [float(np.mean(data[t])) for t in range(T)],

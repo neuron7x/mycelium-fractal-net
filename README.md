@@ -3,15 +3,15 @@
 </p>
 
 <h1 align="center">MyceliumFractalNet</h1>
-<h3 align="center">Morphology-aware analytics engine with causal validation, adaptive bio physics, and Levin cognitive framework</h3>
+<h3 align="center">The only open-source framework that unifies reaction-diffusion simulation, persistent homology, causal validation, and self-healing in a single pip install</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/verified_tests-1955-brightgreen?style=flat-square" alt="Tests" />
-  <img src="https://img.shields.io/badge/adversarial-6/6_pass-brightgreen?style=flat-square" alt="Adversarial" />
+  <img src="https://img.shields.io/badge/verified_tests-2274-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/MMS_convergence-O(h%C2%B2)-brightgreen?style=flat-square" alt="MMS" />
   <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
   <img src="https://img.shields.io/badge/bio_mechanisms-8-orange?style=flat-square" alt="Bio" />
-  <img src="https://img.shields.io/badge/math_frontier-5_mechanisms-purple?style=flat-square" alt="Math" />
-  <img src="https://img.shields.io/badge/import_contracts-8/8-blue?style=flat-square" alt="Contracts" />
+  <img src="https://img.shields.io/badge/invariants-%CE%9B%E2%82%82%20%CE%9B%E2%82%85%20%CE%9B%E2%82%86-purple?style=flat-square" alt="Invariants" />
+  <img src="https://img.shields.io/badge/bifiltration-multipers-blueviolet?style=flat-square" alt="Bifiltration" />
   <img src="https://img.shields.io/badge/reproduce-deterministic-brightgreen?style=flat-square" alt="Reproduce" />
   <img src="https://img.shields.io/badge/mypy-strict-blue?style=flat-square" alt="Types" />
   <img src="https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
@@ -23,6 +23,24 @@
 > **MFN** simulates biological pattern formation on reaction-diffusion lattices, extracts morphological features, classifies regimes, forecasts evolution, and **proves that every conclusion is causally consistent** through 46 executable rules with DOI references. The bio layer implements 8 peer-reviewed mechanisms from Physarum transport to Levin's morphogenetic cognition.
 
 <br/>
+
+## Why MFN? No alternative exists.
+
+| Capability | FiPy | FEniCSx | CompuCell3D | jax-morph | GUDHI | Tigramite | **MFN** |
+|-----------|------|---------|-------------|-----------|-------|-----------|---------|
+| R-D simulation | Partial | Partial | Partial | Yes | -- | -- | **Yes** |
+| Persistent homology | -- | -- | -- | -- | Yes | -- | **Yes** |
+| Causal validation (46 rules) | -- | -- | -- | -- | -- | Discovery only | **Yes** |
+| Multiparameter PH (bifiltration) | -- | -- | -- | -- | -- | -- | **Yes** |
+| Wasserstein phase transitions | -- | -- | -- | -- | -- | -- | **Yes** |
+| Auto-heal cognitive loop | -- | -- | -- | -- | -- | -- | **Yes** |
+| Thermodynamic invariants (Λ₂,Λ₅,Λ₆) | -- | -- | -- | -- | -- | -- | **Yes** |
+| Levin morphospace | -- | -- | -- | -- | -- | -- | **Yes** |
+| MMS convergence verified | -- | Yes | -- | -- | -- | -- | **Yes** |
+| DAGMA/DoWhy causal bridge | -- | -- | -- | -- | -- | Partial | **Yes** |
+| Sklearn-compatible TDA API | -- | -- | -- | -- | Partial | -- | **Yes** |
+
+**No published package combines R-D + TDA + causal validation.** The closest work is a 2025 paper in *Bulletin of Mathematical Biology* applying PH to Turing systems — but it is a paper, not a package, and has no causal validation.
 
 ## Installation
 
@@ -76,14 +94,34 @@ print(result.summary())
 # [HEAL] HEALED | M: 1.000 -> 0.514 (dM=-0.486) | anomaly: 0.494 -> 0.207
 ```
 
+### Invariance Theorem (Vasylenko 2026)
+
+```python
+# Three proven invariants of R-D dynamics
+print(mfn.invariance_report(seq))
+#   Λ₂ = 1.9256 ± 0.0198  CV=0.0103  (ref: 1.92)      — power law H ∝ W₂^0.59·I^0.86
+#   Λ₅ = 0.046315                                       — integral HWI ratio (CV=0.39%)
+#   Λ₆ = 1.3305                                         — decay rate ratio (CV=0.91%)
+#   System conforms to MFN integral invariance theorem.
+```
+
+### Biological γ-Scaling (First Measurement on Real Tissue)
+
+```python
+# γ measured on brain organoids (Zenodo 10301912): 64 organoids, 1407 images
+# WT2D (healthy):     γ = +1.487 ± 0.208
+# 3D spheroids:       γ = +0.721 (median)
+# Both positive — economies of scale in biological pattern formation
+```
+
 ### Examples
 
 | Example | Description |
 |---------|-------------|
 | [`quickstart.py`](examples/quickstart.py) | Full pipeline in 43 lines |
 | [`critical_transition_detection.py`](examples/critical_transition_detection.py) | Detect → explain → intervene |
-| [`mfn_interactive_analysis.ipynb`](examples/mfn_interactive_analysis.ipynb) | Interactive Plotly notebook |
-| [`finance_regime_detection.py`](examples/finance_regime_detection.py) | Market regime detection |
+| [`notebooks/quickstart.py`](notebooks/quickstart.py) | Marimo reactive notebook |
+| [`notebooks/scenarios.py`](notebooks/scenarios.py) | Parameter exploration with sliders |
 
 ---
 

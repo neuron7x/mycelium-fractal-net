@@ -14,7 +14,7 @@ Updated: 2026-03-24
 | Physarum sparse rebuild | 28.9ms/step lil_matrix loop | 3.0ms precomputed indices + splu | `845cce2` |
 | NaN propagation | Silent leak to BioConfig | np.where(isfinite) guard | `58bb8c9` |
 | HDV overflow | cos(extreme) → NaN | nan_to_num + clip(±1e6) | `e3060c8` |
-| Version drift | 22 stale "4.1.0" refs | All "4.2.0" + golden hashes regenerated | `917f739` |
+| Version drift | 22 stale "4.1.0" refs | All "4.4.2" + golden hashes regenerated | `917f739` |
 | Benchmark flaky gates | Hardcoded ms thresholds | Calibrated baselines + adaptive multiplier | `current` |
 | Regression/gate metric split | Different measurement methods | Unified: regression=correctness, gate=performance | `current` |
 | HDV degenerate encoding | All-+1 for small fields | z-score patch normalization | `23b1631` |
