@@ -2,7 +2,7 @@ UV ?= uv
 RUN := $(UV) run
 SHELL := /usr/bin/env bash
 
-.PHONY: bootstrap fullcheck quickstart sync doctor test lint typecheck security coverage verify validate simulate extract detect forecast compare report benchmark api demo-scenarios showcase release-proof contracts openapi sbom baseline-parity docs-drift clean selfcheck
+.PHONY: bootstrap fullcheck quickstart sync doctor test lint typecheck security coverage verify validate verify-core verify-bio verify-science verify-full simulate extract detect forecast compare report benchmark api demo-scenarios showcase release-proof contracts openapi sbom baseline-parity docs-drift clean selfcheck
 
 # ═══════════════════════════════════════════════════════════════
 #  Setup
@@ -60,6 +60,18 @@ localci:
 
 verify: lint typecheck reproduce adversarial
 	$(RUN) lint-imports
+
+verify-core:
+	$(RUN) pytest tests/smoke/ tests/core/ tests/numerics/ tests/test_golden_hashes.py tests/test_reproducibility_matrix.py tests/test_release_contract.py tests/test_rd_properties.py -v --timeout=120
+
+verify-bio:
+	$(RUN) pytest tests/ --ignore=tests/integration --ignore=tests/ml --ignore=tests/security --ignore=tests/perf --ignore=tests/performance -v --timeout=300
+
+verify-science:
+	$(RUN) pytest tests/ validation/ --ignore=tests/ml --ignore=tests/perf --ignore=tests/performance -v --timeout=300
+
+verify-full:
+	$(RUN) pytest tests/ validation/ -v --timeout=300
 
 validate:
 	$(RUN) python validation/run_validation_experiments.py

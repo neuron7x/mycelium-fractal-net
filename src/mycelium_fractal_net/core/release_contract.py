@@ -24,23 +24,23 @@ PYTHON_MAX = "3.13"
 INSTALL_TIERS = {
     "core": {
         "command": "pip install mycelium-fractal-net",
-        "deps": ["numpy"],
-        "description": "Simulation + detection + diagnosis (numpy only)",
+        "deps": ["numpy", "pydantic"],
+        "description": "Simulation + detection + diagnosis (numpy + pydantic)",
     },
     "bio": {
         "command": "pip install mycelium-fractal-net[bio]",
-        "deps": ["numpy", "scipy", "scikit-learn"],
+        "deps": ["scipy", "scikit-learn", "cmaes"],
         "description": "Biological mechanisms: Physarum, FHN, chemotaxis, Levin",
     },
     "science": {
         "command": "pip install mycelium-fractal-net[science]",
-        "deps": ["numpy", "scipy", "gudhi", "ot", "scikit-learn"],
+        "deps": ["scipy", "gudhi", "POT"],
         "description": "TDA, optimal transport, causal emergence, invariants",
     },
     "full": {
         "command": "pip install mycelium-fractal-net[full]",
-        "deps": ["numpy", "scipy", "gudhi", "ot", "scikit-learn", "torch", "fastapi"],
-        "description": "Everything: bio + science + ML + API",
+        "deps": ["bio", "science", "api", "ml", "accel", "frontier", "data"],
+        "description": "Everything",
     },
 }
 

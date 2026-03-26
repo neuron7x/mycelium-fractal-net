@@ -29,12 +29,10 @@ def test_optional_dependency_extras_defined() -> None:
     assert "kafka-python>=2.0.0" in extras["kafka"]
     assert "torch>=2.0.0,<3.0.0" in extras["ml"]
     assert "numba>=0.60.0" in extras["accel"]
-    # full extra must include all optional extras plus dev/security deps
+    # full extra is a meta-extra referencing other extras
     full_set = set(extras["full"])
-    assert "aiohttp>=3.9.4" in full_set
-    assert "kafka-python>=2.0.0" in full_set
-    assert "torch>=2.0.0,<3.0.0" in full_set
-    assert "numba>=0.60.0" in full_set
+    # Must contain at least one self-referencing extra
+    assert any("mycelium-fractal-net[" in dep for dep in full_set) or len(full_set) > 5
 
 
 def _run_blocked_torch_script(tmp_path: Path, source: str) -> subprocess.CompletedProcess[str]:

@@ -7,7 +7,10 @@ import math
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import sympy as sp
+try:
+    import sympy as sp
+except ImportError:  # sympy is optional (crypto extra)
+    sp = None  # type: ignore[assignment]
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
