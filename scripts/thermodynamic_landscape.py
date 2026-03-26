@@ -44,8 +44,10 @@ def sweep() -> dict:
 
     n_total = len(alphas) * len(thresholds)
     print(f"Sweeping {len(alphas)} x {len(thresholds)} = {n_total} points...")
-    print(f"Parameters: alpha in [{alphas[0]:.2f}, {alphas[-1]:.2f}], "
-          f"turing_threshold in [{thresholds[0]:.2f}, {thresholds[-1]:.2f}]")
+    print(
+        f"Parameters: alpha in [{alphas[0]:.2f}, {alphas[-1]:.2f}], "
+        f"turing_threshold in [{thresholds[0]:.2f}, {thresholds[-1]:.2f}]"
+    )
     print()
 
     grid_M = np.full((len(thresholds), len(alphas)), np.nan)
@@ -64,7 +66,9 @@ def sweep() -> dict:
         for i, threshold in enumerate(thresholds):
             try:
                 spec = mfn.SimulationSpec(
-                    grid_size=32, steps=60, seed=42,
+                    grid_size=32,
+                    steps=60,
+                    seed=42,
                     alpha=round(float(alpha), 4),
                     turing_threshold=round(float(threshold), 4),
                 )
@@ -106,8 +110,10 @@ def sweep() -> dict:
 
     print(f"\nCompleted in {elapsed_total:.1f}s")
     print(f"  Valid simulations: {n_valid}/{n_total}")
-    print(f"  Pattern formation (M>0.05): {n_pattern}/{n_valid} ({100*n_pattern/max(n_valid,1):.0f}%)")
-    print(f"  HWI satisfied: {n_hwi_ok}/{n_valid} ({100*n_hwi_ok/max(n_valid,1):.0f}%)")
+    print(
+        f"  Pattern formation (M>0.05): {n_pattern}/{n_valid} ({100 * n_pattern / max(n_valid, 1):.0f}%)"
+    )
+    print(f"  HWI satisfied: {n_hwi_ok}/{n_valid} ({100 * n_hwi_ok / max(n_valid, 1):.0f}%)")
     print()
     print(f"  OPTIMAL: alpha={best_params[0]:.4f}, threshold={best_params[1]:.4f}")
     print(f"  M_full = {best_M:.6f}")
@@ -117,7 +123,9 @@ def sweep() -> dict:
 
     default_j = int(np.argmin(np.abs(alphas - 0.18)))
     default_i = int(np.argmin(np.abs(thresholds - 0.75)))
-    default_M = float(grid_M[default_i, default_j]) if np.isfinite(grid_M[default_i, default_j]) else 0.0
+    default_M = (
+        float(grid_M[default_i, default_j]) if np.isfinite(grid_M[default_i, default_j]) else 0.0
+    )
     improvement = best_M / max(default_M, 1e-10) if default_M > 0 else float("inf")
     print(f"  Default (alpha=0.18, threshold=0.75): M={default_M:.6f}")
     print(f"  Improvement: {improvement:.1f}x")
@@ -166,6 +174,7 @@ def visualize(result: dict, output_path: str) -> None:
     """Create phase diagram visualization."""
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         from matplotlib.colors import LinearSegmentedColormap
@@ -191,8 +200,13 @@ def visualize(result: dict, output_path: str) -> None:
         "mfn", ["#0d1117", "#1a1a4e", "#2d6a9f", "#00cc96", "#f0e68c", "#ff6b6b"]
     )
     im = ax1.pcolormesh(
-        alphas, d_activators, M_display,
-        cmap=cmap, shading="auto", vmin=0, vmax=max(0.3, np.nanmax(M_display)),
+        alphas,
+        d_activators,
+        M_display,
+        cmap=cmap,
+        shading="auto",
+        vmin=0,
+        vmax=max(0.3, np.nanmax(M_display)),
     )
     cb = fig.colorbar(im, ax=ax1, label="M (HWI saturation)", shrink=0.85)
     cb.ax.yaxis.label.set_color("white")
@@ -200,24 +214,43 @@ def visualize(result: dict, output_path: str) -> None:
 
     # Mark optimal
     opt = result["optimal"]
-    ax1.plot(opt["alpha"], opt["turing_threshold"], "w*", markersize=18, markeredgecolor="black", markeredgewidth=0.5)
+    ax1.plot(
+        opt["alpha"],
+        opt["turing_threshold"],
+        "w*",
+        markersize=18,
+        markeredgecolor="black",
+        markeredgewidth=0.5,
+    )
     ax1.annotate(
-        f'M={opt["M_full"]:.3f}',
+        f"M={opt['M_full']:.3f}",
         (opt["alpha"], opt["turing_threshold"]),
-        textcoords="offset points", xytext=(10, 10),
-        fontsize=9, color="white", fontweight="bold",
-        arrowprops=dict(arrowstyle="->", color="white", lw=0.8),
+        textcoords="offset points",
+        xytext=(10, 10),
+        fontsize=9,
+        color="white",
+        fontweight="bold",
+        arrowprops={"arrowstyle": "->", "color": "white", "lw": 0.8},
     )
 
     # Mark default
     dfl = result["default"]
-    ax1.plot(dfl["alpha"], dfl["turing_threshold"], "wo", markersize=10, markeredgecolor="black", markeredgewidth=0.5)
+    ax1.plot(
+        dfl["alpha"],
+        dfl["turing_threshold"],
+        "wo",
+        markersize=10,
+        markeredgecolor="black",
+        markeredgewidth=0.5,
+    )
     ax1.annotate(
-        f'default M={dfl["M_full"]:.3f}',
+        f"default M={dfl['M_full']:.3f}",
         (dfl["alpha"], dfl["turing_threshold"]),
-        textcoords="offset points", xytext=(10, -15),
-        fontsize=8, color="#aaaaaa",
-        arrowprops=dict(arrowstyle="->", color="#aaaaaa", lw=0.5),
+        textcoords="offset points",
+        xytext=(10, -15),
+        fontsize=8,
+        color="#aaaaaa",
+        arrowprops={"arrowstyle": "->", "color": "#aaaaaa", "lw": 0.5},
     )
 
     ax1.set_xlabel("alpha (field diffusion)", color="white", fontsize=11)
@@ -232,9 +265,13 @@ def visualize(result: dict, output_path: str) -> None:
     ax2.set_facecolor("#1a1a2e")
     hwi_display = np.where(np.isfinite(M_grid), hwi_grid.astype(float), np.nan)
     ax2.pcolormesh(
-        alphas, d_activators, hwi_display,
+        alphas,
+        d_activators,
+        hwi_display,
         cmap=LinearSegmentedColormap.from_list("hwi", ["#ff6b6b", "#00cc96"]),
-        shading="auto", vmin=0, vmax=1,
+        shading="auto",
+        vmin=0,
+        vmax=1,
     )
     ax2.set_xlabel("alpha", color="white", fontsize=11)
     ax2.set_ylabel("turing_threshold", color="white", fontsize=11)
@@ -248,7 +285,9 @@ def visualize(result: dict, output_path: str) -> None:
         f"{result['statistics']['compute_time_seconds']}s\n"
         f"Optimal: alpha={opt['alpha']:.3f}, threshold={opt['turing_threshold']:.3f} "
         f"→ M={opt['M_full']:.4f} ({result['improvement_factor']}x vs default)",
-        color="white", fontsize=11, y=1.02,
+        color="white",
+        fontsize=11,
+        y=1.02,
     )
 
     plt.tight_layout()
@@ -270,11 +309,14 @@ if __name__ == "__main__":
 
     print()
     print("=" * 60)
-    print(f"  The system has seen itself.")
-    print(f"  {result['statistics']['n_total']} simulations. "
-          f"{result['statistics']['compute_time_seconds']}s.")
-    print(f"  Optimal: alpha={result['optimal']['alpha']:.4f}, "
-          f"threshold={result['optimal']['turing_threshold']:.4f}")
-    print(f"  M = {result['optimal']['M_full']:.6f} "
-          f"({result['improvement_factor']}x vs default)")
+    print("  The system has seen itself.")
+    print(
+        f"  {result['statistics']['n_total']} simulations. "
+        f"{result['statistics']['compute_time_seconds']}s."
+    )
+    print(
+        f"  Optimal: alpha={result['optimal']['alpha']:.4f}, "
+        f"threshold={result['optimal']['turing_threshold']:.4f}"
+    )
+    print(f"  M = {result['optimal']['M_full']:.6f} ({result['improvement_factor']}x vs default)")
     print("=" * 60)

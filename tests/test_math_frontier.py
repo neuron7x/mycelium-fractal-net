@@ -272,6 +272,7 @@ def test_bio_conductivity_feeds_anastomosis() -> None:
 
     # Run with Physarum disabled (no conductivity feedback)
     from mycelium_fractal_net.bio.extension import BioConfig
+
     cfg_no_phys = BioConfig(enable_physarum=False)
     bio_without = BioExtension.from_sequence(s, config=cfg_no_phys).step(n=5)
     B_without = bio_without.anastomosis_state.B.copy()
@@ -283,5 +284,6 @@ def test_bio_conductivity_feeds_anastomosis() -> None:
     assert np.all(B_without >= 0)
 
     # With conductivity feedback, growth should differ
-    assert not np.allclose(B_with, B_without, atol=1e-10), \
+    assert not np.allclose(B_with, B_without, atol=1e-10), (
         "Conductivity feedback should produce different growth patterns"
+    )

@@ -59,9 +59,7 @@ def test_physarum_step_performance() -> None:
         times.append((time.perf_counter() - t0) * 1000)
 
     ms_per_step = statistics.median(times)
-    assert ms_per_step < gate_ms, (
-        f"Physarum step regression: {ms_per_step:.1f}ms > {gate_ms:.1f}ms"
-    )
+    assert ms_per_step < gate_ms, f"Physarum step regression: {ms_per_step:.1f}ms > {gate_ms:.1f}ms"
 
 
 def test_memory_query_vectorized() -> None:

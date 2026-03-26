@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import ast
 import json
-import sys
 from pathlib import Path
 
 SRC_ROOT = Path(__file__).resolve().parents[1] / "src" / "mycelium_fractal_net"
@@ -27,9 +26,8 @@ def _collect_imports(file_path: Path) -> list[str]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imports.append(alias.name)
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imports.append(node.module)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imports.append(node.module)
     return sorted(set(imports))
 
 

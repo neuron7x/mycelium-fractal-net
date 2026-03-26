@@ -14,7 +14,6 @@ import numpy as np
 from .causal_emergence import (
     compute_causal_emergence,
     discretize_field_pca,
-    discretize_turing_field,
 )
 from .fisher_information import FIMResult, compute_fim
 from .rmt_spectral import RMTDiagnostics, rmt_diagnostics
@@ -48,22 +47,17 @@ class MathFrontierReport:
         )
         w2 = f"W2={self.w2_trajectory_speed:.4f}"
         ce = f"CE={self.causal_emergence_score:.4f}"
-        fim = (
-            f"FIM={self.fim.epistemic_value:.3f}"
-            if self.fim
-            else "FIM=skip"
-        )
+        fim = f"FIM={self.fim.epistemic_value:.3f}" if self.fim else "FIM=skip"
         rmt_label = (
-            "struct" if self.rmt and "Poisson" in self.rmt.structure_type
-            else "random" if self.rmt and "GOE" in self.rmt.structure_type
-            else "inter" if self.rmt
+            "struct"
+            if self.rmt and "Poisson" in self.rmt.structure_type
+            else "random"
+            if self.rmt and "GOE" in self.rmt.structure_type
+            else "inter"
+            if self.rmt
             else ""
         )
-        rmt = (
-            f"r={self.rmt.r_ratio:.3f}({rmt_label})"
-            if self.rmt
-            else "RMT=skip"
-        )
+        rmt = f"r={self.rmt.r_ratio:.3f}({rmt_label})" if self.rmt else "RMT=skip"
         jko = self.unified.summary() if self.unified else "JKO=skip"
         return f"[MATH] {topo} | {w2} | {ce} | {fim} | {rmt} | {jko} ({self.compute_time_ms:.0f}ms)"
 
@@ -105,7 +99,7 @@ def run_math_frontier(
     w2_speed = wasserstein_distance(seq.history[0], seq.field, method="auto")
 
     # 3. Causal Emergence — PCA-based discretization replaces per-frame heuristic
-    n_steps = seq.history.shape[0]
+    seq.history.shape[0]
     states_micro = discretize_field_pca(seq.history, n_macro_states=4)
     tpm_micro = np.zeros((4, 4))
     for t in range(len(states_micro) - 1):

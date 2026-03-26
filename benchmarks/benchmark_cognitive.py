@@ -73,13 +73,17 @@ def t2_learning() -> dict:
 
     for i in range(20):
         rng = np.random.RandomState(i)
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=16, steps=30, seed=i,
-            alpha=round(0.10 + rng.uniform(0, 0.14), 4),
-            turing_threshold=round(0.3 + rng.uniform(0, 0.5), 4),
-            jitter_var=round(rng.uniform(0.002, 0.008), 5),
-            quantum_jitter=True,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=16,
+                steps=30,
+                seed=i,
+                alpha=round(0.10 + rng.uniform(0, 0.14), 4),
+                turing_threshold=round(0.3 + rng.uniform(0, 0.5), 4),
+                jitter_var=round(rng.uniform(0.002, 0.008), 5),
+                quantum_jitter=True,
+            )
+        )
         r = mfn.auto_heal(seq, memory=mem, verbose=False)
         if r.prediction_error is not None:
             errors.append(r.prediction_error)
@@ -93,7 +97,9 @@ def t2_learning() -> dict:
         "experiences": mem.size,
         "r_squared": round(mem.r_squared, 4),
         "prediction_mae": round(float(np.mean(errors)), 4) if errors else None,
-        "prediction_accuracy_5pct": round(float(np.mean([e < 0.05 for e in errors])), 3) if errors else None,
+        "prediction_accuracy_5pct": round(float(np.mean([e < 0.05 for e in errors])), 3)
+        if errors
+        else None,
         "convergence_step": next((i for i, r in enumerate(r2_history) if r > 0.95), None),
         "top_feature": max(top_features, key=top_features.get) if top_features else None,
         "heal_rate": stats.get("heal_rate", 0),
@@ -118,12 +124,16 @@ def t3_agency() -> dict:
 
     for i in range(15):
         rng = np.random.RandomState(i + 100)
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=16, steps=30, seed=i + 100,
-            alpha=round(0.15 + rng.uniform(0, 0.09), 4),
-            jitter_var=round(rng.uniform(0.003, 0.008), 5),
-            quantum_jitter=True,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=16,
+                steps=30,
+                seed=i + 100,
+                alpha=round(0.15 + rng.uniform(0, 0.09), 4),
+                jitter_var=round(rng.uniform(0.003, 0.008), 5),
+                quantum_jitter=True,
+            )
+        )
         t0 = time.perf_counter()
         r = mfn.auto_heal(seq, verbose=False)
         ms = (time.perf_counter() - t0) * 1000
@@ -143,7 +153,9 @@ def t3_agency() -> dict:
         "healed": healed,
         "total_needing": total,
         "mean_delta_M": round(float(np.mean(delta_Ms)), 4) if delta_Ms else None,
-        "mean_delta_anomaly": round(float(np.mean(delta_anomalies)), 4) if delta_anomalies else None,
+        "mean_delta_anomaly": round(float(np.mean(delta_anomalies)), 4)
+        if delta_anomalies
+        else None,
         "heal_mean_ms": round(float(np.mean(times)), 0),
         "heal_p95_ms": round(float(np.percentile(times, 95)), 0),
     }
@@ -182,8 +194,12 @@ if __name__ == "__main__":
 
     print(f"\n{'=' * 60}")
     print(f"  PERCEPTION:  diagnose={r1['diagnose_mean_ms']:.0f}ms  M_CV={r1['M_cv_percent']:.2f}%")
-    print(f"  LEARNING:    R²={r2['r_squared']}  MAE={r2['prediction_mae']}  converge@{r2['convergence_step']}")
-    print(f"  AGENCY:      heal={r3['heal_success_rate']:.0%}  ΔM={r3['mean_delta_M']}  Δanom={r3['mean_delta_anomaly']}")
+    print(
+        f"  LEARNING:    R²={r2['r_squared']}  MAE={r2['prediction_mae']}  converge@{r2['convergence_step']}"
+    )
+    print(
+        f"  AGENCY:      heal={r3['heal_success_rate']:.0%}  ΔM={r3['mean_delta_M']}  Δanom={r3['mean_delta_anomaly']}"
+    )
     print(f"  Total: {elapsed:.1f}s")
     print(f"  Saved: {path}")
     print(f"{'=' * 60}")

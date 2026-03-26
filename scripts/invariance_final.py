@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import numpy as np
 from scipy.optimize import curve_fit
-from scipy.stats import shapiro, iqr
+from scipy.stats import iqr, shapiro
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.analytics.unified_score import compute_hwi_components
@@ -32,7 +32,9 @@ def _bootstrap_ci(data: np.ndarray, n_boot: int = 2000, alpha: float = 0.05) -> 
     """Bootstrap confidence interval for the mean."""
     rng = np.random.default_rng(42)
     means = np.array([data[rng.integers(0, len(data), len(data))].mean() for _ in range(n_boot)])
-    return float(np.percentile(means, 100 * alpha / 2)), float(np.percentile(means, 100 * (1 - alpha / 2)))
+    return float(np.percentile(means, 100 * alpha / 2)), float(
+        np.percentile(means, 100 * (1 - alpha / 2))
+    )
 
 
 def _runs_test(x: np.ndarray) -> tuple[int, float]:
@@ -46,11 +48,12 @@ def _runs_test(x: np.ndarray) -> tuple[int, float]:
     if n1 == 0 or n2 == 0 or n < 10:
         return runs, 1.0
     mu = 1 + 2 * n1 * n2 / n
-    sigma2 = 2 * n1 * n2 * (2 * n1 * n2 - n) / (n ** 2 * (n - 1))
+    sigma2 = 2 * n1 * n2 * (2 * n1 * n2 - n) / (n**2 * (n - 1))
     if sigma2 <= 0:
         return runs, 1.0
     z = (runs - mu) / np.sqrt(sigma2)
     from scipy.stats import norm
+
     p = 2 * (1 - norm.cdf(abs(z)))
     return runs, float(p)
 
@@ -65,6 +68,7 @@ def _cusum_changepoint(x: np.ndarray) -> int:
 # ═══════════════════════════════════════════════════════════════════════════
 # GATE 1: FINITE-SIZE SCALING
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 def gate_1() -> dict:
     print("GATE 1: Finite-size scaling (N=16..256, 10 seeds each)")
@@ -114,14 +118,17 @@ def gate_1() -> dict:
         return M_inf + c / np.log(N)
 
     fits = {}
-    models = [("power_law", power_law, [0.06, 2.0, 1.0]),
-              ("1/N", inv_N, [0.06, 2.0]),
-              ("1/log(N)", log_corr, [0.06, 0.5])]
+    models = [
+        ("power_law", power_law, [0.06, 2.0, 1.0]),
+        ("1/N", inv_N, [0.06, 2.0]),
+        ("1/log(N)", log_corr, [0.06, 0.5]),
+    ]
 
     for name, func, p0 in models:
         try:
-            popt, pcov = curve_fit(func, Ns, Ms_mean, p0=p0, sigma=Ms_std,
-                                   absolute_sigma=True, maxfev=10000)
+            popt, pcov = curve_fit(
+                func, Ns, Ms_mean, p0=p0, sigma=Ms_std, absolute_sigma=True, maxfev=10000
+            )
             perr = np.sqrt(np.diag(pcov))
             resid = Ms_mean - np.array([func(n, *popt) for n in Ns])
             chi2 = float(np.sum((resid / Ms_std) ** 2))
@@ -132,13 +139,14 @@ def gate_1() -> dict:
                 "chi2": round(chi2, 4),
                 "chi2_reduced": round(chi2 / max(len(Ns) - len(popt), 1), 4),
             }
-            print(f"  {name:12s}: M∞={popt[0]:.6f}±{perr[0]:.6f} chi²_red={chi2/(len(Ns)-len(popt)):.3f}")
+            print(
+                f"  {name:12s}: M∞={popt[0]:.6f}±{perr[0]:.6f} chi²_red={chi2 / (len(Ns) - len(popt)):.3f}"
+            )
         except Exception as e:
             fits[name] = {"error": str(e)}
 
     # Best fit: lowest chi2_reduced among physically valid fits (M_inf > 0)
-    valid_fits = {k: v for k, v in fits.items()
-                  if "chi2_reduced" in v and v.get("M_inf", -1) > 0}
+    valid_fits = {k: v for k, v in fits.items() if "chi2_reduced" in v and v.get("M_inf", -1) > 0}
     if valid_fits:
         best_name = min(valid_fits, key=lambda k: valid_fits[k]["chi2_reduced"])
         M_inf = valid_fits[best_name]["M_inf"]
@@ -169,8 +177,10 @@ def gate_1() -> dict:
     print(f"  BEST: {best_name}, M∞ = {M_inf:.6f} ± {M_inf_err:.6f}")
 
     return {
-        "raw": {str(N): {k: round(v, 6) if isinstance(v, float) else v
-                         for k, v in data[N].items()} for N in grid_sizes},
+        "raw": {
+            str(N): {k: round(v, 6) if isinstance(v, float) else v for k, v in data[N].items()}
+            for N in grid_sizes
+        },
         "fits": fits,
         "best_fit": best_name,
         "M_inf": round(M_inf, 6),
@@ -183,6 +193,7 @@ def gate_1() -> dict:
 # GATE 2: PLATEAU VALIDATION
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def gate_2() -> dict:
     print("\nGATE 2: Plateau (20×20, connected component)")
     alphas = np.linspace(0.05, 0.24, 20)
@@ -192,17 +203,21 @@ def gate_2() -> dict:
     for j, alpha in enumerate(alphas):
         for i, thr in enumerate(thresholds):
             try:
-                seq = mfn.simulate(mfn.SimulationSpec(
-                    grid_size=32, steps=60, seed=42,
-                    alpha=round(float(alpha), 4),
-                    turing_threshold=round(float(thr), 4),
-                ))
+                seq = mfn.simulate(
+                    mfn.SimulationSpec(
+                        grid_size=32,
+                        steps=60,
+                        seed=42,
+                        alpha=round(float(alpha), 4),
+                        turing_threshold=round(float(thr), 4),
+                    )
+                )
                 hwi = compute_hwi_components(seq.history[0], seq.field)
                 grid_M[i, j] = hwi.M
             except Exception:
                 pass
         if (j + 1) % 10 == 0:
-            print(f"  {j+1}/20 columns")
+            print(f"  {j + 1}/20 columns")
 
     valid_mask = np.isfinite(grid_M)
     valid = grid_M[valid_mask]
@@ -217,6 +232,7 @@ def gate_2() -> dict:
 
     # Connected component of ±10% plateau
     from scipy.ndimage import label
+
     labeled, n_components = label(p10 & valid_mask)
     if n_components > 0:
         sizes = [int(np.sum(labeled == c)) for c in range(1, n_components + 1)]
@@ -227,8 +243,8 @@ def gate_2() -> dict:
     np.save("results/plateau_map.npy", grid_M)
 
     print(f"  Valid: {int(np.sum(valid_mask))}/400")
-    print(f"  M = {mu:.6f} ± {sigma:.6f}, CV={sigma/mu*100:.1f}%")
-    print(f"  ±10%: {frac_10*100:.0f}%, ±20%: {frac_20*100:.0f}%")
+    print(f"  M = {mu:.6f} ± {sigma:.6f}, CV={sigma / mu * 100:.1f}%")
+    print(f"  ±10%: {frac_10 * 100:.0f}%, ±20%: {frac_20 * 100:.0f}%")
     print(f"  Largest connected ±10% region: {largest_cc} points ({n_components} components)")
 
     return {
@@ -249,6 +265,7 @@ def gate_2() -> dict:
 # GATE 3: TEMPORAL PHASE SEPARATION
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def gate_3() -> dict:
     print("\nGATE 3: Temporal phases (10 seeds, CUSUM + runs test)")
     seeds = list(range(10))
@@ -266,8 +283,8 @@ def gate_3() -> dict:
         cp = _cusum_changepoint(Ms)
 
         # Split at changepoint
-        morph = Ms[:cp] if cp > 3 else Ms[:T * 3 // 4]
-        steady = Ms[cp:] if cp < T - 3 else Ms[T * 3 // 4:]
+        morph = Ms[:cp] if cp > 3 else Ms[: T * 3 // 4]
+        steady = Ms[cp:] if cp < T - 3 else Ms[T * 3 // 4 :]
 
         # Runs test on morphogenesis phase: is M(t) random or structured?
         n_runs, p_runs = _runs_test(morph)
@@ -276,7 +293,9 @@ def gate_3() -> dict:
             "changepoint": int(cp),
             "morph_mean": round(float(morph.mean()), 6),
             "morph_std": round(float(morph.std()), 6),
-            "morph_cv": round(float(morph.std() / morph.mean() * 100), 2) if morph.mean() > 0 else None,
+            "morph_cv": round(float(morph.std() / morph.mean() * 100), 2)
+            if morph.mean() > 0
+            else None,
             "steady_mean": round(float(steady.mean()), 6),
             "steady_std": round(float(steady.std()), 6),
             "runs_test_n": n_runs,
@@ -284,8 +303,10 @@ def gate_3() -> dict:
             "morph_is_random": p_runs > 0.05,
         }
         if seed < 5:
-            print(f"  seed={seed}: cp={cp}, morph M={morph.mean():.6f}±{morph.std():.6f}, "
-                  f"steady M={steady.mean():.6f}, runs p={p_runs:.3f}")
+            print(
+                f"  seed={seed}: cp={cp}, morph M={morph.mean():.6f}±{morph.std():.6f}, "
+                f"steady M={steady.mean():.6f}, runs p={p_runs:.3f}"
+            )
 
     morph_means = np.array([results[s]["morph_mean"] for s in seeds])
     steady_means = np.array([results[s]["steady_mean"] for s in seeds])
@@ -295,8 +316,12 @@ def gate_3() -> dict:
     boot_morph_ci = _bootstrap_ci(morph_means)
     boot_steady_ci = _bootstrap_ci(steady_means)
 
-    print(f"  Cross-seed morph: {morph_means.mean():.6f} CI=[{boot_morph_ci[0]:.6f},{boot_morph_ci[1]:.6f}] CV={cross_cv:.2f}%")
-    print(f"  Cross-seed steady: {steady_means.mean():.6f} CI=[{boot_steady_ci[0]:.6f},{boot_steady_ci[1]:.6f}]")
+    print(
+        f"  Cross-seed morph: {morph_means.mean():.6f} CI=[{boot_morph_ci[0]:.6f},{boot_morph_ci[1]:.6f}] CV={cross_cv:.2f}%"
+    )
+    print(
+        f"  Cross-seed steady: {steady_means.mean():.6f} CI=[{boot_steady_ci[0]:.6f},{boot_steady_ci[1]:.6f}]"
+    )
     print(f"  Changepoints: mean={cps.mean():.1f} std={cps.std():.1f}")
 
     # Separation quality: Cohen's d between phases
@@ -321,6 +346,7 @@ def gate_3() -> dict:
 # GATE 4: SEED ROBUSTNESS — 200 seeds
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def gate_4() -> dict:
     print("\nGATE 4: Seed robustness (200 seeds)")
     n_seeds = 200
@@ -342,7 +368,7 @@ def gate_4() -> dict:
     cv = sigma / mu * 100
     boot_ci = _bootstrap_ci(Ms)
 
-    stat_s, p_s = shapiro(Ms[:50])  # Shapiro limited to 5000 but use 50 for speed
+    _stat_s, _p_s = shapiro(Ms[:50])  # Shapiro limited to 5000 but use 50 for speed
     _, p_s_full = shapiro(Ms) if len(Ms) <= 5000 else (0, 0)
 
     # Percentile-based CI (non-parametric)
@@ -356,9 +382,9 @@ def gate_4() -> dict:
     print(f"  Shapiro p={p_s_full:.4f}")
 
     # Component stability
-    print(f"  H:  {Hs.mean():.6f} ± {Hs.std():.6f} CV={Hs.std()/Hs.mean()*100:.2f}%")
-    print(f"  W2: {W2s.mean():.6f} ± {W2s.std():.6f} CV={W2s.std()/W2s.mean()*100:.2f}%")
-    print(f"  I:  {I_s.mean():.6f} ± {I_s.std():.6f} CV={I_s.std()/I_s.mean()*100:.2f}%")
+    print(f"  H:  {Hs.mean():.6f} ± {Hs.std():.6f} CV={Hs.std() / Hs.mean() * 100:.2f}%")
+    print(f"  W2: {W2s.mean():.6f} ± {W2s.std():.6f} CV={W2s.std() / W2s.mean() * 100:.2f}%")
+    print(f"  I:  {I_s.mean():.6f} ± {I_s.std():.6f} CV={I_s.std() / I_s.mean() * 100:.2f}%")
 
     return {
         "n_seeds": n_seeds,
@@ -383,6 +409,7 @@ def gate_4() -> dict:
 # ═══════════════════════════════════════════════════════════════════════════
 # GATE 5: METRIC INTEGRITY
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 def gate_5() -> dict:
     print("\nGATE 5: Metric integrity")
@@ -415,7 +442,12 @@ def gate_5() -> dict:
     for offset in [-0.05, -0.02, 0.02, 0.05]:
         hwi = compute_hwi_components(seq.history[0] + offset, seq.field + offset)
         d = abs(hwi.M - M_ref) / M_ref * 100
-        tests[f"offset_{offset:+.2f}"] = {"M": round(hwi.M, 6), "drift": round(d, 4), "ok": d < 1.0, "class": "translation"}
+        tests[f"offset_{offset:+.2f}"] = {
+            "M": round(hwi.M, 6),
+            "drift": round(d, 4),
+            "ok": d < 1.0,
+            "class": "translation",
+        }
         print(f"  Offset {offset:+.2f}: M={hwi.M:.6f} drift={d:.1f}%")
 
     geom = {k: v for k, v in tests.items() if "class" not in v}
@@ -452,8 +484,14 @@ if __name__ == "__main__":
 
     elapsed = time.perf_counter() - t0
 
-    result = {"g1": g1, "g2": g2, "g3": g3, "g4": g4, "g5": g5,
-              "compute_seconds": round(elapsed, 1)}
+    result = {
+        "g1": g1,
+        "g2": g2,
+        "g3": g3,
+        "g4": g4,
+        "g5": g5,
+        "compute_seconds": round(elapsed, 1),
+    }
 
     with open("results/finite_size_fit.json", "w") as f:
         json.dump(g1, f, indent=2)
@@ -467,35 +505,45 @@ if __name__ == "__main__":
 
     # G1
     g1_pass = g1["M_inf_err"] < g1["M_inf"] * 0.5 if g1["M_inf"] > 0 else False
-    print(f"  G1 Finite-size: M∞={g1['M_inf']:.6f}±{g1['M_inf_err']:.6f} "
-          f"boot=[{g1['M_inf_bootstrap_ci'][0]:.4f},{g1['M_inf_bootstrap_ci'][1]:.4f}] "
-          f"best={g1['best_fit']}  {'PASS' if g1_pass else 'FAIL'}")
+    print(
+        f"  G1 Finite-size: M∞={g1['M_inf']:.6f}±{g1['M_inf_err']:.6f} "
+        f"boot=[{g1['M_inf_bootstrap_ci'][0]:.4f},{g1['M_inf_bootstrap_ci'][1]:.4f}] "
+        f"best={g1['best_fit']}  {'PASS' if g1_pass else 'FAIL'}"
+    )
 
     # G2
     g2_pass = g2["plateau_10pct"] > 0.50
-    print(f"  G2 Plateau:     ±10%={g2['plateau_10pct']*100:.0f}% "
-          f"±20%={g2['plateau_20pct']*100:.0f}% "
-          f"CC={g2['largest_connected_component']}pts  "
-          f"CV={g2['M_cv_percent']:.1f}%  {'PASS' if g2_pass else 'FAIL'}")
+    print(
+        f"  G2 Plateau:     ±10%={g2['plateau_10pct'] * 100:.0f}% "
+        f"±20%={g2['plateau_20pct'] * 100:.0f}% "
+        f"CC={g2['largest_connected_component']}pts  "
+        f"CV={g2['M_cv_percent']:.1f}%  {'PASS' if g2_pass else 'FAIL'}"
+    )
 
     # G3
     g3_pass = g3["morph_cv_cross_seed"] < 5.0
-    print(f"  G3 Temporal:    morph={g3['morph_mean']:.6f} "
-          f"CI=[{g3['morph_ci_95'][0]:.6f},{g3['morph_ci_95'][1]:.6f}] "
-          f"CV={g3['morph_cv_cross_seed']:.2f}%  "
-          f"d={g3['cohens_d']:.1f}  {'PASS' if g3_pass else 'FAIL'}")
+    print(
+        f"  G3 Temporal:    morph={g3['morph_mean']:.6f} "
+        f"CI=[{g3['morph_ci_95'][0]:.6f},{g3['morph_ci_95'][1]:.6f}] "
+        f"CV={g3['morph_cv_cross_seed']:.2f}%  "
+        f"d={g3['cohens_d']:.1f}  {'PASS' if g3_pass else 'FAIL'}"
+    )
 
     # G4
     g4_pass = g4["M_cv_percent"] < 5.0
-    print(f"  G4 Seeds (200): M={g4['M_mean']:.6f}±{g4['M_std']:.6f} "
-          f"CI=[{g4['M_bootstrap_ci'][0]:.6f},{g4['M_bootstrap_ci'][1]:.6f}] "
-          f"CV={g4['M_cv_percent']:.3f}%  {'PASS' if g4_pass else 'FAIL'}")
+    print(
+        f"  G4 Seeds (200): M={g4['M_mean']:.6f}±{g4['M_std']:.6f} "
+        f"CI=[{g4['M_bootstrap_ci'][0]:.6f},{g4['M_bootstrap_ci'][1]:.6f}] "
+        f"CV={g4['M_cv_percent']:.3f}%  {'PASS' if g4_pass else 'FAIL'}"
+    )
 
     # G5
     g5_pass = g5["geometric_exact"]
-    print(f"  G5 Integrity:   geom={'EXACT' if g5_pass else 'BROKEN'} "
-          f"trans_drift={g5['max_translation_drift']:.0f}%  "
-          f"{'PASS' if g5_pass else 'FAIL'}")
+    print(
+        f"  G5 Integrity:   geom={'EXACT' if g5_pass else 'BROKEN'} "
+        f"trans_drift={g5['max_translation_drift']:.0f}%  "
+        f"{'PASS' if g5_pass else 'FAIL'}"
+    )
 
     all_pass = g1_pass and g2_pass and g3_pass and g4_pass and g5_pass
 
@@ -503,20 +551,30 @@ if __name__ == "__main__":
     print("-" * 65)
 
     # Invariant form
-    print(f"  M∞ = {g1['M_inf']:.4f} ± {g1['M_inf_err']:.4f} "
-          f"[{g1['M_inf_bootstrap_ci'][0]:.4f}, {g1['M_inf_bootstrap_ci'][1]:.4f}]")
-    print(f"  M(N=32, t=0) = {g4['M_mean']:.6f} "
-          f"[{g4['M_bootstrap_ci'][0]:.6f}, {g4['M_bootstrap_ci'][1]:.6f}]")
-    print(f"  M_morph = {g3['morph_mean']:.6f} "
-          f"[{g3['morph_ci_95'][0]:.6f}, {g3['morph_ci_95'][1]:.6f}]")
-    print(f"  M_steady = {g3['steady_mean']:.6f} "
-          f"[{g3['steady_ci_95'][0]:.6f}, {g3['steady_ci_95'][1]:.6f}]")
+    print(
+        f"  M∞ = {g1['M_inf']:.4f} ± {g1['M_inf_err']:.4f} "
+        f"[{g1['M_inf_bootstrap_ci'][0]:.4f}, {g1['M_inf_bootstrap_ci'][1]:.4f}]"
+    )
+    print(
+        f"  M(N=32, t=0) = {g4['M_mean']:.6f} "
+        f"[{g4['M_bootstrap_ci'][0]:.6f}, {g4['M_bootstrap_ci'][1]:.6f}]"
+    )
+    print(
+        f"  M_morph = {g3['morph_mean']:.6f} "
+        f"[{g3['morph_ci_95'][0]:.6f}, {g3['morph_ci_95'][1]:.6f}]"
+    )
+    print(
+        f"  M_steady = {g3['steady_mean']:.6f} "
+        f"[{g3['steady_ci_95'][0]:.6f}, {g3['steady_ci_95'][1]:.6f}]"
+    )
     print(f"  Phase boundary: step {g3['changepoint_mean']:.0f} ± {g3['changepoint_std']:.0f}")
     print(f"  Separation: Cohen's d = {g3['cohens_d']:.1f}")
     print()
-    print(f"  Components at N=32: H={g4['H_mean']:.6f} (CV={g4['H_cv']:.1f}%) "
-          f"W2={g4['W2_mean']:.6f} (CV={g4['W2_cv']:.1f}%) "
-          f"I={g4['I_mean']:.6f} (CV={g4['I_cv']:.1f}%)")
+    print(
+        f"  Components at N=32: H={g4['H_mean']:.6f} (CV={g4['H_cv']:.1f}%) "
+        f"W2={g4['W2_mean']:.6f} (CV={g4['W2_cv']:.1f}%) "
+        f"I={g4['I_mean']:.6f} (CV={g4['I_cv']:.1f}%)"
+    )
     print(f"  Plateau: {g2['M_mean']:.6f} ± {g2['M_std']:.6f} over 400 param combos")
 
     print()
@@ -529,17 +587,24 @@ if __name__ == "__main__":
             print("  VERDICT: Robust invariant")
     else:
         failed = []
-        if not g1_pass: failed.append("finite-size")
-        if not g2_pass: failed.append("plateau")
-        if not g3_pass: failed.append("temporal")
-        if not g4_pass: failed.append("seeds")
-        if not g5_pass: failed.append("integrity")
+        if not g1_pass:
+            failed.append("finite-size")
+        if not g2_pass:
+            failed.append("plateau")
+        if not g3_pass:
+            failed.append("temporal")
+        if not g4_pass:
+            failed.append("seeds")
+        if not g5_pass:
+            failed.append("integrity")
         print(f"  VERDICT: Rejected ({', '.join(failed)})")
 
     print()
-    print(f"  Known limitations:")
+    print("  Known limitations:")
     print(f"    - Finite-size: M decreases ~N^(-1.4), M∞ ≈ {g1['M_inf']:.4f}")
-    print(f"    - Translation: |field| normalization not shift-invariant ({g5['max_translation_drift']:.0f}% max)")
+    print(
+        f"    - Translation: |field| normalization not shift-invariant ({g5['max_translation_drift']:.0f}% max)"
+    )
     print(f"    - Non-normal distribution (Shapiro p={g4['shapiro_p']:.4f})")
     print()
     print(f"  {elapsed:.0f}s total")

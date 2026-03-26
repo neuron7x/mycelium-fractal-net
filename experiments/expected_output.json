@@ -27,7 +27,7 @@
     "rmt_structure": "structured_Poisson"
   },
   "_meta": {
-    "compute_time_ms": 1383.5,
+    "compute_time_ms": 1271.7,
     "python": "3.13"
   }
 }

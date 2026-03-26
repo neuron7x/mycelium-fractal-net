@@ -37,6 +37,8 @@ from .reaction_diffusion_compat import (
 
 # Re-export config, metrics, constants, and compat for backward compatibility
 from .reaction_diffusion_config import (
+    ALPHA_LTD_RATE,
+    ALPHA_LTP_RATE,
     ALPHA_MAX,
     ALPHA_MIN,
     D_ACTIVATOR_MAX,
@@ -58,8 +60,6 @@ from .reaction_diffusion_config import (
     INITIAL_POTENTIAL_STD,
     JITTER_VAR_MAX,
     JITTER_VAR_MIN,
-    ALPHA_LTD_RATE,
-    ALPHA_LTP_RATE,
     MAX_STABLE_DIFFUSION,
     R_ACTIVATOR_MAX,
     R_ACTIVATOR_MIN,

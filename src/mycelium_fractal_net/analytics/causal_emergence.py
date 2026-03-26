@@ -12,7 +12,11 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from scipy.stats import entropy as scipy_entropy
+def _lazy_entropy(pk: Any, base: float | None = None) -> Any:
+    """Lazy scipy.stats.entropy — avoids loading scipy on base import."""
+    from scipy.stats import entropy
+
+    return entropy(pk, base=base)
 
 __all__ = [
     "CausalEmergenceResult",
@@ -54,8 +58,8 @@ def effective_information(tpm: np.ndarray) -> float:
     tpm = np.asarray(tpm, dtype=np.float64)
     tpm = tpm / (tpm.sum(axis=1, keepdims=True) + 1e-12)
     avg_output = tpm.mean(axis=0)
-    H_avg = float(scipy_entropy(avg_output + 1e-12, base=2))
-    row_H: np.ndarray = scipy_entropy((tpm + 1e-12).T, base=2)
+    H_avg = float(_lazy_entropy(avg_output + 1e-12, base=2))
+    row_H: np.ndarray = _lazy_entropy((tpm + 1e-12).T, base=2)
     avg_H = float(np.mean(row_H))
     return max(H_avg - avg_H, 0.0)
 
@@ -75,8 +79,8 @@ def compute_causal_emergence(
     best = "macro" if EI_macro > EI_micro else "micro"
 
     avg_out = tpm_micro.mean(axis=0)
-    determinism = float(scipy_entropy(avg_out + 1e-12, base=2))
-    degeneracy = float(np.mean(scipy_entropy((tpm_micro + 1e-12).T, base=2)))
+    determinism = float(_lazy_entropy(avg_out + 1e-12, base=2))
+    degeneracy = float(np.mean(_lazy_entropy((tpm_micro + 1e-12).T, base=2)))
 
     # Coverage check: fraction of states with >= 5 transitions
     row_sums = tpm_micro.sum(axis=1)

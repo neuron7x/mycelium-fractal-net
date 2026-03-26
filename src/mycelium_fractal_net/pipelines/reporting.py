@@ -11,17 +11,14 @@ from typing import Any
 
 import numpy as np
 
-try:
-    import torch
-except Exception:  # pragma: no cover
-    torch = None
+torch = None  # loaded on demand, not at import time
 
 from importlib.metadata import PackageNotFoundError, version
 
 try:
     __version__ = version("mycelium-fractal-net")
 except PackageNotFoundError:
-    __version__ = "4.4.2"
+    __version__ = "4.5.0"
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.artifact_bundle import (
     sha256_file,

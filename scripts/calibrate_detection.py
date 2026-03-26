@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 import os
 import sys
-import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -42,11 +41,12 @@ def main() -> None:
     labels = [tc["label"] for tc in test_cases]
     scores = [tc["score"] for tc in test_cases]
     print(f"  Baseline: {len(test_cases)} cases")
-    print(f"  Labels: {dict((l, labels.count(l)) for l in set(labels))}")
+    print(f"  Labels: { {l: labels.count(l) for l in set(labels)} }")
     print(f"  Scores: mean={np.mean(scores):.3f} std={np.std(scores):.3f}")
 
     # Load current detection config weights
     from mycelium_fractal_net.core import detection_config as dc
+
     weight_names = [n for n in dir(dc) if n.startswith("ANOMALY_W_")]
     weights = {n: getattr(dc, n) for n in weight_names if isinstance(getattr(dc, n), float)}
 
@@ -73,7 +73,7 @@ def main() -> None:
             "min": round(float(min(scores)), 4),
             "max": round(float(max(scores)), 4),
         },
-        "label_distribution": dict((l, labels.count(l)) for l in set(labels)),
+        "label_distribution": {l: labels.count(l) for l in set(labels)},
         "weights": {k: round(v, 4) for k, v in weights.items()},
         "weight_sum": round(sum(weights.values()), 4),
     }
@@ -81,7 +81,7 @@ def main() -> None:
     os.makedirs("results", exist_ok=True)
     with open("results/detection_sensitivity.json", "w") as f:
         json.dump(result, f, indent=2)
-    print(f"\n  Saved: results/detection_sensitivity.json")
+    print("\n  Saved: results/detection_sensitivity.json")
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ Ref: Chhabra & Jensen (1989) Phys Rev Lett 62:1327
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field as dc_field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -251,8 +251,11 @@ def compute_multifractal_spectrum(
 
     n_valid = int(np.sum(r2 >= 0.9))
     result = MultifractalSpectrum(
-        alpha_q=alpha_q, f_q=f_q, q_values=q_values,
-        r_squared=r2, n_valid_scales=n_valid,
+        alpha_q=alpha_q,
+        f_q=f_q,
+        q_values=q_values,
+        r_squared=r2,
+        n_valid_scales=n_valid,
     )
 
     # Phase-randomization surrogate test
@@ -507,9 +510,7 @@ def finite_size_scaling_study(
     for N in grid_sizes:
         try:
             seq = mfn.simulate(mfn.SimulationSpec(grid_size=N, steps=60, seed=seed))
-            spec = compute_multifractal_spectrum(
-                seq.field, run_surrogate=True, n_surrogate=3
-            )
+            spec = compute_multifractal_spectrum(seq.field, run_surrogate=True, n_surrogate=3)
             results[N] = {
                 "delta_alpha": round(spec.delta_alpha, 4),
                 "surrogate_delta_alpha": round(spec.surrogate_delta_alpha, 4),

@@ -16,8 +16,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import numpy as np
-
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
 
 
@@ -113,7 +111,7 @@ def _run_cli(scenario_name: str) -> dict:
         if scenario_name == "neuromod":
             cmd.extend(["--profile", "gabaa_tonic_muscimol_alpha1beta3"])
 
-        result = subprocess.run(
+        subprocess.run(
             cmd,
             capture_output=True,
             text=True,

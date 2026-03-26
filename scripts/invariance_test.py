@@ -41,9 +41,11 @@ def test_seed_stability() -> dict:
         Is.append(hwi.I)
 
     Ms = np.array(Ms)
-    print(f"  M: mean={Ms.mean():.6f} std={Ms.std():.6f} "
-          f"CV={Ms.std()/Ms.mean()*100:.1f}% "
-          f"range=[{Ms.min():.6f}, {Ms.max():.6f}]")
+    print(
+        f"  M: mean={Ms.mean():.6f} std={Ms.std():.6f} "
+        f"CV={Ms.std() / Ms.mean() * 100:.1f}% "
+        f"range=[{Ms.min():.6f}, {Ms.max():.6f}]"
+    )
 
     return {
         "n_seeds": 50,
@@ -105,11 +107,15 @@ def test_parameter_plateau() -> dict:
     for j, alpha in enumerate(alphas):
         for i, thr in enumerate(thresholds):
             try:
-                seq = mfn.simulate(mfn.SimulationSpec(
-                    grid_size=32, steps=60, seed=42,
-                    alpha=round(float(alpha), 4),
-                    turing_threshold=round(float(thr), 4),
-                ))
+                seq = mfn.simulate(
+                    mfn.SimulationSpec(
+                        grid_size=32,
+                        steps=60,
+                        seed=42,
+                        alpha=round(float(alpha), 4),
+                        turing_threshold=round(float(thr), 4),
+                    )
+                )
                 hwi = compute_hwi_components(seq.history[0], seq.field)
                 grid_M[i, j] = hwi.M
             except Exception:
@@ -125,18 +131,24 @@ def test_parameter_plateau() -> dict:
         median_M = 0.0
         plateau_fraction = 0.0
 
-    print(f"  Valid points: {len(valid)}/{len(alphas)*len(thresholds)}")
+    print(f"  Valid points: {len(valid)}/{len(alphas) * len(thresholds)}")
     print(f"  M median: {median_M:.6f}")
     print(f"  M range: [{valid.min():.6f}, {valid.max():.6f}]" if len(valid) > 0 else "  No valid")
-    print(f"  CV: {valid.std()/valid.mean()*100:.1f}%" if len(valid) > 0 and valid.mean() > 0 else "")
-    print(f"  Plateau (within 20% of median): {plateau_fraction*100:.0f}%")
+    print(
+        f"  CV: {valid.std() / valid.mean() * 100:.1f}%"
+        if len(valid) > 0 and valid.mean() > 0
+        else ""
+    )
+    print(f"  Plateau (within 20% of median): {plateau_fraction * 100:.0f}%")
 
     return {
-        "n_valid": int(len(valid)),
+        "n_valid": len(valid),
         "M_median": round(median_M, 6),
         "M_mean": round(float(valid.mean()), 6) if len(valid) > 0 else None,
         "M_std": round(float(valid.std()), 6) if len(valid) > 0 else None,
-        "M_cv_percent": round(float(valid.std() / valid.mean() * 100), 2) if len(valid) > 0 and valid.mean() > 0 else None,
+        "M_cv_percent": round(float(valid.std() / valid.mean() * 100), 2)
+        if len(valid) > 0 and valid.mean() > 0
+        else None,
         "M_min": round(float(valid.min()), 6) if len(valid) > 0 else None,
         "M_max": round(float(valid.max()), 6) if len(valid) > 0 else None,
         "plateau_fraction": round(plateau_fraction, 4),
@@ -170,21 +182,31 @@ def test_temporal_profile() -> dict:
             "M_all": [round(float(m), 6) for m in Ms],
             "morphogenesis_mean": round(float(M_morph.mean()), 6),
             "morphogenesis_std": round(float(M_morph.std()), 6),
-            "morphogenesis_cv_percent": round(float(M_morph.std() / M_morph.mean() * 100), 2) if M_morph.mean() > 0 else None,
+            "morphogenesis_cv_percent": round(float(M_morph.std() / M_morph.mean() * 100), 2)
+            if M_morph.mean() > 0
+            else None,
             "convergence_mean": round(float(M_conv.mean()), 6),
             "convergence_std": round(float(M_conv.std()), 6),
         }
-        print(f"  seed={seed}: morphogenesis M={M_morph.mean():.6f}+/-{M_morph.std():.6f} "
-              f"(CV={M_morph.std()/M_morph.mean()*100:.1f}%), "
-              f"convergence M={M_conv.mean():.6f}")
+        print(
+            f"  seed={seed}: morphogenesis M={M_morph.mean():.6f}+/-{M_morph.std():.6f} "
+            f"(CV={M_morph.std() / M_morph.mean() * 100:.1f}%), "
+            f"convergence M={M_conv.mean():.6f}"
+        )
 
     # Cross-seed comparison of morphogenesis M
     morph_means = [results[s]["morphogenesis_mean"] for s in seeds]
-    cross_seed_cv = float(np.std(morph_means) / np.mean(morph_means) * 100) if np.mean(morph_means) > 0 else None
+    cross_seed_cv = (
+        float(np.std(morph_means) / np.mean(morph_means) * 100)
+        if np.mean(morph_means) > 0
+        else None
+    )
 
     return {
         "seeds": {str(s): results[s] for s in seeds},
-        "cross_seed_morphogenesis_cv_percent": round(cross_seed_cv, 2) if cross_seed_cv is not None else None,
+        "cross_seed_morphogenesis_cv_percent": round(cross_seed_cv, 2)
+        if cross_seed_cv is not None
+        else None,
     }
 
 
@@ -230,9 +252,11 @@ if __name__ == "__main__":
     print(f"  {'STABLE' if cv1 < 30 else 'UNSTABLE'}")
 
     # Grid convergence
-    grid_means = [r2["grid_sizes"][str(N)]["M_mean"]
-                  for N in [16, 24, 32, 48, 64]
-                  if r2["grid_sizes"][str(N)]["n_valid"] > 0]
+    grid_means = [
+        r2["grid_sizes"][str(N)]["M_mean"]
+        for N in [16, 24, 32, 48, 64]
+        if r2["grid_sizes"][str(N)]["n_valid"] > 0
+    ]
     if len(grid_means) >= 2:
         grid_cv = float(np.std(grid_means) / np.mean(grid_means) * 100)
         print(f"  Grid (N=16-64): CV = {grid_cv:.1f}%", end="")
@@ -241,7 +265,7 @@ if __name__ == "__main__":
     # Parameter plateau
     cv3 = r3["M_cv_percent"]
     plat = r3["plateau_fraction"]
-    print(f"  Params (10x10): CV = {cv3:.1f}%, plateau = {plat*100:.0f}%", end="")
+    print(f"  Params (10x10): CV = {cv3:.1f}%, plateau = {plat * 100:.0f}%", end="")
     print(f"  {'PLATEAU' if plat > 0.5 else 'NO PLATEAU'}")
 
     # Temporal constancy
@@ -250,8 +274,7 @@ if __name__ == "__main__":
     print(f"  {'CONSTANT' if cv4 < 30 else 'VARIABLE'}")
 
     # Final call
-    is_invariant = (cv1 < 30 and (cv3 is None or cv3 < 50) and
-                    (cv4 is None or cv4 < 30))
+    is_invariant = cv1 < 30 and (cv3 is None or cv3 < 50) and (cv4 is None or cv4 < 30)
     print()
     if is_invariant:
         print("  >>> M is a CANDIDATE INVARIANT: stable across seeds,")

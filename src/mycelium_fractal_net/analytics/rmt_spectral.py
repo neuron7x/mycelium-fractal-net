@@ -14,7 +14,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from scipy.linalg import eigvalsh
+def _eigvalsh(a: Any) -> Any:
+    """Lazy scipy.linalg.eigvalsh."""
+    from scipy.linalg import eigvalsh
+    return eigvalsh(a)
 
 __all__ = ["RMTDiagnostics", "rmt_diagnostics"]
 
@@ -52,7 +55,7 @@ def rmt_diagnostics(
     n_samples: int | None = None,
 ) -> RMTDiagnostics:
     """RMT analysis of Physarum Laplacian and optional Gramian."""
-    evals_L = eigvalsh(L)
+    evals_L = _eigvalsh(L)
     spacings = np.diff(evals_L[1:])
     spacings = spacings[spacings > 1e-12]
 
@@ -73,16 +76,14 @@ def rmt_diagnostics(
     fiedler = float(evals_L[1]) if len(evals_L) > 1 else 0.0
     # Normalized spectral gap: (λ₃-λ₂)/λ₃. 0=uniform, 1=strong Fiedler mode
     spectral_gap = (
-        float((evals_L[2] - evals_L[1]) / (evals_L[2] + 1e-12))
-        if len(evals_L) > 2
-        else 0.0
+        float((evals_L[2] - evals_L[1]) / (evals_L[2] + 1e-12)) if len(evals_L) > 2 else 0.0
     )
 
     if W_c is not None:
         k = W_c.shape[0]
         n = n_samples or k * 10
         gamma = k / n
-        evals_W = eigvalsh(W_c)
+        evals_W = _eigvalsh(W_c)
         sigma2 = float(np.median(evals_W[evals_W > 0])) if np.any(evals_W > 0) else 1e-6
         lam_plus = sigma2 * (1 + np.sqrt(gamma)) ** 2
         signal_evals = evals_W[evals_W > lam_plus]

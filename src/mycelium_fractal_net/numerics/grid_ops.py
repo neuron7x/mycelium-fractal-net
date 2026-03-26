@@ -13,10 +13,21 @@ from mycelium_fractal_net.types.exceptions import NumericalInstabilityError
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-try:  # optional acceleration contour
-    from numba import njit
-except Exception:  # pragma: no cover
-    njit = None
+# numba loaded on first use — avoids pulling scipy/LLVM on base import
+njit = None
+_numba_loaded = False
+
+
+def _load_numba() -> None:
+    global njit, _numba_loaded
+    if _numba_loaded:
+        return
+    _numba_loaded = True
+    try:
+        from numba import njit as _njit
+        njit = _njit  # type: ignore[assignment]
+    except Exception:  # pragma: no cover
+        pass
 
 
 class BoundaryCondition(Enum):
@@ -71,10 +82,24 @@ def _laplacian_numpy_dirichlet(field: NDArray[np.floating]) -> NDArray[np.floati
     return cast("NDArray[np.floating[Any]]", up + down + left + right - 4.0 * field)
 
 
-if njit is not None:
+_laplacian_periodic_jit = None
+_laplacian_neumann_jit = None
+_laplacian_dirichlet_jit = None
+_jit_compiled = False
 
-    @njit(cache=True)
-    def _laplacian_periodic_jit(field):
+
+def _compile_jit_kernels() -> None:
+    """Compile numba JIT kernels on first use (avoids loading scipy at import)."""
+    global _laplacian_periodic_jit, _laplacian_neumann_jit, _laplacian_dirichlet_jit, _jit_compiled
+    if _jit_compiled:
+        return
+    _jit_compiled = True
+    _load_numba()
+    if njit is None:
+        return
+
+    @njit(cache=True)  # type: ignore[misc]
+    def _p_jit(field):  # type: ignore[misc]
         rows, cols = field.shape
         out = np.empty_like(field)
         for i in range(rows):
@@ -83,17 +108,11 @@ if njit is not None:
             for j in range(cols):
                 left = (j - 1) % cols
                 right = (j + 1) % cols
-                out[i, j] = (
-                    field[up, j]
-                    + field[down, j]
-                    + field[i, left]
-                    + field[i, right]
-                    - 4.0 * field[i, j]
-                )
+                out[i, j] = field[up, j] + field[down, j] + field[i, left] + field[i, right] - 4.0 * field[i, j]
         return out
 
-    @njit(cache=True)
-    def _laplacian_neumann_jit(field):
+    @njit(cache=True)  # type: ignore[misc]
+    def _n_jit(field):  # type: ignore[misc]
         rows, cols = field.shape
         out = np.empty_like(field)
         for i in range(rows):
@@ -102,17 +121,11 @@ if njit is not None:
             for j in range(cols):
                 left = j if j == 0 else j - 1
                 right = j if j == cols - 1 else j + 1
-                out[i, j] = (
-                    field[up, j]
-                    + field[down, j]
-                    + field[i, left]
-                    + field[i, right]
-                    - 4.0 * field[i, j]
-                )
+                out[i, j] = field[up, j] + field[down, j] + field[i, left] + field[i, right] - 4.0 * field[i, j]
         return out
 
-    @njit(cache=True)
-    def _laplacian_dirichlet_jit(field):
+    @njit(cache=True)  # type: ignore[misc]
+    def _d_jit(field):  # type: ignore[misc]
         rows, cols = field.shape
         out = np.empty_like(field)
         for i in range(rows):
@@ -124,15 +137,16 @@ if njit is not None:
                 out[i, j] = up + down + left + right - 4.0 * field[i, j]
         return out
 
-else:  # pragma: no cover
-    _laplacian_periodic_jit = None
-    _laplacian_neumann_jit = None
-    _laplacian_dirichlet_jit = None
+    _laplacian_periodic_jit = _p_jit  # noqa: F841
+    _laplacian_neumann_jit = _n_jit  # noqa: F841
+    _laplacian_dirichlet_jit = _d_jit  # noqa: F841
 
 
 def laplacian_backend(use_accel: bool | None = None) -> str:
-    if _use_accel(use_accel) and njit is not None:
-        return "numba-jit"
+    if _use_accel(use_accel):
+        _compile_jit_kernels()
+        if _laplacian_periodic_jit is not None:
+            return "numba-jit"
     return "numpy-reference"
 
 
@@ -146,7 +160,10 @@ def compute_laplacian(
     if field.ndim != 2:
         raise ValueError(f"field must be 2D, got ndim={field.ndim}")
 
-    accel = _use_accel(use_accel) and njit is not None
+    accel = False
+    if _use_accel(use_accel):
+        _compile_jit_kernels()
+        accel = _laplacian_periodic_jit is not None
     if boundary == BoundaryCondition.PERIODIC:
         laplacian = _laplacian_periodic_jit(field) if accel else _laplacian_numpy_periodic(field)
     elif boundary == BoundaryCondition.NEUMANN:

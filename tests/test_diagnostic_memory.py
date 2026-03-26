@@ -120,8 +120,14 @@ def test_rule_describe() -> None:
 
 def test_rule_to_dict() -> None:
     rule = PredictiveRule(
-        condition_key="x", condition_op=">", condition_threshold=1.0,
-        outcome_key="y", outcome_value="z", confidence=0.8, support=10, mean_lag=5.0,
+        condition_key="x",
+        condition_op=">",
+        condition_threshold=1.0,
+        outcome_key="y",
+        outcome_value="z",
+        confidence=0.8,
+        support=10,
+        mean_lag=5.0,
     )
     d = rule.to_dict()
     json.dumps(d)

@@ -11,7 +11,6 @@ from __future__ import annotations
 import hashlib
 import json
 import platform
-import sys
 from pathlib import Path
 
 import numpy as np

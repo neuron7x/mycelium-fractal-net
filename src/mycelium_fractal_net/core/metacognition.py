@@ -102,8 +102,7 @@ class MetaCognitiveReport:
             )
         elif self.surprise > 1.0:
             lines.append(
-                f"Moderate novelty ({self.surprise:.1f}) — "
-                f"partially outside learned distribution."
+                f"Moderate novelty ({self.surprise:.1f}) — partially outside learned distribution."
             )
 
         return "\n".join(lines)
@@ -180,18 +179,14 @@ class MetaCognitiveLayer:
             )
             checks.append(False)
         elif basin_stab < 0.4 and severity == "stable":
-            contradictions.append(
-                f"basin_stability={basin_stab:.2f} (low) but severity=stable"
-            )
+            contradictions.append(f"basin_stability={basin_stab:.2f} (low) but severity=stable")
             checks.append(False)
         else:
             checks.append(True)
 
         # Check 3: EWS vs anomaly
         if ews > 0.7 and anomaly == "nominal":
-            contradictions.append(
-                f"ews_score={ews:.2f} (high transition risk) but anomaly=nominal"
-            )
+            contradictions.append(f"ews_score={ews:.2f} (high transition risk) but anomaly=nominal")
             checks.append(False)
         else:
             checks.append(True)
@@ -217,9 +212,7 @@ class MetaCognitiveLayer:
         coherence = n_agree / max(n_total, 1)
         return coherence, contradictions, n_agree, n_total
 
-    def _estimate_confidence(
-        self, report: Any, coherence: float
-    ) -> tuple[float, list[str]]:
+    def _estimate_confidence(self, report: Any, coherence: float) -> tuple[float, list[str]]:
         """Estimate confidence from signal strength and agreement."""
         drivers: list[str] = []
         scores: list[float] = []
@@ -263,8 +256,12 @@ class MetaCognitiveLayer:
         High surprise = novel observation, learned rules may not apply.
         """
         feature_keys = [
-            "anomaly_score", "ews_score", "basin_stability",
-            "delta_alpha", "hurst_exponent", "chi_invariant",
+            "anomaly_score",
+            "ews_score",
+            "basin_stability",
+            "delta_alpha",
+            "hurst_exponent",
+            "chi_invariant",
         ]
 
         novel_dims: list[str] = []

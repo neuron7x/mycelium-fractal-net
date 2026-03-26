@@ -23,6 +23,7 @@ import numpy as np
 def compute_M(field_current: np.ndarray, field_reference: np.ndarray) -> dict:
     """Compute M = H/(W₂√I) between two field states."""
     from mycelium_fractal_net.analytics.unified_score import compute_hwi_components
+
     hwi = compute_hwi_components(field_current, field_reference)
     return {
         "H": round(hwi.H, 6),
@@ -37,9 +38,11 @@ def compute_M(field_current: np.ndarray, field_reference: np.ndarray) -> dict:
 # SUBSTRATE 1: Gray-Scott (MFN native Turing RD)
 # ═══════════════════════════════════════════════════════════════
 
+
 def substrate_gray_scott(N: int = 64, T: int = 200, seed: int = 42) -> dict:
     """MFN native simulation — activator-inhibitor Turing system."""
     import mycelium_fractal_net as mfn
+
     seq = mfn.simulate(mfn.SimulationSpec(grid_size=N, steps=T, seed=seed))
 
     # M at multiple timepoints during morphogenesis
@@ -68,6 +71,7 @@ def substrate_gray_scott(N: int = 64, T: int = 200, seed: int = 42) -> dict:
 # SUBSTRATE 2: FitzHugh-Nagumo 2D (excitable medium)
 # ═══════════════════════════════════════════════════════════════
 
+
 def substrate_fhn(N: int = 64, T: int = 500, dt: float = 0.02, seed: int = 42) -> dict:
     """FitzHugh-Nagumo: v-w excitable dynamics on 2D lattice.
 
@@ -86,7 +90,7 @@ def substrate_fhn(N: int = 64, T: int = 500, dt: float = 0.02, seed: int = 42) -
     for step in range(T):
         lap_v = np.roll(v, 1, 0) + np.roll(v, -1, 0) + np.roll(v, 1, 1) + np.roll(v, -1, 1) - 4 * v
         lap_w = np.roll(w, 1, 0) + np.roll(w, -1, 0) + np.roll(w, 1, 1) + np.roll(w, -1, 1) - 4 * w
-        dv = v - v ** 3 / 3 - w + I_ext + Dv * lap_v
+        dv = v - v**3 / 3 - w + I_ext + Dv * lap_v
         dw = eps * (v + a - b * w) + Dw * lap_w
         v = v + dt * dv
         w = w + dt * dw
@@ -119,6 +123,7 @@ def substrate_fhn(N: int = 64, T: int = 500, dt: float = 0.02, seed: int = 42) -
 # SUBSTRATE 3: Cahn-Hilliard (phase separation)
 # ═══════════════════════════════════════════════════════════════
 
+
 def substrate_cahn_hilliard(N: int = 64, T: int = 500, dt: float = 0.5, seed: int = 42) -> dict:
     """Cahn-Hilliard: spinodal decomposition.
 
@@ -135,7 +140,7 @@ def substrate_cahn_hilliard(N: int = 64, T: int = 500, dt: float = 0.5, seed: in
 
     history = [phi.copy()]
     for step in range(T):
-        mu = phi ** 3 - phi - gamma * lap(phi)
+        mu = phi**3 - phi - gamma * lap(phi)
         phi = phi + dt * M_mob * lap(mu)
         phi = np.clip(phi, -2.0, 2.0)  # stability clamp
         if step % 10 == 0:
@@ -166,6 +171,7 @@ def substrate_cahn_hilliard(N: int = 64, T: int = 500, dt: float = 0.5, seed: in
 # ═══════════════════════════════════════════════════════════════
 # MULTI-SEED VALIDATION
 # ═══════════════════════════════════════════════════════════════
+
 
 def validate_across_seeds(substrate_fn, n_seeds: int = 5, **kwargs) -> dict:
     """Run substrate across multiple seeds, report M statistics."""
@@ -199,37 +205,45 @@ if __name__ == "__main__":
 
     t1 = time.perf_counter()
     r1 = substrate_gray_scott(N=64, T=200)
-    print(f"  {r1['name']:25s} M_morph = {r1['M_morph']:.6f} ({time.perf_counter()-t1:.1f}s)")
+    print(f"  {r1['name']:25s} M_morph = {r1['M_morph']:.6f} ({time.perf_counter() - t1:.1f}s)")
 
     t1 = time.perf_counter()
     r2 = substrate_fhn(N=64, T=500)
-    print(f"  {r2['name']:25s} M_morph = {r2['M_morph']:.6f} ({time.perf_counter()-t1:.1f}s)")
+    print(f"  {r2['name']:25s} M_morph = {r2['M_morph']:.6f} ({time.perf_counter() - t1:.1f}s)")
 
     t1 = time.perf_counter()
     r3 = substrate_cahn_hilliard(N=64, T=500)
-    print(f"  {r3['name']:25s} M_morph = {r3['M_morph']:.6f} ({time.perf_counter()-t1:.1f}s)")
+    print(f"  {r3['name']:25s} M_morph = {r3['M_morph']:.6f} ({time.perf_counter() - t1:.1f}s)")
 
     Ms_single = [r1["M_morph"], r2["M_morph"], r3["M_morph"]]
-    cv_single = float(np.std(Ms_single) / np.mean(Ms_single) * 100) if np.mean(Ms_single) > 0 else 999
+    cv_single = (
+        float(np.std(Ms_single) / np.mean(Ms_single) * 100) if np.mean(Ms_single) > 0 else 999
+    )
 
     print(f"\n  Mean = {np.mean(Ms_single):.6f}")
     print(f"  CV   = {cv_single:.1f}%")
 
     # Multi-seed validation
-    print(f"\nPhase 2: Multi-seed validation (5 seeds each)")
+    print("\nPhase 2: Multi-seed validation (5 seeds each)")
     print("-" * 50)
 
     t1 = time.perf_counter()
     v1 = validate_across_seeds(substrate_gray_scott, n_seeds=5, N=32, T=60)
-    print(f"  Gray-Scott:       M = {v1['M_mean']:.6f} ± {v1['M_std']:.6f}  CV={v1['M_cv']:.1f}%  ({time.perf_counter()-t1:.1f}s)")
+    print(
+        f"  Gray-Scott:       M = {v1['M_mean']:.6f} ± {v1['M_std']:.6f}  CV={v1['M_cv']:.1f}%  ({time.perf_counter() - t1:.1f}s)"
+    )
 
     t1 = time.perf_counter()
     v2 = validate_across_seeds(substrate_fhn, n_seeds=5, N=32, T=300)
-    print(f"  FitzHugh-Nagumo:  M = {v2['M_mean']:.6f} ± {v2['M_std']:.6f}  CV={v2['M_cv']:.1f}%  ({time.perf_counter()-t1:.1f}s)")
+    print(
+        f"  FitzHugh-Nagumo:  M = {v2['M_mean']:.6f} ± {v2['M_std']:.6f}  CV={v2['M_cv']:.1f}%  ({time.perf_counter() - t1:.1f}s)"
+    )
 
     t1 = time.perf_counter()
     v3 = validate_across_seeds(substrate_cahn_hilliard, n_seeds=5, N=32, T=300)
-    print(f"  Cahn-Hilliard:    M = {v3['M_mean']:.6f} ± {v3['M_std']:.6f}  CV={v3['M_cv']:.1f}%  ({time.perf_counter()-t1:.1f}s)")
+    print(
+        f"  Cahn-Hilliard:    M = {v3['M_mean']:.6f} ± {v3['M_std']:.6f}  CV={v3['M_cv']:.1f}%  ({time.perf_counter() - t1:.1f}s)"
+    )
 
     # Cross-substrate comparison
     cross_Ms = [v1["M_mean"], v2["M_mean"], v3["M_mean"]]
@@ -278,12 +292,12 @@ if __name__ == "__main__":
         print(f"  >>> M ≈ {np.mean(cross_Ms):.4f} across three independent PDE substrates")
     elif cross_cv < 50:
         print(f"  >>> PARTIAL: same order of magnitude, CV={cross_cv:.1f}%")
-        print(f"  >>> M is substrate-dependent but in narrow band")
+        print("  >>> M is substrate-dependent but in narrow band")
     else:
         print(f"  >>> NOT INVARIANT: CV={cross_cv:.1f}%")
-        print(f"  >>> M depends on the specific PDE, not on pattern formation itself")
+        print("  >>> M depends on the specific PDE, not on pattern formation itself")
 
     print()
     print(f"  {elapsed:.0f}s total")
-    print(f"  Saved: results/m_invariant_substrates.json")
+    print("  Saved: results/m_invariant_substrates.json")
     print("=" * 65)

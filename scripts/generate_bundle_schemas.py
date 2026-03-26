@@ -13,7 +13,6 @@ from pathlib import Path
 def _dataclass_to_schema(cls, title: str, version: str) -> dict:
     """Convert a dataclass to a JSON Schema (draft-07)."""
     properties = {}
-    required = []
 
     for name, field_obj in cls.__dataclass_fields__.items():
         field_type = field_obj.type
@@ -60,7 +59,7 @@ def main() -> None:
     from mycelium_fractal_net.types.causal import CausalValidationResult
     from mycelium_fractal_net.types.detection import AnomalyEvent
     from mycelium_fractal_net.types.features import MorphologyDescriptor
-    from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
+    from mycelium_fractal_net.types.field import SimulationSpec
     from mycelium_fractal_net.types.forecast import ComparisonResult, ForecastResult
     from mycelium_fractal_net.types.report import AnalysisReport
 

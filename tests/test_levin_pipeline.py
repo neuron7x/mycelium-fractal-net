@@ -23,9 +23,7 @@ def seq() -> mfn.FieldSequence:
 def test_pipeline_runs(seq: mfn.FieldSequence) -> None:
     pipeline = LevinPipeline.from_sequence(
         seq,
-        config=LevinPipelineConfig(
-            n_basin_samples=10, D_hdv=100, n_anon_steps=2
-        ),
+        config=LevinPipelineConfig(n_basin_samples=10, D_hdv=100, n_anon_steps=2),
     )
     report = pipeline.run()
     assert isinstance(report, LevinReport)
@@ -35,9 +33,7 @@ def test_pipeline_runs(seq: mfn.FieldSequence) -> None:
 def test_summary_string(seq: mfn.FieldSequence) -> None:
     pipeline = LevinPipeline.from_sequence(
         seq,
-        config=LevinPipelineConfig(
-            n_basin_samples=10, D_hdv=100, n_anon_steps=2
-        ),
+        config=LevinPipelineConfig(n_basin_samples=10, D_hdv=100, n_anon_steps=2),
     )
     report = pipeline.run()
     s = report.summary()
@@ -52,9 +48,7 @@ def test_summary_string(seq: mfn.FieldSequence) -> None:
 def test_to_dict_json_serializable(seq: mfn.FieldSequence) -> None:
     pipeline = LevinPipeline.from_sequence(
         seq,
-        config=LevinPipelineConfig(
-            n_basin_samples=10, D_hdv=100, n_anon_steps=2
-        ),
+        config=LevinPipelineConfig(n_basin_samples=10, D_hdv=100, n_anon_steps=2),
     )
     report = pipeline.run()
     d = report.to_dict()
@@ -70,9 +64,7 @@ def test_to_dict_json_serializable(seq: mfn.FieldSequence) -> None:
 def test_basin_stability_range(seq: mfn.FieldSequence) -> None:
     pipeline = LevinPipeline.from_sequence(
         seq,
-        config=LevinPipelineConfig(
-            n_basin_samples=20, D_hdv=100, n_anon_steps=2
-        ),
+        config=LevinPipelineConfig(n_basin_samples=20, D_hdv=100, n_anon_steps=2),
     )
     report = pipeline.run()
     assert 0.0 <= report.basin_stability <= 1.0
@@ -86,28 +78,20 @@ def test_basin_stability_range(seq: mfn.FieldSequence) -> None:
 def test_interpretation_not_empty(seq: mfn.FieldSequence) -> None:
     pipeline = LevinPipeline.from_sequence(
         seq,
-        config=LevinPipelineConfig(
-            n_basin_samples=10, D_hdv=100, n_anon_steps=2
-        ),
+        config=LevinPipelineConfig(n_basin_samples=10, D_hdv=100, n_anon_steps=2),
     )
     report = pipeline.run()
     interp = report.interpretation()
     assert len(interp) > 20
     # Should contain analysis keywords
-    assert any(
-        kw in interp for kw in ["robust", "stable", "transition", "critical"]
-    )
+    assert any(kw in interp for kw in ["robust", "stable", "transition", "critical"])
 
 
 def test_with_target_field(seq: mfn.FieldSequence) -> None:
-    target = mfn.simulate(
-        mfn.SimulationSpec(grid_size=16, steps=30, seed=99)
-    ).field
+    target = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=30, seed=99)).field
     pipeline = LevinPipeline.from_sequence(
         seq,
-        config=LevinPipelineConfig(
-            n_basin_samples=10, D_hdv=100, n_anon_steps=2
-        ),
+        config=LevinPipelineConfig(n_basin_samples=10, D_hdv=100, n_anon_steps=2),
     )
     report = pipeline.run(target_field=target)
     assert np.isfinite(report.free_energy)
@@ -117,9 +101,7 @@ def test_with_target_field(seq: mfn.FieldSequence) -> None:
 def test_metrics_finite(seq: mfn.FieldSequence) -> None:
     pipeline = LevinPipeline.from_sequence(
         seq,
-        config=LevinPipelineConfig(
-            n_basin_samples=10, D_hdv=100, n_anon_steps=2
-        ),
+        config=LevinPipelineConfig(n_basin_samples=10, D_hdv=100, n_anon_steps=2),
     )
     report = pipeline.run()
     assert np.isfinite(report.morphospace_pc1_variance)
@@ -135,9 +117,7 @@ def test_metrics_finite(seq: mfn.FieldSequence) -> None:
 def test_grid_size_and_frames(seq: mfn.FieldSequence) -> None:
     pipeline = LevinPipeline.from_sequence(
         seq,
-        config=LevinPipelineConfig(
-            n_basin_samples=10, D_hdv=100, n_anon_steps=2
-        ),
+        config=LevinPipelineConfig(n_basin_samples=10, D_hdv=100, n_anon_steps=2),
     )
     report = pipeline.run()
     assert report.grid_size == 16

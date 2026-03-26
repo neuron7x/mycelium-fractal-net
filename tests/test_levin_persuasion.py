@@ -123,7 +123,7 @@ def test_intervention_levels_ordered() -> None:
 def test_persuadability_basic() -> None:
     n = 5
     A = -0.1 * np.eye(n)  # Stable system
-    B = np.eye(n)          # Full control
+    B = np.eye(n)  # Full control
     analyzer = PersuadabilityAnalyzer(horizon=1.0, n_integration_steps=20)
     result = analyzer.compute(A, B)
     assert isinstance(result, PersuadabilityResult)
@@ -194,7 +194,7 @@ def test_from_field_history() -> None:
     base = rng.standard_normal((N, N))
     history = np.empty((T, N, N))
     for t in range(T):
-        history[t] = base * (0.95 ** t) + rng.standard_normal((N, N)) * 0.01
+        history[t] = base * (0.95**t) + rng.standard_normal((N, N)) * 0.01
     analyzer = PersuadabilityAnalyzer()
     result = analyzer.from_field_history(history, n_modes=5)
     assert isinstance(result, PersuadabilityResult)

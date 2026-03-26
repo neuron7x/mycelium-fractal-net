@@ -175,9 +175,7 @@ def test_dynamics_report(seq: mfn.FieldSequence) -> None:
     ts = seq.history.mean(axis=(1, 2))
     dfa = compute_dfa(ts)
     bi = compute_basin_invariant(S_bb=0.6, S_B=0.7)
-    report = FractalDynamicsReport(
-        spectral_evolution=se, dfa=dfa, basin_invariant=bi
-    )
+    report = FractalDynamicsReport(spectral_evolution=se, dfa=dfa, basin_invariant=bi)
     s = report.summary()
     assert "[DYNAMICS]" in s
     assert "H=" in s

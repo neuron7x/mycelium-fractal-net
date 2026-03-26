@@ -1,4 +1,5 @@
 """Pipeline report generation with signed artifact bundles."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
