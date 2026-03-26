@@ -120,6 +120,7 @@ from .cognitive import (
     benchmark_quick,
     compare_many,
     explain,
+    gamma_diagnostic,
     history,
     plot_field,
     sweep,
@@ -555,6 +556,7 @@ __all__ = list(V1_SURFACE) + [
     "plot_field",
     "sweep",
     "to_markdown",
+    "gamma_diagnostic",
     # Auto-heal + learning
     "HealResult",
     "ExperienceMemory",

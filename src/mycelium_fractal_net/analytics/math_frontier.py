@@ -172,7 +172,7 @@ def run_math_frontier(
             beta_1=topo.beta_1,
         )
     except Exception:  # noqa: S110
-        pass
+        pass  # unified score optional — W2 may fail for degenerate fields
 
     elapsed = (time.perf_counter() - t0) * 1000
     return MathFrontierReport(
