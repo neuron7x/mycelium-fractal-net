@@ -1,4 +1,23 @@
-"""Morphology-aware Field Intelligence Engine public API."""
+"""MyceliumFractalNet — Morphogenetic Field Intelligence Engine.
+
+The only open-source framework that unifies reaction-diffusion simulation,
+persistent homology, causal validation, and self-healing in one package.
+
+Quick start:
+    >>> import mycelium_fractal_net as mfn
+    >>> seq = mfn.simulate(mfn.SimulationSpec(grid_size=32, steps=60, seed=42))
+    >>> print(mfn.observe(seq))       # every lens in one call
+    >>> print(mfn.diagnose(seq))      # anomaly + EWS + causal gate
+    >>> print(mfn.explain(seq))       # natural language
+    >>> result = mfn.auto_heal(seq)   # self-repair
+
+API tiers:
+    Tier 1 — Pipeline:     simulate, extract, detect, diagnose, forecast, compare
+    Tier 2 — Intelligence: observe, explain, auto_heal, invariance_report
+    Tier 3 — Analytics:    InvariantOperator, ThermodynamicKernel, FractalPreservingInterpolator
+    Tier 4 — Types:        SimulationSpec, FieldSequence, AnomalyEvent, DiagnosisReport
+    Tier 5 — Bio (lazy):   BioExtension, LevinPipeline (loaded on first access)
+"""
 
 from __future__ import annotations
 
@@ -528,63 +547,62 @@ DEPRECATED_SURFACES = {
 }
 
 
-# Public __all__: only stable v1 surface + commonly used engine types.
-# Frozen/ML surfaces accessible via lazy __getattr__ but NOT in __all__.
-__all__ = list(V1_SURFACE) + [
-    # Engine types (stable)
-    "FeatureVector",
-    "FractalConfig",
-    "FractalGrowthEngine",
-    "FractalMetrics",
-    "MembraneConfig",
-    "MembraneEngine",
-    "MembraneMetrics",
-    "MyceliumField",
-    "NumericalInstabilityError",
-    "ReactionDiffusionConfig",
-    "ReactionDiffusionEngine",
-    "ReactionDiffusionMetrics",
-    "SimulationConfig",
-    "SimulationResult",
-    "StabilityError",
-    "ValueOutOfRangeError",
-    # Data loading
-    "FieldAdapter",
+# ═══════════════════════════════════════════════════════════════
+# PUBLIC API — organized by tier
+# ═══════════════════════════════════════════════════════════════
+
+__all__ = [
+    # ── Tier 1: Pipeline (the 7 verbs) ────────────────────────
+    "simulate",
+    "extract",
+    "detect",
+    "diagnose",
+    "forecast",
+    "compare",
+    "report",
+    # ── Tier 2: Intelligence ──────────────────────────────────
+    "observe",
+    "explain",
+    "auto_heal",
+    "invariance_report",
+    "plan_intervention",
+    "full_analyze",
+    "early_warning",
     "load",
-    # Null modes + invariant operator
     "simulate_null",
-    "InvariantOperator",
-    # Cognitive extensions
+    # ── Tier 3: Cognitive extensions ──────────────────────────
     "benchmark_quick",
     "compare_many",
-    "explain",
+    "gamma_diagnostic",
     "history",
     "plot_field",
     "sweep",
     "to_markdown",
-    "gamma_diagnostic",
-    "invariance_report",
-    # Auto-heal + learning
-    "HealResult",
-    "ExperienceMemory",
-    "auto_heal",
-    "get_experience_memory",
-    # Types used in pipeline
-    "BoundaryCondition",
-    "CriticalTransitionWarning",
-    "DiagnosisDiff",
+    # ── Tier 4: Engines & operators ───────────────────────────
+    "InvariantOperator",
+    "ThermodynamicKernel",
+    "ThermodynamicKernelConfig",
+    "FractalPreservingInterpolator",
+    "FractalInterpolatorConfig",
+    "ObservatoryReport",
+    # ── Tier 5: Core types ────────────────────────────────────
+    "SimulationSpec",
+    "FieldSequence",
+    "AnomalyEvent",
     "DiagnosisReport",
-    "EnsembleDiagnosisReport",
-    # Specs
-    "GABAATonicSpec",
+    "ForecastResult",
+    "ComparisonResult",
+    "MorphologyDescriptor",
+    "AnalysisReport",
+    "HealResult",
+    "ThermodynamicStabilityReport",
+    "FractalScaleJourney",
+    # ── Tier 6: Spec types (simulation config) ────────────────
     "NeuromodulationSpec",
-    "ObservationNoiseSpec",
+    "GABAATonicSpec",
     "SerotonergicPlasticitySpec",
-    # Legacy stable functions (CPU-only)
-    "compute_fractal_features",
-    "compute_lyapunov_exponent",
-    "compute_nernst_potential",
-    "estimate_fractal_dimension",
-    "generate_fractal_ifs",
-    "simulate_mycelium_field",
+    "ObservationNoiseSpec",
+    "BoundaryCondition",
+    # ── Version ───────────────────────────────────────────────
+    "__version__",
 ]
