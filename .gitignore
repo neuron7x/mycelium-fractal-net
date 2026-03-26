@@ -138,5 +138,21 @@ benchmarks/stress_output.txt
 
 # Build/temp outputs
 benchmarks/stress_output.txt
-*.pyc
-__pycache__/
+
+# Downloaded/generated data (never commit)
+organoid_data/
+spheroid_data/
+scripts/spheroid_data/
+scripts/gamma_results/
+scripts/gamma_spheroid_results/
+scripts/invariant_results/
+scripts/m_invariance_results/
+
+# Research scripts (not release-critical)
+research/
+
+# Ruff cache
+.ruff_cache/
+
+# ASV
+.asv/
