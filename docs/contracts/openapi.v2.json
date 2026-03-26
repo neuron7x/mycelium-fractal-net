@@ -486,7 +486,7 @@
   },
   "info": {
     "title": "Morphology-aware Field Intelligence Engine",
-    "version": "openapi-v2"
+    "version": "4.4.2"
   },
   "openapi": "3.1.0",
   "paths": {

@@ -25,6 +25,7 @@ __all__ = [
     "explain",
     "gamma_diagnostic",
     "history",
+    "invariance_report",
     "plot_field",
     "sweep",
     "to_markdown",
@@ -397,5 +398,51 @@ def history(seq: FieldSequence, stride: int = 5) -> str:
     lines.append(f"\n  M: {M[0]:.4f} → {M[-1]:.4f} (Δ={M[-1]-M[0]:+.4f})")
     lines.append(f"  dH/dt < 0: {traj['dH_dt_negative_frac']:.0%}")
     lines.append(f"  Descent: {'YES' if M[-1] < M[0] else 'NO'}")
+
+    return "\n".join(lines)
+
+
+# ═══════════════════════════════════════════════════════════════
+# 9. INVARIANCE REPORT — compute Λ₂, Λ₅, Λ₆
+# ═══════════════════════════════════════════════════════════════
+
+def invariance_report(seq: FieldSequence) -> str:
+    """Compute MFN integral invariants Λ₂, Λ₅, Λ₆ for a FieldSequence.
+
+    Λ₂ = H/(W₂^0.59·I^0.86) ≈ 1.92  (per-step power law, CV~1%)
+    Λ₅ = ΣH/(ΣW₂·√ΣI) ≈ 0.082      (integral ratio, CV~0.3%)
+    Λ₆ = λ_H/(λ_W+λ_I/2) ≈ 1.323    (decay rate ratio, CV~0.9%)
+
+    >>> print(mfn.invariance_report(seq))
+    """
+    from .analytics.invariant_operator import InvariantOperator
+
+    if seq.history is None or seq.history.shape[0] < 5:
+        return "  Need ≥5 history frames for invariance analysis."
+
+    op = InvariantOperator()
+
+    L2 = op.Lambda2(seq.history)
+    L2_mean = float(np.mean(L2))
+    L2_cv = float(np.std(L2) / (L2_mean + 1e-12))
+    L5 = op.Lambda5(seq.history)
+    L6 = op.Lambda6(seq.history)
+
+    lines = [
+        f"  Λ₂ = {L2_mean:.4f} ± {np.std(L2):.4f}  CV={L2_cv:.4f}  (ref: 1.92)",
+        f"  Λ₅ = {L5:.6f}              (ref: 0.082 at N=32)",
+        f"  Λ₆ = {L6:.4f}              (ref: 1.323)",
+        "",
+    ]
+
+    l2_ok = L2_cv < 0.05
+    l6_ok = abs(L6 - 1.323) / 1.323 < 0.10
+    lines.append(f"  Λ₂ invariant (CV<5%): {'YES' if l2_ok else 'NO'}")
+    lines.append(f"  Λ₆ within 10% of ref: {'YES' if l6_ok else 'NO'}")
+
+    if l2_ok and l6_ok:
+        lines.append("  System conforms to MFN integral invariance theorem.")
+    else:
+        lines.append("  System outside admissible class.")
 
     return "\n".join(lines)

@@ -1,6 +1,6 @@
 {
   "schema": "mfn-claims-manifest-v1",
-  "engine_version": "4.2.0",
+  "engine_version": "4.4.2",
   "metrics": {
     "causal_rules": 46,
     "causal_stages": 7,
@@ -22,8 +22,8 @@
     "api_endpoints": 8
   },
   "notes": {
-    "test_count": "Run pytest to get current count",
-    "coverage": "Run pytest --cov to get current value",
-    "benchmark_throughput": "Run benchmarks/benchmark_core.py"
+    "test_count_policy": "verified at CI time via pytest --co -q | tail -1",
+    "coverage_policy": "enforced >= 80% in CI via --cov-fail-under=80",
+    "benchmark_throughput_policy": "tracked via benchmarks/benchmark_core.py per release"
   }
 }

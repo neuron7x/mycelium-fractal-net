@@ -69,6 +69,7 @@ from .core.simulate import (
     simulate_batch,
     simulate_final,
     simulate_history,
+    simulate_null,
     simulate_scenario,
 )
 from .core.watch import watch
@@ -108,6 +109,7 @@ from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
 from .types.inverse import InverseSynthesisResult
 from .types.report import AnalysisReport  # noqa: TC001
 from .adapters import FieldAdapter
+from .analytics.invariant_operator import InvariantOperator
 
 
 from .auto_heal import ExperienceMemory, HealResult, auto_heal, get_experience_memory
@@ -122,6 +124,7 @@ from .cognitive import (
     explain,
     gamma_diagnostic,
     history,
+    invariance_report,
     plot_field,
     sweep,
     to_markdown,
@@ -548,6 +551,9 @@ __all__ = list(V1_SURFACE) + [
     # Data loading
     "FieldAdapter",
     "load",
+    # Null modes + invariant operator
+    "simulate_null",
+    "InvariantOperator",
     # Cognitive extensions
     "benchmark_quick",
     "compare_many",
@@ -557,6 +563,7 @@ __all__ = list(V1_SURFACE) + [
     "sweep",
     "to_markdown",
     "gamma_diagnostic",
+    "invariance_report",
     # Auto-heal + learning
     "HealResult",
     "ExperienceMemory",

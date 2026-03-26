@@ -58,6 +58,13 @@ from .unified_score import (
     compute_unified_score,
     hwi_trajectory,
 )
+from .invariant_operator import (
+    InvariantOperator,
+    MState,
+    MTrajectory,
+    NullMode,
+    StabilityMap,
+)
 from .wasserstein_geometry import (
     ot_basin_stability,
     wasserstein_distance,
@@ -100,6 +107,11 @@ __all__ = [
     "tda_ews_trajectory",
     "wasserstein_distance",
     "wasserstein_trajectory_speed",
+    "InvariantOperator",
+    "MState",
+    "MTrajectory",
+    "NullMode",
+    "StabilityMap",
     "HWIComponents",
     "UnifiedScore",
     "compute_hwi_components",

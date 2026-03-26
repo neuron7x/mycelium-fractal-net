@@ -288,3 +288,47 @@ def simulate_scenario(name: str) -> FieldSequence:
     if name not in scenario_specs:
         raise ValueError(f"Unknown scenario {name!r}. Available: {sorted(scenario_specs)}")
     return simulate_history(scenario_specs[name])
+
+
+def simulate_null(mode: str = "uniform", grid_size: int = 32, steps: int = 30) -> FieldSequence:
+    """Generate a null-mode FieldSequence for invariant validation.
+
+    Null modes are systems where Λ₅ should be trivially 0 or degenerate.
+    Use to validate that the invariant operator is working correctly.
+
+    Modes:
+        'uniform':   constant field, no structure → Λ₅ = 0
+        'static':    random field, no dynamics → Λ₅ = 0
+        'diffusion': pure diffusion, no reaction → Λ₅ > 0 but no pattern
+        'noise':     white noise per step → Λ₅ undefined (no coherence)
+    """
+    N = grid_size
+    T = steps
+
+    if mode == "uniform":
+        field = np.full((N, N), 0.5, dtype=np.float64)
+        history = np.stack([field] * T)
+    elif mode == "static":
+        field = np.random.default_rng(42).uniform(0, 1, (N, N))
+        history = np.stack([field] * T)
+    elif mode == "diffusion":
+        rng = np.random.default_rng(42)
+        history = np.zeros((T, N, N), dtype=np.float64)
+        history[0] = rng.normal(-0.07, 0.005, (N, N))
+        for t in range(1, T):
+            f = history[t - 1]
+            lap = (np.roll(f, 1, 0) + np.roll(f, -1, 0) +
+                   np.roll(f, 1, 1) + np.roll(f, -1, 1) - 4 * f)
+            history[t] = f + 0.18 * lap
+    elif mode == "noise":
+        rng = np.random.default_rng(42)
+        history = rng.uniform(0, 1, (T, N, N))
+    else:
+        raise ValueError(f"Unknown null mode {mode!r}. Use: uniform, static, diffusion, noise")
+
+    return FieldSequence(
+        field=history[-1],
+        history=history,
+        spec=None,
+        metadata={"null_mode": mode, "grid_size": N, "steps": T},
+    )

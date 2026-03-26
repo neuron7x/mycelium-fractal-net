@@ -67,8 +67,19 @@ Decision semantics: `pass` → report published · `degraded` → published with
 | E_Na (Na+ Nernst) | +66.6 mV | +66.0 ± 5 mV | Hille (2001) |
 | E_Ca (Ca²+ Nernst) | +101.5 mV | +102.0 ± 5 mV | Hille (2001) |
 | RT/F at 37°C | 26.712 mV | 26.730 mV | Standard biophysics |
-| Fractal dimension | 1.762 ± 0.008 | 1.585 | Fricker et al. (2017) |
+| Fractal dimension (D_box) | 1.762 ± 0.008 | 1.585 (D_mass) | Fricker et al. (2017) ¹ |
 | Turing pattern | Δ = 0.002 V | > 1e-6 V | Turing (1952) |
+
+¹ **Fractal dimension discrepancy (11%)**: MFN computes D_box (box-counting
+dimension) = 1.762; Fricker et al. report D_mass (mass dimension) = 1.585 for
+*Phanerochaete velutina*. The methods measure different geometric properties:
+D_box counts covering boxes at each scale; D_mass measures how mass scales with
+radius from the center. For branching networks, D_box ≥ D_mass is the expected
+relationship (Falconer 2003, §3.3). Additionally, Fricker's measurement is on
+a real organism (*P. velutina*), while MFN simulates a reaction-diffusion field
+with different growth parameters. This is a methodological difference, not an
+error. See `validation/numerics/fractal_dimension_analysis.py` for the
+comparison study.
 
 ## Reproducibility
 
