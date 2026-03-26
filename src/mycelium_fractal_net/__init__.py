@@ -24,6 +24,7 @@ from .analytics import (
 from .analytics.invariant_operator import InvariantOperator
 from .analytics.morphology import compute_morphology_descriptor
 from .auto_heal import ExperienceMemory, HealResult, auto_heal, get_experience_memory
+from .core.observatory import ObservatoryReport, observe
 from .core.scale_engine import FractalInterpolatorConfig, FractalPreservingInterpolator
 from .core.thermodynamic_kernel import ThermodynamicKernel, ThermodynamicKernelConfig
 from .types.scale import FractalScaleJourney, FractalScaleReport
