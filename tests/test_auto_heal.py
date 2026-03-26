@@ -17,10 +17,16 @@ def healthy() -> mfn.FieldSequence:
 
 @pytest.fixture(scope="module")
 def stressed() -> mfn.FieldSequence:
-    return mfn.simulate(mfn.SimulationSpec(
-        grid_size=16, steps=30, seed=42,
-        alpha=0.24, jitter_var=0.008, quantum_jitter=True,
-    ))
+    return mfn.simulate(
+        mfn.SimulationSpec(
+            grid_size=16,
+            steps=30,
+            seed=42,
+            alpha=0.24,
+            jitter_var=0.008,
+            quantum_jitter=True,
+        )
+    )
 
 
 def test_healthy_no_intervention(healthy: mfn.FieldSequence) -> None:
@@ -81,10 +87,16 @@ def test_experience_memory_accumulates() -> None:
     """Memory should grow with each heal call."""
     mem = mfn.ExperienceMemory(min_experiences=3)
     for seed in range(5):
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=16, steps=20, seed=seed,
-            alpha=0.22, jitter_var=0.005, quantum_jitter=True,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=16,
+                steps=20,
+                seed=seed,
+                alpha=0.22,
+                jitter_var=0.005,
+                quantum_jitter=True,
+            )
+        )
         mfn.auto_heal(seq, memory=mem)
     assert mem.size >= 3
 
@@ -94,10 +106,16 @@ def test_experience_prediction_after_min() -> None:
     mem = mfn.ExperienceMemory(min_experiences=3)
     results = []
     for seed in range(6):
-        seq = mfn.simulate(mfn.SimulationSpec(
-            grid_size=16, steps=20, seed=seed,
-            alpha=0.22, jitter_var=0.005, quantum_jitter=True,
-        ))
+        seq = mfn.simulate(
+            mfn.SimulationSpec(
+                grid_size=16,
+                steps=20,
+                seed=seed,
+                alpha=0.22,
+                jitter_var=0.005,
+                quantum_jitter=True,
+            )
+        )
         r = mfn.auto_heal(seq, memory=mem)
         results.append(r)
     # Later results should have prediction

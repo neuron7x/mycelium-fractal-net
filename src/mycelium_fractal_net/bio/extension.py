@@ -211,10 +211,14 @@ class BioExtension:
                 N = self.N
                 cond_cell = np.zeros((N, N), dtype=np.float64)
                 count = np.zeros((N, N), dtype=np.float64)
-                cond_cell[:, :-1] += p_s.D_h; cond_cell[:, 1:] += p_s.D_h
-                count[:, :-1] += 1; count[:, 1:] += 1
-                cond_cell[:-1, :] += p_s.D_v; cond_cell[1:, :] += p_s.D_v
-                count[:-1, :] += 1; count[1:, :] += 1
+                cond_cell[:, :-1] += p_s.D_h
+                cond_cell[:, 1:] += p_s.D_h
+                count[:, :-1] += 1
+                count[:, 1:] += 1
+                cond_cell[:-1, :] += p_s.D_v
+                cond_cell[1:, :] += p_s.D_v
+                count[:-1, :] += 1
+                count[1:, :] += 1
                 cond_field = cond_cell / np.maximum(count, 1)
             a_s = self._a_engine.step(a_s, conductivity_field=cond_field)
 

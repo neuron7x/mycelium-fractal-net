@@ -11,6 +11,7 @@ try:
 except PackageNotFoundError:
     __version__ = "4.4.2"
 
+from .adapters import FieldAdapter
 from .analytics import (
     FeatureVector,
     FractalInsightArchitect,
@@ -20,7 +21,22 @@ from .analytics import (
     compute_box_counting_dimension,
     compute_fractal_features,
 )
+from .analytics.invariant_operator import InvariantOperator
 from .analytics.morphology import compute_morphology_descriptor
+from .auto_heal import ExperienceMemory, HealResult, auto_heal, get_experience_memory
+
+# Bio is lazy-loaded via _LAZY_ATTRS (see below)
+from .cognitive import (
+    benchmark_quick,
+    compare_many,
+    explain,
+    gamma_diagnostic,
+    history,
+    invariance_report,
+    plot_field,
+    sweep,
+    to_markdown,
+)
 from .config import (
     DatasetConfig,
     FeatureConfig,
@@ -108,27 +124,6 @@ from .types.field import (
 from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
 from .types.inverse import InverseSynthesisResult
 from .types.report import AnalysisReport  # noqa: TC001
-from .adapters import FieldAdapter
-from .analytics.invariant_operator import InvariantOperator
-
-
-from .auto_heal import ExperienceMemory, HealResult, auto_heal, get_experience_memory
-
-
-# Bio is lazy-loaded via _LAZY_ATTRS (see below)
-
-
-from .cognitive import (
-    benchmark_quick,
-    compare_many,
-    explain,
-    gamma_diagnostic,
-    history,
-    invariance_report,
-    plot_field,
-    sweep,
-    to_markdown,
-)
 
 # Bio extension — lazy import (scipy + sklearn are heavy)
 # Access via mfn.BioExtension, mfn.BioConfig, mfn.BioReport

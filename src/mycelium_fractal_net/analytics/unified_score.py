@@ -162,18 +162,24 @@ def compute_hwi_components(
     # Replaces chi-squared which had CV=63% due to near-zero denominators.
     # JSD ∈ [0, ln2], no division instability.
     m_dist = 0.5 * (a + b)
-    I = float(0.5 * np.sum(a * np.log(a / (m_dist + 1e-12)))
-              + 0.5 * np.sum(b * np.log(b / (m_dist + 1e-12))))
+    I = float(
+        0.5 * np.sum(a * np.log(a / (m_dist + 1e-12)))
+        + 0.5 * np.sum(b * np.log(b / (m_dist + 1e-12)))
+    )
 
     sqrt_I = float(np.sqrt(max(I, 1e-12)))
     hwi_rhs = W2 * sqrt_I
-    hwi_holds = H <= hwi_rhs + 1e-6
+    hwi_holds = hwi_rhs + 1e-6 >= H
     M = float(H / (hwi_rhs + 1e-10)) if hwi_rhs > 1e-6 else 0.0
 
     return HWIComponents(
-        H=H, W2=W2, I=I,
-        hwi_lhs=H, hwi_rhs=hwi_rhs,
-        hwi_holds=hwi_holds, M=min(M, 1.0),
+        H=H,
+        W2=W2,
+        I=I,
+        hwi_lhs=H,
+        hwi_rhs=hwi_rhs,
+        hwi_holds=hwi_holds,
+        M=min(M, 1.0),
     )
 
 
@@ -196,9 +202,15 @@ def compute_unified_score(
     M_full = M_base * (1.0 + CE / CE_max) * (1.0 + max(chi, 0) / chi_max)
 
     return UnifiedScore(
-        hwi=hwi, CE=CE, beta_0=beta_0, beta_1=beta_1,
-        euler_characteristic=chi, M_base=M_base, M_full=M_full,
-        CE_max=CE_max, chi_max=chi_max,
+        hwi=hwi,
+        CE=CE,
+        beta_0=beta_0,
+        beta_1=beta_1,
+        euler_characteristic=chi,
+        M_base=M_base,
+        M_full=M_full,
+        CE_max=CE_max,
+        chi_max=chi_max,
     )
 
 
@@ -235,7 +247,10 @@ def hwi_trajectory(
     dH_dt_neg_frac = float(np.sum(dH_dt < 0) / max(len(dH_dt), 1))
 
     return {
-        "M": M_arr, "H": H_arr, "W2": W2_arr, "I": I_arr,
+        "M": M_arr,
+        "H": H_arr,
+        "W2": W2_arr,
+        "I": I_arr,
         "dH_dt": dH_dt,
         "dH_dt_negative_frac": dH_dt_neg_frac,
         "timesteps": np.array(frames),

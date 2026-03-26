@@ -16,12 +16,13 @@ from typing import Any
 
 import numpy as np
 
-__all__ = ["DagmaBridge", "DoWhyBridge", "CausalDiscoveryResult"]
+__all__ = ["CausalDiscoveryResult", "DagmaBridge", "DoWhyBridge"]
 
 
 @dataclass
 class CausalDiscoveryResult:
     """Result from causal structure discovery."""
+
     adjacency_matrix: np.ndarray
     n_nodes: int
     n_edges: int
@@ -42,8 +43,9 @@ class DagmaBridge:
         self.lambda1 = lambda1
         self.threshold = threshold
 
-    def discover(self, feature_matrix: np.ndarray,
-                 feature_names: list[str] | None = None) -> CausalDiscoveryResult:
+    def discover(
+        self, feature_matrix: np.ndarray, feature_names: list[str] | None = None
+    ) -> CausalDiscoveryResult:
         """Discover causal DAG from time-series feature matrix.
 
         Args:
@@ -74,8 +76,7 @@ class DagmaBridge:
             method="DAGMA-linear",
         )
 
-    def discover_from_history(self, history: np.ndarray,
-                              stride: int = 1) -> CausalDiscoveryResult:
+    def discover_from_history(self, history: np.ndarray, stride: int = 1) -> CausalDiscoveryResult:
         """Discover causal structure from raw field history.
 
         Extracts spatial statistics per frame, then runs DAGMA.
@@ -93,11 +94,16 @@ class DagmaBridge:
             p = p / p.sum()
             entropy = float(-np.sum(p * np.log(p)))
 
-            features.append([
-                float(np.mean(f)), float(np.std(f)),
-                float(np.max(f)), float(np.min(f)),
-                grad_energy, entropy,
-            ])
+            features.append(
+                [
+                    float(np.mean(f)),
+                    float(np.std(f)),
+                    float(np.max(f)),
+                    float(np.min(f)),
+                    grad_energy,
+                    entropy,
+                ]
+            )
 
         return self.discover(np.array(features), names)
 
@@ -126,7 +132,7 @@ class DoWhyBridge:
             refuters: list of refutation methods
         """
         try:
-            import dowhy  # noqa: F811 — lazy import, not core dep
+            import dowhy
             from dowhy import CausalModel
         except ImportError:
             raise ImportError("dowhy not installed: pip install dowhy")
@@ -138,14 +144,25 @@ class DoWhyBridge:
 
         if isinstance(data, np.ndarray):
             T = data.shape[0]
-            df = pd.DataFrame({
-                "mean": [float(np.mean(data[t])) for t in range(T)],
-                "std": [float(np.std(data[t])) for t in range(T)],
-                "max": [float(np.max(data[t])) for t in range(T)],
-                "entropy": [float(-np.sum(np.abs(data[t].ravel() / (np.sum(np.abs(data[t])) + 1e-12))
-                            * np.log(np.abs(data[t].ravel() / (np.sum(np.abs(data[t])) + 1e-12)) + 1e-12)))
-                            for t in range(T)],
-            })
+            df = pd.DataFrame(
+                {
+                    "mean": [float(np.mean(data[t])) for t in range(T)],
+                    "std": [float(np.std(data[t])) for t in range(T)],
+                    "max": [float(np.max(data[t])) for t in range(T)],
+                    "entropy": [
+                        float(
+                            -np.sum(
+                                np.abs(data[t].ravel() / (np.sum(np.abs(data[t])) + 1e-12))
+                                * np.log(
+                                    np.abs(data[t].ravel() / (np.sum(np.abs(data[t])) + 1e-12))
+                                    + 1e-12
+                                )
+                            )
+                        )
+                        for t in range(T)
+                    ],
+                }
+            )
             treatment = "mean"
             outcome = "entropy"
         else:
@@ -176,7 +193,9 @@ class DoWhyBridge:
                 ref = model.refute_estimate(identified, estimate, method_name=ref_name)
                 result["refutations"][ref_name] = {
                     "new_effect": float(ref.new_effect) if hasattr(ref, "new_effect") else None,
-                    "refutation_result": str(ref.refutation_result) if hasattr(ref, "refutation_result") else "unknown",
+                    "refutation_result": str(ref.refutation_result)
+                    if hasattr(ref, "refutation_result")
+                    else "unknown",
                 }
             except Exception as e:
                 result["refutations"][ref_name] = {"error": str(e)[:100]}

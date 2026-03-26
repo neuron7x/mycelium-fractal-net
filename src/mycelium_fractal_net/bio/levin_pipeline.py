@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 
@@ -257,8 +257,10 @@ class LevinPipeline:
             alpha_d = 0.18
             for _ in range(5):
                 lap = (
-                    np.roll(f, 1, 0) + np.roll(f, -1, 0)
-                    + np.roll(f, 1, 1) + np.roll(f, -1, 1)
+                    np.roll(f, 1, 0)
+                    + np.roll(f, -1, 0)
+                    + np.roll(f, 1, 1)
+                    + np.roll(f, -1, 1)
                     - 4.0 * f
                 )
                 f = f + alpha_d * lap

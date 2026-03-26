@@ -21,9 +21,10 @@ __all__ = ["KuramotoResult", "kuramoto_order_parameter", "kuramoto_trajectory"]
 @dataclass
 class KuramotoResult:
     """Kuramoto synchronization measurement."""
-    R: float          # order parameter [0, 1]
-    psi: float        # mean phase [0, 2π]
-    coherence: str    # 'synchronized', 'partial', 'incoherent'
+
+    R: float  # order parameter [0, 1]
+    psi: float  # mean phase [0, 2π]
+    coherence: str  # 'synchronized', 'partial', 'incoherent'
 
     def summary(self) -> str:
         return f"R={self.R:.3f} ({self.coherence})"

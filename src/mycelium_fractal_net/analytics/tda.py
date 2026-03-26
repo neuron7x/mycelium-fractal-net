@@ -53,7 +53,9 @@ class PersistenceTransformer:
         """Transform list of 2D fields to persistence diagrams."""
         return [self._compute_one(field) for field in X]
 
-    def fit_transform(self, X: list[np.ndarray], y: Any = None) -> list[list[tuple[int, tuple[float, float]]]]:
+    def fit_transform(
+        self, X: list[np.ndarray], y: Any = None
+    ) -> list[list[tuple[int, tuple[float, float]]]]:
         return self.fit(X, y).transform(X)
 
     def _compute_one(self, field: np.ndarray) -> list[tuple[int, tuple[float, float]]]:
@@ -70,12 +72,16 @@ class PersistenceTransformer:
         cc.compute_persistence()
         pairs = cc.persistence()
 
-        return [(d, (b, de)) for d, (b, de) in pairs
-                if de != float('inf') and de - b >= self.min_persistence]
+        return [
+            (d, (b, de))
+            for d, (b, de) in pairs
+            if de != float("inf") and de - b >= self.min_persistence
+        ]
 
     def _fallback(self, field: np.ndarray) -> list[tuple[int, tuple[float, float]]]:
         """Fallback without GUDHI — basic connected component analysis."""
         from scipy.ndimage import label
+
         binary = (field > np.median(field)).astype(int)
         _, n = label(binary)
         return [(0, (0.0, float(i) / max(n, 1))) for i in range(n)]
@@ -95,7 +101,9 @@ class CubicalPersistence:
     def transform(self, X: list[np.ndarray]) -> list[list[tuple[int, tuple[float, float]]]]:
         return self._transformer.transform(X)
 
-    def fit_transform(self, X: list[np.ndarray], y: Any = None) -> list[list[tuple[int, tuple[float, float]]]]:
+    def fit_transform(
+        self, X: list[np.ndarray], y: Any = None
+    ) -> list[list[tuple[int, tuple[float, float]]]]:
         return self.transform(X)
 
 
@@ -140,7 +148,7 @@ class PersistenceLandscapeVectorizer:
         # Compute tent functions
         tents = np.zeros((len(dgm), self.n_bins))
         for i, (_, (b, d)) in enumerate(dgm):
-            mid = (b + d) / 2
+            (b + d) / 2
             tents[i] = np.maximum(0, np.minimum(t - b, d - t))
 
         # Sort at each t to get landscapes

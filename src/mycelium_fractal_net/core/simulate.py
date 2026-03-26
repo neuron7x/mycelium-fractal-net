@@ -1,4 +1,5 @@
 """Simulation entrypoints: simulate(), simulate_batch(), simulate_history()."""
+
 from __future__ import annotations
 
 import hashlib
@@ -317,8 +318,9 @@ def simulate_null(mode: str = "uniform", grid_size: int = 32, steps: int = 30) -
         history[0] = rng.normal(-0.07, 0.005, (N, N))
         for t in range(1, T):
             f = history[t - 1]
-            lap = (np.roll(f, 1, 0) + np.roll(f, -1, 0) +
-                   np.roll(f, 1, 1) + np.roll(f, -1, 1) - 4 * f)
+            lap = (
+                np.roll(f, 1, 0) + np.roll(f, -1, 0) + np.roll(f, 1, 1) + np.roll(f, -1, 1) - 4 * f
+            )
             history[t] = f + 0.18 * lap
     elif mode == "noise":
         rng = np.random.default_rng(42)

@@ -43,16 +43,16 @@ __all__ = [
 
 # Schultz 1997: dopamine neurons have baseline ~4 Hz,
 # burst at ~20 Hz for positive RPE, pause to ~0 Hz for negative.
-BASELINE_DA: float = 0.2          # Tonic dopamine level [0, 1]
-MAX_DA: float = 1.0               # Burst ceiling
-MIN_DA: float = 0.0               # Pause floor
-RPE_GAIN: float = 5.0             # How strongly prediction error drives DA
-DA_DECAY: float = 0.1             # Exponential decay toward baseline per step
+BASELINE_DA: float = 0.2  # Tonic dopamine level [0, 1]
+MAX_DA: float = 1.0  # Burst ceiling
+MIN_DA: float = 0.0  # Pause floor
+RPE_GAIN: float = 5.0  # How strongly prediction error drives DA
+DA_DECAY: float = 0.1  # Exponential decay toward baseline per step
 
 # Plasticity modulation (Friston 2009)
-PLASTICITY_MIN: float = 0.5       # Floor: never fully rigid
-PLASTICITY_MAX: float = 3.0       # Ceiling: never infinitely plastic
-DA_TO_PLASTICITY: float = 2.0     # DA=1 → plasticity_scale=3.0
+PLASTICITY_MIN: float = 0.5  # Floor: never fully rigid
+PLASTICITY_MAX: float = 3.0  # Ceiling: never infinitely plastic
+DA_TO_PLASTICITY: float = 2.0  # DA=1 → plasticity_scale=3.0
 
 
 @dataclass
@@ -70,8 +70,8 @@ class DopamineConfig:
 class DopamineState:
     """Current dopamine system state."""
 
-    level: float = BASELINE_DA     # Current DA level [0, 1]
-    rpe: float = 0.0              # Last reward prediction error
+    level: float = BASELINE_DA  # Current DA level [0, 1]
+    rpe: float = 0.0  # Last reward prediction error
     plasticity_scale: float = 1.0  # Current plasticity modulation
     n_updates: int = 0
 
@@ -148,8 +148,13 @@ def select_levers(
         return top_levers  # exploit: focus on what works
     # Blend: use top levers + some random extras proportional to DA
     import numpy as np
+
     n_extra = int(dopamine_state.level * (len(all_levers) - len(top_levers)))
     others = [l for l in all_levers if l not in top_levers]
     rng = np.random.default_rng(int(dopamine_state.level * 1000))
-    extras = list(rng.choice(others, size=min(n_extra, len(others)), replace=False)) if others and n_extra > 0 else []
+    extras = (
+        list(rng.choice(others, size=min(n_extra, len(others)), replace=False))
+        if others and n_extra > 0
+        else []
+    )
     return top_levers + extras

@@ -56,23 +56,23 @@ def _persistence_diagram(field: np.ndarray) -> list[tuple[float, float]]:
     """Compute persistence diagram for a 2D field."""
     try:
         import gudhi
+
         f = np.asarray(field, dtype=np.float64)
         if f.max() - f.min() < 1e-12:
             return []
         cc = gudhi.CubicalComplex(top_dimensional_cells=f)
         cc.compute_persistence()
         pairs = cc.persistence()
-        return [(b, d) for dim, (b, d) in pairs
-                if d != float('inf') and d - b > 0.001]
+        return [(b, d) for dim, (b, d) in pairs if d != float("inf") and d - b > 0.001]
     except ImportError:
         return []
 
 
-def _wasserstein_pd(dgm1: list[tuple[float, float]],
-                    dgm2: list[tuple[float, float]]) -> float:
+def _wasserstein_pd(dgm1: list[tuple[float, float]], dgm2: list[tuple[float, float]]) -> float:
     """Wasserstein distance between two persistence diagrams."""
     try:
         import gudhi.wasserstein
+
         if not dgm1 or not dgm2:
             return 0.0
         d1 = np.array(dgm1)
@@ -87,12 +87,13 @@ def _wasserstein_pd(dgm1: list[tuple[float, float]],
         max_len = max(len(pers1), len(pers2))
         pers1 += [0.0] * (max_len - len(pers1))
         pers2 += [0.0] * (max_len - len(pers2))
-        return float(sum(abs(a - b) for a, b in zip(pers1, pers2)))
+        return float(sum(abs(a - b) for a, b in zip(pers1, pers2, strict=False)))
 
 
 def _betti_from_field(field: np.ndarray) -> tuple[int, int]:
     """Quick Betti numbers via connected components."""
     from scipy.ndimage import label
+
     binary = (field > np.median(field)).astype(int)
     _, b0 = label(binary)
     V = binary.sum()
@@ -173,14 +174,16 @@ def detect_topological_transitions(
             else:
                 t_type = "reorganization"
 
-            transitions.append(TopologicalTransition(
-                timestep=t_after,
-                w_distance=float(w),
-                type=t_type,
-                beta_0_before=b0_before,
-                beta_0_after=b0_after,
-                beta_1_before=b1_before,
-                beta_1_after=b1_after,
-            ))
+            transitions.append(
+                TopologicalTransition(
+                    timestep=t_after,
+                    w_distance=float(w),
+                    type=t_type,
+                    beta_0_before=b0_before,
+                    beta_0_after=b0_after,
+                    beta_1_before=b1_before,
+                    beta_1_after=b1_after,
+                )
+            )
 
     return transitions

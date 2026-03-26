@@ -59,9 +59,11 @@ __all__ = [
 # DATA TYPES
 # ═══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class MState:
     """Single (H, W₂, I, M) measurement at one time step."""
+
     t: int
     H: float
     W2: float
@@ -70,13 +72,13 @@ class MState:
     hwi_holds: bool
 
     def to_dict(self) -> dict[str, Any]:
-        return {k: round(v, 8) if isinstance(v, float) else v
-                for k, v in self.__dict__.items()}
+        return {k: round(v, 8) if isinstance(v, float) else v for k, v in self.__dict__.items()}
 
 
 @dataclass
 class MTrajectory:
     """Full M(t) trajectory with invariance statistics."""
+
     states: list[MState]
     M_mean: float
     M_std: float
@@ -89,13 +91,16 @@ class MTrajectory:
 
     def summary(self) -> str:
         flag = "INVARIANT" if self.invariant else "VARIANT"
-        return (f"M={self.plateau_M:.4f} CV={self.plateau_cv:.3f} "
-                f"[{self.t_onset}..{self.t_conv}] {flag}")
+        return (
+            f"M={self.plateau_M:.4f} CV={self.plateau_cv:.3f} "
+            f"[{self.t_onset}..{self.t_conv}] {flag}"
+        )
 
 
 @dataclass
 class StabilityMap:
     """Parameter-space stability map of M."""
+
     param_name: str
     param_values: list[float]
     M_means: list[float]
@@ -106,7 +111,11 @@ class StabilityMap:
     def summary(self) -> str:
         n_inv = sum(self.invariant_mask)
         n_tot = len(self.invariant_mask)
-        bd = f"breakdown at {self.param_name}={self.breakdown_value:.4f}" if self.breakdown_value else "no breakdown"
+        bd = (
+            f"breakdown at {self.param_name}={self.breakdown_value:.4f}"
+            if self.breakdown_value
+            else "no breakdown"
+        )
         return f"{self.param_name}: {n_inv}/{n_tot} invariant, {bd}"
 
 
@@ -129,8 +138,13 @@ class NullMode:
         rng = np.random.default_rng(42)
         field = rng.normal(0.5, 0.1, (N, N))
         for _ in range(steps):
-            lap = (np.roll(field, 1, 0) + np.roll(field, -1, 0) +
-                   np.roll(field, 1, 1) + np.roll(field, -1, 1) - 4 * field)
+            lap = (
+                np.roll(field, 1, 0)
+                + np.roll(field, -1, 0)
+                + np.roll(field, 1, 1)
+                + np.roll(field, -1, 1)
+                - 4 * field
+            )
             field = field + alpha * lap
         return field
 
@@ -144,6 +158,7 @@ class NullMode:
 # CANONICAL OPERATOR
 # ═══════════════════════════════════════════════════════════════
 
+
 class InvariantOperator:
     """Canonical (H, W₂, I) → M computation.
 
@@ -155,11 +170,11 @@ class InvariantOperator:
     """
 
     # Fixed hyperparameters — DO NOT change these
-    EPS = 1e-12          # probability floor
-    W2_PROJ = 200        # sliced projections (doubled from 100 for stability)
+    EPS = 1e-12  # probability floor
+    W2_PROJ = 200  # sliced projections (doubled from 100 for stability)
     W2_EXACT_LIMIT = 48  # exact EMD up to this N
     CV_THRESHOLD = 0.05  # 5% invariance threshold
-    M_ONSET = 0.01       # minimum M for plateau detection
+    M_ONSET = 0.01  # minimum M for plateau detection
 
     def _to_dist(self, field: np.ndarray) -> np.ndarray:
         """Field → L¹-normalized probability mass. THE one normalization."""
@@ -174,8 +189,10 @@ class InvariantOperator:
     def _I(self, a: np.ndarray, b: np.ndarray) -> float:
         """Jensen-Shannon divergence. Bounded ∈ [0, ln2]."""
         m = 0.5 * (a + b)
-        return float(0.5 * np.sum(a * np.log(a / (m + self.EPS)))
-                      + 0.5 * np.sum(b * np.log(b / (m + self.EPS))))
+        return float(
+            0.5 * np.sum(a * np.log(a / (m + self.EPS)))
+            + 0.5 * np.sum(b * np.log(b / (m + self.EPS)))
+        )
 
     def _W2(self, field1: np.ndarray, field2: np.ndarray) -> float:
         """Wasserstein-2 distance. Exact EMD for small grids, sliced for large."""
@@ -192,8 +209,7 @@ class InvariantOperator:
         if N <= self.W2_EXACT_LIMIT:
             C = ot.dist(coords, coords)
             return float(np.sqrt(max(ot.emd2(a, b, C), 0)))
-        return float(ot.sliced_wasserstein_distance(
-            coords, coords, a, b, self.W2_PROJ))
+        return float(ot.sliced_wasserstein_distance(coords, coords, a, b, self.W2_PROJ))
 
     def measure(self, field_t: np.ndarray, field_ref: np.ndarray) -> MState:
         """Compute (H, W₂, I, M) for a single pair of fields.
@@ -211,7 +227,7 @@ class InvariantOperator:
 
         sqrt_I = float(np.sqrt(max(I, self.EPS)))
         denom = W2 * sqrt_I
-        hwi_holds = H <= denom + 1e-6
+        hwi_holds = denom + 1e-6 >= H
 
         if denom > 1e-6:
             M = min(float(H / denom), 1.0)
@@ -320,7 +336,7 @@ class InvariantOperator:
 
         # Find breakdown point
         breakdown = None
-        for i, (val, inv) in enumerate(zip(param_values, inv_mask)):
+        for _i, (val, inv) in enumerate(zip(param_values, inv_mask, strict=False)):
             if not inv:
                 breakdown = val
                 break
@@ -340,11 +356,11 @@ class InvariantOperator:
 
     # Fitted exponents for Λ₂
     ALPHA_EXP = 0.592  # W₂ exponent
-    BETA_EXP = 0.859   # I exponent
+    BETA_EXP = 0.859  # I exponent
     # Reference values
-    LAMBDA5_REF = 0.046   # integral HWI ratio
-    LAMBDA6_REF = 1.323   # decay rate ratio
-    LAMBDA2_REF = 1.92    # generalized power law
+    LAMBDA5_REF = 0.046  # integral HWI ratio
+    LAMBDA6_REF = 1.323  # decay rate ratio
+    LAMBDA2_REF = 1.92  # generalized power law
 
     def Lambda5(self, history: np.ndarray) -> float:
         """Integral invariant Λ₅ = ΣH / (ΣW₂ · √ΣI).

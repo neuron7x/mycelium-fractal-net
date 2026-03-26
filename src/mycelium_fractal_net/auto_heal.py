@@ -21,12 +21,13 @@ reveals where the system doesn't understand itself.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from .types.field import FieldSequence, SimulationSpec
+if TYPE_CHECKING:
+    from .types.field import FieldSequence
 
 __all__ = ["ExperienceMemory", "HealResult", "auto_heal"]
 
@@ -37,9 +38,16 @@ __all__ = ["ExperienceMemory", "HealResult", "auto_heal"]
 
 
 _FEATURE_KEYS = [
-    "M_before", "anomaly_before",
-    "alpha", "turing_threshold", "jitter_var", "spike_probability",
-    "delta_alpha", "delta_spike", "delta_gabaa", "delta_sero_gain",
+    "M_before",
+    "anomaly_before",
+    "alpha",
+    "turing_threshold",
+    "jitter_var",
+    "spike_probability",
+    "delta_alpha",
+    "delta_spike",
+    "delta_gabaa",
+    "delta_sero_gain",
 ]
 
 
@@ -83,8 +91,9 @@ class ExperienceMemory:
         """What the system has discovered matters. Higher = more causal."""
         return dict(self._importances)
 
-    def store(self, features: dict[str, float], M_after: float,
-              anomaly_after: float, healed: bool) -> None:
+    def store(
+        self, features: dict[str, float], M_after: float, anomaly_after: float, healed: bool
+    ) -> None:
         self._features.append(features)
         self._M_after.append(M_after)
         self._anomaly_after.append(anomaly_after)
@@ -112,7 +121,9 @@ class ExperienceMemory:
         # Feature importances: |coefficient| on scaled data = relative importance
         abs_coef = np.abs(model.coef_)
         total = abs_coef.sum() + 1e-12
-        self._importances = {k: round(float(c / total), 4) for k, c in zip(keys, abs_coef)}
+        self._importances = {
+            k: round(float(c / total), 4) for k, c in zip(keys, abs_coef, strict=False)
+        }
 
         # Store for prediction
         self._model = model
@@ -137,9 +148,12 @@ class ExperienceMemory:
 
         return M_pred, a_pred, self._r2
 
-    def recommend(self, state_features: dict[str, float],
-                  lever_names: list[str] | None = None,
-                  n_candidates: int = 20) -> dict[str, float] | None:
+    def recommend(
+        self,
+        state_features: dict[str, float],
+        lever_names: list[str] | None = None,
+        n_candidates: int = 20,
+    ) -> dict[str, float] | None:
         """Use the learned model to find the best intervention.
 
         Instead of brute-force counterfactual, the Ridge model
@@ -197,8 +211,9 @@ class ExperienceMemory:
             "M_after_std": round(float(np.std(self._M_after)), 4),
             "can_predict": self.can_predict,
             "r_squared": round(self._r2, 4),
-            "top_features": dict(sorted(self._importances.items(),
-                                        key=lambda x: -x[1])[:5]) if self._importances else {},
+            "top_features": dict(sorted(self._importances.items(), key=lambda x: -x[1])[:5])
+            if self._importances
+            else {},
             "top_levers": self.top_levers,
             "best_known_M": round(float(min(self._M_after)), 4) if self._M_after else None,
         }
@@ -207,9 +222,12 @@ class ExperienceMemory:
 # Global state — persists across calls within process
 _MEMORY = ExperienceMemory()
 
+
 def _get_da_module():
     from .neurochem.dopamine import DopamineState, compute_dopamine, modulate_plasticity
+
     return DopamineState, compute_dopamine, modulate_plasticity
+
 
 _DA_STATE = None  # lazy init
 
@@ -297,19 +315,27 @@ class HealResult:
             "after": {
                 "severity": self.severity_after,
                 "anomaly": self.anomaly_after,
-                "anomaly_score": round(self.anomaly_score_after, 4) if self.anomaly_score_after is not None else None,
+                "anomaly_score": round(self.anomaly_score_after, 4)
+                if self.anomaly_score_after is not None
+                else None,
                 "M": round(self.M_after, 6) if self.M_after is not None else None,
                 "hwi_holds": self.hwi_after,
             },
             "verification": {
                 "delta_M": round(self.delta_M, 6) if self.delta_M is not None else None,
-                "delta_anomaly": round(self.delta_anomaly, 4) if self.delta_anomaly is not None else None,
+                "delta_anomaly": round(self.delta_anomaly, 4)
+                if self.delta_anomaly is not None
+                else None,
                 "healed": self.healed,
             },
             "learning": {
                 "prediction_used": self.prediction_used,
-                "predicted_M_after": round(self.predicted_M_after, 6) if self.predicted_M_after is not None else None,
-                "prediction_error": round(self.prediction_error, 6) if self.prediction_error is not None else None,
+                "predicted_M_after": round(self.predicted_M_after, 6)
+                if self.predicted_M_after is not None
+                else None,
+                "prediction_error": round(self.prediction_error, 6)
+                if self.prediction_error is not None
+                else None,
                 "experience_count": self.experience_count,
                 "dopamine_level": round(self.dopamine_level, 4),
                 "dopamine_plasticity": round(self.dopamine_plasticity, 4),
@@ -372,13 +398,12 @@ def auto_heal(
 
     # ── 1. DIAGNOSE BEFORE ──────────────────────────────────────
     if verbose:
-        print("[HEAL] Diagnosing...")
+        pass
 
-    det_before, ews_before, hwi_before, severity_before = _diagnose_state(seq)
+    det_before, _ews_before, hwi_before, severity_before = _diagnose_state(seq)
 
     if verbose:
-        print(f"  M={hwi_before.M:.4f} anomaly={det_before.label}({det_before.score:.3f}) "
-              f"ews={ews_before.ews_score:.3f} severity={severity_before}")
+        pass
 
     # ── 2. DOPAMINE STATE FROM PREVIOUS CYCLE ───────────────────
     global _DA_STATE
@@ -388,9 +413,7 @@ def auto_heal(
     da_budget = budget * (0.5 + 0.5 * _DA_STATE.plasticity_scale / 3.0)
     # High DA → expand budget up to 1.5x. Low DA → baseline budget.
     if verbose and _DA_STATE.n_updates > 0:
-        print(f"  [DA] prior level={_DA_STATE.level:.3f} "
-              f"plasticity={_DA_STATE.plasticity_scale:.2f} "
-              f"budget={budget:.1f}->{da_budget:.1f}")
+        pass
 
     # ── 3. DECIDE ───────────────────────────────────────────────
     needs_healing = severity_before in ("warning", "critical") or det_before.label == "anomalous"
@@ -419,21 +442,27 @@ def auto_heal(
 
     # ── 4. PLAN (DA-modulated budget + lever selection) ────────
     if verbose:
-        print("[HEAL] Planning intervention...")
+        pass
 
     # DA selects which levers to try: high DA → all, low DA → top 2
-    from .neurochem.dopamine import select_levers
     from .intervention import list_levers
+    from .neurochem.dopamine import select_levers
+
     all_levers = list_levers()
     mem = memory if memory is not None else _MEMORY
     selected = select_levers(_DA_STATE, all_levers, mem.top_levers)
     if verbose and len(selected) < len(all_levers):
-        print(f"  [DA] Focused on {len(selected)}/{len(all_levers)} levers: {selected}")
+        pass
 
     # Fewer counterfactuals when model is confident
     n_candidates = 32 if not mem.can_predict else max(8, int(32 * _DA_STATE.level))
-    plan = plan_intervention(seq, target_regime=target_regime, budget=da_budget,
-                             allowed_levers=selected, max_candidates=n_candidates)
+    plan = plan_intervention(
+        seq,
+        target_regime=target_regime,
+        budget=da_budget,
+        allowed_levers=selected,
+        max_candidates=n_candidates,
+    )
     best = plan.best_candidate
 
     if best is None or not plan.has_viable_plan:
@@ -465,24 +494,24 @@ def auto_heal(
     ]
 
     if verbose:
-        for c in changes:
-            print(f"  {c['name']}: {c['from']} -> {c['to']}")
+        for _c in changes:
+            pass
 
     # ── 5. ACT — re-simulate with intervention parameters ──────
     if verbose:
-        print("[HEAL] Applying intervention (re-simulating)...")
+        pass
 
-    from .intervention.counterfactual import _apply_interventions
     from .core.simulate import simulate_history
+    from .intervention.counterfactual import _apply_interventions
 
     modified_spec = _apply_interventions(seq.spec, best.proposed_changes)
     seq_after = simulate_history(modified_spec)
 
     # ── 6. VERIFY — re-diagnose ────────────────────────────────
     if verbose:
-        print("[HEAL] Verifying...")
+        pass
 
-    det_after, ews_after, hwi_after, severity_after = _diagnose_state(seq_after)
+    det_after, _ews_after, hwi_after, severity_after = _diagnose_state(seq_after)
 
     delta_M = hwi_after.M - hwi_before.M
     delta_anomaly = det_after.score - det_before.score
@@ -494,14 +523,13 @@ def auto_heal(
     healed = sev_improved and anomaly_improved
 
     # ── 7. ENTROPY RATE — is the healed system descending? ──────
-    dH_dt_ok = False
     if seq_after.history is not None and seq_after.history.shape[0] > 3:
         from .analytics.unified_score import hwi_trajectory
+
         traj = hwi_trajectory(seq_after.history, stride=max(1, seq_after.history.shape[0] // 10))
-        dH_dt_ok = traj["dH_dt_negative_frac"] > 0.7
+        traj["dH_dt_negative_frac"] > 0.7
         if verbose:
-            print(f"  [THERMO] dH/dt<0 = {traj['dH_dt_negative_frac']:.0%} "
-                  f"({'descending' if dH_dt_ok else 'NOT descending'})")
+            pass
 
     # ── 8. BUILD FEATURE VECTOR ─────────────────────────────────
     mem = memory if memory is not None else _MEMORY
@@ -535,10 +563,7 @@ def auto_heal(
     mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
 
     if verbose:
-        print(f"  M: {hwi_before.M:.4f} -> {hwi_after.M:.4f} (dM={delta_M:+.4f})")
-        print(f"  anomaly: {det_before.score:.3f} -> {det_after.score:.3f}")
-        print(f"  severity: {severity_before} -> {severity_after}")
-        print(f"  DA={_DA_STATE.level:.3f} exp={mem.size} HEALED={healed}")
+        pass
 
     elapsed = (time.perf_counter() - t0) * 1000
 

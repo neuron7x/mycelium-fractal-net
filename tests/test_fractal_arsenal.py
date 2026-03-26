@@ -50,7 +50,9 @@ def test_mf_genuine_flag(seq: mfn.FieldSequence) -> None:
     spec = compute_multifractal_spectrum(seq.field)
     # At N=32: da is large but is_genuine depends on n_valid_scales
     if spec.n_valid_scales >= 4:
-        assert spec.is_genuine, f"Expected genuine, got da={spec.delta_alpha:.3f} n_valid={spec.n_valid_scales}"
+        assert spec.is_genuine, (
+            f"Expected genuine, got da={spec.delta_alpha:.3f} n_valid={spec.n_valid_scales}"
+        )
     else:
         assert not spec.is_genuine
 
@@ -72,9 +74,18 @@ def test_mf_monofractal_uniform() -> None:
 def test_mf_nine_features(seq: mfn.FieldSequence) -> None:
     d = compute_multifractal_spectrum(seq.field).to_dict()
     for key in [
-        "delta_alpha", "alpha_0", "f_max", "asymmetry",
-        "D0", "D1", "D2", "D0_minus_D2", "AUS",
-        "surrogate_ratio", "n_valid_scales", "is_genuine",
+        "delta_alpha",
+        "alpha_0",
+        "f_max",
+        "asymmetry",
+        "D0",
+        "D1",
+        "D2",
+        "D0_minus_D2",
+        "AUS",
+        "surrogate_ratio",
+        "n_valid_scales",
+        "is_genuine",
     ]:
         assert key in d, f"Missing: {key}"
 
@@ -230,4 +241,5 @@ def test_mf_n_valid_scales(seq: mfn.FieldSequence) -> None:
 
 def test_finite_size_scaling_study_exists() -> None:
     from mycelium_fractal_net.analytics.fractal_arsenal import finite_size_scaling_study
+
     assert callable(finite_size_scaling_study)

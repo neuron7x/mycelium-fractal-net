@@ -45,8 +45,39 @@ def optional_dependency_error(
     )
 
 
+def _hint(extra: str) -> str:
+    return f"Install with `pip install mycelium-fractal-net[{extra}]` or `uv sync --extra {extra}`."
+
+
+def require_dependency(module_name: str, extra: str, feature: str = "") -> ModuleType:
+    """Import an optional dependency with clear install hint on failure."""
+    try:
+        return import_module(module_name)
+    except ImportError as exc:
+        label = feature or module_name
+        raise MissingOptionalDependencyError(
+            f"'{module_name}' is required for {label}. {_hint(extra)}"
+        ) from exc
+
+
+def require_science_dependency(module_name: str = "scipy") -> ModuleType:
+    return require_dependency(module_name, "science", "scientific computing")
+
+
+def require_bio_dependency(module_name: str = "scipy") -> ModuleType:
+    return require_dependency(module_name, "bio", "biological mechanisms")
+
+
+def require_api_dependency(module_name: str = "fastapi") -> ModuleType:
+    return require_dependency(module_name, "api", "REST API")
+
+
 __all__ = [
     "MissingOptionalDependencyError",
     "optional_dependency_error",
+    "require_api_dependency",
+    "require_bio_dependency",
+    "require_dependency",
     "require_ml_dependency",
+    "require_science_dependency",
 ]

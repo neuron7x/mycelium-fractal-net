@@ -62,7 +62,9 @@ def test_unified_score_pattern_formation(seq: mfn.FieldSequence) -> None:
     score = compute_unified_score(
         field_current=seq.history[0],
         field_reference=seq.field,
-        CE=0.459, beta_0=3, beta_1=1,
+        CE=0.459,
+        beta_0=3,
+        beta_1=1,
     )
     assert 0.01 < score.M_base < 1.0, f"M_base={score.M_base:.4f}"
 
@@ -72,7 +74,9 @@ def test_unified_score_augmentation(seq: mfn.FieldSequence) -> None:
     score = compute_unified_score(
         field_current=seq.history[0],
         field_reference=seq.field,
-        CE=0.459, beta_0=3, beta_1=1,
+        CE=0.459,
+        beta_0=3,
+        beta_1=1,
     )
     assert score.M_full >= score.M_base
     assert score.euler_characteristic == 2
@@ -82,7 +86,9 @@ def test_unified_score_json(seq: mfn.FieldSequence) -> None:
     score = compute_unified_score(
         field_current=seq.history[0],
         field_reference=seq.field,
-        CE=0.459, beta_0=3, beta_1=1,
+        CE=0.459,
+        beta_0=3,
+        beta_1=1,
     )
     d = score.to_dict()
     json.dumps(d)
@@ -95,11 +101,15 @@ def test_unified_score_interpretation(seq: mfn.FieldSequence) -> None:
     score = compute_unified_score(
         field_current=seq.history[0],
         field_reference=seq.field,
-        CE=0.459, beta_0=3, beta_1=1,
+        CE=0.459,
+        beta_0=3,
+        beta_1=1,
     )
     assert score._interpret() in [
-        "active_morphogenesis", "convergent",
-        "high_efficiency", "near_steady_state",
+        "active_morphogenesis",
+        "convergent",
+        "high_efficiency",
+        "near_steady_state",
     ]
 
 

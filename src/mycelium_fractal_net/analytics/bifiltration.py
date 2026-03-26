@@ -14,7 +14,7 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field as datafield
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -52,8 +52,7 @@ class BifiltrationSignature:
             else "no critical threshold"
         )
         return (
-            f"[BIFILT] {self.n_thresholds} thresholds, "
-            f"norm={self.signed_barcode_norm:.3f}, {crit}"
+            f"[BIFILT] {self.n_thresholds} thresholds, norm={self.signed_barcode_norm:.3f}, {crit}"
         )
 
 
@@ -83,6 +82,7 @@ def compute_bifiltration(
     for t in thresholds:
         binary = (f > t).astype(int)
         from scipy.ndimage import label
+
         _, b0 = label(binary)
         betti_per_threshold.append(b0)
 
@@ -126,8 +126,10 @@ def compute_bifiltration(
     # Find critical threshold (maximum β₀ change)
     critical = None
     if len(betti_per_threshold) >= 2:
-        diffs = [abs(betti_per_threshold[i + 1] - betti_per_threshold[i])
-                 for i in range(len(betti_per_threshold) - 1)]
+        diffs = [
+            abs(betti_per_threshold[i + 1] - betti_per_threshold[i])
+            for i in range(len(betti_per_threshold) - 1)
+        ]
         max_idx = int(np.argmax(diffs))
         critical = thresholds[max_idx]
 

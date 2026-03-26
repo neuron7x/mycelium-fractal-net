@@ -84,9 +84,14 @@ def compute_causal_emergence(
     coverage = n_covered / max(tpm_micro.shape[0], 1)
 
     return CausalEmergenceResult(
-        EI_micro=EI_micro, EI_macro=EI_macro, CE_macro=CE_macro,
-        best_scale=best, determinism=determinism, degeneracy=degeneracy,
-        is_reliable=coverage >= 0.75, state_coverage=coverage,
+        EI_micro=EI_micro,
+        EI_macro=EI_macro,
+        CE_macro=CE_macro,
+        best_scale=best,
+        determinism=determinism,
+        degeneracy=degeneracy,
+        is_reliable=coverage >= 0.75,
+        state_coverage=coverage,
     )
 
 
@@ -161,7 +166,7 @@ def discretize_field_pca(
 
     # Economy SVD for PCA — handle T < D case efficiently
     n_components = min(5, T, flat.shape[1])
-    if T < flat.shape[1]:
+    if flat.shape[1] > T:
         C = flat @ flat.T
         eigvals, eigvecs = np.linalg.eigh(C)
         idx = np.argsort(eigvals)[::-1][:n_components]
@@ -173,6 +178,7 @@ def discretize_field_pca(
     if method == "kmeans":
         try:
             from sklearn.cluster import KMeans
+
             km = KMeans(n_clusters=n_macro_states, n_init=10, random_state=42)
             return km.fit_predict(proj).astype(int)
         except ImportError:

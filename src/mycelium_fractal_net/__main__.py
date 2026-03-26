@@ -32,6 +32,7 @@ def _run_rich() -> None:
 
     try:
         from mycelium_fractal_net.bio import MetaOptimizer
+
         _has_meta = True
     except ImportError:
         _has_meta = False

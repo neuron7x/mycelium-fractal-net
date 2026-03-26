@@ -31,6 +31,7 @@ BC_DIRICHLET = BoundaryCondition.DIRICHLET
 # HELPERS
 # ═══════════════════════════════════════════════════════════════
 
+
 def manufactured_diffusion_periodic(N: int, alpha: float, T: int, dt: float = 1.0):
     """Manufactured solution: u(x,y,t) = cos(2πx/N)·cos(2πy/N)·exp(-λt).
 
@@ -100,6 +101,7 @@ def manufactured_diffusion_neumann(N: int, alpha: float, T: int, dt: float = 1.0
 # TEST 1: SPATIAL CONVERGENCE ORDER
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestSpatialConvergence:
     """h-refinement: Laplacian stencil error should decrease as O(h²)."""
 
@@ -116,13 +118,13 @@ class TestSpatialConvergence:
         cx, cy = 0.5, 0.5
         sigma = 0.15
         r2 = (xx - cx) ** 2 + (yy - cy) ** 2
-        u = np.exp(-r2 / sigma ** 2)
+        u = np.exp(-r2 / sigma**2)
 
         # Analytical Laplacian (continuous)
-        lap_exact = (4 * r2 / sigma ** 4 - 4 / sigma ** 2) * u
+        lap_exact = (4 * r2 / sigma**4 - 4 / sigma**2) * u
 
         # Discrete Laplacian (need to scale by 1/h² since stencil uses h=1)
-        lap_discrete = compute_laplacian(u, boundary=bc, check_stability=False) / h ** 2
+        lap_discrete = compute_laplacian(u, boundary=bc, check_stability=False) / h**2
 
         return float(np.sqrt(np.mean((lap_discrete - lap_exact) ** 2)))
 
@@ -140,8 +142,7 @@ class TestSpatialConvergence:
         assert len(rates) >= 2, f"Not enough convergence data: {errors}"
         mean_rate = np.mean(rates)
         assert mean_rate >= 1.8, (
-            f"Spatial convergence order {mean_rate:.2f} < 1.8. "
-            f"Errors: {errors}, Rates: {rates}"
+            f"Spatial convergence order {mean_rate:.2f} < 1.8. Errors: {errors}, Rates: {rates}"
         )
 
     def test_spatial_convergence_order_neumann(self):
@@ -158,14 +159,14 @@ class TestSpatialConvergence:
         if len(rates) >= 2:
             mean_rate = np.mean(rates)
             assert mean_rate >= 1.5, (
-                f"Neumann spatial convergence {mean_rate:.2f} < 1.5. "
-                f"Rates: {rates}"
+                f"Neumann spatial convergence {mean_rate:.2f} < 1.5. Rates: {rates}"
             )
 
 
 # ═══════════════════════════════════════════════════════════════
 # TEST 2: TEMPORAL CONVERGENCE ORDER
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestTemporalConvergence:
     """dt-refinement: error should decrease as O(dt) for explicit Euler."""
@@ -192,14 +193,14 @@ class TestTemporalConvergence:
         assert len(rates) >= 2, f"Not enough temporal data: {errors}"
         mean_rate = np.mean(rates)
         assert mean_rate >= 0.9, (
-            f"Temporal convergence order {mean_rate:.2f} < 0.9. "
-            f"Errors: {errors}, Rates: {rates}"
+            f"Temporal convergence order {mean_rate:.2f} < 0.9. Errors: {errors}, Rates: {rates}"
         )
 
 
 # ═══════════════════════════════════════════════════════════════
 # TEST 3: BOUNDARY CONDITIONS MATRIX
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestBoundaryConditions:
     """Each boundary type should converge to the manufactured solution."""
@@ -246,6 +247,7 @@ class TestBoundaryConditions:
 # TEST 4: MASS CONSERVATION
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestMassConservation:
     """Pure diffusion on periodic domain: total mass must be conserved."""
 
@@ -288,6 +290,7 @@ class TestMassConservation:
 # ═══════════════════════════════════════════════════════════════
 # TEST 5: CFL STABILITY BOUNDARY (negative test)
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestCFLStability:
     """CFL condition: α·dt ≤ 0.25 for stability. Verify instability above."""

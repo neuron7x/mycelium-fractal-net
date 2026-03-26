@@ -15,19 +15,26 @@ import numpy as np
 
 try:
     from numba import njit, prange
+
     _HAS_NUMBA = True
 except ImportError:
     _HAS_NUMBA = False
 
-__all__ = ["gs_step_fused", "HAS_FUSED_KERNELS"]
+__all__ = ["HAS_FUSED_KERNELS", "gs_step_fused"]
 
 HAS_FUSED_KERNELS = _HAS_NUMBA
 
 if _HAS_NUMBA:
+
     @njit(parallel=True, cache=True)
     def gs_step_fused(
-        U: np.ndarray, V: np.ndarray,
-        Du: float, Dv: float, F: float, k: float, dt: float,
+        U: np.ndarray,
+        V: np.ndarray,
+        Du: float,
+        Dv: float,
+        F: float,
+        k: float,
+        dt: float,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Fused Gray-Scott step: Laplacian + reaction in one pass.
 
@@ -63,21 +70,27 @@ if _HAS_NUMBA:
             for j in range(M):
                 jp = (j + 1) % M
                 jm = (j - 1) % M
-                out[i, j] = (field[ip, j] + field[im, j]
-                             + field[i, jp] + field[i, jm]
-                             - 4.0 * field[i, j])
+                out[i, j] = (
+                    field[ip, j] + field[im, j] + field[i, jp] + field[i, jm] - 4.0 * field[i, j]
+                )
         return out
 
 else:
+
     def gs_step_fused(U, V, Du, Dv, F, k, dt):
         """Fallback numpy implementation."""
-        lapU = np.roll(U,1,0)+np.roll(U,-1,0)+np.roll(U,1,1)+np.roll(U,-1,1)-4*U
-        lapV = np.roll(V,1,0)+np.roll(V,-1,0)+np.roll(V,1,1)+np.roll(V,-1,1)-4*V
+        lapU = np.roll(U, 1, 0) + np.roll(U, -1, 0) + np.roll(U, 1, 1) + np.roll(U, -1, 1) - 4 * U
+        lapV = np.roll(V, 1, 0) + np.roll(V, -1, 0) + np.roll(V, 1, 1) + np.roll(V, -1, 1) - 4 * V
         uvv = U * V * V
         U_new = U + dt * (Du * lapU - uvv + F * (1 - U))
         V_new = V + dt * (Dv * lapV + uvv - (F + k) * V)
         return U_new, V_new
 
     def laplacian_fused(field):
-        return (np.roll(field,1,0)+np.roll(field,-1,0)
-                +np.roll(field,1,1)+np.roll(field,-1,1)-4*field)
+        return (
+            np.roll(field, 1, 0)
+            + np.roll(field, -1, 0)
+            + np.roll(field, 1, 1)
+            + np.roll(field, -1, 1)
+            - 4 * field
+        )

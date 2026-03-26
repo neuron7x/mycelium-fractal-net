@@ -7,7 +7,10 @@ import json
 import numpy as np
 
 import mycelium_fractal_net as mfn
-from mycelium_fractal_net.analytics.causal_emergence import discretize_field_pca, discretize_turing_field
+from mycelium_fractal_net.analytics.causal_emergence import (
+    discretize_field_pca,
+    discretize_turing_field,
+)
 from mycelium_fractal_net.analytics.fisher_information import (
     FIMResult,
     compute_fim,
@@ -146,8 +149,11 @@ def test_frontier_fim_in_dict() -> None:
         return np.ones((8, 8)) * theta[0]
 
     report = run_math_frontier(
-        seq, run_rmt=False, run_fim=True,
-        fim_simulate_fn=sim, fim_theta=np.array([1.0]),
+        seq,
+        run_rmt=False,
+        run_fim=True,
+        fim_simulate_fn=sim,
+        fim_theta=np.array([1.0]),
     )
     d = report.to_dict()
     assert d["fim"] is not None

@@ -84,11 +84,13 @@ def compute_tda(
     pairs = cc.persistence()
 
     def _metrics(dim: int) -> tuple[int, float, float]:
-        lifetimes = np.array([
-            de - b
-            for d, (b, de) in pairs
-            if d == dim and de != float("inf") and (de - b) > min_pers
-        ])
+        lifetimes = np.array(
+            [
+                de - b
+                for d, (b, de) in pairs
+                if d == dim and de != float("inf") and (de - b) > min_pers
+            ]
+        )
         if len(lifetimes) == 0:
             return 0, 0.0, 0.0
         tp = float(lifetimes.sum())
@@ -109,10 +111,14 @@ def compute_tda(
         ptype = "mixed"
 
     return TopologicalSignature(
-        beta_0=b0, beta_1=b1,
-        total_pers_0=tp0, total_pers_1=tp1,
-        pers_entropy_0=pe0, pers_entropy_1=pe1,
-        min_persistence=min_pers, pattern_type=ptype,
+        beta_0=b0,
+        beta_1=b1,
+        total_pers_0=tp0,
+        total_pers_1=tp1,
+        pers_entropy_0=pe0,
+        pers_entropy_1=pe1,
+        min_persistence=min_pers,
+        pattern_type=ptype,
     )
 
 
@@ -137,7 +143,9 @@ def tda_ews_trajectory(
         tp1[i] = sig.total_pers_1
 
     return {
-        "beta_0": b0, "beta_1": b1,
-        "total_pers_0": tp0, "total_pers_1": tp1,
+        "beta_0": b0,
+        "beta_1": b1,
+        "total_pers_0": tp0,
+        "total_pers_1": tp1,
         "timesteps": np.array(frames),
     }

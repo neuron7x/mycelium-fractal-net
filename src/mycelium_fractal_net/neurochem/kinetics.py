@@ -94,6 +94,7 @@ def compute_excitability_offset_v(
     # Local mean: each cell compares to its 5×5 neighborhood, not global average.
     # A neuron knows its neighbors, not the brain's mean activation.
     from scipy.ndimage import uniform_filter
+
     activator_f64 = np.asarray(activator, dtype=np.float64)
     local_mean = uniform_filter(activator_f64, size=5, mode="wrap")
     centered_activator = activator_f64 - local_mean
@@ -208,8 +209,11 @@ def step_neuromodulation_state(
     plasticity_scale = float(serotonergic.plasticity_scale) if serotonergic is not None else 1.0
     # Local mean for plasticity: how different is this cell from its neighbors?
     from scipy.ndimage import uniform_filter
+
     local_mean_act = uniform_filter(
-        np.asarray(activator, dtype=np.float64), size=5, mode="wrap",
+        np.asarray(activator, dtype=np.float64),
+        size=5,
+        mode="wrap",
     )
     plasticity_drive = np.clip(
         np.abs(activator - local_mean_act) * PLASTICITY_DRIVE_SCALE * plasticity_scale, 0.0, 1.0

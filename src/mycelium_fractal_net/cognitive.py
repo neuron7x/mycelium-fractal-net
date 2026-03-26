@@ -36,15 +36,16 @@ __all__ = [
 # 1. EXPLAIN — human language
 # ═══════════════════════════════════════════════════════════════
 
+
 def explain(seq: FieldSequence) -> str:
     """One-paragraph human-language explanation of system state.
 
     >>> print(mfn.explain(seq))
     Your system is forming a spots pattern with 3 connected components...
     """
+    from .analytics.tda_ews import compute_tda
     from .core.detect import detect_anomaly
     from .core.early_warning import early_warning
-    from .analytics.tda_ews import compute_tda
 
     det = detect_anomaly(seq)
     ews = early_warning(seq)
@@ -53,8 +54,10 @@ def explain(seq: FieldSequence) -> str:
     lines = []
 
     # Pattern type
-    lines.append(f"Your system shows a {tda.pattern_type} pattern "
-                 f"(β₀={tda.beta_0} components, β₁={tda.beta_1} loops).")
+    lines.append(
+        f"Your system shows a {tda.pattern_type} pattern "
+        f"(β₀={tda.beta_0} components, β₁={tda.beta_1} loops)."
+    )
 
     # Health
     if det.label == "nominal":
@@ -66,8 +69,10 @@ def explain(seq: FieldSequence) -> str:
 
     # EWS
     if ews.ews_score > 0.5:
-        lines.append(f"Early warning signals indicate {ews.transition_type} "
-                     f"(EWS={ews.ews_score:.2f}). Consider intervention.")
+        lines.append(
+            f"Early warning signals indicate {ews.transition_type} "
+            f"(EWS={ews.ews_score:.2f}). Consider intervention."
+        )
     elif ews.ews_score > 0.3:
         lines.append(f"Mild early warning: {ews.transition_type} (EWS={ews.ews_score:.2f}).")
     else:
@@ -86,14 +91,15 @@ def explain(seq: FieldSequence) -> str:
 # 2. COMPARE_MANY — batch comparison
 # ═══════════════════════════════════════════════════════════════
 
+
 def compare_many(sequences: list[FieldSequence]) -> str:
     """Compare N systems side-by-side.
 
     >>> print(mfn.compare_many([seq1, seq2, seq3]))
     """
+    from .analytics.unified_score import compute_hwi_components
     from .core.detect import detect_anomaly
     from .core.early_warning import early_warning
-    from .analytics.unified_score import compute_hwi_components
 
     rows = []
     for i, seq in enumerate(sequences):
@@ -101,21 +107,27 @@ def compare_many(sequences: list[FieldSequence]) -> str:
         ews = early_warning(seq)
         hwi = compute_hwi_components(seq.history[0], seq.field) if seq.history is not None else None
 
-        rows.append({
-            "id": i + 1,
-            "label": det.label,
-            "score": det.score,
-            "ews": ews.ews_score,
-            "M": hwi.M if hwi else 0,
-            "regime": det.regime.label if det.regime else "?",
-        })
+        rows.append(
+            {
+                "id": i + 1,
+                "label": det.label,
+                "score": det.score,
+                "ews": ews.ews_score,
+                "M": hwi.M if hwi else 0,
+                "regime": det.regime.label if det.regime else "?",
+            }
+        )
 
     # Format table
     lines = [f"  {'#':>3} {'Label':>10} {'Score':>7} {'EWS':>6} {'M':>7} {'Regime':>12}"]
-    lines.append(f"  {'---':>3} {'----------':>10} {'-------':>7} {'------':>6} {'-------':>7} {'------------':>12}")
+    lines.append(
+        f"  {'---':>3} {'----------':>10} {'-------':>7} {'------':>6} {'-------':>7} {'------------':>12}"
+    )
     for r in rows:
-        lines.append(f"  {r['id']:>3} {r['label']:>10} {r['score']:>7.3f} "
-                     f"{r['ews']:>6.3f} {r['M']:>7.3f} {r['regime']:>12}")
+        lines.append(
+            f"  {r['id']:>3} {r['label']:>10} {r['score']:>7.3f} "
+            f"{r['ews']:>6.3f} {r['M']:>7.3f} {r['regime']:>12}"
+        )
 
     # Summary
     best = min(rows, key=lambda r: r["score"])
@@ -130,6 +142,7 @@ def compare_many(sequences: list[FieldSequence]) -> str:
 # 3. SWEEP — parameter exploration
 # ═══════════════════════════════════════════════════════════════
 
+
 def sweep(
     param: str,
     values: list[float],
@@ -140,15 +153,17 @@ def sweep(
 
     >>> print(mfn.sweep("alpha", [0.05, 0.10, 0.15, 0.20]))
     """
-    from .core.detect import detect_anomaly
     from .analytics.unified_score import compute_hwi_components
+    from .core.detect import detect_anomaly
     from .core.simulate import simulate_history
 
     base = base_spec or {"grid_size": 32, "steps": 60}
     base["seed"] = seed
 
     lines = [f"  {'Value':>8} {'Label':>10} {'Score':>7} {'M':>7} {'EWS':>6}"]
-    lines.append(f"  {'--------':>8} {'----------':>10} {'-------':>7} {'-------':>7} {'------':>6}")
+    lines.append(
+        f"  {'--------':>8} {'----------':>10} {'-------':>7} {'-------':>7} {'------':>6}"
+    )
 
     for val in values:
         spec_dict = {**base, param: val}
@@ -157,10 +172,17 @@ def sweep(
             seq = simulate_history(spec)
             det = detect_anomaly(seq)
             from .core.early_warning import early_warning
+
             ews = early_warning(seq)
-            hwi = compute_hwi_components(seq.history[0], seq.field) if seq.history is not None else None
+            hwi = (
+                compute_hwi_components(seq.history[0], seq.field)
+                if seq.history is not None
+                else None
+            )
             M = hwi.M if hwi else 0
-            lines.append(f"  {val:>8.4f} {det.label:>10} {det.score:>7.3f} {M:>7.3f} {ews.ews_score:>6.3f}")
+            lines.append(
+                f"  {val:>8.4f} {det.label:>10} {det.score:>7.3f} {M:>7.3f} {ews.ews_score:>6.3f}"
+            )
         except Exception as e:
             lines.append(f"  {val:>8.4f} {'ERROR':>10} — {str(e)[:30]}")
 
@@ -170,6 +192,7 @@ def sweep(
 # ═══════════════════════════════════════════════════════════════
 # 4. PLOT_FIELD — ASCII heatmap
 # ═══════════════════════════════════════════════════════════════
+
 
 def plot_field(seq: FieldSequence, width: int = 48, height: int = 24) -> str:
     """ASCII heatmap of the field. No dependencies needed.
@@ -208,14 +231,15 @@ def plot_field(seq: FieldSequence, width: int = 48, height: int = 24) -> str:
 # 5. BENCHMARK_QUICK — performance snapshot
 # ═══════════════════════════════════════════════════════════════
 
+
 def benchmark_quick(seq: FieldSequence) -> str:
     """Quick performance check on a FieldSequence.
 
     >>> print(mfn.benchmark_quick(seq))
     """
+    from .analytics.unified_score import compute_hwi_components
     from .core.detect import detect_anomaly
     from .core.early_warning import early_warning
-    from .analytics.unified_score import compute_hwi_components
 
     results = {}
 
@@ -232,7 +256,8 @@ def benchmark_quick(seq: FieldSequence) -> str:
         compute_hwi_components(seq.history[0], seq.field)
         results["M"] = (time.perf_counter() - t0) * 1000
 
-    from . import extract, diagnose
+    from . import diagnose, extract
+
     t0 = time.perf_counter()
     extract(seq)
     results["extract"] = (time.perf_counter() - t0) * 1000
@@ -248,8 +273,10 @@ def benchmark_quick(seq: FieldSequence) -> str:
         lines.append(f"  {name:>12} {ms:>7.1f}ms")
         total += ms
     lines.append(f"  {'TOTAL':>12} {total:>7.1f}ms")
-    lines.append(f"  Field: {seq.field.shape[0]}×{seq.field.shape[1]}, "
-                 f"History: {seq.history.shape[0] if seq.history is not None else 0} frames")
+    lines.append(
+        f"  Field: {seq.field.shape[0]}×{seq.field.shape[1]}, "
+        f"History: {seq.history.shape[0] if seq.history is not None else 0} frames"
+    )
 
     return "\n".join(lines)
 
@@ -258,12 +285,13 @@ def benchmark_quick(seq: FieldSequence) -> str:
 # 6. TO_MARKDOWN — exportable report
 # ═══════════════════════════════════════════════════════════════
 
+
 def to_markdown(seq: FieldSequence) -> str:
     """Full diagnosis as markdown — paste into docs, PR, README.
 
     >>> print(mfn.to_markdown(seq))
     """
-    from . import detect, extract, diagnose, early_warning
+    from . import detect, diagnose, early_warning, extract
 
     diag = diagnose(seq)
     det = detect(seq)
@@ -289,7 +317,7 @@ def to_markdown(seq: FieldSequence) -> str:
         "",
         "### Narrative",
         "",
-        diag.narrative if diag.narrative else "_No narrative available._",
+        diag.narrative or "_No narrative available._",
         "",
         f"_Generated by MFN v{__import__('mycelium_fractal_net').__version__}_",
     ]
@@ -299,6 +327,7 @@ def to_markdown(seq: FieldSequence) -> str:
 # ═══════════════════════════════════════════════════════════════
 # 8. GAMMA DIAGNOSTIC — scaling exponent from ensemble
 # ═══════════════════════════════════════════════════════════════
+
 
 def gamma_diagnostic(sequences: list[FieldSequence]) -> str:
     """Measure scaling exponent γ from an ensemble of FieldSequences.
@@ -320,14 +349,17 @@ def gamma_diagnostic(sequences: list[FieldSequence]) -> str:
     for seq in sequences:
         field = seq.field
         # Entropy
-        p = np.abs(field).ravel() + 1e-12; p /= p.sum()
-        q = np.abs(ref).ravel() + 1e-12; q /= q.sum()
+        p = np.abs(field).ravel() + 1e-12
+        p /= p.sum()
+        q = np.abs(ref).ravel() + 1e-12
+        q /= q.sum()
         dH = max(0, float(np.sum(p * np.log(p / (q + 1e-12)))))
 
         # Topology
         _, b0 = label(field > np.median(field))
         b = (field > np.median(field)).astype(int)
-        V = b.sum(); Eh = (b[:, :-1] * b[:, 1:]).sum()
+        V = b.sum()
+        Eh = (b[:, :-1] * b[:, 1:]).sum()
         Ev = (b[:-1, :] * b[1:, :]).sum()
         F = (b[:-1, :-1] * b[:-1, 1:] * b[1:, :-1] * b[1:, 1:]).sum()
         b1 = max(0, b0 - (V - Eh - Ev + F))
@@ -371,6 +403,7 @@ def gamma_diagnostic(sequences: list[FieldSequence]) -> str:
 # 7. HISTORY — temporal profile
 # ═══════════════════════════════════════════════════════════════
 
+
 def history(seq: FieldSequence, stride: int = 5) -> str:
     """Show M(t), H(t), dH/dt across trajectory.
 
@@ -395,7 +428,7 @@ def history(seq: FieldSequence, stride: int = 5) -> str:
         lines.append(f"  {ts[i]:>6d} {M[i]:>8.4f} {H[i]:>8.4f} {dh_str}")
 
     # Summary
-    lines.append(f"\n  M: {M[0]:.4f} → {M[-1]:.4f} (Δ={M[-1]-M[0]:+.4f})")
+    lines.append(f"\n  M: {M[0]:.4f} → {M[-1]:.4f} (Δ={M[-1] - M[0]:+.4f})")
     lines.append(f"  dH/dt < 0: {traj['dH_dt_negative_frac']:.0%}")
     lines.append(f"  Descent: {'YES' if M[-1] < M[0] else 'NO'}")
 
@@ -405,6 +438,7 @@ def history(seq: FieldSequence, stride: int = 5) -> str:
 # ═══════════════════════════════════════════════════════════════
 # 9. INVARIANCE REPORT — compute Λ₂, Λ₅, Λ₆
 # ═══════════════════════════════════════════════════════════════
+
 
 def invariance_report(seq: FieldSequence) -> str:
     """Compute MFN integral invariants Λ₂, Λ₅, Λ₆ for a FieldSequence.

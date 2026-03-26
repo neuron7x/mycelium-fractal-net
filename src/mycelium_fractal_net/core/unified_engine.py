@@ -110,8 +110,7 @@ class SystemReport:
             lines.append("System is healthy — nominal operation, no intervention needed.")
         elif self.severity == "info":
             lines.append(
-                f"System is functional but approaching transition "
-                f"(EWS={self.ews_score:.2f})."
+                f"System is functional but approaching transition (EWS={self.ews_score:.2f})."
             )
         elif self.severity == "warning":
             lines.append(
@@ -127,8 +126,7 @@ class SystemReport:
         # Basin stability + entropy invariant
         if self.basin_stability > 0.7 and self.basin_entropy < 0.5:
             lines.append(
-                f"Topology robust: S_B={self.basin_stability:.2f}, "
-                f"smooth basin boundaries."
+                f"Topology robust: S_B={self.basin_stability:.2f}, smooth basin boundaries."
             )
         elif self.basin_stability < 0.4:
             lines.append(
@@ -292,9 +290,7 @@ class UnifiedEngine:
         N = seq.field.shape[0]
         D_hdv = min(300, max(100, 6000 // N))  # N=16→375, N=32→187, N=64→93
         n_samples = min(30, max(10, 500 // N))  # N=16→31, N=32→15, N=64→7
-        levin_cfg = LevinPipelineConfig(
-            n_basin_samples=n_samples, D_hdv=D_hdv, n_anon_steps=3
-        )
+        levin_cfg = LevinPipelineConfig(n_basin_samples=n_samples, D_hdv=D_hdv, n_anon_steps=3)
         levin = LevinPipeline.from_sequence(seq, config=levin_cfg).run(
             target_field=target_field,
             physarum_state=bio.physarum_state,
@@ -440,7 +436,5 @@ class UnifiedEngine:
             "n_observations": self.memory.size,
             "rules": [r.to_dict() for r in rules],
             "thresholds": thresholds.to_dict(),
-            "top_correlations": [
-                {"a": a, "b": b, "r": round(r, 3)} for a, b, r in strong[:10]
-            ],
+            "top_correlations": [{"a": a, "b": b, "r": round(r, 3)} for a, b, r in strong[:10]],
         }

@@ -7,9 +7,8 @@ Golden hashes are valid ONLY within a matching DeterminismSpec.
 from __future__ import annotations
 
 import hashlib
-import platform
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
