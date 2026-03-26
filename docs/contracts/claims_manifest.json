@@ -1,6 +1,6 @@
 {
   "schema": "mfn-claims-manifest-v1",
-  "engine_version": "4.4.2",
+  "engine_version": "4.5.0",
   "updated": "2026-03-26",
   "metrics": {
     "causal_rules": 46,
@@ -42,6 +42,13 @@
     "lambda5_cv": 0.0039,
     "lambda6_cv": 0.0091,
     "gamma_brain_organoid": 1.487,
-    "gamma_spheroid": 0.721
+    "gamma_spheroid": 0.721,
+    "thermodynamic_kernel": {
+      "lyapunov_gate": "lambda1 < 0 required for gate_passed=True",
+      "metastable_policy": "allow_metastable=True for Turing zone",
+      "energy_functional": "F = E_grad + E_potential (double-well)",
+      "adaptive_timestep": "PID-inspired dt in [dt_min, dt_max]",
+      "tests": 20
+    }
   }
 }

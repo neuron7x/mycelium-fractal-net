@@ -5,6 +5,48 @@ All notable changes to MyceliumFractalNet are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0] — 2026-03-26
+
+### Breakthrough
+- **Integral Invariance Theorem** (Vasylenko 2026): three proven invariants Λ₂, Λ₅, Λ₆
+  - H ∝ W₂^0.59 · I^0.86 (R² = 0.99998)
+  - Λ₅ = ΣH/(ΣW₂·√ΣI) stable at CV = 0.39% across 30 seeds
+  - Λ₆ = λ_H/(λ_W+λ_I/2) = 1.323 (decay rate ratio, CV = 0.91%)
+- **ThermodynamicKernel**: free energy tracking + Lyapunov stability gate + adaptive dt
+  - First R-D framework with thermodynamic stability gate
+  - F[u] = ½∫|∇u|² + ∫V(u), λ₁ < 0 gate, PID timestep control
+- **γ-scaling on real tissue**: γ = +1.487 on brain organoids (Zenodo 10301912)
+
+### New features
+- `InvariantOperator` with `Lambda2()`, `Lambda5()`, `Lambda6()`, `invariants()`
+- `mfn.invariance_report(seq)` — one-call invariant verification
+- `mfn.simulate_null()` — null mode factory (uniform, static, diffusion, noise)
+- Sklearn-compatible TDA: `PersistenceTransformer`, `PersistenceLandscapeVectorizer`
+- Multiparameter PH: `compute_bifiltration()` via multipers
+- Topological phase transitions: `detect_topological_transitions()` via W₁
+- Kuramoto synchronization: `kuramoto_order_parameter()`, `kuramoto_trajectory()`
+- Causal bridge: `DagmaBridge` (DAGMA), `DoWhyBridge` (DoWhy)
+- Marimo notebooks: `notebooks/quickstart.py`, `notebooks/scenarios.py`
+- Release contract: `core/release_contract.py` — single source of truth
+- `DeterminismSpec` + `CANONICAL_SPEC` for golden hash provenance
+
+### Verification
+- MMS convergence: O(h²) spatial, O(dt) temporal — 10 tests
+- Mass conservation: < 1e-10 (periodic + Neumann)
+- 2363 tests pass, 82.6% branch coverage
+- Contract version sync: 4.4.2 across all files
+- `docs/NUMERICAL_VALIDITY.md`, `docs/GOLDEN_ARTIFACT_POLICY.md`
+- `docs/THERMODYNAMIC_KERNEL.md`, `docs/SCALE_SUPPORT_MATRIX.md`
+- `.zenodo.json` for DOI minting
+- `asv.conf.json` for performance history
+
+### Infrastructure
+- `_optional.py`: `require_science/bio/api_dependency()` with install hints
+- pyproject.toml: core = numpy + pydantic only; frontier extra added
+- Makefile: `verify-core`, `verify-bio`, `verify-science`, `verify-full`
+- `scripts/check_contract_version_sync.py` — CI gate
+- `docs/adr/0014-openapi-authority.md`
+
 ## [4.4.2] — 2026-03-25
 
 ### Performance

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 try:
     __version__ = version("mycelium-fractal-net")
 except PackageNotFoundError:
-    __version__ = "4.4.2"
+    __version__ = "4.5.0"
 
 from .adapters import FieldAdapter
 from .analytics import (

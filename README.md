@@ -6,14 +6,14 @@
 <h3 align="center">The only open-source framework that unifies reaction-diffusion simulation, persistent homology, causal validation, and self-healing in a single pip install</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/verified_tests-2274-brightgreen?style=flat-square" alt="Tests" />
-  <img src="https://img.shields.io/badge/MMS_convergence-O(h%C2%B2)-brightgreen?style=flat-square" alt="MMS" />
-  <img src="https://img.shields.io/badge/causal_rules-46/46-blue?style=flat-square" alt="Causal Rules" />
-  <img src="https://img.shields.io/badge/bio_mechanisms-8-orange?style=flat-square" alt="Bio" />
-  <img src="https://img.shields.io/badge/invariants-%CE%9B%E2%82%82%20%CE%9B%E2%82%85%20%CE%9B%E2%82%86-purple?style=flat-square" alt="Invariants" />
-  <img src="https://img.shields.io/badge/bifiltration-multipers-blueviolet?style=flat-square" alt="Bifiltration" />
+  <img src="https://img.shields.io/badge/tests-2363_pass-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/coverage-82.6%25-brightgreen?style=flat-square" alt="Coverage" />
+  <img src="https://img.shields.io/badge/MMS-O(h%C2%B2)_verified-brightgreen?style=flat-square" alt="MMS" />
+  <img src="https://img.shields.io/badge/causal_rules-46-blue?style=flat-square" alt="Causal Rules" />
+  <img src="https://img.shields.io/badge/bio-8_mechanisms-orange?style=flat-square" alt="Bio" />
+  <img src="https://img.shields.io/badge/invariants-%CE%9B%E2%82%82_%CE%9B%E2%82%85_%CE%9B%E2%82%86-purple?style=flat-square" alt="Invariants" />
+  <img src="https://img.shields.io/badge/thermo_gate-Lyapunov_%2B_energy-red?style=flat-square" alt="Thermo" />
   <img src="https://img.shields.io/badge/reproduce-deterministic-brightgreen?style=flat-square" alt="Reproduce" />
-  <img src="https://img.shields.io/badge/mypy-strict-blue?style=flat-square" alt="Types" />
   <img src="https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="License" /></a>
 </p>
@@ -29,16 +29,17 @@
 | Capability | FiPy | FEniCSx | CompuCell3D | jax-morph | GUDHI | Tigramite | **MFN** |
 |-----------|------|---------|-------------|-----------|-------|-----------|---------|
 | R-D simulation | Partial | Partial | Partial | Yes | -- | -- | **Yes** |
-| Persistent homology | -- | -- | -- | -- | Yes | -- | **Yes** |
-| Causal validation (46 rules) | -- | -- | -- | -- | -- | Discovery only | **Yes** |
+| Thermodynamic stability gate | -- | -- | -- | -- | -- | -- | **Yes** |
+| Persistent homology (TDA) | -- | -- | -- | -- | Yes | -- | **Yes** |
 | Multiparameter PH (bifiltration) | -- | -- | -- | -- | -- | -- | **Yes** |
-| Wasserstein phase transitions | -- | -- | -- | -- | -- | -- | **Yes** |
+| Causal validation (46 rules) | -- | -- | -- | -- | -- | Discovery | **Yes** |
+| DAGMA/DoWhy causal bridge | -- | -- | -- | -- | -- | Partial | **Yes** |
 | Auto-heal cognitive loop | -- | -- | -- | -- | -- | -- | **Yes** |
 | Thermodynamic invariants (Λ₂,Λ₅,Λ₆) | -- | -- | -- | -- | -- | -- | **Yes** |
 | Levin morphospace | -- | -- | -- | -- | -- | -- | **Yes** |
-| MMS convergence verified | -- | Yes | -- | -- | -- | -- | **Yes** |
-| DAGMA/DoWhy causal bridge | -- | -- | -- | -- | -- | Partial | **Yes** |
 | Sklearn-compatible TDA API | -- | -- | -- | -- | Partial | -- | **Yes** |
+| MMS convergence O(h²) verified | -- | Yes | -- | -- | -- | -- | **Yes** |
+| Kuramoto synchronization | -- | -- | -- | -- | -- | -- | **Yes** |
 
 **No published package combines R-D + TDA + causal validation.** The closest work is a 2025 paper in *Bulletin of Mathematical Biology* applying PH to Turing systems — but it is a paper, not a package, and has no causal validation.
 
@@ -84,6 +85,19 @@ from mycelium_fractal_net.analytics import run_math_frontier
 math = run_math_frontier(seq)
 print(math.summary())
 # [MATH] b0=3 b1=1 TP0=0.847 | W2=1.33 | CE=-0.12 | r=0.025(structur)
+```
+
+### Thermodynamic Stability Gate
+
+```python
+# Every simulation passes through a free energy + Lyapunov gate
+from mycelium_fractal_net import ThermodynamicKernel, ThermodynamicKernelConfig
+
+kernel = ThermodynamicKernel(ThermodynamicKernelConfig(allow_metastable=True))
+frames = [(seq.history[t], np.zeros_like(seq.history[t])) for t in range(seq.history.shape[0])]
+report = kernel.analyze_trajectory(frames, reaction_fn=lambda u, v: (np.zeros_like(u), v))
+print(report.summary())
+# [THERMO] gate=OPEN verdict=metastable λ₁=-0.0123 drift=4.21e-05 steps=60 adaptive=0
 ```
 
 ### Auto-Heal: Closed Cognitive Loop
@@ -132,7 +146,7 @@ Most scientific Python packages simulate *or* analyze *or* validate. MFN does al
 
 | Layer | What it does | How it's verified |
 |-------|-------------|-------------------|
-| **Simulation** | Reaction-diffusion PDE on N×N lattice | CFL stability, field bounds, NaN guard |
+| **Simulation** | Reaction-diffusion PDE on N×N lattice | MMS O(h²), CFL stability, ThermodynamicKernel gate |
 | **Analysis** | 57-dim morphology embedding, regime classification, EWS | 46 causal rules block invalid conclusions |
 | **Bio Physics** | 8 mechanisms: Physarum, FHN, chemotaxis, anastomosis, dispersal, morphospace, memory diffusion, persuasion | Property-based tests (Hypothesis), stateful tests, calibrated benchmark gates |
 | **Levin Framework** | PCA morphospace + basin stability + HDV memory anonymization + active inference + controllability Gramian | 5 mathematical invariants, 87% branch coverage, stress tested |
@@ -263,10 +277,40 @@ tests/benchmarks/
 ## Architecture
 
 ```
+                    ┌──────────────────────────────────────┐
+                    │        ThermodynamicKernel            │
+                    │  F[u] = ½∫|∇u|² + ∫V(u)             │
+                    │  λ₁ < 0 → gate open                 │
+                    │  adaptive dt ∈ [dt_min, dt_max]      │
+                    └──────────┬───────────────────────────┘
+                               │ gate_passed=True
+                    ┌──────────▼───────────────────────────┐
+                    │      ReactionDiffusionEngine          │
+                    │  Turing + STDP + neuromodulation      │
+                    └──────────┬───────────────────────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          ▼                    ▼                    ▼
+   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+   │   detect()   │    │  extract()   │    │   bio.step() │
+   │  46 causal   │    │  57-dim emb  │    │  8 mechansms │
+   │   rules      │    │  TDA + W₂    │    │  Levin pipe  │
+   └──────┬───────┘    └──────┬───────┘    └──────┬───────┘
+          │                   │                   │
+          └────────────────┬──┘───────────────────┘
+                           ▼
+                    ┌──────────────┐
+                    │  diagnose()  │
+                    │  auto_heal() │
+                    │  invariants  │
+                    └──────────────┘
+```
+
+```
 src/mycelium_fractal_net/
 ├── types/          30 frozen dataclasses — the type system
-├── core/           PDE solver, detect, forecast, compare, causal validation, EWS
-├── analytics/      Feature extraction, morphology (57-dim), connectivity
+├── core/           PDE solver, ThermodynamicKernel, detect, forecast, causal validation
+├── analytics/      Feature extraction, invariant operator, TDA, bifiltration, Kuramoto
 ├── bio/            8 mechanisms + LevinPipeline + meta-optimizer
 │   ├── physarum.py           Adaptive conductivity (Tero 2007)
 │   ├── anastomosis.py        Hyphal network (Glass 2004)
