@@ -6,7 +6,7 @@
 <h3 align="center">The only open-source framework that unifies reaction-diffusion simulation, persistent homology, causal validation, and self-healing in a single pip install</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-2363_pass-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-2428-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/coverage-82.6%25-brightgreen?style=flat-square" alt="Coverage" />
   <img src="https://img.shields.io/badge/MMS-O(h%C2%B2)_verified-brightgreen?style=flat-square" alt="MMS" />
   <img src="https://img.shields.io/badge/causal_rules-46-blue?style=flat-square" alt="Causal Rules" />
@@ -87,26 +87,30 @@ print(math.summary())
 # [MATH] b0=3 b1=1 TP0=0.847 | W2=1.33 | CE=-0.12 | r=0.025(structur)
 ```
 
-### Thermodynamic Stability Gate
+### Sovereign Gate — 6-lens verification
 
 ```python
-# Every simulation passes through a free energy + Lyapunov gate
-from mycelium_fractal_net import ThermodynamicKernel, ThermodynamicKernelConfig
-
-kernel = ThermodynamicKernel(ThermodynamicKernelConfig(allow_metastable=True))
-frames = [(seq.history[t], np.zeros_like(seq.history[t])) for t in range(seq.history.shape[0])]
-report = kernel.analyze_trajectory(frames, reaction_fn=lambda u, v: (np.zeros_like(u), v))
-print(report.summary())
-# [THERMO] gate=OPEN verdict=metastable λ₁=-0.0123 drift=4.21e-05 steps=60 adaptive=0
+# Every output passes through 6 verification lenses before leaving the system
+verdict = mfn.SovereignGate().verify(seq)
+print(verdict)
+# ╔════════════════════════════════════════════════════════════╗
+# ║                    SOVEREIGN GATE: OPEN                    ║
+# ╠════════════════════════════════════════════════════════════╣
+# ║  [PASS] structural: range=0.068295, finite                 ║
+# ║  [PASS] thermodynamic: F=0.025775 σ=0.266743               ║
+# ║  [PASS] causal: label=nominal score=0.212                  ║
+# ║  [PASS] transport: W₂: 1.9083→0.7855 (converging)          ║
+# ║  [PASS] invariant: Λ₂=1.9256 CV=0.0103                     ║
+# ╚════════════════════════════════════════════════════════════╝
 ```
 
 ### Auto-Heal: Closed Cognitive Loop
 
 ```python
 # System detects problem → plans intervention → applies → verifies → learns
-result = mfn.auto_heal(stressed_seq)
+result = mfn.auto_heal(seq)
 print(result.summary())
-# [HEAL] HEALED | M: 1.000 -> 0.514 (dM=-0.486) | anomaly: 0.494 -> 0.207
+# [HEAL] System healthy — no intervention needed. M=0.636 severity=info
 ```
 
 ### Invariance Theorem (Vasylenko 2026)
