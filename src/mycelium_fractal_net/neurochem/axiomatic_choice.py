@@ -9,6 +9,7 @@ Trigger conditions:
     - Delta Theta -> 0            (neurodynamic stagnation)
     - D_f not in [1.5, 2.0]      (CCP cognitive window violation)
     - R < R_c                     (phase coherence collapse)
+    - CI_score > 0.6              (computational irreducibility — Wolfram 2002)
 
 Axioms:
     A1 Admissibility:    A_C(U_t) in U_t
@@ -78,6 +79,7 @@ class ActivationCondition(Enum):
     THETA_STAGNATION = "theta_stagnation"
     CCP_VIOLATION_D_F = "ccp_violation_d_f"
     CCP_VIOLATION_R = "ccp_violation_r"
+    COMPUTATIONAL_IRREDUCIBILITY = "computational_irreducibility"
     NONE = "none"
 
 
@@ -107,6 +109,7 @@ def check_activation_conditions(
     ccp_R: float | None = None,
     gradient_norm: float | None = None,
     j_values: Sequence[float] | None = None,
+    ci_score: float | None = None,
 ) -> ActivationResult:
     """Check whether A_C should activate.
 
@@ -155,8 +158,14 @@ def check_activation_conditions(
         conditions.append(ActivationCondition.CCP_VIOLATION_R)
         details["R"] = ccp_R
 
+    # C6: Computational irreducibility (Wolfram 2002)
+    # System cannot predict own next state — analytical shortcuts fail
+    if ci_score is not None and ci_score > 0.6:
+        conditions.append(ActivationCondition.COMPUTATIONAL_IRREDUCIBILITY)
+        details["ci_score"] = ci_score
+
     should = len(conditions) > 0
-    severity = float(np.clip(len(conditions) / 5.0, 0.0, 1.0))
+    severity = float(np.clip(len(conditions) / 6.0, 0.0, 1.0))
 
     return ActivationResult(
         should_activate=should,
@@ -283,6 +292,7 @@ class AxiomaticChoiceOperator:
         ccp_R: float | None = None,
         gradient_norm: float | None = None,
         j_values: Sequence[float] | None = None,
+        ci_score: float | None = None,
         force: bool = False,
     ) -> GNCState | None:
         """Execute A_C selection.
@@ -308,6 +318,7 @@ class AxiomaticChoiceOperator:
                 ccp_R=ccp_R,
                 gradient_norm=gradient_norm,
                 j_values=j_values,
+                ci_score=ci_score,
             )
             if not activation.should_activate:
                 return None
