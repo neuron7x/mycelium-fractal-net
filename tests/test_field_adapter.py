@@ -89,6 +89,7 @@ def test_full_pipeline_on_loaded_data() -> None:
 
 
 def test_load_in_all() -> None:
-    """mfn.load is in __all__."""
+    """mfn.load is in __all__. FieldAdapter is internal (use mfn.load instead)."""
     assert "load" in mfn.__all__
-    assert "FieldAdapter" in mfn.__all__
+    # FieldAdapter is accessible but not in curated __all__
+    assert hasattr(mfn, "FieldAdapter")

@@ -1,6 +1,6 @@
 # Architectural Debt Register
 
-Updated: 2026-03-24
+Updated: 2026-03-27
 
 ## Resolved
 
@@ -24,6 +24,13 @@ Updated: 2026-03-24
 | ComputeBudget | No adaptive compute | Glycogen reserve: 8280× eigen speedup under load | `e1e9c65` |
 | Stress test coverage | No hardware stress test | 32/32 operations, 0 leaks, sub-quadratic scaling | `1ac3602` |
 | Vectorized HDV/Laplacian | Python loops in encode + build_laplacian | stride_tricks + mgrid, 1.9× speedup | `1ac3602` |
+| Version drift 4.2.0→4.5.0 | 22 stale version refs across source | All synced via check_contract_version_sync.py | `a265886` |
+| 512×512 scale support | OOM profiling incomplete | FractalPreservingInterpolator + MemoryBudgetGuard | `26ea774` |
+| 1024×1024 policy | Undefined | FractalBudgetExceededError + allow_experimental_1024 | `26ea774` |
+| Optional deps on import | scipy(475)+torch(668) loaded eagerly | Lazy numba/scipy/torch — 0 optional on import | `a265886` |
+| MMS convergence tests | No manufactured solution tests | 10 tests: O(h²) spatial, O(dt) temporal, mass, CFL | `ac88d49` |
+| Contract version sync | Manual, error-prone | check_contract_version_sync.py CI gate | `ac88d49` |
+| README claims drift | Manual badge updates | Every example verified to produce exact shown output | `b946c4f` |
 
 ## Active
 

@@ -137,9 +137,9 @@ def _compile_jit_kernels() -> None:
                 out[i, j] = up + down + left + right - 4.0 * field[i, j]
         return out
 
-    _laplacian_periodic_jit = _p_jit  # noqa: F841
-    _laplacian_neumann_jit = _n_jit  # noqa: F841
-    _laplacian_dirichlet_jit = _d_jit  # noqa: F841
+    _laplacian_periodic_jit = _p_jit
+    _laplacian_neumann_jit = _n_jit
+    _laplacian_dirichlet_jit = _d_jit
 
 
 def laplacian_backend(use_accel: bool | None = None) -> str:

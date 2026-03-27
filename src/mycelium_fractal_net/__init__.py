@@ -43,12 +43,6 @@ from .analytics import (
 from .analytics.invariant_operator import InvariantOperator
 from .analytics.morphology import compute_morphology_descriptor
 from .auto_heal import ExperienceMemory, HealResult, auto_heal, get_experience_memory
-from .core.observatory import ObservatoryReport, observe
-from .core.scale_engine import FractalInterpolatorConfig, FractalPreservingInterpolator
-from .core.sovereign_gate import SovereignGate, SovereignVerdict
-from .core.thermodynamic_kernel import ThermodynamicKernel, ThermodynamicKernelConfig
-from .types.scale import FractalScaleJourney, FractalScaleReport
-from .types.thermodynamics import ThermodynamicStabilityReport
 
 # Bio is lazy-loaded via _LAZY_ATTRS (see below)
 from .cognitive import (
@@ -105,7 +99,9 @@ from .core.ensemble import ensemble_diagnose
 from .core.extract import extract as extract_operation
 from .core.forecast import forecast_next
 from .core.inverse import inverse_synthesis
+from .core.observatory import ObservatoryReport, observe
 from .core.report import report as report_operation
+from .core.scale_engine import FractalInterpolatorConfig, FractalPreservingInterpolator
 from .core.simulate import (
     simulate_batch,
     simulate_final,
@@ -113,6 +109,8 @@ from .core.simulate import (
     simulate_null,
     simulate_scenario,
 )
+from .core.sovereign_gate import SovereignGate, SovereignVerdict
+from .core.thermodynamic_kernel import ThermodynamicKernel, ThermodynamicKernelConfig
 from .core.watch import watch
 from .pipelines import (
     build_analysis_report,
@@ -122,7 +120,7 @@ from .pipelines import (
     run_scenario,
 )
 from .types.detection import (
-    AnomalyEvent,  # noqa: TC001
+    AnomalyEvent,
     RegimeState,
 )
 from .types.diagnosis import DiagnosisDiff, DiagnosisReport
@@ -131,7 +129,7 @@ from .types.ews import CriticalTransitionWarning
 from .types.features import (
     FEATURE_COUNT,
     FEATURE_NAMES,
-    MorphologyDescriptor,  # noqa: TC001
+    MorphologyDescriptor,
 )
 from .types.field import (
     BoundaryCondition,
@@ -146,9 +144,11 @@ from .types.field import (
     SerotonergicPlasticitySpec,
     SimulationSpec,
 )
-from .types.forecast import ComparisonResult, ForecastResult  # noqa: TC001
+from .types.forecast import ComparisonResult, ForecastResult
 from .types.inverse import InverseSynthesisResult
-from .types.report import AnalysisReport  # noqa: TC001
+from .types.report import AnalysisReport
+from .types.scale import FractalScaleJourney, FractalScaleReport
+from .types.thermodynamics import ThermodynamicStabilityReport
 
 # Bio extension — lazy import (scipy + sklearn are heavy)
 # Access via mfn.BioExtension, mfn.BioConfig, mfn.BioReport
@@ -553,59 +553,59 @@ DEPRECATED_SURFACES = {
 # ═══════════════════════════════════════════════════════════════
 
 __all__ = [
-    # ── Tier 1: Pipeline (the 7 verbs) ────────────────────────
-    "simulate",
-    "extract",
-    "detect",
-    "diagnose",
-    "forecast",
-    "compare",
-    "report",
-    # ── Tier 2: Intelligence ──────────────────────────────────
-    "observe",
-    "explain",
-    "auto_heal",
-    "invariance_report",
-    "plan_intervention",
-    "full_analyze",
-    "early_warning",
-    "load",
-    "simulate_null",
-    # ── Tier 3: Cognitive extensions ──────────────────────────
-    "benchmark_quick",
-    "compare_many",
-    "gamma_diagnostic",
-    "history",
-    "plot_field",
-    "sweep",
-    "to_markdown",
+    "AnalysisReport",
+    "AnomalyEvent",
+    "BoundaryCondition",
+    "ComparisonResult",
+    "DiagnosisReport",
+    "FieldSequence",
+    "ForecastResult",
+    "FractalInterpolatorConfig",
+    "FractalPreservingInterpolator",
+    "FractalScaleJourney",
+    "GABAATonicSpec",
+    "HealResult",
     # ── Tier 4: Engines & operators ───────────────────────────
     "InvariantOperator",
-    "ThermodynamicKernel",
-    "ThermodynamicKernelConfig",
-    "FractalPreservingInterpolator",
-    "FractalInterpolatorConfig",
-    "ObservatoryReport",
-    "SovereignGate",
-    "SovereignVerdict",
-    # ── Tier 5: Core types ────────────────────────────────────
-    "SimulationSpec",
-    "FieldSequence",
-    "AnomalyEvent",
-    "DiagnosisReport",
-    "ForecastResult",
-    "ComparisonResult",
     "MorphologyDescriptor",
-    "AnalysisReport",
-    "HealResult",
-    "ThermodynamicStabilityReport",
-    "FractalScaleJourney",
     # ── Tier 6: Spec types (simulation config) ────────────────
     "NeuromodulationSpec",
-    "GABAATonicSpec",
-    "SerotonergicPlasticitySpec",
     "ObservationNoiseSpec",
-    "BoundaryCondition",
+    "ObservatoryReport",
+    "SerotonergicPlasticitySpec",
+    # ── Tier 5: Core types ────────────────────────────────────
+    "SimulationSpec",
+    "SovereignGate",
+    "SovereignVerdict",
+    "ThermodynamicKernel",
+    "ThermodynamicKernelConfig",
+    "ThermodynamicStabilityReport",
     # ── Version ───────────────────────────────────────────────
     "__version__",
+    "auto_heal",
+    # ── Tier 3: Cognitive extensions ──────────────────────────
+    "benchmark_quick",
+    "compare",
+    "compare_many",
+    "detect",
+    "diagnose",
+    "early_warning",
+    "explain",
+    "extract",
+    "forecast",
+    "full_analyze",
+    "gamma_diagnostic",
+    "history",
+    "invariance_report",
+    "load",
+    # ── Tier 2: Intelligence ──────────────────────────────────
+    "observe",
+    "plan_intervention",
+    "plot_field",
+    "report",
+    # ── Tier 1: Pipeline (the 7 verbs) ────────────────────────
+    "simulate",
+    "simulate_null",
+    "sweep",
+    "to_markdown",
 ]
