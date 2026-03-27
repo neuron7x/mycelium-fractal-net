@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 import mycelium_fractal_net as mfn
 from mycelium_fractal_net.analytics.wolfram_bridge import (
-    ComputationalIrreducibilityReport,
     compute_incompressibility,
     compute_prediction_residual,
     detect_computational_irreducibility,
 )
-
 
 # ── Incompressibility ────────────────────────────────────────────────
 
@@ -82,8 +79,8 @@ class TestCIDetection:
         """Converged Turing pattern is computationally reducible."""
         seq = mfn.simulate(mfn.SimulationSpec(grid_size=32, steps=60, seed=42))
         ci = detect_computational_irreducibility(seq)
-        assert isinstance(ci, ComputationalIrreducibilityReport)
-        assert not ci.is_irreducible
+        assert isinstance(ci, dict)
+        assert not ci["is_irreducible"]
 
     def test_noise_is_irreducible(self) -> None:
         """Pure noise is maximally irreducible."""
@@ -92,8 +89,8 @@ class TestCIDetection:
         rng = np.random.RandomState(42)
         noise = FieldSequence(field=rng.uniform(-0.1, 0.1, (32, 32)))
         ci = detect_computational_irreducibility(noise)
-        assert ci.is_irreducible
-        assert ci.pce_complexity_class == "3_chaotic"
+        assert ci["is_irreducible"]
+        assert ci["pce_complexity_class"] == "3_chaotic"
 
     def test_flat_is_reducible(self) -> None:
         """Flat field is maximally reducible (Class 1)."""
@@ -101,25 +98,26 @@ class TestCIDetection:
 
         flat = FieldSequence(field=np.full((32, 32), -0.05))
         ci = detect_computational_irreducibility(flat)
-        assert not ci.is_irreducible
-        assert ci.pce_complexity_class == "1_fixed"
+        assert not ci["is_irreducible"]
+        assert ci["pce_complexity_class"] == "1_fixed"
 
     def test_ci_score_bounded(self) -> None:
         seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=20, seed=42))
         ci = detect_computational_irreducibility(seq)
-        assert 0.0 <= ci.ci_score <= 1.0
+        assert 0.0 <= ci["ci_score"] <= 1.0
 
     def test_intrinsic_randomness_bounded(self) -> None:
         seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=20, seed=42))
         ci = detect_computational_irreducibility(seq)
-        assert 0.0 <= ci.intrinsic_randomness <= 1.0
+        assert 0.0 <= ci["intrinsic_randomness"] <= 1.0
 
-    def test_summary_not_empty(self) -> None:
+    def test_dict_has_all_keys(self) -> None:
         seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=20, seed=42))
         ci = detect_computational_irreducibility(seq)
-        s = ci.summary()
-        assert "CI:" in s
-        assert "class=" in s
+        expected = {"ci_score", "is_irreducible", "incompressibility",
+                    "lyapunov_indicator", "prediction_residual",
+                    "pce_complexity_class", "intrinsic_randomness"}
+        assert set(ci.keys()) == expected
 
 
 # ── A_C integration ──────────────────────────────────────────────────
@@ -169,11 +167,11 @@ class TestWolframClassification:
         """Healthy MFN should be Class 4 (complex) or Class 2 (periodic)."""
         seq = mfn.simulate(mfn.SimulationSpec(grid_size=32, steps=60, seed=42))
         ci = detect_computational_irreducibility(seq)
-        assert ci.pce_complexity_class in ("4_complex", "2_periodic")
+        assert ci["pce_complexity_class"] in ("4_complex", "2_periodic")
 
     def test_classification_deterministic(self) -> None:
         seq = mfn.simulate(mfn.SimulationSpec(grid_size=16, steps=20, seed=42))
         ci1 = detect_computational_irreducibility(seq)
         ci2 = detect_computational_irreducibility(seq)
-        assert ci1.pce_complexity_class == ci2.pce_complexity_class
-        assert ci1.ci_score == ci2.ci_score
+        assert ci1["pce_complexity_class"] == ci2["pce_complexity_class"]
+        assert ci1["ci_score"] == ci2["ci_score"]

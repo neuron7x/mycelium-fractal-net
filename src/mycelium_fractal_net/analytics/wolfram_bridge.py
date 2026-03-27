@@ -99,6 +99,18 @@ class ComputationalIrreducibilityReport:
     pce_complexity_class: str
     intrinsic_randomness: float
 
+    def to_dict(self) -> dict[str, object]:
+        """Serialise to plain dict (JSON-safe)."""
+        return {
+            "ci_score": self.ci_score,
+            "is_irreducible": self.is_irreducible,
+            "incompressibility": self.incompressibility,
+            "lyapunov_indicator": self.lyapunov_indicator,
+            "prediction_residual": self.prediction_residual,
+            "pce_complexity_class": self.pce_complexity_class,
+            "intrinsic_randomness": self.intrinsic_randomness,
+        }
+
     def summary(self) -> str:
         return (
             f"[CI:{self.ci_score:.3f} {'IRREDUCIBLE' if self.is_irreducible else 'reducible'}] "
@@ -322,7 +334,7 @@ def _estimate_intrinsic_randomness(field: np.ndarray) -> float:
 
 def detect_computational_irreducibility(
     seq: FieldSequence,
-) -> ComputationalIrreducibilityReport:
+) -> dict[str, object]:
     """Detect computational irreducibility in a field state.
 
     Combines three signals:
@@ -340,7 +352,8 @@ def detect_computational_irreducibility(
 
     Returns
     -------
-    ComputationalIrreducibilityReport
+    dict
+        JSON-safe dictionary with CI metrics.
     """
     field = np.asarray(seq.field, dtype=np.float64)
     history = seq.history if hasattr(seq, "history") else None
@@ -375,4 +388,4 @@ def detect_computational_irreducibility(
         prediction_residual=round(P, 6),
         pce_complexity_class=pce_class,
         intrinsic_randomness=round(intrinsic, 6),
-    )
+    ).to_dict()
