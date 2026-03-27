@@ -211,6 +211,7 @@ def S_select(
     """
     from mycelium_fractal_net.neurochem.ccp_gnc_bridge import validate_ccp_gnc_consistency
     from mycelium_fractal_net.neurochem.gnc import (
+        THETA,
         GNCBridge,
         MesoController,
         compute_gnc_state,
@@ -238,7 +239,7 @@ def S_select(
         coherence=diag.coherence,
         dominant_axis=diag.dominant_axis,
         meso_strategy=strategy,
-        theta_vector=np.array(list(gnc_state.theta.values()), dtype=np.float64),
+        theta_vector=np.array([gnc_state.theta[t] for t in THETA], dtype=np.float64),
         modulated_anomaly=modulated,
         program_spine={"A_H": 0.0, "B_X": 0.0, "D_T": 0.0},
         ccp_gnc_consistent=consistency["consistent"],

@@ -28,6 +28,10 @@ _OPTIONAL_ATTRS = {
     "estimate_fractal_dimension": "mycelium_fractal_net.core.fractal",
     "generate_fractal_ifs": "mycelium_fractal_net.core.fractal",
     "simulate_mycelium_field": "mycelium_fractal_net.core.turing",
+    # Choice Operator A_C (lazy: imports thermodynamic kernel)
+    "choice_operator": "mycelium_fractal_net.core.choice_operator",
+    "ChoiceResult": "mycelium_fractal_net.core.choice_operator",
+    "detect_indeterminacy": "mycelium_fractal_net.core.choice_operator",
 }
 
 
@@ -41,6 +45,7 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = [
+    "ChoiceResult",
     "FractalConfig",
     "FractalGrowthEngine",
     "FractalMetrics",
@@ -59,9 +64,11 @@ __all__ = [
     "StabilityError",
     "ValueOutOfRangeError",
     "aggregate_gradients_krum",
+    "choice_operator",
     "compute_lyapunov_exponent",
     "compute_nernst_potential",
     "compute_stability_metrics",
+    "detect_indeterminacy",
     "estimate_fractal_dimension",
     "extract",
     "generate_fractal_ifs",

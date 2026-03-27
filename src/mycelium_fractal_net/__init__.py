@@ -503,9 +503,8 @@ _LAZY_ATTRS = {
     "BioExtension": ("mycelium_fractal_net.bio", "BioExtension"),
     "BioConfig": ("mycelium_fractal_net.bio", "BioConfig"),
     "BioReport": ("mycelium_fractal_net.bio", "BioReport"),
-    # Auto-heal types
-    "HealResult": ("mycelium_fractal_net.auto_heal", "HealResult"),
     # Meta-Core — Reality pipeline (lazy: imports GNC+)
+    # Note: HealResult is eagerly imported (line 45), no lazy entry needed
     "compute_reality": ("mycelium_fractal_net.meta_core", "compute_reality"),
     "resolve_reality": ("mycelium_fractal_net.meta_core", "resolve_reality"),
     "AgentState": ("mycelium_fractal_net.meta_core", "AgentState"),
