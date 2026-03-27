@@ -35,6 +35,34 @@ class CollapseTracker:
     def history(self) -> list[float]:
         return list(self._history)
 
+    @property
+    def consecutive_failures(self) -> int:
+        return self._consecutive_failures
+
+    def phi_trend(self, window: int = 20) -> float:
+        """Slope of Phi over recent window. Positive = pressure rising."""
+        if len(self._history) < 2:
+            return 0.0
+        import numpy as np
+
+        recent = self._history[-window:]
+        if len(recent) < 2:
+            return 0.0
+        x = np.arange(len(recent), dtype=float)
+        return float(np.polyfit(x, recent, 1)[0])
+
+    def failure_density(self, window: int = 20) -> float:
+        """Fraction of irreversible events in recent window."""
+        if len(self._history) < 2:
+            return 0.0
+        recent = self._history[-window:]
+        # Count jumps (irreversible events cause phi to jump by ~1.0)
+        import numpy as np
+
+        diffs = np.diff(recent)
+        n_jumps = int(np.sum(diffs > 0.5))  # decay-adjusted threshold
+        return float(n_jumps / max(len(recent), 1))
+
     def record(
         self,
         phase_is_collapsing: bool,

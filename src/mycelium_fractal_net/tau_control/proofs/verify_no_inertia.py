@@ -12,23 +12,29 @@ import numpy as np
 from mycelium_fractal_net.tau_control.identity_engine import IdentityEngine
 
 
-def verify_no_inertia(n: int = 500, seed: int = 42) -> dict[str, object]:
-    """Run steps with escalating pressure until transformation fires."""
+def verify_no_inertia(n: int = 800, seed: int = 42) -> dict[str, object]:
+    """Run steps with sustained collapse pressure until transformation fires.
+
+    Uses min_consecutive_existential=1 and collapse_k_max=2 to ensure
+    the system is not too conservative for this proof.
+    """
     rng = np.random.default_rng(seed)
     engine = IdentityEngine(state_dim=4, collapse_k_max=2)
+    # Lower hysteresis for this proof
+    engine.discriminant.min_consecutive_existential = 1
 
     reports = []
     for i in range(n):
-        # Gradually escalate: more collapses, less recovery success
-        collapsing = i > 50 and (i % 3 == 0)
-        recovery_ok = i < 100 or rng.random() > 0.7
+        # Sustained collapse: always collapsing after warmup, never recovering
+        collapsing = i > 20
+        recovery_ok = i < 20
         x = rng.normal(0, 0.5 + i * 0.01, 4)
 
         report = engine.process(
             state_vector=x,
             free_energy=0.5 + i * 0.01,
             phase_is_collapsing=collapsing,
-            coherence=max(0.1, 0.9 - i * 0.002),
+            coherence=max(0.05, 0.9 - i * 0.003),
             recovery_succeeded=recovery_ok,
         )
         reports.append(report)

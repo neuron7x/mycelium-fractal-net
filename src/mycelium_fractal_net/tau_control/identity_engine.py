@@ -125,7 +125,7 @@ class IdentityEngine:
         # 2. Tau update
         tau = self.tau_ctrl.update(recovery_succeeded)
 
-        # 3. Pressure classification
+        # 3. Pressure classification (with trajectory features)
         pressure = self.discriminant.classify(
             phi=phi,
             tau=tau,
@@ -133,6 +133,9 @@ class IdentityEngine:
             norm=self._norm,
             phase_is_collapsing=phase_is_collapsing,
             coherence=coherence,
+            phi_trend=self.tracker.phi_trend(),
+            failure_density=self.tracker.failure_density(),
+            steps_in_bad_phase=self.tracker.consecutive_failures,
         )
 
         # 4. Mode determination

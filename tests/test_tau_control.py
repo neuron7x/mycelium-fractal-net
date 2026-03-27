@@ -158,10 +158,12 @@ class TestViabilityKernel:
 
 class TestDiscriminant:
     def test_high_phi_is_existential(self) -> None:
-        d = Discriminant()
+        d = Discriminant(min_consecutive_existential=3)
         ns = NormSpace(np.zeros(4), np.eye(4))
-        p = d.classify(phi=10.0, tau=3.0, x=np.zeros(4), norm=ns,
-                       phase_is_collapsing=False, coherence=0.9)
+        # Hysteresis: need consecutive EXISTENTIAL classifications
+        for _ in range(3):
+            p = d.classify(phi=10.0, tau=3.0, x=np.zeros(4), norm=ns,
+                           phase_is_collapsing=False, coherence=0.9)
         assert p == PressureKind.EXISTENTIAL
 
     def test_healthy_is_operational(self) -> None:

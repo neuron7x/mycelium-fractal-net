@@ -18,13 +18,19 @@ Ref: Vasylenko (2026), Friston (2010), Ashby (1956)
 """
 
 from .collapse_tracker import CollapseTracker
-from .discriminant import Discriminant, PressureKind, SystemMode
+from .discriminant import (
+    CalibrationResult,
+    Discriminant,
+    PressureKind,
+    SystemMode,
+    TrajectoryDiscriminant,
+)
 from .identity_engine import IdentityEngine, IdentityReport
 from .lyapunov import LyapunovMonitor, LyapunovState
 from .tau_controller import TauController
 from .transformation import TransformationProtocol
 from .types import MetaRuleSpace, NormSpace, TauState
-from .viability import ViabilityKernel
+from .viability import BarrierMonitor, BarrierStatus, CertifiedEllipsoid, ViabilityKernel
 
 __all__ = [
     "CollapseTracker",

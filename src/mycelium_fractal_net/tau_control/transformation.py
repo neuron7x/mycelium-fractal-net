@@ -33,10 +33,13 @@ class TransformationProtocol:
     def __init__(
         self,
         lyapunov: LyapunovMonitor | None = None,
+        epsilon_c: float = 1.0,
     ) -> None:
         self.lyapunov = lyapunov or LyapunovMonitor()
+        self.epsilon_c = epsilon_c
         self._transform_count: int = 0
         self._reject_count: int = 0
+        self._last_reject_reason: str = ""
 
     @property
     def transform_count(self) -> int:
@@ -45,6 +48,10 @@ class TransformationProtocol:
     @property
     def reject_count(self) -> int:
         return self._reject_count
+
+    @property
+    def last_reject_reason(self) -> str:
+        return self._last_reject_reason
 
     def transform(
         self,
@@ -90,10 +97,18 @@ class TransformationProtocol:
             free_energy, norm, norm_origin, new_meta, meta_origin,
         )
 
-        # MANDATORY: bounded-jump check
+        # MANDATORY: bounded-jump check (V-based)
         if not self.lyapunov.bounded_jump_ok(v_old.v_total, v_new.v_total):
             self._reject_count += 1
+            self._last_reject_reason = "delta_V_exceeded"
+            return meta, False
+
+        # MANDATORY: KL bounded jump (Gate 6)
+        if not self.lyapunov.kl_bounded(new_meta, meta, self.epsilon_c):
+            self._reject_count += 1
+            self._last_reject_reason = "KL_exceeded"
             return meta, False
 
         self._transform_count += 1
+        self._last_reject_reason = ""
         return new_meta, True
