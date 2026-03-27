@@ -8,6 +8,7 @@ Modes:
 
 from __future__ import annotations
 
+import logging
 import math
 import time
 from collections.abc import Generator
@@ -15,6 +16,8 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.core.causal_validation import validate_causal_consistency
+
+_log = logging.getLogger(__name__)
 from mycelium_fractal_net.core.detect import detect_anomaly
 from mycelium_fractal_net.core.early_warning import early_warning
 from mycelium_fractal_net.core.forecast import forecast_next
@@ -176,7 +179,7 @@ def _build_report(
             bridge.update_from_m_score(anomaly.score)
             gnc_diag = bridge.summary()
     except Exception:
-        pass
+        _log.debug("GNC+ diagnosis unavailable", exc_info=True)
 
     # CCP metrics (optional, fail-safe)
     ccp_state = None
@@ -199,9 +202,9 @@ def _build_report(
                         ccp_state, _gnc(gnc_levels)
                     )
                 except Exception:
-                    pass
+                    _log.debug("CCP-GNC+ consistency check failed", exc_info=True)
         except Exception:
-            pass
+            _log.debug("CCP metrics computation failed", exc_info=True)
 
     # A_C activation check (optional, fail-safe)
     ac_activation = None
@@ -225,7 +228,7 @@ def _build_report(
                 "details": ac_result.details,
             }
         except Exception:
-            pass
+            _log.debug("A_C activation check failed", exc_info=True)
 
     return DiagnosisReport(
         severity=severity,

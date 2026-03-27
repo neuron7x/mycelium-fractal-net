@@ -8,11 +8,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
+import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+_logger = logging.getLogger(__name__)
 
 try:
     from cryptography.hazmat.primitives.asymmetric.ed25519 import (
@@ -76,10 +80,28 @@ def _verify_signature(message: bytes, signature: bytes, public_key_bytes: bytes)
 
 
 def _crypto_config_seed(config_path: str | Path) -> str:
-    text = Path(config_path).read_text(encoding="utf-8")
-    match = re.search(r'deterministic_artifact_seed:\s*"?([^"\n]+)"?', text)
-    if match:
-        return match.group(1).strip()
+    # Prefer environment variable for per-deployment uniqueness
+    env_seed = os.environ.get("MFN_ARTIFACT_SEED")
+    if env_seed:
+        return env_seed
+
+    try:
+        text = Path(config_path).read_text(encoding="utf-8")
+        match = re.search(r'deterministic_artifact_seed:\s*"?([^"\n]+)"?', text)
+        if match:
+            seed = match.group(1).strip()
+            if seed == "mfn-artifact-signing-v1":
+                _logger.warning(
+                    "Using default artifact signing seed. Set MFN_ARTIFACT_SEED "
+                    "env var for per-deployment key uniqueness."
+                )
+            return seed
+    except FileNotFoundError:
+        pass
+    _logger.warning(
+        "No artifact signing seed configured. Using default. "
+        "Set MFN_ARTIFACT_SEED for production deployments."
+    )
     return "mfn-artifact-signing-v1"
 
 

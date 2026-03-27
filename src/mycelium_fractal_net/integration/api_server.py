@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from mycelium_fractal_net import __version__
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
@@ -137,7 +137,19 @@ class ComparePayload(BaseModel):
 
 
 class ReportPayload(ForecastPayload):
-    output_root: str = "artifacts/runs"
+    output_root: str = Field(
+        default="artifacts/runs",
+        max_length=500,
+        description="Path for report output. No '..' traversal allowed.",
+    )
+
+    @model_validator(mode="after")
+    def _validate_output_root(self) -> ReportPayload:
+        """Prevent path traversal attacks."""
+        if ".." in self.output_root:
+            msg = "output_root must not contain '..' (path traversal)"
+            raise ValueError(msg)
+        return self
 
 
 def _spec_from_payload(req: SimulationPayload) -> SimulationSpec:

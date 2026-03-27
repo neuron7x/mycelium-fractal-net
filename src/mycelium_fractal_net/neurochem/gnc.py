@@ -32,6 +32,7 @@ Ref: Friston et al. (2012) Neural Comput 24:2201
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -98,6 +99,7 @@ SIGMA: dict[str, dict[str, int]] = {
 
 # Omega: pairwise interaction matrix (7x7)
 _IDX = {m: i for i, m in enumerate(MODULATORS)}
+_OMEGA_LOCK = threading.Lock()
 _OMEGA = np.zeros((7, 7), dtype=np.float64)
 _OMEGA[_IDX["Glutamate"], _IDX["GABA"]] = -0.6
 _OMEGA[_IDX["GABA"], _IDX["Glutamate"]] = -0.6
@@ -364,13 +366,13 @@ def omega_update(state: GNCState, learning_rate: float = 0.01) -> np.ndarray:
     delta = learning_rate * np.outer(centered, centered)
     np.fill_diagonal(delta, 0.0)
 
-    # Apply with momentum — don't let Omega drift too far from baseline
-    _OMEGA = np.clip(_OMEGA + delta, -1.0, 1.0)
-    # Symmetrize
-    _OMEGA = (_OMEGA + _OMEGA.T) / 2.0
-    np.fill_diagonal(_OMEGA, 0.0)
+    with _OMEGA_LOCK:
+        _OMEGA = np.clip(_OMEGA + delta, -1.0, 1.0)
+        _OMEGA = (_OMEGA + _OMEGA.T) / 2.0
+        np.fill_diagonal(_OMEGA, 0.0)
+        result = _OMEGA.copy()
 
-    return _OMEGA.copy()
+    return result
 
 
 def get_omega() -> np.ndarray:
@@ -381,17 +383,18 @@ def get_omega() -> np.ndarray:
 def reset_omega() -> None:
     """Reset Omega to baseline values."""
     global _OMEGA
-    _OMEGA = np.zeros((7, 7), dtype=np.float64)
-    _OMEGA[_IDX["Glutamate"], _IDX["GABA"]] = -0.6
-    _OMEGA[_IDX["GABA"], _IDX["Glutamate"]] = -0.6
-    _OMEGA[_IDX["Dopamine"], _IDX["Serotonin"]] = -0.4
-    _OMEGA[_IDX["Serotonin"], _IDX["Dopamine"]] = -0.4
-    _OMEGA[_IDX["Noradrenaline"], _IDX["Acetylcholine"]] = +0.3
-    _OMEGA[_IDX["Acetylcholine"], _IDX["Noradrenaline"]] = +0.3
-    _OMEGA[_IDX["Opioid"], :] = +0.2
-    _OMEGA[_IDX["Opioid"], _IDX["Opioid"]] = 0.0
-    _OMEGA[_IDX["Glutamate"], _IDX["Dopamine"]] = +0.3
-    _OMEGA[_IDX["Acetylcholine"], _IDX["Glutamate"]] = +0.2
+    with _OMEGA_LOCK:
+        _OMEGA = np.zeros((7, 7), dtype=np.float64)
+        _OMEGA[_IDX["Glutamate"], _IDX["GABA"]] = -0.6
+        _OMEGA[_IDX["GABA"], _IDX["Glutamate"]] = -0.6
+        _OMEGA[_IDX["Dopamine"], _IDX["Serotonin"]] = -0.4
+        _OMEGA[_IDX["Serotonin"], _IDX["Dopamine"]] = -0.4
+        _OMEGA[_IDX["Noradrenaline"], _IDX["Acetylcholine"]] = +0.3
+        _OMEGA[_IDX["Acetylcholine"], _IDX["Noradrenaline"]] = +0.3
+        _OMEGA[_IDX["Opioid"], :] = +0.2
+        _OMEGA[_IDX["Opioid"], _IDX["Opioid"]] = 0.0
+        _OMEGA[_IDX["Glutamate"], _IDX["Dopamine"]] = +0.3
+        _OMEGA[_IDX["Acetylcholine"], _IDX["Glutamate"]] = +0.2
 
 
 # ═══════════════════════════════════════════════════════════════

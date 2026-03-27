@@ -175,15 +175,15 @@ class RateLimiter:
         Returns:
             str: Client identifier key.
         """
-        # Check for forwarded header (behind proxy)
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            # Take the first IP in the chain (original client)
-            return str(forwarded.split(",")[0].strip())
-
-        # Fall back to direct client IP
+        # Only trust X-Forwarded-For from loopback (behind local proxy).
+        # Direct client connections use request.client.host.
         if request.client:
-            return str(request.client.host)
+            client_ip = str(request.client.host)
+            if client_ip in ("127.0.0.1", "::1"):
+                forwarded = request.headers.get("X-Forwarded-For", "")
+                if forwarded:
+                    return str(forwarded.split(",")[0].strip())
+            return client_ip
 
         return "unknown"
 

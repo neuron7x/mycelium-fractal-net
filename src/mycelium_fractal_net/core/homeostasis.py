@@ -33,7 +33,10 @@ Ref: Cannon (1932) "The Wisdom of the Body"
 
 from __future__ import annotations
 
+import logging
 import time
+
+_log = logging.getLogger(__name__)
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -143,7 +146,7 @@ class HomeostasisLoop:
                         current_seq = heal_result.seq_after
                         report.heals_succeeded += 1
                 except Exception:
-                    pass  # heal failed — continue with current state
+                    _log.debug("auto_heal failed during homeostasis", exc_info=True)
 
             sigma_prev = sigma
 
@@ -171,7 +174,7 @@ class HomeostasisLoop:
 
             report.observation = observe(current_seq)
         except Exception:
-            pass  # observatory optional — homeostasis works without it
+            _log.debug("observatory unavailable during homeostasis", exc_info=True)
 
         report.compute_time_ms = (time.perf_counter() - t0) * 1000
         return report

@@ -20,6 +20,8 @@ reveals where the system doesn't understand itself.
 
 from __future__ import annotations
 
+import logging
+import threading
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -63,8 +65,9 @@ class ExperienceMemory:
     are the ones it has discovered as causal.
     """
 
-    def __init__(self, min_experiences: int = 15) -> None:
+    def __init__(self, min_experiences: int = 15, max_experiences: int = 500) -> None:
         self.min_experiences = min_experiences
+        self.max_experiences = max_experiences
         self._features: list[dict[str, float]] = []
         self._M_after: list[float] = []
         self._anomaly_after: list[float] = []
@@ -98,6 +101,12 @@ class ExperienceMemory:
         self._M_after.append(M_after)
         self._anomaly_after.append(anomaly_after)
         self._healed.append(healed)
+        # FIFO eviction when over capacity
+        if self.size > self.max_experiences:
+            self._features = self._features[-self.max_experiences:]
+            self._M_after = self._M_after[-self.max_experiences:]
+            self._anomaly_after = self._anomaly_after[-self.max_experiences:]
+            self._healed = self._healed[-self.max_experiences:]
         # Refit model when we have enough data
         if self.size >= self.min_experiences:
             self._fit()
@@ -221,15 +230,16 @@ class ExperienceMemory:
 
 # Global state — persists across calls within process
 _MEMORY = ExperienceMemory()
+_DA_STATE = None  # lazy init
+_STATE_LOCK = threading.Lock()
+
+_log = logging.getLogger(__name__)
 
 
 def _get_da_module():
     from .neurochem.dopamine import DopamineState, compute_dopamine, modulate_plasticity
 
     return DopamineState, compute_dopamine, modulate_plasticity
-
-
-_DA_STATE = None  # lazy init
 
 
 @dataclass
@@ -431,10 +441,11 @@ def auto_heal(
 
     # ── 2. DOPAMINE STATE FROM PREVIOUS CYCLE ───────────────────
     global _DA_STATE
-    if _DA_STATE is None:
-        DopamineState, _, _ = _get_da_module()
-        _DA_STATE = DopamineState()
-    da_budget = budget * (0.5 + 0.5 * _DA_STATE.plasticity_scale / 3.0)
+    with _STATE_LOCK:
+        if _DA_STATE is None:
+            DopamineState, _, _ = _get_da_module()
+            _DA_STATE = DopamineState()
+        da_budget = budget * (0.5 + 0.5 * _DA_STATE.plasticity_scale / 3.0)
 
     # ── 3. DECIDE ───────────────────────────────────────────────
     needs_healing = severity_before in ("warning", "critical") or det_before.label == "anomalous"
@@ -536,8 +547,9 @@ def auto_heal(
 
     pe_for_da = prediction_error if prediction_error is not None else abs(delta_M)
     _, compute_dopamine_fn, _ = _get_da_module()
-    _DA_STATE = compute_dopamine_fn(pe_for_da, _DA_STATE)
-    mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
+    with _STATE_LOCK:
+        _DA_STATE = compute_dopamine_fn(pe_for_da, _DA_STATE)
+        mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
 
     elapsed = (time.perf_counter() - t0) * 1000
 

@@ -262,9 +262,11 @@ class ReactionDiffusionEngine:
             intrinsic_enabled = bool(spec.intrinsic_field_jitter)
             intrinsic_var = float(spec.intrinsic_field_jitter_var)
         if intrinsic_enabled:
-            self._field = self._field + self._rng.normal(
-                0, np.sqrt(intrinsic_var), size=self._field.shape
-            )
+            safe_var = max(0.0, float(intrinsic_var))
+            if safe_var > 0.0:
+                self._field = self._field + self._rng.normal(
+                    0, np.sqrt(safe_var), size=self._field.shape
+                )
 
         # Soft-boundary damping + hard clamp
         self._field, pressure = self._apply_soft_boundary_damping(self._field)
