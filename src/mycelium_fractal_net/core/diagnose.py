@@ -158,6 +158,17 @@ def _build_report(
         "causal_mode": causal_mode,
     }
 
+    # GNC+ neuromodulatory diagnosis (optional, fail-safe)
+    gnc_diag = None
+    try:
+        from mycelium_fractal_net.neurochem.gnc import GNCBridge
+
+        bridge = GNCBridge()
+        bridge.update_from_m_score(anomaly.score)
+        gnc_diag = bridge.summary()
+    except Exception:  # noqa: BLE001
+        pass
+
     return DiagnosisReport(
         severity=severity,
         anomaly=anomaly,
@@ -168,6 +179,7 @@ def _build_report(
         plan=plan,
         narrative=narrative,
         metadata=metadata,
+        gnc_diagnosis=gnc_diag,
     )
 
 

@@ -41,12 +41,14 @@ __all__ = [
     "GNCBridge",
     "GNCDiagnosis",
     "GNCState",
+    "MesoController",
     "MODULATORS",
     "ROLES",
     "SIGMA",
     "THETA",
     "compute_gnc_state",
     "gnc_diagnose",
+    "omega_update",
     "step",
 ]
 
@@ -340,3 +342,133 @@ class GNCBridge:
 
     def summary(self) -> str:
         return gnc_diagnose(self.state).summary()
+
+
+# ═══════════════════════════════════════════════════════════════
+# ADAPTIVE OMEGA
+# ═══════════════════════════════════════════════════════════════
+
+def omega_update(state: GNCState, learning_rate: float = 0.01) -> np.ndarray:
+    """Update Omega matrix based on current modulator co-activation.
+
+    Hebbian rule: if two modulators are co-active (both > 0.5),
+    strengthen their coupling. If anti-correlated, weaken.
+
+    Returns the updated 7x7 Omega matrix.
+    """
+    global _OMEGA
+    levels = np.array([state.modulators[m] for m in MODULATORS])
+    centered = levels - 0.5
+
+    # Hebbian: delta_omega_ij = lr * centered_i * centered_j
+    delta = learning_rate * np.outer(centered, centered)
+    np.fill_diagonal(delta, 0.0)
+
+    # Apply with momentum — don't let Omega drift too far from baseline
+    _OMEGA = np.clip(_OMEGA + delta, -1.0, 1.0)
+    # Symmetrize
+    _OMEGA = (_OMEGA + _OMEGA.T) / 2.0
+    np.fill_diagonal(_OMEGA, 0.0)
+
+    return _OMEGA.copy()
+
+
+def get_omega() -> np.ndarray:
+    """Return current Omega matrix (7x7)."""
+    return _OMEGA.copy()
+
+
+def reset_omega() -> None:
+    """Reset Omega to baseline values."""
+    global _OMEGA
+    _OMEGA = np.zeros((7, 7), dtype=np.float64)
+    _OMEGA[_IDX["Glutamate"], _IDX["GABA"]] = -0.6
+    _OMEGA[_IDX["GABA"], _IDX["Glutamate"]] = -0.6
+    _OMEGA[_IDX["Dopamine"], _IDX["Serotonin"]] = -0.4
+    _OMEGA[_IDX["Serotonin"], _IDX["Dopamine"]] = -0.4
+    _OMEGA[_IDX["Noradrenaline"], _IDX["Acetylcholine"]] = +0.3
+    _OMEGA[_IDX["Acetylcholine"], _IDX["Noradrenaline"]] = +0.3
+    _OMEGA[_IDX["Opioid"], :] = +0.2
+    _OMEGA[_IDX["Opioid"], _IDX["Opioid"]] = 0.0
+    _OMEGA[_IDX["Glutamate"], _IDX["Dopamine"]] = +0.3
+    _OMEGA[_IDX["Acetylcholine"], _IDX["Glutamate"]] = +0.2
+
+
+# ═══════════════════════════════════════════════════════════════
+# MESO CONTROLLER
+# ═══════════════════════════════════════════════════════════════
+
+class MesoController:
+    """Meso-level controller: switches between micro (Theta) and macro (Program spine).
+
+    When coherence is high and imbalance low → micro adjustments (Theta tuning).
+    When coherence drops or imbalance rises → macro strategy switch.
+
+    Strategy levels:
+        micro:  fine-tune individual Theta parameters
+        meso:   adjust modulator levels to restore balance
+        macro:  activate program spine (A_H, B_X, D_T)
+    """
+
+    COHERENCE_MICRO = 0.6   # above → micro
+    COHERENCE_MACRO = 0.3   # below → macro
+    IMBALANCE_MICRO = 0.15  # below → micro
+    IMBALANCE_MACRO = 0.25  # above → macro
+
+    def __init__(self) -> None:
+        self.current_strategy: str = "micro"
+        self.strategy_history: list[str] = []
+
+    def evaluate(self, state: GNCState) -> str:
+        """Evaluate current state and return strategy: micro/meso/macro."""
+        diag = gnc_diagnose(state)
+
+        if diag.coherence > self.COHERENCE_MICRO and diag.theta_imbalance < self.IMBALANCE_MICRO:
+            strategy = "micro"
+        elif diag.coherence < self.COHERENCE_MACRO or diag.theta_imbalance > self.IMBALANCE_MACRO:
+            strategy = "macro"
+        else:
+            strategy = "meso"
+
+        self.current_strategy = strategy
+        self.strategy_history.append(strategy)
+        return strategy
+
+    def apply(self, state: GNCState) -> GNCState:
+        """Apply the current strategy to the state."""
+        strategy = self.evaluate(state)
+
+        if strategy == "micro":
+            # Fine-tune: one step of manifold dynamics
+            return step(state)
+
+        if strategy == "meso":
+            # Balance: push extreme modulators toward center
+            new_mods = {}
+            for m in MODULATORS:
+                lv = state.modulators[m]
+                if lv > 0.7:
+                    new_mods[m] = lv - 0.05
+                elif lv < 0.3:
+                    new_mods[m] = lv + 0.05
+                else:
+                    new_mods[m] = lv
+            state_balanced = GNCState.from_levels(new_mods, state.context)
+            omega_update(state_balanced, learning_rate=0.005)
+            return state_balanced
+
+        # macro: reset toward baseline + update omega
+        reset_omega()
+        baseline_shift = {m: state.modulators[m] * 0.7 + 0.5 * 0.3 for m in MODULATORS}
+        return GNCState.from_levels(baseline_shift, state.context)
+
+    def summary(self) -> str:
+        n = len(self.strategy_history)
+        if n == 0:
+            return "[Meso] no evaluations"
+        counts = {s: self.strategy_history.count(s) for s in ("micro", "meso", "macro")}
+        return (
+            f"[Meso] current={self.current_strategy} "
+            f"history={n} (micro={counts.get('micro', 0)} "
+            f"meso={counts.get('meso', 0)} macro={counts.get('macro', 0)})"
+        )

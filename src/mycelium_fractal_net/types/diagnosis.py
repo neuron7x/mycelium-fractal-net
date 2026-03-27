@@ -35,6 +35,7 @@ class DiagnosisReport:
     plan: InterventionPlan | None
     narrative: str
     metadata: dict[str, Any] = field(default_factory=dict)
+    gnc_diagnosis: Any = None  # GNCDiagnosis if neurochem.gnc available
 
     def is_ok(self) -> bool:
         """True if severity is stable or info."""
