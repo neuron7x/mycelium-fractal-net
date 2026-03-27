@@ -20,7 +20,7 @@ def test_package_version() -> None:
 
     assert hasattr(mycelium_fractal_net, "__version__")
     assert isinstance(mycelium_fractal_net.__version__, str)
-    assert mycelium_fractal_net.__version__ == "4.5.0"
+    assert mycelium_fractal_net.__version__ == "0.7.0"
 
 
 def test_public_api_functions() -> None:

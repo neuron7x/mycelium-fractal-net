@@ -138,7 +138,7 @@ report = mfn.diagnose(seq, gnc_levels={...}, compute_ccp=True, run_ac_check=True
 
 ## Status
 
-- **v4.5.0** — 2,600+ tests, ruff clean
+- **v0.7.0** — 2,675+ tests, ruff clean
 - **75 A_C tests** — axioms A1-A5, strategies, activation, integration
 - **56 GNC+ tests** — Sigma, Omega, F1-F7, MesoController, Bridge
 - **10 γ-correlation tests** — synthetic 20-state validation

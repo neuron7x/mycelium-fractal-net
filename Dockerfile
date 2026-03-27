@@ -1,4 +1,4 @@
-# MyceliumFractalNet v4.5 Docker Image
+# MyceliumFractalNet v0.7 Docker Image
 # Multi-stage build for minimal production image
 
 ARG PYTHON_VERSION=3.12
@@ -38,7 +38,7 @@ ENV PATH=/usr/local/bin:$PATH \
     PYTHONUNBUFFERED=1
 
 LABEL org.opencontainers.image.title="MyceliumFractalNet" \
-      org.opencontainers.image.version="4.5.0" \
+      org.opencontainers.image.version="0.7.0" \
       org.opencontainers.image.source="https://github.com/neuron7x/mycelium-fractal-net" \
       org.opencontainers.image.description="Morphogenetic field intelligence engine"
 

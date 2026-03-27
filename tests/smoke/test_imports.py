@@ -18,7 +18,7 @@ def test_package_version() -> None:
 
     assert hasattr(mfn, "__version__")
     assert isinstance(mfn.__version__, str)
-    assert mfn.__version__ == "4.5.0"
+    assert mfn.__version__ == "0.7.0"
 
 
 def test_simulation_types_import() -> None:

@@ -58,7 +58,7 @@ def _get_mfn_version() -> str:
         return version("mycelium-fractal-net")
     except Exception:
         # Fallback if package metadata not available
-        return "4.5.0"
+        return "0.7.0"
 
 
 MFN_VERSION = _get_mfn_version()
