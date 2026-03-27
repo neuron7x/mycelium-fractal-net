@@ -218,9 +218,10 @@ class TestHistory:
 
     def test_critical_severity_uses_ensemble(self, candidates) -> None:
         op = AxiomaticChoiceOperator(strategy=SelectionStrategy.RANDOM_ADMISSIBLE)
-        # 5 conditions -> severity=5/6=0.83 -> ensemble forced
+        # 6 conditions -> severity=6/7=0.86 -> ensemble forced
         op.select(
             candidates,
+            prev_state=candidates[0],
             gradient_norm=0.001,
             j_values=[0.50, 0.51],
             ccp_D_f=1.2,

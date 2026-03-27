@@ -206,6 +206,27 @@ def _build_report(
         except Exception:
             _log.debug("CCP metrics computation failed", exc_info=True)
 
+    # OmegaOrdinal dynamics (optional, fail-safe)
+    ordinal_dynamics = None
+    if gnc_levels is not None:
+        try:
+            from mycelium_fractal_net.neurochem.gnc import compute_gnc_state as _gnc_ord
+            from mycelium_fractal_net.neurochem.omega_ordinal import (
+                build_omega_ordinal,
+                compute_ordinal_dynamics,
+            )
+
+            ordinal_omega = build_omega_ordinal()
+            ordinal_result = compute_ordinal_dynamics(_gnc_ord(gnc_levels), ordinal_omega)
+            ordinal_dynamics = {
+                "ordinal_level": ordinal_result["ordinal_label"],
+                "ac_required": ordinal_result["ac_required"],
+                "phase_transition_risk": ordinal_result["phase_transition_risk"],
+                "omega_effect_norm": ordinal_result["omega_effect_norm"],
+            }
+        except Exception:
+            _log.debug("OmegaOrdinal dynamics failed", exc_info=True)
+
     # A_C activation check (optional, fail-safe)
     ac_activation = None
     if run_ac_check and gnc_levels is not None:
@@ -244,6 +265,7 @@ def _build_report(
         ccp_state=ccp_state,
         ccp_gnc_consistency=ccp_gnc_consistency,
         ac_activation=ac_activation,
+        ordinal_dynamics=ordinal_dynamics,
     )
 
 

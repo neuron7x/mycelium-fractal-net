@@ -80,6 +80,7 @@ class ActivationCondition(Enum):
     CCP_VIOLATION_D_F = "ccp_violation_d_f"
     CCP_VIOLATION_R = "ccp_violation_r"
     COMPUTATIONAL_IRREDUCIBILITY = "computational_irreducibility"
+    OMEGA_SQ_TRANSITION = "omega_sq_transition"
     NONE = "none"
 
 
@@ -164,8 +165,22 @@ def check_activation_conditions(
         conditions.append(ActivationCondition.COMPUTATIONAL_IRREDUCIBILITY)
         details["ci_score"] = ci_score
 
+    # C7: OmegaOrdinal ω² transition (Vasylenko 2026)
+    # Transfinite hierarchy detects manifold-level phase transition
+    try:
+        from .omega_ordinal import OrdinalRank, build_omega_ordinal, compute_ordinal_dynamics
+
+        omega = build_omega_ordinal()
+        ordinal = compute_ordinal_dynamics(gnc_state, omega)
+        if ordinal["ordinal_level"] == OrdinalRank.OMEGA_SQ:
+            conditions.append(ActivationCondition.OMEGA_SQ_TRANSITION)
+            details["ordinal_level"] = "ω²"
+            details["phase_transition_risk"] = ordinal["phase_transition_risk"]
+    except Exception:
+        pass  # fail-safe: ordinal check is optional
+
     should = len(conditions) > 0
-    severity = float(np.clip(len(conditions) / 6.0, 0.0, 1.0))
+    severity = float(np.clip(len(conditions) / 7.0, 0.0, 1.0))
 
     return ActivationResult(
         should_activate=should,

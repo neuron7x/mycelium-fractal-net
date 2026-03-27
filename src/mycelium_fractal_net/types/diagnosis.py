@@ -39,6 +39,7 @@ class DiagnosisReport:
     ccp_state: dict[str, Any] | None = None  # CCP triple (D_f, Phi, R) if computed
     ccp_gnc_consistency: dict[str, Any] | None = None  # CCP↔GNC+ consistency check
     ac_activation: dict[str, Any] | None = None  # A_C activation check result
+    ordinal_dynamics: dict[str, Any] | None = None  # OmegaOrdinal ω→ω² dynamics
 
     def is_ok(self) -> bool:
         """True if severity is stable or info."""
