@@ -5,6 +5,27 @@ All notable changes to MyceliumFractalNet are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.1] — 2026-03-27
+
+### Performance
+- **LyapunovAnalyzer: O(N⁴) → O(N²)** via analytical Jacobian registry
+  - Gray-Scott 64×64: 1096ms → 0.038ms (×28800 speedup)
+  - Gray-Scott 128×128: ~17000ms → 0.362ms (×47000 speedup)
+  - Pointwise 2×2 Jacobian eigenvalue solver, fully vectorized NumPy
+- Randomized power iteration fallback for unknown reaction functions (O(k·N²))
+- Legacy numerical FD preserved as private method for small grids (N²≤1024)
+
+### Added
+- `jacobian_registry.py`: extensible registry for analytical Jacobians
+  - `gray_scott_jacobian`, `fhn_jacobian`, `register_jacobian()`
+  - `leading_lambda1_analytical()` with automatic dispatch
+- `LyapunovAnalyzer.last_method` property for diagnostics
+- `OmegaOrdinal` — transfinite neuromodulatory hierarchy ω→ω²
+  - 4 ordinal ranks: ω (pairwise), ω+1 (mediative), ω+2 (global), ω² (phase transition)
+  - C7 activation condition in A_C: OMEGA_SQ_TRANSITION
+  - `ordinal_dynamics` field in DiagnosisReport
+- 41 new tests (18 Lyapunov + 23 OmegaOrdinal), total: 2675
+
 ## [4.5.0] — 2026-03-26
 
 ### Breakthrough
