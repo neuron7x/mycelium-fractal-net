@@ -120,6 +120,7 @@ def _build_report(
     causal_mode: str,
     gnc_levels: dict[str, float] | None = None,
     compute_ccp: bool = False,
+    run_ac_check: bool = False,
 ) -> DiagnosisReport:
     """Assemble the final DiagnosisReport from pipeline outputs."""
     severity = _compute_severity(
@@ -202,6 +203,30 @@ def _build_report(
         except Exception:
             pass
 
+    # A_C activation check (optional, fail-safe)
+    ac_activation = None
+    if run_ac_check and gnc_levels is not None:
+        try:
+            from mycelium_fractal_net.neurochem.axiomatic_choice import (
+                check_activation_conditions,
+            )
+            from mycelium_fractal_net.neurochem.gnc import compute_gnc_state as _gnc_ac
+
+            gnc_st = _gnc_ac(gnc_levels)
+            ccp_d_f = ccp_state.get("D_f") if ccp_state else None
+            ccp_r = ccp_state.get("R") if ccp_state else None
+            ac_result = check_activation_conditions(
+                gnc_state=gnc_st, ccp_D_f=ccp_d_f, ccp_R=ccp_r,
+            )
+            ac_activation = {
+                "should_activate": ac_result.should_activate,
+                "conditions": [c.value for c in ac_result.active_conditions],
+                "severity": ac_result.severity,
+                "details": ac_result.details,
+            }
+        except Exception:
+            pass
+
     return DiagnosisReport(
         severity=severity,
         anomaly=anomaly,
@@ -215,6 +240,7 @@ def _build_report(
         gnc_diagnosis=gnc_diag,
         ccp_state=ccp_state,
         ccp_gnc_consistency=ccp_gnc_consistency,
+        ac_activation=ac_activation,
     )
 
 
@@ -230,6 +256,7 @@ def diagnose(
     causal_mode: str = "strict",
     gnc_levels: dict[str, float] | None = None,
     compute_ccp: bool = False,
+    run_ac_check: bool = False,
 ) -> DiagnosisReport:
     """Full diagnostic pipeline in one call.
 
@@ -314,6 +341,7 @@ def diagnose(
         causal_mode,
         gnc_levels=gnc_levels,
         compute_ccp=compute_ccp,
+        run_ac_check=run_ac_check,
     )
 
 

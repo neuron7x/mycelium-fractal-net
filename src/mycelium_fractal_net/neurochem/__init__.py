@@ -1,3 +1,10 @@
+from .axiomatic_choice import (
+    ActivationCondition,
+    ActivationResult,
+    AxiomaticChoiceOperator,
+    SelectionStrategy,
+    check_activation_conditions,
+)
 from .calibration import (
     get_calibration_criteria,
     list_calibration_tasks,
@@ -16,13 +23,18 @@ from .state import NeuromodulationState
 
 __all__ = [
     "PROFILE_REGISTRY",
+    "ActivationCondition",
+    "ActivationResult",
+    "AxiomaticChoiceOperator",
     "DopamineConfig",
     "DopamineState",
     "GABAAKineticsConfig",
     "NeuromodulationConfig",
     "NeuromodulationState",
     "ObservationNoiseConfig",
+    "SelectionStrategy",
     "SerotonergicKineticsConfig",
+    "check_activation_conditions",
     "compute_dopamine",
     "compute_excitability_offset_v",
     "get_calibration_criteria",

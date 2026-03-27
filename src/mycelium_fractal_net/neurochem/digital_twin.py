@@ -19,7 +19,7 @@ from typing import Any
 
 import numpy as np
 
-from .gnc import _IDX, _OMEGA, MODULATORS, GNCState, compute_gnc_state
+from .gnc import _IDX, _OMEGA, MODULATORS, THETA, GNCState, compute_gnc_state
 
 __all__ = ["NeuromodulatoryDigitalTwin"]
 
@@ -172,6 +172,74 @@ class NeuromodulatoryDigitalTwin:
             f"F4={'PASS' if v['f4_pass'] is True else 'FAIL'} "
             f"MAE={v['mae']}"
         )
+
+    def predict_with_ac(
+        self,
+        horizon: int = 5,
+        ccp_D_f: float | None = None,
+        ccp_R: float | None = None,
+        seed: int | None = None,
+    ) -> tuple[list[GNCState], list[bool]]:
+        """Trajectory prediction with A_C integration.
+
+        At each step, generates candidate variations around the predicted state.
+        If activation conditions are met, A_C selects the best candidate.
+
+        Returns
+        -------
+        (trajectory, ac_activated_flags)
+        """
+        if len(self.history) < 3:
+            msg = "Need >= 3 history states for prediction"
+            raise ValueError(msg)
+
+        from .axiomatic_choice import AxiomaticChoiceOperator, SelectionStrategy
+
+        operator = AxiomaticChoiceOperator(
+            strategy=SelectionStrategy.ENSEMBLE, seed=seed,
+        )
+        rng = np.random.default_rng(seed)
+        trajectory: list[GNCState] = []
+        ac_flags: list[bool] = []
+        prev_state = self.history[-1]
+
+        for h in range(1, horizon + 1):
+            predicted = self.predict(h)
+
+            # Generate variations around prediction
+            candidates = [predicted]
+            for noise_std in (0.05, 0.10):
+                noisy = GNCState(
+                    modulators=dict(predicted.modulators),
+                    theta={
+                        t: float(np.clip(
+                            predicted.theta[t] + rng.normal(0, noise_std),
+                            0.1, 0.9,
+                        ))
+                        for t in THETA
+                    },
+                    context=dict(predicted.context),
+                    environment=dict(predicted.environment),
+                )
+                candidates.append(noisy)
+
+            selected = operator.select(
+                candidates=candidates,
+                prev_state=prev_state,
+                ccp_D_f=ccp_D_f,
+                ccp_R=ccp_R,
+            )
+
+            if selected is not None:
+                trajectory.append(selected)
+                ac_flags.append(True)
+            else:
+                trajectory.append(predicted)
+                ac_flags.append(False)
+
+            prev_state = trajectory[-1]
+
+        return trajectory, ac_flags
 
     @classmethod
     def from_gnc_states(cls, states: list[GNCState], window: int = 10) -> NeuromodulatoryDigitalTwin:
