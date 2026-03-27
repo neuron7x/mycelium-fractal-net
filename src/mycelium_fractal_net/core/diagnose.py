@@ -288,6 +288,10 @@ def diagnose(
         When provided, runs full GNC+ state computation instead of the default M-score bridge.
     compute_ccp : bool
         If True, compute CCP metrics (D_f, Phi, R) and CCP↔GNC+ consistency.
+    run_ac_check : bool
+        If True and gnc_levels provided, check A_C activation conditions
+        (gradient vanished, theta stagnation, CCP violations). Adds
+        ac_activation dict to report with should_activate, conditions, severity.
 
     Returns
     -------

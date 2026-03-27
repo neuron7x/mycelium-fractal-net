@@ -108,12 +108,40 @@ print(gnc_diagnose(state).summary())
 "
 ```
 
+## A_C — Axiomatic Choice Operator
+
+Symmetry-breaking primitive for computational indeterminacy.
+Activates when gradient-based selection provides no direction.
+
+**Trigger conditions:**
+- |nabla L| < eps (gradient vanished)
+- |J(s_i) - J(s_j)| < eps (equivalent candidates)
+- Delta-Theta -> 0 (neurodynamic stagnation)
+- D_f not in [1.5, 2.0] (CCP violation)
+- R < R_c (coherence collapse)
+
+**Axioms:** A1 admissibility, A2 CCP-closure, A3 non-derivability, A4 phase induction, A5 stabilization
+
+**6 strategies:** MAX_COHERENCE, CLOSEST_ATTRACTOR, MAX_PHI, MIN_THETA_IMBALANCE, RANDOM_ADMISSIBLE, ENSEMBLE
+
+**Integration:**
+- `auto_heal()` — resolves Pareto front indeterminacy
+- `Digital Twin.predict_with_ac()` — trajectory with A_C
+- `diagnose(run_ac_check=True)` — reports activation status
+- `resolve_reality()` — A_C-powered cognitive state resolution
+
+```python
+# One-call full pipeline with A_C
+report = mfn.diagnose(seq, gnc_levels={...}, compute_ccp=True, run_ac_check=True)
+# → anomaly + GNC+ + CCP + A_C activation check
+```
+
 ## Status
 
-- **v4.5.0** — 2,428+ tests, 82.6% coverage, ruff clean
+- **v4.5.0** — 2,600+ tests, ruff clean
+- **75 A_C tests** — axioms A1-A5, strategies, activation, integration
 - **56 GNC+ tests** — Sigma, Omega, F1-F7, MesoController, Bridge
 - **10 γ-correlation tests** — synthetic 20-state validation
-- **30 commits** this session
 - Solo-authored in wartime Ukraine, 2024–2026
 
 ---

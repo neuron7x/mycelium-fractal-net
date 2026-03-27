@@ -505,6 +505,23 @@ _LAZY_ATTRS = {
     "BioReport": ("mycelium_fractal_net.bio", "BioReport"),
     # Auto-heal types
     "HealResult": ("mycelium_fractal_net.auto_heal", "HealResult"),
+    # Meta-Core — Reality pipeline (lazy: imports GNC+)
+    "compute_reality": ("mycelium_fractal_net.meta_core", "compute_reality"),
+    "resolve_reality": ("mycelium_fractal_net.meta_core", "resolve_reality"),
+    "AgentState": ("mycelium_fractal_net.meta_core", "AgentState"),
+    "RealityFrame": ("mycelium_fractal_net.meta_core", "RealityFrame"),
+    # Choice Operator A_C (lazy: imports thermodynamic kernel)
+    "choice_operator": ("mycelium_fractal_net.core.choice_operator", "choice_operator"),
+    "ChoiceResult": ("mycelium_fractal_net.core.choice_operator", "ChoiceResult"),
+    # Axiomatic Choice (lazy: imports GNC+)
+    "AxiomaticChoiceOperator": (
+        "mycelium_fractal_net.neurochem.axiomatic_choice",
+        "AxiomaticChoiceOperator",
+    ),
+    "SelectionStrategy": (
+        "mycelium_fractal_net.neurochem.axiomatic_choice",
+        "SelectionStrategy",
+    ),
 }
 
 
@@ -576,9 +593,12 @@ DEPRECATED_SURFACES = {
 # ═══════════════════════════════════════════════════════════════
 
 __all__ = [
+    "AgentState",
     "AnalysisReport",
     "AnomalyEvent",
+    "AxiomaticChoiceOperator",
     "BoundaryCondition",
+    "ChoiceResult",
     "ComparisonResult",
     "DiagnosisReport",
     "FieldSequence",
@@ -595,6 +615,8 @@ __all__ = [
     "NeuromodulationSpec",
     "ObservationNoiseSpec",
     "ObservatoryReport",
+    "RealityFrame",
+    "SelectionStrategy",
     "SerotonergicPlasticitySpec",
     # ── Tier 5: Core types ────────────────────────────────────
     "SimulationSpec",
@@ -606,10 +628,12 @@ __all__ = [
     # ── Version ───────────────────────────────────────────────
     "__version__",
     "auto_heal",
-    # ── Tier 3: Cognitive extensions ──────────────────────────
     "benchmark_quick",
+    "choice_operator",
     "compare",
     "compare_many",
+    # ── Tier 3: Cognitive extensions ──────────────────────────
+    "compute_reality",
     "detect",
     "diagnose",
     "early_warning",
@@ -626,6 +650,7 @@ __all__ = [
     "plan_intervention",
     "plot_field",
     "report",
+    "resolve_reality",
     # ── Tier 1: Pipeline (the 7 verbs) ────────────────────────
     "simulate",
     "simulate_null",
