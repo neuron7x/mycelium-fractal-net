@@ -55,10 +55,10 @@ class TestTrajectoryDiscriminant:
         td = TrajectoryDiscriminant()
         result = td.calibrate(_synth_operational(300), _synth_existential(300))
         assert isinstance(result, CalibrationResult)
-        # CALIBRATION: ridge regression achieves high accuracy but moderate ECE.
-        # ECE < 0.5 is achievable; perfect calibration requires isotonic regression.
-        assert result.ece < 0.5, f"ECE too high: {result.ece}"
-        assert result.accuracy > 0.75, f"Accuracy too low: {result.accuracy}"
+        # IMPLEMENTED TRUTH: isotonic calibration, ECE < 0.15 on synthetic data.
+        assert result.ece < 0.15, f"ECE too high: {result.ece}"
+        assert result.accuracy > 0.85, f"Accuracy too low: {result.accuracy}"
+        assert result.ece_method == "isotonic"
         assert result.label == "synthetic_calibration"
 
     def test_high_uncertainty_forces_operational(self) -> None:
@@ -300,6 +300,7 @@ class TestProofsV2:
         """# CALIBRATION: synthetic labels only."""
         td = TrajectoryDiscriminant()
         result = td.calibrate(_synth_operational(500), _synth_existential(500))
-        # CALIBRATION: synthetic labels only. Ridge regression with moderate ECE.
-        assert result.ece < 0.5
+        # IMPLEMENTED TRUTH: isotonic calibration, ECE < 0.15 on synthetic data.
+        assert result.ece < 0.15, f"ECE too high: {result.ece}"
+        assert result.ece_method == "isotonic"
         assert result.accuracy > 0.80
