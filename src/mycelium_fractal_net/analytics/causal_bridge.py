@@ -55,7 +55,7 @@ class DagmaBridge:
         try:
             from dagma.linear import DagmaLinear
         except ImportError:
-            raise ImportError("dagma not installed: pip install dagma-linear")
+            raise ImportError("dagma not installed: pip install dagma-linear") from None
 
         n_features = feature_matrix.shape[1]
         if feature_names is None:
@@ -132,10 +132,9 @@ class DoWhyBridge:
             refuters: list of refutation methods
         """
         try:
-            import dowhy
             from dowhy import CausalModel
         except ImportError:
-            raise ImportError("dowhy not installed: pip install dowhy")
+            raise ImportError("dowhy not installed: pip install dowhy") from None
 
         pd = __import__("pandas")  # lazy — avoids static import detection
 

@@ -152,6 +152,17 @@ markers = [
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+# Frozen surfaces excluded from lint — scheduled for removal in v5.0
+extend-exclude = [
+  "src/mycelium_fractal_net/crypto/",
+  "src/mycelium_fractal_net/signal/",
+  "src/mycelium_fractal_net/core/federated.py",
+  "src/mycelium_fractal_net/core/stdp.py",
+  "src/mycelium_fractal_net/core/turing.py",
+  "src/mycelium_fractal_net/core/reaction_diffusion_compat.py",
+  "src/mycelium_fractal_net/analytics/legacy_features.py",
+  "research/",
+]
 
 [tool.ruff.lint]
 select = [
@@ -205,6 +216,16 @@ ignore = [
   "PT011",   # pytest-raises-too-broad (acceptable for integration tests)
   "PT012",   # pytest-raises-with-multiple-statements (test readability)
   "PT017",   # pytest-assert-in-except (intentional test pattern)
+  "E741",    # ambiguous-variable-name (I, F, H, N are standard in scientific code)
+  "S110",    # try-except-pass (intentional for optional features with fail-closed pattern)
+  "T201",    # print (used in CLI, scripts, and cognitive functions)
+  "E501",    # line-too-long (handled by formatter, allow in complex expressions)
+  "A002",    # builtin-argument-shadowing (id= in rule_registry is domain convention)
+  "B039",    # mutable-contextvar-default (logging config pattern)
+  "S104",    # hardcoded-bind-all-interfaces (API server binds 0.0.0.0 by design)
+  "S105",    # hardcoded-password-string (false positive on enum/config field names)
+  "S112",    # try-except-continue (rate limiter resilience pattern)
+  "SIM102",  # collapsible-if (readability over compactness in gate logic)
   "DTZ003",  # call-datetime-utcnow (UTC usage intentional in timestamps)
   "DTZ005",  # call-datetime-now-without-tzinfo (same)
 ]

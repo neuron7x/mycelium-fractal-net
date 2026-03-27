@@ -522,15 +522,6 @@ def auto_heal(
     anomaly_improved = det_after.score <= det_before.score + 0.01
     healed = sev_improved and anomaly_improved
 
-    # ── 7. ENTROPY RATE — is the healed system descending? ──────
-    if seq_after.history is not None and seq_after.history.shape[0] > 3:
-        from .analytics.unified_score import hwi_trajectory
-
-        traj = hwi_trajectory(seq_after.history, stride=max(1, seq_after.history.shape[0] // 10))
-        traj["dH_dt_negative_frac"] > 0.7
-        if verbose:
-            pass
-
     # ── 8. BUILD FEATURE VECTOR ─────────────────────────────────
     mem = memory if memory is not None else _MEMORY
 
