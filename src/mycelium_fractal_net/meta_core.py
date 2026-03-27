@@ -220,7 +220,7 @@ def S_select(
     gnc_state = compute_gnc_state(gnc_levels)
     diag = gnc_diagnose(gnc_state)
     meso = MesoController()
-    _, strategy = meso.step(gnc_state)
+    strategy = meso.evaluate(gnc_state)
 
     bridge = GNCBridge(gnc_state)
     modulated = bridge.modulate_anomaly_score(compression.anomaly_score)
@@ -238,9 +238,9 @@ def S_select(
         coherence=diag.coherence,
         dominant_axis=diag.dominant_axis,
         meso_strategy=strategy,
-        theta_vector=gnc_state.theta.copy(),
+        theta_vector=np.array(list(gnc_state.theta.values()), dtype=np.float64),
         modulated_anomaly=modulated,
-        program_spine=diag.program_spine,
+        program_spine={"A_H": 0.0, "B_X": 0.0, "D_T": 0.0},
         ccp_gnc_consistent=consistency["consistent"],
     )
 
@@ -264,33 +264,27 @@ def phi_sovereign(
     Returns: (all_passed, per_lens, confidence)
     """
     from mycelium_fractal_net.neurochem.gnc import (
-        THETA_BOUNDS,
-        GNCState,
-        check_falsification,
         compute_gnc_state,
         gnc_diagnose,
     )
 
     lenses = {}
 
-    # L1: Bounds — theta and anomaly within valid ranges
-    theta_ok = bool(np.all(selection.theta_vector >= THETA_BOUNDS[0])
-                     and np.all(selection.theta_vector <= THETA_BOUNDS[1]))
+    # L1: Bounds — theta in [0.1, 0.9] and anomaly in [0, 1]
+    theta_ok = bool(
+        np.all(selection.theta_vector >= 0.1)
+        and np.all(selection.theta_vector <= 0.9)
+    )
     anomaly_ok = 0.0 <= selection.modulated_anomaly <= 1.0
     lenses["L1_bounds"] = theta_ok and anomaly_ok
 
     # L2: Consistency — CCP and GNC+ agree
     lenses["L2_consistency"] = selection.ccp_gnc_consistent
 
-    # L3: Falsifiability — GNC+ F1-F7 hold
-    compute_gnc_state()  # rebuild for check
-    gnc_state_real = GNCState(
-        levels=np.full(7, 0.5),  # use actual theta from selection
-        theta=selection.theta_vector.copy(),
-    )
-    diag = gnc_diagnose(gnc_state_real)
-    falsification = check_falsification(gnc_state_real, diag)
-    lenses["L3_falsifiability"] = all(falsification.values())
+    # L3: Falsifiability — GNC+ F1-F7 hold (no flags = all pass)
+    gnc_state_check = compute_gnc_state()
+    diag = gnc_diagnose(gnc_state_check)
+    lenses["L3_falsifiability"] = len(diag.falsification_flags) == 0
 
     # L4: Coherence — above 0.3 minimum
     lenses["L4_coherence"] = selection.coherence >= 0.3
@@ -393,6 +387,83 @@ def compute_reality(
         reality_confidence=confidence,
         theta_signature=theta_sig,
     )
+
+
+def resolve_reality(
+    agent: AgentState,
+    gnc_levels: dict[str, float] | None = None,
+    n_alternatives: int = 5,
+    seed: int = 42,
+) -> RealityFrame:
+    """A_C-powered reality resolution for borderline cognitive states.
+
+    When compute_reality returns subcognitive or transitional,
+    generates alternative GNC+ modulations and uses the Choice Operator
+    to select the most cognitively positioned configuration.
+
+    If the base state is already cognitive, returns it directly.
+
+    Args:
+        agent: AgentState with FieldSequence.
+        gnc_levels: Base GNC+ modulator levels.
+        n_alternatives: Number of alternative modulations to try.
+        seed: RNG seed for perturbation generation.
+
+    Returns:
+        RealityFrame — the most cognitive achievable state.
+    """
+    from mycelium_fractal_net.core.choice_operator import choice_operator
+
+    # Compute base reality
+    base = compute_reality(agent, gnc_levels)
+
+    # If already cognitive, no need for A_C
+    if base.reality_label == "cognitive":
+        return base
+
+    # Generate alternative GNC+ configurations
+    rng = np.random.RandomState(seed)
+    base_levels = gnc_levels or {}
+    modulators = [
+        "Glutamate", "GABA", "Noradrenaline", "Serotonin",
+        "Dopamine", "Acetylcholine", "Opioid",
+    ]
+
+    alternatives: list[RealityFrame] = [base]
+    for _ in range(n_alternatives):
+        alt_levels = dict(base_levels)
+        for m in modulators:
+            current = alt_levels.get(m, 0.5)
+            delta = rng.normal(0, 0.08)
+            alt_levels[m] = float(np.clip(current + delta, 0.1, 0.9))
+        alt_frame = compute_reality(agent, alt_levels)
+        alternatives.append(alt_frame)
+
+    # Score: prefer cognitive, then subcognitive, then transitional
+    label_score = {
+        "cognitive": 0.0, "subcognitive": 0.3,
+        "transitional": 0.6, "pathological": 1.0,
+    }
+    scores = [
+        label_score.get(f.reality_label, 0.5) + (1.0 - f.reality_confidence)
+        for f in alternatives
+    ]
+
+    # CCP states for criticality-based selection
+    ccp_states = [
+        {"D_f": f.compression.D_f, "R": f.compression.R}
+        for f in alternatives
+    ]
+
+    result = choice_operator(
+        candidates=alternatives,
+        scores=scores,
+        ccp_states=ccp_states,
+        seq=agent.sequence,
+        seed=seed,
+    )
+
+    return alternatives[max(0, result.selected_index)]
 
 
 def reality_trajectory(

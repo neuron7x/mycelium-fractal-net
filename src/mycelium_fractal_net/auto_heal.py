@@ -461,7 +461,23 @@ def auto_heal(
         allowed_levers=selected,
         max_candidates=n_candidates,
     )
+
+    # ── 4b. CHOICE OPERATOR A_C — resolve Pareto indeterminacy ───
     best = plan.best_candidate
+    if plan.has_viable_plan and len(plan.pareto_front) > 1:
+        from .core.choice_operator import choice_operator
+
+        pareto = list(plan.pareto_front)
+        pareto_scores = [c.composite_score for c in pareto]
+        choice = choice_operator(
+            candidates=pareto,
+            scores=pareto_scores,
+            seq=seq,
+            sigma=_DA_STATE.plasticity_scale * 0.001,  # DA modulates perturbation
+            seed=42,
+        )
+        if choice.selected_index >= 0:
+            best = pareto[choice.selected_index]
 
     if best is None or not plan.has_viable_plan:
         elapsed = (time.perf_counter() - t0) * 1000
