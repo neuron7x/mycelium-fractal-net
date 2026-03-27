@@ -308,6 +308,8 @@ module = [
     "mycelium_fractal_net.core.*",
     "mycelium_fractal_net.analytics.*",
     "mycelium_fractal_net.neurochem.*",
+    "mycelium_fractal_net.interpretability.*",
+    "mycelium_fractal_net.self_reading.*",
 ]
 disallow_untyped_defs = true
 warn_return_any = true

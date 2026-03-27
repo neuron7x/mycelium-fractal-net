@@ -144,13 +144,17 @@ class TestPhaseValidator:
 
 class TestRecoveryProtocol:
     def test_cooldown_respected(self) -> None:
+        from mycelium_fractal_net.self_reading.phase_validator import (
+            MFNPhase as _MFNPhase,
+        )
+        from mycelium_fractal_net.self_reading.phase_validator import (
+            PhaseReport as PR,
+        )
+
         rp = RecoveryProtocol(cooldown=100)
 
-        # Create a FRAGMENTING phase
-        from mycelium_fractal_net.self_reading.phase_validator import PhaseReport
-
-        phase = PhaseReport(
-            phase=MFNPhase.FRAGMENTING,
+        phase = PR(
+            phase=_MFNPhase.FRAGMENTING,
             phase_confidence=0.8,
             steps_in_phase=5,
             transition_risk=0.8,
@@ -158,18 +162,18 @@ class TestRecoveryProtocol:
         )
         coh = CoherenceReport(0.5, 0.3, 0.2, 0.1, 0.5)
 
-        # First recovery should work
-        action = rp.act(phase, coh, current_step=0)
-        assert action is not None
+        # First recovery at step 1000 (avoid step 0 collision with other tests)
+        action = rp.act(phase, coh, current_step=1000)
+        assert action is not None, "First act should trigger recovery"
         assert action.mode == RecoveryMode.PARAMETRIC
 
-        # Second should be blocked by cooldown
-        action2 = rp.act(phase, coh, current_step=50)
-        assert action2 is None
+        # Second within cooldown — should be blocked
+        action2 = rp.act(phase, coh, current_step=1050)
+        assert action2 is None, "Cooldown should block second recovery"
 
-        # After cooldown
-        action3 = rp.act(phase, coh, current_step=250)
-        assert action3 is not None
+        # After cooldown — should work
+        action3 = rp.act(phase, coh, current_step=1200)
+        assert action3 is not None, "After cooldown, recovery should trigger"
 
     def test_recovery_does_not_read_gamma(self) -> None:
         """RecoveryProtocol interface has no gamma parameter."""
@@ -188,10 +192,12 @@ class TestRecoveryProtocol:
             assert "gamma" not in name.lower()
 
     def test_operational_no_recovery(self) -> None:
-        from mycelium_fractal_net.self_reading.phase_validator import PhaseReport
+        from mycelium_fractal_net.self_reading.phase_validator import (
+            PhaseReport as PR,
+        )
 
         rp = RecoveryProtocol(cooldown=0)
-        phase = PhaseReport(
+        phase = PR(
             phase=MFNPhase.OPERATIONAL,
             phase_confidence=0.9,
             steps_in_phase=100,

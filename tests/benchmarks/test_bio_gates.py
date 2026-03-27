@@ -20,7 +20,7 @@ from mycelium_fractal_net.bio.physarum import PhysarumEngine
 def _gate_multiplier(baseline_ms: float) -> float:
     """Adaptive multiplier: sub-ms operations get more headroom (GC noise dominates)."""
     if baseline_ms < 0.5:
-        return 50.0  # sub-ms: GC spike can be 50x
+        return 100.0  # sub-ms: GC/version/cache variance can exceed 50x
     if baseline_ms < 5.0:
         return 5.0  # ms-range: moderate variance
     return 3.0  # >5ms: stable enough for 3x

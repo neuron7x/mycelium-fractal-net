@@ -104,3 +104,17 @@ forbidden_modules =
     mycelium_fractal_net.api
     mycelium_fractal_net.cli
     mycelium_fractal_net.pipelines
+
+# === Layer 9: Interpretability + Self-Reading (read-only observers) ===
+[importlinter:contract:interpretability_read_only]
+name = Interpretability and Self-Reading must not import simulation or transport
+type = forbidden
+source_modules =
+    mycelium_fractal_net.interpretability
+    mycelium_fractal_net.self_reading
+forbidden_modules =
+    mycelium_fractal_net.core.simulate
+    mycelium_fractal_net.core.engine
+    mycelium_fractal_net.api
+    mycelium_fractal_net.cli
+    mycelium_fractal_net.integration
