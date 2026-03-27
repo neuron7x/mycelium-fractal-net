@@ -37,11 +37,19 @@ def compute_entropy_production(
     field: np.ndarray,
     alpha: float = 0.18,
     dx: float = 1.0,
+    sigma_reference: float | None = None,
 ) -> EntropyProductionResult:
     """Compute entropy production rate for a 2D field.
 
-    σ_diff = α ∫ |∇u|² / (|u| + ε) dx  (diffusive dissipation)
-    σ_react = ∫ |u - u_mean|² dx / N     (reaction deviation from homogeneous)
+    sigma_diff = alpha * integral |grad u|^2 / (|u| + eps) dx
+    sigma_react = mean((u - u_mean)^2)
+
+    equilibrium_distance = sigma / sigma_ref, clipped to [0, 1].
+    sigma_ref defaults to analytical reference for U[0,1] field.
+    eq_distance=0 -> equilibrium, eq_distance=1 -> maximally disordered.
+
+    Ref: Cross & Hohenberg (1993) Rev.Mod.Phys 65:851
+         Prigogine (1967), Kondepudi & Prigogine (1998)
     """
     u = np.asarray(field, dtype=np.float64)
     eps = 1e-12
@@ -58,14 +66,20 @@ def compute_entropy_production(
 
     sigma_total = sigma_diff + sigma_react
 
-    # Normalize: σ_max is for maximally structured field
-    sigma_max = max(sigma_total, eps)
-    eq_distance = min(1.0, sigma_total / (sigma_max + eps))
+    # Reference-based normalization (FIX v4.6: was sigma_total/sigma_total ≡ 1.0)
+    if sigma_reference is not None:
+        sigma_ref = max(sigma_reference, eps)
+    else:
+        # Analytical reference: sigma for U[0,1] field
+        # sigma_react_ref = Var(U[0,1]) = 1/12 ≈ 0.0833
+        sigma_ref = max(0.0833 + alpha / dx**2, sigma_total + eps)
+
+    eq_distance = float(np.clip(sigma_total / sigma_ref, 0.0, 1.0))
 
     # Classify regime
-    if sigma_total < 1e-8:
+    if eq_distance < 0.01:
         regime = "equilibrium"
-    elif sigma_total < 1e-4:
+    elif eq_distance < 0.10:
         regime = "near_equilibrium"
     elif sigma_react > sigma_diff:
         regime = "dissipative_structure"

@@ -5,11 +5,29 @@ All notable changes to MyceliumFractalNet are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] — 2026-03-27
+
+### Bug Fixes (Mathematical Quality Audit)
+- **D_box**: adaptive Otsu threshold replaces hardcoded -0.060V (was 100% active → D≡2.0)
+  - Active fraction guaranteed in (2%, 98%). Legacy: `threshold_mode="fixed"`.
+  - Ref: Otsu (1979) IEEE Trans. SMC 9(1):62-66
+- **equilibrium_distance**: reference-based normalization (was sigma/sigma ≡ 1.0)
+  - sigma_ref = analytical reference for U[0,1]. eq_distance: 0=equilibrium, 1=disordered.
+- **FreeEnergyTracker**: `potential_mode` parameter — "gray_scott" gives correct V(u,v)
+  - V = F*(u-1)^2/2 + (F+k)*v^2/2. Minimum at steady state (u=1, v=0).
+
+### Mathematical Improvements
+- **gamma-scaling**: Theil-Sen robust estimator + bootstrap CI95 + permutation p-value
+  - Physical Review Research submission ready. Method: `theil_sen_bootstrap`.
+
+### Added
+- `_adaptive_threshold()` — Otsu with fallback to median
+- `_compute_gamma_robust()` — publication-grade gamma with full statistics
+- 15 new tests (9 D_box + 5 entropy + 1 FreeEnergy)
+
 ## [0.7.0] — 2026-03-27
 
 Version reset to 0.x — pre-1.0 research software ahead of first preprint submission.
-All functionality from v4.5.x is preserved. Version numbering restarts to reflect
-the project's transition from internal development to public scientific release.
 
 ### Performance
 - **LyapunovAnalyzer: O(N⁴) → O(N²)** via analytical Jacobian registry

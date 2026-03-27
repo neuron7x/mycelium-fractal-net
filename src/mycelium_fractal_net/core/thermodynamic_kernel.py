@@ -45,25 +45,57 @@ METASTABLE_WINDOW = 0.05
 
 
 class FreeEnergyTracker:
-    """F[u] = E_grad + E_potential. Central differences for ∇u."""
+    """F[u] = E_grad + E_potential. Central differences for grad u.
 
-    def __init__(self, domain_extent: float = 1.0, grid_size: int = 32) -> None:
+    potential_mode:
+        "cahn_hilliard": V=u^2(1-u)^2/4  (default, backward compatible)
+        "gray_scott":    V=F*(u-1)^2/2 + (F+k)*v^2/2  (correct for GS)
+        "quadratic":     V=u^2/2  (convex, always monotone)
+
+    Ref: Cross & Hohenberg (1993) Rev.Mod.Phys 65:851
+    """
+
+    def __init__(
+        self,
+        domain_extent: float = 1.0,
+        grid_size: int = 32,
+        potential_mode: str = "cahn_hilliard",
+        reaction_params: dict[str, float] | None = None,
+    ) -> None:
         self.dx = domain_extent / grid_size
         self.dy = domain_extent / grid_size
+        self.potential_mode = potential_mode
+        self.reaction_params = reaction_params or {"F": 0.04, "k": 0.06}
 
     def gradient_energy(self, u: NDArray[np.float64]) -> float:
-        """½ ∫ |∇u|² dx."""
+        """half integral |grad u|^2 dx."""
         du_dx = np.gradient(u, self.dx, axis=1)
         du_dy = np.gradient(u, self.dy, axis=0)
         return float(0.5 * np.sum(du_dx**2 + du_dy**2) * self.dx * self.dy)
 
-    def potential_energy(self, u: NDArray[np.float64]) -> float:
-        """∫ V(u) dx, V(u) = u²(1-u)²/4 (double-well)."""
-        v_val = (u**2) * (1.0 - u) ** 2 / 4.0
+    def potential_energy(
+        self,
+        u: NDArray[np.float64],
+        v: NDArray[np.float64] | None = None,
+    ) -> float:
+        """Integral V(u) dx. Mode selects the potential function."""
+        if self.potential_mode == "gray_scott" and v is not None:
+            f_param = self.reaction_params.get("F", 0.04)
+            k_param = self.reaction_params.get("k", 0.06)
+            v_val = f_param * (u - 1.0) ** 2 / 2.0 + (f_param + k_param) * v**2 / 2.0
+        elif self.potential_mode == "quadratic":
+            v_val = u**2 / 2.0
+        else:
+            # cahn_hilliard (default, backward compatible)
+            v_val = (u**2) * (1.0 - u) ** 2 / 4.0
         return float(np.sum(v_val) * self.dx * self.dy)
 
-    def total_energy(self, u: NDArray[np.float64]) -> float:
-        return self.gradient_energy(u) + self.potential_energy(u)
+    def total_energy(
+        self,
+        u: NDArray[np.float64],
+        v: NDArray[np.float64] | None = None,
+    ) -> float:
+        return self.gradient_energy(u) + self.potential_energy(u, v)
 
     def curvature_landscape(self, u: NDArray[np.float64]) -> CurvatureLandscape:
         lap = (

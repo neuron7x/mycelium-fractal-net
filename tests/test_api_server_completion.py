@@ -14,7 +14,7 @@ def test_api_server_health_and_metrics() -> None:
     client = TestClient(create_app())
     payload = client.get("/health").json()
     assert payload["status"] == "healthy"
-    assert payload["engine_version"] == "0.7.0"
+    assert payload["engine_version"] == "0.8.0"
     assert payload["api_version"] == "v1"
     assert payload["uptime"] >= 0.0
     client.post("/v1/simulate", json={"grid_size": 16, "steps": 8, "with_history": True})

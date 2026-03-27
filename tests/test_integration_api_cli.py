@@ -214,7 +214,7 @@ class TestAPIEndpoints:
         data = response.json()
 
         assert data["status"] == "healthy"
-        assert data["version"] == "0.7.0"
+        assert data["version"] == "0.8.0"
 
 
 class TestAdapters:

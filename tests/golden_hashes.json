@@ -1,7 +1,7 @@
 {
   "baseline": {
     "field": "c36b8404d9280844",
-    "descriptor": "a3bab7c21e5c0f12",
+    "descriptor": "81b03ec1837f27c8",
     "detection_score": 0.192458,
     "detection_label": "nominal"
   },
@@ -19,7 +19,7 @@
   },
   "balanced_criticality": {
     "field": "c36b8404d9280844",
-    "descriptor": "a3bab7c21e5c0f12",
+    "descriptor": "81b03ec1837f27c8",
     "detection_score": 0.192458,
     "detection_label": "nominal"
   }

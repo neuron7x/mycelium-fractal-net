@@ -147,64 +147,65 @@ class FeatureVector:
         return self.values[key]
 
 
+def _adaptive_threshold(field: NDArray[np.floating[Any]]) -> float:
+    """Otsu adaptive threshold. Guarantees active fraction in (2%, 98%).
+
+    Ref: Otsu (1979) IEEE Trans. SMC 9(1):62-66
+    """
+    try:
+        from skimage.filters import threshold_otsu
+
+        thr = float(threshold_otsu(field))
+    except ImportError:
+        thr = float(np.mean(field))
+
+    frac = float(np.mean(field > thr))
+    if frac < 0.02 or frac > 0.98:
+        thr = float(np.percentile(field, 50))
+    return thr
+
+
 def compute_box_counting_dimension(
     field: NDArray[np.floating[Any]],
     *,
     num_scales: int = 8,
-    threshold: float = -0.060,
+    threshold: float | None = None,
+    threshold_mode: str = "adaptive",
 ) -> float:
-    """
-    Compute box-counting fractal dimension for a 2D field.
+    """Compute box-counting fractal dimension for a 2D field.
 
     Uses the box-counting algorithm to estimate the fractal dimension D
-    of the active region in the field. The active region is defined as
-    cells with values above the threshold.
-
-    Algorithm:
-    1. Binarize field at threshold
-    2. Count occupied boxes at multiple scales (box sizes)
-    3. Fit log(N) vs log(1/ε) to estimate D
-
-    For a fractal set: N(ε) ~ ε^(-D)
-    where N is the number of occupied boxes and ε is the box size.
+    of the active region in the field.
 
     Parameters
     ----------
     field : NDArray[np.floating]
-        2D field array. Values should be in Volts (biological range: ~-0.095 to 0.040).
-        Must be a square array.
+        2D field array. Must be square.
     num_scales : int, optional
-        Number of scales (box sizes) to use for regression. Default is 8.
-        More scales provide better estimates but require larger fields.
-    threshold : float, optional
-        Threshold for binarization in Volts. Default is -0.060 V (-60 mV).
-        Cells above this threshold are considered "active".
+        Number of scales for regression. Default is 8.
+    threshold : float | None, optional
+        Threshold for binarization in Volts. Used when threshold_mode="fixed".
+    threshold_mode : str, optional
+        "adaptive" (default): Otsu adaptive threshold, active fraction in (2%, 98%).
+        "fixed": use explicit threshold value (legacy: -0.060 V).
+        "otsu": force Otsu from skimage.
 
     Returns
     -------
     float
-        Estimated fractal dimension D.
-        - D ≈ 0 for empty/sparse fields
-        - D ≈ 1 for line-like structures
-        - D ∈ [1.4, 1.9] for biological mycelium patterns
-        - D ≈ 2 for filled regions
+        Estimated fractal dimension D in [0, 2].
 
     Raises
     ------
     ValueError
-        If field is not 2D or not square.
-        If field contains NaN or infinite values.
+        If field is not 2D or not square, or contains NaN/Inf.
 
     Notes
     -----
-    Implementation details are described in docs/MFN_FEATURE_SCHEMA.md.
+    Changed in v4.6: threshold defaults to adaptive (Otsu).
+    Legacy behavior: ``threshold_mode="fixed", threshold=-0.060``.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> field = np.random.randn(64, 64) * 0.01 - 0.070
-    >>> D = compute_box_counting_dimension(field)
-    >>> print(f"Fractal dimension: {D:.3f}")
+    Ref: Otsu (1979), Vasylenko CCP (2026)
     """
     if not np.isfinite(field).all():
         raise ValueError("field contains NaN or Inf values")
@@ -214,8 +215,16 @@ def compute_box_counting_dimension(
     if field.shape[0] != field.shape[1]:
         raise ValueError(f"field must be square, got shape {field.shape}")
 
-    # Convert threshold from Volts (user API) to mV (internal FeatureConfig expects mV)
-    threshold_mv = threshold * 1000.0
+    if threshold_mode == "fixed" and threshold is not None:
+        thr = threshold
+    elif threshold_mode == "otsu":
+        from skimage.filters import threshold_otsu
+
+        thr = float(threshold_otsu(field))
+    else:
+        thr = _adaptive_threshold(field)
+
+    threshold_mv = thr * 1000.0
     config = FeatureConfig(num_scales=num_scales, threshold_low_mv=threshold_mv)
 
     D_box, _ = _compute_fractal_dim(field, config)

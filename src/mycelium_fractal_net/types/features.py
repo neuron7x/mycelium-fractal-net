@@ -168,7 +168,7 @@ class MorphologyDescriptor:
         return {
             "schema_version": "mfn-morphology-descriptor-v2",
             "descriptor_version": self.version,
-            "runtime_version": "0.7.0",
+            "runtime_version": "0.8.0",
             "version": self.version,
             "embedding": list(self.embedding),
             "features": dict(self.features),

@@ -25,10 +25,89 @@ RESULTS_DIR = Path("results")
 RESULTS_DIR.mkdir(exist_ok=True)
 
 
+def _compute_gamma_robust(
+    x: np.ndarray,
+    y: np.ndarray,
+    n_bootstrap: int = 1000,
+    rng_seed: int = 42,
+) -> dict:
+    """Gamma-scaling with Theil-Sen + bootstrap CI95 + permutation p-value.
+
+    Ref: Theil (1950), Sen (1968), Efron & Tibshirani (1994)
+    """
+    n = len(x)
+    if n < 3:
+        return {"gamma": 0.0, "r2": 0.0, "ci95_lo": 0.0, "ci95_hi": 0.0,
+                "p_value": 1.0, "se": 0.0, "n_points": n,
+                "valid": False, "method": "insufficient_data"}
+
+    # OLS (legacy compatibility)
+    coeffs_ols = np.polyfit(x, y, 1)
+    gamma_ols = float(coeffs_ols[0])
+    y_pred = np.polyval(coeffs_ols, x)
+    ss_res = np.sum((y - y_pred) ** 2)
+    ss_tot = np.sum((y - y.mean()) ** 2)
+    r2_ols = float(1.0 - ss_res / (ss_tot + 1e-12))
+
+    # Theil-Sen: median of all pairwise slopes
+    slopes = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            dx = x[j] - x[i]
+            if abs(dx) > 1e-10:
+                slopes.append((y[j] - y[i]) / dx)
+    gamma_ts = float(np.median(slopes)) if slopes else gamma_ols
+    intercept_ts = float(np.median(y - gamma_ts * x))
+    y_pred_ts = gamma_ts * x + intercept_ts
+    r2_ts = float(1.0 - np.sum((y - y_pred_ts) ** 2) / (ss_tot + 1e-12))
+
+    # Bootstrap CI95
+    rng = np.random.default_rng(rng_seed)
+    boot_gammas = []
+    for _ in range(n_bootstrap):
+        idx = rng.integers(0, n, n)
+        xi, yi = x[idx], y[idx]
+        if len(np.unique(xi)) >= 2:
+            boot_gammas.append(float(np.polyfit(xi, yi, 1)[0]))
+
+    if len(boot_gammas) >= 10:
+        ci_lo = float(np.percentile(boot_gammas, 2.5))
+        ci_hi = float(np.percentile(boot_gammas, 97.5))
+        se = float(np.std(boot_gammas))
+    else:
+        ci_lo = ci_hi = gamma_ts
+        se = 0.0
+
+    # Permutation p-value (H0: no slope)
+    null = [float(np.polyfit(x, rng.permutation(y), 1)[0])
+            for _ in range(n_bootstrap)]
+    p_value = max(float(np.mean(np.abs(null) >= abs(gamma_ts))),
+                  1.0 / n_bootstrap)
+
+    ci_excludes_zero = not (ci_lo <= 0.0 <= ci_hi)
+    gate_pass = (ci_excludes_zero and p_value < 0.05
+                 and abs(gamma_ts) > 0.3 and r2_ts > 0.3)
+
+    return {
+        "gamma": round(gamma_ts, 4),
+        "gamma_ols": round(gamma_ols, 4),
+        "r2": round(r2_ts, 6),
+        "r2_ols": round(r2_ols, 6),
+        "ci95_lo": round(ci_lo, 4),
+        "ci95_hi": round(ci_hi, 4),
+        "p_value": round(p_value, 6),
+        "se": round(se, 4),
+        "n_points": n,
+        "valid": gate_pass,
+        "method": "theil_sen_bootstrap",
+    }
+
+
 def _compute_gamma(sequences) -> dict:
     """Compute gamma-scaling across a sequence of FieldSequences."""
     if len(sequences) < 5:
-        return {"gamma": 0.0, "r2": 0.0, "n_points": 0, "valid": False}
+        return {"gamma": 0.0, "r2": 0.0, "n_points": 0, "valid": False,
+                "ci95_lo": 0.0, "ci95_hi": 0.0, "p_value": 1.0}
 
     from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 
@@ -37,15 +116,12 @@ def _compute_gamma(sequences) -> dict:
         desc = compute_morphology_descriptor(seq)
         descriptors.append(desc)
 
-    # Extract HWI-like components: entropy (LZC) and topology (instability)
     entropies = []
     bettis = []
     for d in descriptors:
         entropies.append(d.complexity.get("temporal_lzc", 0.0))
         bettis.append(d.stability.get("instability_index", 0.0))
 
-    # Compute DeltaH and beta sums between NON-CONSECUTIVE pairs
-    # (wider separation = larger signal)
     log_dH = []
     log_beta = []
     for i in range(len(entropies)):
@@ -57,25 +133,10 @@ def _compute_gamma(sequences) -> dict:
                 log_beta.append(np.log(b_sum))
 
     if len(log_dH) < 3:
-        return {"gamma": 0.0, "r2": 0.0, "n_points": len(log_dH), "valid": False}
+        return {"gamma": 0.0, "r2": 0.0, "n_points": len(log_dH), "valid": False,
+                "ci95_lo": 0.0, "ci95_hi": 0.0, "p_value": 1.0}
 
-    x = np.array(log_beta)
-    y = np.array(log_dH)
-    coeffs = np.polyfit(x, y, 1)
-    gamma = float(coeffs[0])
-
-    # R^2
-    y_pred = np.polyval(coeffs, x)
-    ss_res = np.sum((y - y_pred) ** 2)
-    ss_tot = np.sum((y - y.mean()) ** 2)
-    r2 = float(1.0 - ss_res / (ss_tot + 1e-12))
-
-    return {
-        "gamma": round(gamma, 4),
-        "r2": round(r2, 6),
-        "n_points": len(log_dH),
-        "valid": True,
-    }
+    return _compute_gamma_robust(np.array(log_beta), np.array(log_dH))
 
 
 def run() -> dict:
@@ -89,7 +150,6 @@ def run() -> dict:
     t0 = time.perf_counter()
 
     # Generate multi-state trajectory
-    seeds = list(range(20))
     gamma_results = []
 
     for trial_seed in [42, 17, 91]:
@@ -109,7 +169,7 @@ def run() -> dict:
         if result["valid"]:
             print(f"    gamma={result['gamma']:.4f} R2={result['r2']:.4f} n={result['n_points']}")
         else:
-            print(f"    INVALID (insufficient points)")
+            print("    INVALID (insufficient points)")
 
     elapsed = time.perf_counter() - t0
 
@@ -127,11 +187,10 @@ def run() -> dict:
         mean_gamma = 0.0
         mean_r2 = 0.0
         gamma_in_range = False
-        r2_above_threshold = False
 
     gate_pass = gamma_in_range and len(valid_results) >= 2
 
-    print(f"\n--- Gate Check ---")
+    print("\n--- Gate Check ---")
     print(f"  Mean gamma: {mean_gamma:.4f} (range [0.5, 2.5]): {'PASS' if gamma_in_range else 'FAIL'}")
     print(f"  Mean R2: {mean_r2:.4f}")
     print(f"  Valid trials: {len(valid_results)}/{len(gamma_results)}")
