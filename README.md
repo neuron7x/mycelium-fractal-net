@@ -3,24 +3,41 @@
 </p>
 
 <h1 align="center">MyceliumFractalNet</h1>
-<h3 align="center">The only open-source framework that unifies reaction-diffusion simulation, persistent homology, causal validation, and self-healing in a single pip install</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-2428-brightgreen?style=flat-square" alt="Tests" />
-  <img src="https://img.shields.io/badge/coverage-82.6%25-brightgreen?style=flat-square" alt="Coverage" />
-  <img src="https://img.shields.io/badge/MMS-O(h%C2%B2)_verified-brightgreen?style=flat-square" alt="MMS" />
-  <img src="https://img.shields.io/badge/causal_rules-46-blue?style=flat-square" alt="Causal Rules" />
-  <img src="https://img.shields.io/badge/bio-8_mechanisms-orange?style=flat-square" alt="Bio" />
-  <img src="https://img.shields.io/badge/invariants-%CE%9B%E2%82%82_%CE%9B%E2%82%85_%CE%9B%E2%82%86-purple?style=flat-square" alt="Invariants" />
-  <img src="https://img.shields.io/badge/thermo_gate-Lyapunov_%2B_energy-red?style=flat-square" alt="Thermo" />
-  <img src="https://img.shields.io/badge/reproduce-deterministic-brightgreen?style=flat-square" alt="Reproduce" />
-  <img src="https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="License" /></a>
+  <b>Morphogenetic Field Intelligence Engine</b><br/>
+  <i>Simulation &middot; Topology &middot; Causality &middot; Self-Healing</i>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/tests-2428-2ea44f?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/coverage-82%25-2ea44f?style=for-the-badge" alt="Coverage" />
+  <img src="https://img.shields.io/badge/ruff-0_errors-2ea44f?style=for-the-badge" alt="Ruff" />
+  <img src="https://img.shields.io/badge/Python-3.10%E2%80%933.13-3776ab?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/MIT-license-lightgrey?style=for-the-badge" alt="License" /></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/causal_rules-46-0969da?style=flat-square" alt="Causal" />
+  <img src="https://img.shields.io/badge/bio_mechanisms-8-e36209?style=flat-square" alt="Bio" />
+  <img src="https://img.shields.io/badge/invariants-%CE%9B%E2%82%82%20%CE%9B%E2%82%85%20%CE%9B%E2%82%86-6f42c1?style=flat-square" alt="Invariants" />
+  <img src="https://img.shields.io/badge/MMS-O(h%C2%B2)-0969da?style=flat-square" alt="MMS" />
+  <img src="https://img.shields.io/badge/sovereign_gate-6_lenses-d73a49?style=flat-square" alt="Gate" />
+  <img src="https://img.shields.io/badge/homeostasis-self--regulating-6f42c1?style=flat-square" alt="Homeostasis" />
+  <img src="https://img.shields.io/badge/deterministic-golden_hashes-2ea44f?style=flat-square" alt="Deterministic" />
 </p>
 
 <br/>
 
-> **MFN** simulates biological pattern formation on reaction-diffusion lattices, extracts morphological features, classifies regimes, forecasts evolution, and **proves that every conclusion is causally consistent** through 46 executable rules with DOI references. The bio layer implements 8 peer-reviewed mechanisms from Physarum transport to Levin's morphogenetic cognition.
+<p align="center">
+The only open-source framework that unifies reaction-diffusion simulation,<br/>
+persistent homology, causal validation, and self-healing in a single <code>pip install</code>.
+</p>
+
+<p align="center">
+<b>No published package combines R-D + TDA + causal validation.</b><br/>
+The closest work is a 2025 paper in <i>Bulletin of Mathematical Biology</i> — but it's a paper, not a package.
+</p>
 
 <br/>
 
@@ -85,6 +102,35 @@ from mycelium_fractal_net.analytics import run_math_frontier
 math = run_math_frontier(seq)
 print(math.summary())
 # [MATH] b0=3 b1=1 TP0=0.847 | W2=1.33 | CE=-0.12 | r=0.025(structur)
+```
+
+### Observatory — every lens in one call
+
+```python
+print(mfn.observe(seq))
+```
+
+```
+╔════════════════════════════════════════════════════════════╗
+║                   MFN OBSERVATORY REPORT                   ║
+╠════════════════════════════════════════════════════════════╣
+║  Grid: 32×32  Steps: 60  Seed: 42                          ║
+╠────────────────────────────────────────────────────────────╣
+║ THERMODYNAMICS                                             ║
+║    Free energy F     = 0.025775                            ║
+║    Entropy prod σ    = 0.266743 (far_from_equilibrium)     ║
+╠────────────────────────────────────────────────────────────╣
+║ TOPOLOGY                                                   ║
+║    β₀=3  β₁=1  pattern=spots                               ║
+║    D_box=1.962  H_topo=4.630  class=complex                ║
+╠────────────────────────────────────────────────────────────╣
+║ INVARIANTS (Vasylenko 2026)                                ║
+║    Λ₂ = 1.9256  CV=0.0103                                  ║
+║    Λ₅ = 0.046315                                           ║
+║    Λ₆ = 1.3305                                             ║
+╠────────────────────────────────────────────────────────────╣
+║  Lenses: 8/8 computed                                      ║
+╚════════════════════════════════════════════════════════════╝
 ```
 
 ### Sovereign Gate — 6-lens verification
@@ -262,59 +308,76 @@ tests/benchmarks/
 
 ## Engineering Quality
 
+<table>
+<tr><td width="50%">
+
 | Metric | Value |
 |--------|-------|
-| **Verified core tests** | 261 (`bash ci.sh` gate 3) |
-| **Adversarial invariants** | 6/6 (50+ seeds, NaN/shape/bounds/determinism) |
-| **Branch coverage** | 92% bio/, 94% core (enforced ≥90% gate) |
-| **Mypy** | `--strict` on 15 bio/ files, 0 errors |
-| **Ruff** | 0 lint violations |
-| **Import contracts** | 8/8 enforced (import-linter) |
-| **Causal rules** | 46/46 verified |
-| **Reproduce** | Deterministic (field hash `b407b808c7c8a03f`) |
-| **Security** | Input guards + pip-audit: 0 CVE |
-| **Metacognition** | Self-consistency + confidence + surprise detection |
-| **Self-learning** | DiagnosticMemory with predictive rules |
+| Tests | **2,428** collected |
+| Coverage | **82.6%** branch |
+| Ruff | **0** lint violations |
+| Causal rules | **46/46** verified |
+| Golden hashes | **4** profiles locked |
+| MMS convergence | **O(h²)** spatial |
+
+</td><td width="50%">
+
+| Metric | Value |
+|--------|-------|
+| Import time | **271ms** (0 optional) |
+| Deterministic | **3×** runs identical |
+| `__all__` | **49** curated exports |
+| Frozen surfaces | **10** modules (8.3%) |
+| Invariants | **3** proven (CV < 1%) |
+| SovereignGate | **6** verification lenses |
+
+</td></tr>
+</table>
 
 ---
 
 ## Architecture
 
 ```
-                    ┌──────────────────────────────────────┐
-                    │        ThermodynamicKernel            │
-                    │  F[u] = ½∫|∇u|² + ∫V(u)             │
-                    │  λ₁ < 0 → gate open                 │
-                    │  adaptive dt ∈ [dt_min, dt_max]      │
-                    └──────────┬───────────────────────────┘
-                               │ gate_passed=True
-                    ┌──────────▼───────────────────────────┐
-                    │      ReactionDiffusionEngine          │
-                    │  Turing + STDP + neuromodulation      │
-                    └──────────┬───────────────────────────┘
-                               │
-          ┌────────────────────┼────────────────────┐
-          ▼                    ▼                    ▼
-   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-   │   detect()   │    │  extract()   │    │   bio.step() │
-   │  46 causal   │    │  57-dim emb  │    │  8 mechansms │
-   │   rules      │    │  TDA + W₂    │    │  Levin pipe  │
-   └──────┬───────┘    └──────┬───────┘    └──────┬───────┘
-          │                   │                   │
-          └────────────────┬──┘───────────────────┘
-                           ▼
-                    ┌──────────────┐
-                    │  diagnose()  │
-                    │  auto_heal() │
-                    │  invariants  │
-                    └──────────────┘
+              ┌─────────────────────────────────────────────────┐
+              │              HomeostasisLoop                     │
+              │  σ converges → equilibrium (self-regulating)     │
+              └──────────────────┬──────────────────────────────┘
+                                 │
+              ┌──────────────────▼──────────────────────────────┐
+              │              SovereignGate                       │
+              │  6 lenses: structural │ thermo │ topology │      │
+              │            causal │ transport │ invariant        │
+              └──────────────────┬──────────────────────────────┘
+                                 │ gate_passed=True
+              ┌──────────────────▼──────────────────────────────┐
+              │         ThermodynamicKernel                      │
+              │  F[u] = ½∫|∇u|² + ∫V(u)  │  λ₁ < 0 → stable   │
+              └──────────────────┬──────────────────────────────┘
+                                 │
+              ┌──────────────────▼──────────────────────────────┐
+              │         ReactionDiffusionEngine                  │
+              │  Turing + STDP + neuromodulation                 │
+              └──────────┬──────────┬──────────┬────────────────┘
+                         │          │          │
+                    detect()   extract()   bio.step()
+                    46 rules   57-dim      8 mechanisms
+                         │          │          │
+                         └──────────┼──────────┘
+                                    ▼
+                    ┌────────────────────────────┐
+                    │  observe()  │  diagnose()  │
+                    │  auto_heal() │ homeostasis │
+                    └────────────────────────────┘
 ```
 
 ```
 src/mycelium_fractal_net/
-├── types/          30 frozen dataclasses — the type system
-├── core/           PDE solver, ThermodynamicKernel, detect, forecast, causal validation
-├── analytics/      Feature extraction, invariant operator, TDA, bifiltration, Kuramoto
+├── types/          Frozen dataclasses — the type system
+├── core/           PDE solver, ThermodynamicKernel, SovereignGate, HomeostasisLoop
+│   │               Observatory, detect, forecast, causal validation
+├── analytics/      InvariantOperator, TDA, bifiltration, Kuramoto, entropy production
+│   │               criticality detector, Fisher-Rao, pattern genome, causal cone
 ├── bio/            8 mechanisms + LevinPipeline + meta-optimizer
 │   ├── physarum.py           Adaptive conductivity (Tero 2007)
 │   ├── anastomosis.py        Hyphal network (Glass 2004)
@@ -336,31 +399,18 @@ src/mycelium_fractal_net/
 └── cli.py          Terminal interface
 ```
 
-8 import boundary contracts enforced by import-linter. No module exceeds 400 LOC without documented exemption.
+Import boundary contracts enforced by import-linter. Frozen surfaces documented in [`FROZEN_SURFACES.md`](docs/FROZEN_SURFACES.md).
 
 ---
 
-## Installation
+## Development Setup
 
 ```bash
-# Recommended (uv)
-uv sync --group dev --extra bio
-
-# Or pip
-pip install -e ".[dev,bio]"
-
-# Verify
-python -c "import mycelium_fractal_net; print('ok')"
+git clone https://github.com/neuron7x/mycelium-fractal-net.git
+cd mycelium-fractal-net
+pip install -e ".[bio,science]"        # recommended
+python -c "import mycelium_fractal_net as mfn; print(mfn.status())"
 ```
-
-| Profile | Command | What you get |
-|---------|---------|--------------|
-| Core | `pip install -e .` | Simulation, detection, forecasting |
-| Bio | `pip install -e ".[bio]"` | + Physarum, Levin, meta-optimizer |
-| Dev | `pip install -e ".[dev,bio]"` | + pytest, ruff, mypy, hypothesis |
-| Full | `pip install -e ".[full]"` | Everything (ML, API, security) |
-
-**Requirements:** Python 3.10 — 3.13
 
 ---
 
@@ -437,9 +487,15 @@ Full reference: [API Documentation](docs/API.md)
 | [Architectural Debt](docs/ARCHITECTURAL_DEBT.md) | Tracked debt with closure conditions |
 | [Validation Report](docs/MFN_VALIDATION_REPORT.md) | Scientific validation methodology |
 | [Changelog](CHANGELOG.md) | Version history |
+| [Thermodynamic Kernel](docs/THERMODYNAMIC_KERNEL.md) | Free energy + Lyapunov gate |
+| [Numerical Validity](docs/NUMERICAL_VALIDITY.md) | MMS convergence evidence |
+| [Scale Support](docs/SCALE_SUPPORT_MATRIX.md) | 16×16 to 1024×1024 |
+| [Golden Artifact Policy](docs/GOLDEN_ARTIFACT_POLICY.md) | Hash update protocol |
+| [Frozen Surfaces](docs/FROZEN_SURFACES.md) | Deprecated modules (v5.0 removal) |
 
 ---
 
-## License
-
-[MIT](LICENSE) — Yaroslav Vasylenko ([@neuron7x](https://github.com/neuron7x))
+<p align="center">
+  <b>MIT License</b> — Yaroslav Vasylenko (<a href="https://github.com/neuron7x">@neuron7x</a>)<br/>
+  <i>Solo-authored in wartime Ukraine, 2024–2026</i>
+</p>
