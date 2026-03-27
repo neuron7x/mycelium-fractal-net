@@ -118,6 +118,8 @@ def _build_report(
     t_start: float,
     forecast_horizon: int,
     causal_mode: str,
+    gnc_levels: dict[str, float] | None = None,
+    compute_ccp: bool = False,
 ) -> DiagnosisReport:
     """Assemble the final DiagnosisReport from pipeline outputs."""
     severity = _compute_severity(
@@ -161,13 +163,44 @@ def _build_report(
     # GNC+ neuromodulatory diagnosis (optional, fail-safe)
     gnc_diag = None
     try:
-        from mycelium_fractal_net.neurochem.gnc import GNCBridge
+        if gnc_levels is not None:
+            from mycelium_fractal_net.neurochem.gnc import compute_gnc_state, gnc_diagnose
 
-        bridge = GNCBridge()
-        bridge.update_from_m_score(anomaly.score)
-        gnc_diag = bridge.summary()
-    except Exception:  # noqa: BLE001
+            gnc_state = compute_gnc_state(gnc_levels)
+            gnc_diag = gnc_diagnose(gnc_state)
+        else:
+            from mycelium_fractal_net.neurochem.gnc import GNCBridge
+
+            bridge = GNCBridge()
+            bridge.update_from_m_score(anomaly.score)
+            gnc_diag = bridge.summary()
+    except Exception:
         pass
+
+    # CCP metrics (optional, fail-safe)
+    ccp_state = None
+    ccp_gnc_consistency = None
+    if compute_ccp:
+        try:
+            from mycelium_fractal_net.analytics.ccp_metrics import compute_ccp_state
+
+            ccp_state = compute_ccp_state(seq)
+
+            # CCP↔GNC+ consistency check (requires both CCP and GNC+ with explicit levels)
+            if gnc_levels is not None:
+                try:
+                    from mycelium_fractal_net.neurochem.ccp_gnc_bridge import (
+                        validate_ccp_gnc_consistency,
+                    )
+                    from mycelium_fractal_net.neurochem.gnc import compute_gnc_state as _gnc
+
+                    ccp_gnc_consistency = validate_ccp_gnc_consistency(
+                        ccp_state, _gnc(gnc_levels)
+                    )
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     return DiagnosisReport(
         severity=severity,
@@ -180,6 +213,8 @@ def _build_report(
         narrative=narrative,
         metadata=metadata,
         gnc_diagnosis=gnc_diag,
+        ccp_state=ccp_state,
+        ccp_gnc_consistency=ccp_gnc_consistency,
     )
 
 
@@ -193,6 +228,8 @@ def diagnose(
     allowed_levers: list[str] | None = None,
     skip_intervention: bool = False,
     causal_mode: str = "strict",
+    gnc_levels: dict[str, float] | None = None,
+    compute_ccp: bool = False,
 ) -> DiagnosisReport:
     """Full diagnostic pipeline in one call.
 
@@ -216,6 +253,11 @@ def diagnose(
         Skip planning even if severity >= warning.
     causal_mode : str
         'strict' (default), 'observe', or 'permissive'.
+    gnc_levels : dict[str, float] | None
+        Neuromodulator levels for GNC+ diagnosis (e.g. {"Dopamine": 0.7, "GABA": 0.5}).
+        When provided, runs full GNC+ state computation instead of the default M-score bridge.
+    compute_ccp : bool
+        If True, compute CCP metrics (D_f, Phi, R) and CCP↔GNC+ consistency.
 
     Returns
     -------
@@ -270,6 +312,8 @@ def diagnose(
         t_start,
         forecast_horizon,
         causal_mode,
+        gnc_levels=gnc_levels,
+        compute_ccp=compute_ccp,
     )
 
 

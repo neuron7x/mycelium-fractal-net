@@ -11,11 +11,12 @@ Ref: Scheffer et al. (2009) Nature 461:53
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from .gnc import GNCState, MODULATORS, gnc_diagnose
+if TYPE_CHECKING:
+    from .gnc import GNCState
 
 __all__ = [
     "TRANSITION_PATTERNS",
@@ -148,7 +149,7 @@ def gnc_ews_trajectory(
         return {"trajectory_risk": 0.0, "trend": "stable", "peak_horizon": 0, "recommendation": "No data."}
 
     risks: list[float] = []
-    for state, ews in zip(gnc_states, mfn_ews_scores):
+    for state, ews in zip(gnc_states, mfn_ews_scores, strict=False):
         result = gnc_predictive_ews(state, ews)
         risks.append(result["combined_score"])
 

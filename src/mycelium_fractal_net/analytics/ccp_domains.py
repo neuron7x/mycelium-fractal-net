@@ -16,7 +16,6 @@ from typing import Any
 
 import numpy as np
 
-
 CCP_REFERENCE_TABLE: dict[str, dict[str, Any]] = {
     "human_brain_awake": {
         "D_f_range": (1.5, 1.8),
@@ -109,9 +108,9 @@ def run_ccp_benchmark(seeds: list[int] | None = None) -> dict:
     Returns:
         Benchmark summary with means, stds, cognitive fraction, comparison.
     """
+    from mycelium_fractal_net.analytics.ccp_metrics import compute_ccp_state
     from mycelium_fractal_net.core.simulate import simulate_history
     from mycelium_fractal_net.types.field import SimulationSpec
-    from mycelium_fractal_net.analytics.ccp_metrics import compute_ccp_state
 
     if seeds is None:
         seeds = [42, 43, 44, 45, 46]
@@ -140,7 +139,7 @@ def run_ccp_benchmark(seeds: list[int] | None = None) -> dict:
     cognitive_fraction = cognitive_count / n
 
     # Check if mean is in cognitive window
-    from mycelium_fractal_net.analytics.ccp_metrics import D_F_MIN, D_F_MAX, R_C
+    from mycelium_fractal_net.analytics.ccp_metrics import D_F_MAX, D_F_MIN, R_C
     in_window = (D_F_MIN <= D_f_mean <= D_F_MAX) and (R_mean > R_C)
 
     # Compare with human brain awake
@@ -169,6 +168,80 @@ def run_ccp_benchmark(seeds: list[int] | None = None) -> dict:
 # TESTS
 # ===================================================================
 
+
+def _test_reference_table(test_fn) -> None:
+    print("\n--- Reference table ---")
+
+    def _test_all_domains_present():
+        required = ["human_brain_awake", "human_brain_anesthesia", "mycelium_active", "mfn_healthy_field"]
+        for d in required:
+            assert d in CCP_REFERENCE_TABLE, f"missing domain: {d}"
+    test_fn("reference table has all domains", _test_all_domains_present)
+
+    def _test_human_brain_has_ranges():
+        ref = CCP_REFERENCE_TABLE["human_brain_awake"]
+        assert ref["D_f_range"] is not None
+        assert ref["R_range"] is not None
+        assert ref["cognitive"] is True
+    test_fn("human_brain_awake has ranges and cognitive=True", _test_human_brain_has_ranges)
+
+
+def _test_compare_with_ref(test_fn) -> None:
+    print("\n--- compare_with_reference ---")
+
+    def _test_comparison_returns_all_keys():
+        ccp = {"D_f": 1.65, "R": 0.5, "phi_proxy": 0.1}
+        result = compare_with_reference(ccp, "human_brain_awake")
+        for key in ["measured", "reference", "D_f_match", "R_match", "domain_consistent", "interpretation"]:
+            assert key in result, f"missing key: {key}"
+    test_fn("compare_with_reference returns all keys", _test_comparison_returns_all_keys)
+
+    def _test_comparison_in_range():
+        ccp = {"D_f": 1.65, "R": 0.6}
+        result = compare_with_reference(ccp, "human_brain_awake")
+        assert result["D_f_match"], "D_f=1.65 should match human_brain_awake"
+        assert result["R_match"], "R=0.6 should match human_brain_awake"
+        assert result["domain_consistent"]
+    test_fn("D_f=1.65, R=0.6 matches human_brain_awake", _test_comparison_in_range)
+
+    def _test_comparison_out_of_range():
+        ccp = {"D_f": 1.0, "R": 0.1}
+        result = compare_with_reference(ccp, "human_brain_awake")
+        assert not result["D_f_match"]
+        assert not result["R_match"]
+    test_fn("D_f=1.0, R=0.1 outside human_brain_awake", _test_comparison_out_of_range)
+
+    def _test_comparison_unknown_domain():
+        try:
+            compare_with_reference({"D_f": 1.5}, "unknown_domain")
+            raise AssertionError("should raise ValueError")
+        except ValueError:
+            pass
+    test_fn("unknown domain raises ValueError", _test_comparison_unknown_domain)
+
+
+def _test_benchmark(test_fn) -> None:
+    print("\n--- run_ccp_benchmark ---")
+
+    def _test_benchmark_returns_all_fields():
+        result = run_ccp_benchmark(seeds=[42, 43])
+        for key in ["n_runs", "D_f_mean", "D_f_std", "R_mean", "R_std",
+                     "phi_mean", "cognitive_fraction", "in_cognitive_window", "comparison"]:
+            assert key in result, f"missing key: {key}"
+        assert result["n_runs"] == 2
+    test_fn("benchmark returns all fields (n=2)", _test_benchmark_returns_all_fields)
+
+    def _test_benchmark_cognitive_fraction():
+        result = run_ccp_benchmark(seeds=[42])
+        assert 0.0 <= result["cognitive_fraction"] <= 1.0
+    test_fn("benchmark cognitive_fraction in [0, 1]", _test_benchmark_cognitive_fraction)
+
+    def _test_benchmark_D_f_positive():
+        result = run_ccp_benchmark(seeds=[42])
+        assert result["D_f_mean"] > 0, "D_f should be positive"
+    test_fn("benchmark D_f > 0", _test_benchmark_D_f_positive)
+
+
 def _run_tests() -> None:
     passed = 0
     failed = 0
@@ -187,75 +260,9 @@ def _run_tests() -> None:
     print("CCP Domains Test Suite")
     print("=" * 60)
 
-    # --- Reference table ---
-    print("\n--- Reference table ---")
-
-    def _test_all_domains_present():
-        required = ["human_brain_awake", "human_brain_anesthesia", "mycelium_active", "mfn_healthy_field"]
-        for d in required:
-            assert d in CCP_REFERENCE_TABLE, f"missing domain: {d}"
-    _test("reference table has all domains", _test_all_domains_present)
-
-    def _test_human_brain_has_ranges():
-        ref = CCP_REFERENCE_TABLE["human_brain_awake"]
-        assert ref["D_f_range"] is not None
-        assert ref["R_range"] is not None
-        assert ref["cognitive"] is True
-    _test("human_brain_awake has ranges and cognitive=True", _test_human_brain_has_ranges)
-
-    # --- compare_with_reference ---
-    print("\n--- compare_with_reference ---")
-
-    def _test_comparison_returns_all_keys():
-        ccp = {"D_f": 1.65, "R": 0.5, "phi_proxy": 0.1}
-        result = compare_with_reference(ccp, "human_brain_awake")
-        for key in ["measured", "reference", "D_f_match", "R_match", "domain_consistent", "interpretation"]:
-            assert key in result, f"missing key: {key}"
-    _test("compare_with_reference returns all keys", _test_comparison_returns_all_keys)
-
-    def _test_comparison_in_range():
-        ccp = {"D_f": 1.65, "R": 0.6}
-        result = compare_with_reference(ccp, "human_brain_awake")
-        assert result["D_f_match"], "D_f=1.65 should match human_brain_awake"
-        assert result["R_match"], "R=0.6 should match human_brain_awake"
-        assert result["domain_consistent"]
-    _test("D_f=1.65, R=0.6 matches human_brain_awake", _test_comparison_in_range)
-
-    def _test_comparison_out_of_range():
-        ccp = {"D_f": 1.0, "R": 0.1}
-        result = compare_with_reference(ccp, "human_brain_awake")
-        assert not result["D_f_match"]
-        assert not result["R_match"]
-    _test("D_f=1.0, R=0.1 outside human_brain_awake", _test_comparison_out_of_range)
-
-    def _test_comparison_unknown_domain():
-        try:
-            compare_with_reference({"D_f": 1.5}, "unknown_domain")
-            assert False, "should raise ValueError"
-        except ValueError:
-            pass
-    _test("unknown domain raises ValueError", _test_comparison_unknown_domain)
-
-    # --- benchmark ---
-    print("\n--- run_ccp_benchmark ---")
-
-    def _test_benchmark_returns_all_fields():
-        result = run_ccp_benchmark(seeds=[42, 43])
-        for key in ["n_runs", "D_f_mean", "D_f_std", "R_mean", "R_std",
-                     "phi_mean", "cognitive_fraction", "in_cognitive_window", "comparison"]:
-            assert key in result, f"missing key: {key}"
-        assert result["n_runs"] == 2
-    _test("benchmark returns all fields (n=2)", _test_benchmark_returns_all_fields)
-
-    def _test_benchmark_cognitive_fraction():
-        result = run_ccp_benchmark(seeds=[42])
-        assert 0.0 <= result["cognitive_fraction"] <= 1.0
-    _test("benchmark cognitive_fraction in [0, 1]", _test_benchmark_cognitive_fraction)
-
-    def _test_benchmark_D_f_positive():
-        result = run_ccp_benchmark(seeds=[42])
-        assert result["D_f_mean"] > 0, "D_f should be positive"
-    _test("benchmark D_f > 0", _test_benchmark_D_f_positive)
+    _test_reference_table(_test)
+    _test_compare_with_ref(_test)
+    _test_benchmark(_test)
 
     # --- Summary ---
     print("\n" + "=" * 60)

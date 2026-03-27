@@ -19,7 +19,7 @@ from typing import Any
 
 import numpy as np
 
-from .gnc import GNCState, MODULATORS, THETA, _OMEGA, _IDX, compute_gnc_state
+from .gnc import _IDX, _OMEGA, MODULATORS, GNCState, compute_gnc_state
 
 __all__ = ["NeuromodulatoryDigitalTwin"]
 

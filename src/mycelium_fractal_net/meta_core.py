@@ -29,12 +29,14 @@ Ref: Vasylenko Y.O. (2026), Meta-Core. Myloradove, Ukraine.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 from mycelium_fractal_net.types.field import FieldSequence
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 # ===================================================================
@@ -175,8 +177,8 @@ def h_compress(sequence: FieldSequence) -> CompressionResult:
     FieldSequence -> {D_f, Phi, R, anomaly, regime, cognitive}.
     Combines MFN anomaly detection with CCP triple.
     """
-    from mycelium_fractal_net.core.detect import detect_anomaly, detect_regime_shift
     from mycelium_fractal_net.analytics.ccp_metrics import compute_ccp_state
+    from mycelium_fractal_net.core.detect import detect_anomaly, detect_regime_shift
 
     anomaly = detect_anomaly(sequence)
     regime = detect_regime_shift(sequence)
@@ -207,14 +209,13 @@ def S_select(
     GNC+ processes compression output, applies Theta modulation,
     determines meso-strategy, checks CCP-GNC+ consistency.
     """
+    from mycelium_fractal_net.neurochem.ccp_gnc_bridge import validate_ccp_gnc_consistency
     from mycelium_fractal_net.neurochem.gnc import (
         GNCBridge,
-        GNCState,
         MesoController,
         compute_gnc_state,
         gnc_diagnose,
     )
-    from mycelium_fractal_net.neurochem.ccp_gnc_bridge import validate_ccp_gnc_consistency
 
     gnc_state = compute_gnc_state(gnc_levels)
     diag = gnc_diagnose(gnc_state)
@@ -263,12 +264,11 @@ def phi_sovereign(
     Returns: (all_passed, per_lens, confidence)
     """
     from mycelium_fractal_net.neurochem.gnc import (
+        THETA_BOUNDS,
         GNCState,
         check_falsification,
-        gnc_diagnose,
         compute_gnc_state,
-        THETA_BOUNDS,
-        LEVEL_BOUNDS,
+        gnc_diagnose,
     )
 
     lenses = {}
@@ -283,7 +283,7 @@ def phi_sovereign(
     lenses["L2_consistency"] = selection.ccp_gnc_consistent
 
     # L3: Falsifiability — GNC+ F1-F7 hold
-    gnc_state = compute_gnc_state()  # rebuild for check
+    compute_gnc_state()  # rebuild for check
     gnc_state_real = GNCState(
         levels=np.full(7, 0.5),  # use actual theta from selection
         theta=selection.theta_vector.copy(),
@@ -434,9 +434,174 @@ def reality_trajectory(
 # TESTS
 # ===================================================================
 
-def _run_tests() -> None:
-    import traceback
 
+def _tests_R_generate(test_fn, agent) -> None:
+    print("\n--- R(A_t): Recursive Generation ---")
+
+    def _test_R_returns_sequence():
+        result = R_generate(agent)
+        assert isinstance(result, FieldSequence)
+        assert result.field.shape == (32, 32)
+    test_fn("R(A_t) returns FieldSequence", _test_R_returns_sequence)
+
+
+def _tests_h_compress(test_fn, seq) -> None:
+    print("\n--- h_t: Compression ---")
+
+    def _test_h_returns_compression():
+        c = h_compress(seq)
+        assert isinstance(c, CompressionResult)
+        assert 0 <= c.D_f <= 3.0
+        assert 0 <= c.R <= 1.0
+        assert isinstance(c.cognitive, bool)
+    test_fn("h_t returns CompressionResult", _test_h_returns_compression)
+
+    def _test_h_anomaly_bounded():
+        c = h_compress(seq)
+        assert 0.0 <= c.anomaly_score <= 1.0
+    test_fn("h_t anomaly in [0, 1]", _test_h_anomaly_bounded)
+
+
+def _tests_S_select(test_fn, seq) -> None:
+    print("\n--- S_Theta: Selection ---")
+
+    def _test_S_returns_selection():
+        c = h_compress(seq)
+        s = S_select(c, {"Glutamate": 0.6, "GABA": 0.4})
+        assert isinstance(s, SelectionResult)
+        assert s.gnc_regime in ("optimal", "hyperactivated", "hypoactivated", "dysregulated")
+        assert s.meso_strategy in ("EXPLORE", "EXPLOIT", "RESET")
+    test_fn("S_Theta returns SelectionResult", _test_S_returns_selection)
+
+    def _test_S_default_levels():
+        c = h_compress(seq)
+        s = S_select(c)
+        assert s.coherence > 0
+    test_fn("S_Theta works with default levels", _test_S_default_levels)
+
+    def _test_S_theta_dim():
+        c = h_compress(seq)
+        s = S_select(c)
+        assert s.theta_vector.shape == (9,)
+    test_fn("S_Theta theta dimension = 9", _test_S_theta_dim)
+
+
+def _tests_phi_sovereign(test_fn, seq) -> None:
+    print("\n--- phi: SovereignGate (6 lenses) ---")
+
+    def _test_phi_returns_6_lenses():
+        c = h_compress(seq)
+        s = S_select(c)
+        _ok, lenses, conf = phi_sovereign(c, s)
+        assert len(lenses) == 6
+        assert all(k.startswith("L") for k in lenses)
+        assert 0.0 <= conf <= 1.0
+    test_fn("phi returns 6 lenses", _test_phi_returns_6_lenses)
+
+    def _test_phi_lens_names():
+        c = h_compress(seq)
+        s = S_select(c)
+        _, lenses, _ = phi_sovereign(c, s)
+        expected = {"L1_bounds", "L2_consistency", "L3_falsifiability",
+                    "L4_coherence", "L5_cognitive", "L6_stability"}
+        assert set(lenses.keys()) == expected
+    test_fn("phi lens names correct", _test_phi_lens_names)
+
+
+def _tests_compute_reality(test_fn, agent) -> None:
+    print("\n--- compute_reality: Full Pipeline ---")
+
+    def _test_full_pipeline():
+        rf = compute_reality(agent, {"Glutamate": 0.6, "GABA": 0.4})
+        assert isinstance(rf, RealityFrame)
+        assert rf.reality_label in ("cognitive", "subcognitive", "transitional", "pathological")
+        assert 0.0 <= rf.reality_confidence <= 1.0
+    test_fn("Full pipeline returns RealityFrame", _test_full_pipeline)
+
+    def _test_full_pipeline_default():
+        rf = compute_reality(agent)
+        assert rf.reality_label in ("cognitive", "subcognitive", "transitional", "pathological")
+    test_fn("Full pipeline with default GNC+", _test_full_pipeline_default)
+
+    def _test_summary_not_empty():
+        rf = compute_reality(agent)
+        s = rf.summary()
+        assert len(s) > 0
+        assert "Reality_t" in s
+    test_fn("summary() is not empty", _test_summary_not_empty)
+
+    def _test_to_dict_keys():
+        rf = compute_reality(agent)
+        d = rf.to_dict()
+        assert "reality_label" in d
+        assert "compression" in d
+        assert "selection" in d
+        assert "sovereign" in d
+        assert "theta_signature" in d
+    test_fn("to_dict has all keys", _test_to_dict_keys)
+
+    def _test_theta_signature_format():
+        rf = compute_reality(agent)
+        parts = rf.theta_signature.split("|")
+        assert len(parts) == 9
+    test_fn("theta_signature has 9 components", _test_theta_signature_format)
+
+
+def _tests_trajectory(test_fn, agent) -> None:
+    print("\n--- reality_trajectory ---")
+
+    def _test_trajectory_multi_step():
+        frames = reality_trajectory(agent, steps=5)
+        assert len(frames) == 5
+        for f in frames:
+            assert isinstance(f, RealityFrame)
+    test_fn("trajectory with 5 steps", _test_trajectory_multi_step)
+
+    def _test_trajectory_step_numbers():
+        frames = reality_trajectory(agent, steps=3)
+        assert [f.agent.step for f in frames] == [0, 1, 2]
+    test_fn("trajectory step numbers correct", _test_trajectory_step_numbers)
+
+
+def _tests_classify(test_fn) -> None:
+    print("\n--- classify_reality ---")
+
+    def _test_classify_cognitive():
+        c = CompressionResult(D_f=1.7, phi_proxy=0.1, R=0.6,
+                              anomaly_score=0.2, regime="stable", cognitive=True)
+        s = SelectionResult(gnc_regime="optimal", coherence=0.8,
+                            dominant_axis="Glutamate", meso_strategy="EXPLOIT",
+                            theta_vector=np.full(9, 0.5),
+                            modulated_anomaly=0.2, program_spine={},
+                            ccp_gnc_consistent=True)
+        label, _conf = classify_reality(c, s, sovereign_passed=True)
+        assert label == "cognitive"
+    test_fn("classify: optimal+cognitive → cognitive", _test_classify_cognitive)
+
+    def _test_classify_pathological():
+        c = CompressionResult(D_f=1.0, phi_proxy=-0.5, R=0.1,
+                              anomaly_score=0.9, regime="pathological_noise", cognitive=False)
+        s = SelectionResult(gnc_regime="dysregulated", coherence=0.2,
+                            dominant_axis="Opioid", meso_strategy="RESET",
+                            theta_vector=np.full(9, 0.5),
+                            modulated_anomaly=0.9, program_spine={},
+                            ccp_gnc_consistent=False)
+        label, _conf = classify_reality(c, s, sovereign_passed=False)
+        assert label == "pathological"
+    test_fn("classify: dysregulated+failed → pathological", _test_classify_pathological)
+
+
+def _tests_agent_state(test_fn, seq) -> None:
+    print("\n--- AgentState ---")
+
+    def _test_agent_state_fields():
+        a = AgentState(sequence=seq, step=5, action_history=["observe", "adapt"])
+        assert a.step == 5
+        assert len(a.action_history) == 2
+    test_fn("AgentState holds step and actions", _test_agent_state_fields)
+
+
+def _run_tests() -> None:
     passed = 0
     failed = 0
 
@@ -455,7 +620,6 @@ def _run_tests() -> None:
     print("Reality_t = phi( S_Theta( h_t( R(A_t) ) ) )")
     print("=" * 65)
 
-    # --- Setup ---
     from mycelium_fractal_net.core.simulate import simulate_history
     from mycelium_fractal_net.types.field import SimulationSpec
 
@@ -463,163 +627,14 @@ def _run_tests() -> None:
     seq = simulate_history(spec)
     agent = AgentState(sequence=seq, step=0)
 
-    # --- R(A_t) ---
-    print("\n--- R(A_t): Recursive Generation ---")
-
-    def _test_R_returns_sequence():
-        result = R_generate(agent)
-        assert isinstance(result, FieldSequence)
-        assert result.field.shape == (32, 32)
-    _test("R(A_t) returns FieldSequence", _test_R_returns_sequence)
-
-    # --- h_t: Compression ---
-    print("\n--- h_t: Compression ---")
-
-    def _test_h_returns_compression():
-        c = h_compress(seq)
-        assert isinstance(c, CompressionResult)
-        assert 0 <= c.D_f <= 3.0
-        assert 0 <= c.R <= 1.0
-        assert isinstance(c.cognitive, bool)
-    _test("h_t returns CompressionResult", _test_h_returns_compression)
-
-    def _test_h_anomaly_bounded():
-        c = h_compress(seq)
-        assert 0.0 <= c.anomaly_score <= 1.0
-    _test("h_t anomaly in [0, 1]", _test_h_anomaly_bounded)
-
-    # --- S_Theta: Selection ---
-    print("\n--- S_Theta: Selection ---")
-
-    def _test_S_returns_selection():
-        c = h_compress(seq)
-        s = S_select(c, {"Glutamate": 0.6, "GABA": 0.4})
-        assert isinstance(s, SelectionResult)
-        assert s.gnc_regime in ("optimal", "hyperactivated", "hypoactivated", "dysregulated")
-        assert s.meso_strategy in ("EXPLORE", "EXPLOIT", "RESET")
-    _test("S_Theta returns SelectionResult", _test_S_returns_selection)
-
-    def _test_S_default_levels():
-        c = h_compress(seq)
-        s = S_select(c)
-        assert s.coherence > 0
-    _test("S_Theta works with default levels", _test_S_default_levels)
-
-    def _test_S_theta_dim():
-        c = h_compress(seq)
-        s = S_select(c)
-        assert s.theta_vector.shape == (9,)
-    _test("S_Theta theta dimension = 9", _test_S_theta_dim)
-
-    # --- phi: SovereignGate ---
-    print("\n--- phi: SovereignGate (6 lenses) ---")
-
-    def _test_phi_returns_6_lenses():
-        c = h_compress(seq)
-        s = S_select(c)
-        ok, lenses, conf = phi_sovereign(c, s)
-        assert len(lenses) == 6
-        assert all(k.startswith("L") for k in lenses)
-        assert 0.0 <= conf <= 1.0
-    _test("phi returns 6 lenses", _test_phi_returns_6_lenses)
-
-    def _test_phi_lens_names():
-        c = h_compress(seq)
-        s = S_select(c)
-        _, lenses, _ = phi_sovereign(c, s)
-        expected = {"L1_bounds", "L2_consistency", "L3_falsifiability",
-                    "L4_coherence", "L5_cognitive", "L6_stability"}
-        assert set(lenses.keys()) == expected
-    _test("phi lens names correct", _test_phi_lens_names)
-
-    # --- compute_reality: Full pipeline ---
-    print("\n--- compute_reality: Full Pipeline ---")
-
-    def _test_full_pipeline():
-        rf = compute_reality(agent, {"Glutamate": 0.6, "GABA": 0.4})
-        assert isinstance(rf, RealityFrame)
-        assert rf.reality_label in ("cognitive", "subcognitive", "transitional", "pathological")
-        assert 0.0 <= rf.reality_confidence <= 1.0
-    _test("Full pipeline returns RealityFrame", _test_full_pipeline)
-
-    def _test_full_pipeline_default():
-        rf = compute_reality(agent)
-        assert rf.reality_label in ("cognitive", "subcognitive", "transitional", "pathological")
-    _test("Full pipeline with default GNC+", _test_full_pipeline_default)
-
-    def _test_summary_not_empty():
-        rf = compute_reality(agent)
-        s = rf.summary()
-        assert len(s) > 0
-        assert "Reality_t" in s
-    _test("summary() is not empty", _test_summary_not_empty)
-
-    def _test_to_dict_keys():
-        rf = compute_reality(agent)
-        d = rf.to_dict()
-        assert "reality_label" in d
-        assert "compression" in d
-        assert "selection" in d
-        assert "sovereign" in d
-        assert "theta_signature" in d
-    _test("to_dict has all keys", _test_to_dict_keys)
-
-    def _test_theta_signature_format():
-        rf = compute_reality(agent)
-        parts = rf.theta_signature.split("|")
-        assert len(parts) == 9  # 9 theta params
-    _test("theta_signature has 9 components", _test_theta_signature_format)
-
-    # --- reality_trajectory ---
-    print("\n--- reality_trajectory ---")
-
-    def _test_trajectory_multi_step():
-        frames = reality_trajectory(agent, steps=5)
-        assert len(frames) == 5
-        for f in frames:
-            assert isinstance(f, RealityFrame)
-    _test("trajectory with 5 steps", _test_trajectory_multi_step)
-
-    def _test_trajectory_step_numbers():
-        frames = reality_trajectory(agent, steps=3)
-        assert [f.agent.step for f in frames] == [0, 1, 2]
-    _test("trajectory step numbers correct", _test_trajectory_step_numbers)
-
-    # --- classify_reality ---
-    print("\n--- classify_reality ---")
-
-    def _test_classify_cognitive():
-        c = CompressionResult(D_f=1.7, phi_proxy=0.1, R=0.6,
-                              anomaly_score=0.2, regime="stable", cognitive=True)
-        s = SelectionResult(gnc_regime="optimal", coherence=0.8,
-                            dominant_axis="Glutamate", meso_strategy="EXPLOIT",
-                            theta_vector=np.full(9, 0.5),
-                            modulated_anomaly=0.2, program_spine={},
-                            ccp_gnc_consistent=True)
-        label, conf = classify_reality(c, s, sovereign_passed=True)
-        assert label == "cognitive"
-    _test("classify: optimal+cognitive → cognitive", _test_classify_cognitive)
-
-    def _test_classify_pathological():
-        c = CompressionResult(D_f=1.0, phi_proxy=-0.5, R=0.1,
-                              anomaly_score=0.9, regime="pathological_noise", cognitive=False)
-        s = SelectionResult(gnc_regime="dysregulated", coherence=0.2,
-                            dominant_axis="Opioid", meso_strategy="RESET",
-                            theta_vector=np.full(9, 0.5),
-                            modulated_anomaly=0.9, program_spine={},
-                            ccp_gnc_consistent=False)
-        label, conf = classify_reality(c, s, sovereign_passed=False)
-        assert label == "pathological"
-    _test("classify: dysregulated+failed → pathological", _test_classify_pathological)
-
-    # --- AgentState ---
-    print("\n--- AgentState ---")
-
-    def _test_agent_state_fields():
-        a = AgentState(sequence=seq, step=5, action_history=["observe", "adapt"])
-        assert a.step == 5
-        assert len(a.action_history) == 2
-    _test("AgentState holds step and actions", _test_agent_state_fields)
+    _tests_R_generate(_test, agent)
+    _tests_h_compress(_test, seq)
+    _tests_S_select(_test, seq)
+    _tests_phi_sovereign(_test, seq)
+    _tests_compute_reality(_test, agent)
+    _tests_trajectory(_test, agent)
+    _tests_classify(_test)
+    _tests_agent_state(_test, seq)
 
     # --- Summary ---
     print("\n" + "=" * 65)

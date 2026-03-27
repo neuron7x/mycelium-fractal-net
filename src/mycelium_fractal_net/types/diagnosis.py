@@ -36,6 +36,8 @@ class DiagnosisReport:
     narrative: str
     metadata: dict[str, Any] = field(default_factory=dict)
     gnc_diagnosis: Any = None  # GNCDiagnosis if neurochem.gnc available
+    ccp_state: dict[str, Any] | None = None  # CCP triple (D_f, Phi, R) if computed
+    ccp_gnc_consistency: dict[str, Any] | None = None  # CCP↔GNC+ consistency check
 
     def is_ok(self) -> bool:
         """True if severity is stable or info."""

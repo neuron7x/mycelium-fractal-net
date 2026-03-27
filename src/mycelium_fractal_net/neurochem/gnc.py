@@ -38,14 +38,14 @@ from typing import Any
 import numpy as np
 
 __all__ = [
-    "GNCBridge",
-    "GNCDiagnosis",
-    "GNCState",
-    "MesoController",
     "MODULATORS",
     "ROLES",
     "SIGMA",
     "THETA",
+    "GNCBridge",
+    "GNCDiagnosis",
+    "GNCState",
+    "MesoController",
     "compute_gnc_state",
     "gnc_diagnose",
     "omega_update",
@@ -127,14 +127,14 @@ class GNCState:
     @classmethod
     def default(cls) -> GNCState:
         return cls(
-            modulators={m: 0.5 for m in MODULATORS},
-            theta={t: 0.5 for t in THETA},
+            modulators=dict.fromkeys(MODULATORS, 0.5),
+            theta=dict.fromkeys(THETA, 0.5),
         )
 
     @classmethod
     def from_levels(cls, levels: dict[str, float], context: dict[str, float] | None = None) -> GNCState:
         modulators = {m: float(np.clip(levels.get(m, 0.5), 0.0, 1.0)) for m in MODULATORS}
-        state = cls(modulators=modulators, theta={t: 0.5 for t in THETA}, context=context or {})
+        state = cls(modulators=modulators, theta=dict.fromkeys(THETA, 0.5), context=context or {})
         state.theta = _compute_theta(state)
         return state
 
@@ -187,7 +187,7 @@ class GNCDiagnosis:
 
 def _compute_theta(state: GNCState) -> dict[str, float]:
     """Compute Theta from modulator levels via Phi + Sigma + Omega."""
-    delta = {t: 0.0 for t in THETA}
+    delta = dict.fromkeys(THETA, 0.0)
 
     for m in MODULATORS:
         deviation = abs(state.modulators[m] - 0.5)
@@ -219,7 +219,7 @@ def compute_gnc_state(
 
 def step(state: GNCState) -> GNCState:
     """One step on the neuromodulatory manifold: x_t -> x_{t+1}."""
-    delta = {t: 0.0 for t in THETA}
+    delta = dict.fromkeys(THETA, 0.0)
 
     for m in MODULATORS:
         deviation = state.modulators[m] - 0.5

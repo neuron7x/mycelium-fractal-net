@@ -23,14 +23,13 @@ from __future__ import annotations
 
 import numpy as np
 
+from mycelium_fractal_net.analytics.ccp_metrics import D_F_MAX, D_F_MIN, PHI_C, R_C
 from mycelium_fractal_net.neurochem.gnc import (
-    GNCState,
-    GNCDiagnosis,
     MODULATORS,
+    GNCState,
     compute_gnc_state,
     gnc_diagnose,
 )
-from mycelium_fractal_net.analytics.ccp_metrics import D_F_MIN, D_F_MAX, R_C, PHI_C
 
 
 def ccp_to_gnc_prediction(ccp_state: dict) -> dict[str, float]:
@@ -50,7 +49,7 @@ def ccp_to_gnc_prediction(ccp_state: dict) -> dict[str, float]:
     phi = float(ccp_state.get("phi_proxy", 0.0))
 
     # Base: all at 0.5
-    levels = {m: 0.5 for m in MODULATORS}
+    levels = dict.fromkeys(MODULATORS, 0.5)
 
     # D_f → Glutamate/GABA axis
     if D_f > 1.7:
@@ -189,6 +188,95 @@ def validate_ccp_gnc_consistency(
 # TESTS
 # ===================================================================
 
+
+def _tests_ccp_to_gnc(test_fn) -> None:
+    print("\n--- ccp_to_gnc_prediction ---")
+
+    def _test_high_D_f_high_glu():
+        pred = ccp_to_gnc_prediction({"D_f": 1.9, "R": 0.5, "phi_proxy": 0.0})
+        assert pred["Glutamate"] > 0.5, f"high D_f should → Glu↑, got {pred['Glutamate']}"
+    test_fn("high D_f → high Glutamate", _test_high_D_f_high_glu)
+
+    def _test_low_R_high_na():
+        pred = ccp_to_gnc_prediction({"D_f": 1.7, "R": 0.15, "phi_proxy": 0.0})
+        assert pred["Noradrenaline"] > 0.5, f"low R should → NA↑, got {pred['Noradrenaline']}"
+    test_fn("low R → high Noradrenaline", _test_low_R_high_na)
+
+    def _test_high_phi_high_da():
+        pred = ccp_to_gnc_prediction({"D_f": 1.7, "R": 0.5, "phi_proxy": 0.5})
+        assert pred["Dopamine"] > 0.5, f"high Phi → DA↑, got {pred['Dopamine']}"
+    test_fn("high Phi → high Dopamine", _test_high_phi_high_da)
+
+    def _test_prediction_bounds():
+        pred = ccp_to_gnc_prediction({"D_f": 3.0, "R": 0.0, "phi_proxy": -5.0})
+        for m, v in pred.items():
+            assert 0.1 <= v <= 0.9, f"{m}={v} out of bounds"
+    test_fn("all predictions in [0.1, 0.9]", _test_prediction_bounds)
+
+
+def _tests_gnc_to_ccp(test_fn) -> None:
+    print("\n--- gnc_to_ccp_prediction ---")
+
+    def _test_optimal_predicts_cognitive():
+        st = GNCState.default()
+        pred = gnc_to_ccp_prediction(st)
+        assert pred["predicted_cognitive"], "optimal GNC+ should predict cognitive"
+    test_fn("GNC+ optimal → predicts cognitive", _test_optimal_predicts_cognitive)
+
+    def _test_dysregulated_predicts_noncognitive():
+        st = compute_gnc_state({
+            "Glutamate": 0.9, "GABA": 0.9, "Dopamine": 0.1,
+            "Serotonin": 0.1, "Opioid": 0.9, "Noradrenaline": 0.1
+        })
+        pred = gnc_to_ccp_prediction(st)
+        assert pred["confidence"] < 0.8, "dysregulated should have lower confidence"
+    test_fn("GNC+ dysregulated → lower confidence", _test_dysregulated_predicts_noncognitive)
+
+    def _test_confidence_range():
+        for levels in [None, {"Dopamine": 0.9}, {"GABA": 0.9, "Glutamate": 0.1}]:
+            st = compute_gnc_state(levels)
+            pred = gnc_to_ccp_prediction(st)
+            assert 0.0 <= pred["confidence"] <= 1.0
+    test_fn("confidence in [0, 1]", _test_confidence_range)
+
+
+def _tests_consistency(test_fn) -> None:
+    print("\n--- validate_ccp_gnc_consistency ---")
+
+    def _test_consistent_optimal_cognitive():
+        ccp = {"cognitive": True}
+        gnc = GNCState.default()
+        result = validate_ccp_gnc_consistency(ccp, gnc)
+        assert result["consistent"], "optimal + cognitive should be consistent"
+    test_fn("optimal + cognitive = consistent", _test_consistent_optimal_cognitive)
+
+    def _test_inconsistency_detected():
+        ccp = {"cognitive": True}
+        gnc = compute_gnc_state({
+            "Glutamate": 0.9, "GABA": 0.9, "Dopamine": 0.1,
+            "Serotonin": 0.1, "Opioid": 0.9, "Noradrenaline": 0.1
+        })
+        result = validate_ccp_gnc_consistency(ccp, gnc)
+        assert "consistent" in result
+        assert "recommendation" in result
+    test_fn("inconsistency check returns all fields", _test_inconsistency_detected)
+
+    def _test_noncognitive_optimal():
+        ccp = {"cognitive": False}
+        gnc = GNCState.default()
+        result = validate_ccp_gnc_consistency(ccp, gnc)
+        assert result["inconsistency_type"] == "ccp_noncognitive_gnc_optimal"
+    test_fn("non-cognitive + optimal → inconsistency detected", _test_noncognitive_optimal)
+
+    def _test_consistency_returns_all_keys():
+        ccp = {"cognitive": True}
+        gnc = GNCState.default()
+        result = validate_ccp_gnc_consistency(ccp, gnc)
+        for key in ["consistent", "ccp_cognitive", "gnc_regime", "inconsistency_type", "recommendation"]:
+            assert key in result, f"missing key: {key}"
+    test_fn("consistency check returns all keys", _test_consistency_returns_all_keys)
+
+
 def _run_tests() -> None:
     passed = 0
     failed = 0
@@ -207,92 +295,9 @@ def _run_tests() -> None:
     print("CCP-GNC+ Bridge Test Suite")
     print("=" * 60)
 
-    # --- ccp_to_gnc_prediction ---
-    print("\n--- ccp_to_gnc_prediction ---")
-
-    def _test_high_D_f_high_glu():
-        pred = ccp_to_gnc_prediction({"D_f": 1.9, "R": 0.5, "phi_proxy": 0.0})
-        assert pred["Glutamate"] > 0.5, f"high D_f should → Glu↑, got {pred['Glutamate']}"
-    _test("high D_f → high Glutamate", _test_high_D_f_high_glu)
-
-    def _test_low_R_high_na():
-        pred = ccp_to_gnc_prediction({"D_f": 1.7, "R": 0.15, "phi_proxy": 0.0})
-        assert pred["Noradrenaline"] > 0.5, f"low R should → NA↑, got {pred['Noradrenaline']}"
-    _test("low R → high Noradrenaline", _test_low_R_high_na)
-
-    def _test_high_phi_high_da():
-        pred = ccp_to_gnc_prediction({"D_f": 1.7, "R": 0.5, "phi_proxy": 0.5})
-        assert pred["Dopamine"] > 0.5, f"high Phi → DA↑, got {pred['Dopamine']}"
-    _test("high Phi → high Dopamine", _test_high_phi_high_da)
-
-    def _test_prediction_bounds():
-        pred = ccp_to_gnc_prediction({"D_f": 3.0, "R": 0.0, "phi_proxy": -5.0})
-        for m, v in pred.items():
-            assert 0.1 <= v <= 0.9, f"{m}={v} out of bounds"
-    _test("all predictions in [0.1, 0.9]", _test_prediction_bounds)
-
-    # --- gnc_to_ccp_prediction ---
-    print("\n--- gnc_to_ccp_prediction ---")
-
-    def _test_optimal_predicts_cognitive():
-        st = GNCState.default()
-        pred = gnc_to_ccp_prediction(st)
-        assert pred["predicted_cognitive"], f"optimal GNC+ should predict cognitive"
-    _test("GNC+ optimal → predicts cognitive", _test_optimal_predicts_cognitive)
-
-    def _test_dysregulated_predicts_noncognitive():
-        st = compute_gnc_state({
-            "Glutamate": 0.9, "GABA": 0.9, "Dopamine": 0.1,
-            "Serotonin": 0.1, "Opioid": 0.9, "Noradrenaline": 0.1
-        })
-        pred = gnc_to_ccp_prediction(st)
-        # Dysregulated may or may not predict cognitive — check confidence is low
-        assert pred["confidence"] < 0.8, f"dysregulated should have lower confidence"
-    _test("GNC+ dysregulated → lower confidence", _test_dysregulated_predicts_noncognitive)
-
-    def _test_confidence_range():
-        for levels in [None, {"Dopamine": 0.9}, {"GABA": 0.9, "Glutamate": 0.1}]:
-            st = compute_gnc_state(levels)
-            pred = gnc_to_ccp_prediction(st)
-            assert 0.0 <= pred["confidence"] <= 1.0
-    _test("confidence in [0, 1]", _test_confidence_range)
-
-    # --- validate_ccp_gnc_consistency ---
-    print("\n--- validate_ccp_gnc_consistency ---")
-
-    def _test_consistent_optimal_cognitive():
-        ccp = {"cognitive": True}
-        gnc = GNCState.default()
-        result = validate_ccp_gnc_consistency(ccp, gnc)
-        assert result["consistent"], "optimal + cognitive should be consistent"
-    _test("optimal + cognitive = consistent", _test_consistent_optimal_cognitive)
-
-    def _test_inconsistency_detected():
-        ccp = {"cognitive": True}
-        gnc = compute_gnc_state({
-            "Glutamate": 0.9, "GABA": 0.9, "Dopamine": 0.1,
-            "Serotonin": 0.1, "Opioid": 0.9, "Noradrenaline": 0.1
-        })
-        result = validate_ccp_gnc_consistency(ccp, gnc)
-        # May or may not be inconsistent depending on regime classification
-        assert "consistent" in result
-        assert "recommendation" in result
-    _test("inconsistency check returns all fields", _test_inconsistency_detected)
-
-    def _test_noncognitive_optimal():
-        ccp = {"cognitive": False}
-        gnc = GNCState.default()
-        result = validate_ccp_gnc_consistency(ccp, gnc)
-        assert result["inconsistency_type"] == "ccp_noncognitive_gnc_optimal"
-    _test("non-cognitive + optimal → inconsistency detected", _test_noncognitive_optimal)
-
-    def _test_consistency_returns_all_keys():
-        ccp = {"cognitive": True}
-        gnc = GNCState.default()
-        result = validate_ccp_gnc_consistency(ccp, gnc)
-        for key in ["consistent", "ccp_cognitive", "gnc_regime", "inconsistency_type", "recommendation"]:
-            assert key in result, f"missing key: {key}"
-    _test("consistency check returns all keys", _test_consistency_returns_all_keys)
+    _tests_ccp_to_gnc(_test)
+    _tests_gnc_to_ccp(_test)
+    _tests_consistency(_test)
 
     # --- Summary ---
     print("\n" + "=" * 60)

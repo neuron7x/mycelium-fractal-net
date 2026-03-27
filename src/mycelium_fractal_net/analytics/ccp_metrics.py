@@ -18,15 +18,20 @@ Refs:
 """
 from __future__ import annotations
 
-import numpy as np
-from numpy.typing import NDArray
+from typing import TYPE_CHECKING
 
-from mycelium_fractal_net.types.field import FieldSequence
-from mycelium_fractal_net.analytics.fractal_features import compute_box_counting_dimension
+import numpy as np
+
 from mycelium_fractal_net.analytics.legacy_features import (
     FeatureConfig,
+)
+from mycelium_fractal_net.analytics.legacy_features import (
     compute_fractal_features as _compute_fractal_dim_r2,
 )
+from mycelium_fractal_net.types.field import FieldSequence
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 # CCP thresholds
 D_F_MIN = 1.5
@@ -131,7 +136,7 @@ def compute_phase_coherence(seq: FieldSequence) -> dict:
     if seq.history is not None and seq.history.shape[0] >= 4:
         # Temporal phase coherence via analytic signal
         history = seq.history.astype(np.float64)
-        T, N, M = history.shape
+        T, _N, _M = history.shape
         # Compute phase per node across time using discrete derivative
         # Phase approx: arctan2(dx/dt derivative, x - mean)
         flat = history.reshape(T, -1)  # (T, N*M)
@@ -219,7 +224,7 @@ def ccp_trajectory(history: NDArray[np.float64]) -> dict:
     if history.ndim != 3:
         raise ValueError(f"history must be 3D (T, N, N), got {history.ndim}D")
 
-    T, N, M = history.shape
+    T, N, _M = history.shape
     D_f_traj = []
     R_traj = []
     phi_traj = []
@@ -286,9 +291,182 @@ def ccp_trajectory(history: NDArray[np.float64]) -> dict:
 # TESTS
 # ===================================================================
 
-def _run_tests() -> None:
-    import traceback
 
+def _make_spots_field(N=32, seed=42):
+    """Structured spots pattern — should have D_f in cognitive window."""
+    rng = np.random.RandomState(seed)
+    field = np.full((N, N), -0.080, dtype=np.float64)
+    for _ in range(N * N // 8):
+        cx, cy = rng.randint(0, N, 2)
+        r = rng.randint(1, max(2, N // 8))
+        y, x = np.ogrid[-cx:N-cx, -cy:N-cy]
+        mask = x*x + y*y <= r*r
+        field[mask] = rng.uniform(-0.040, 0.010)
+    return FieldSequence(field=field)
+
+
+def _make_noise_field(N=32, seed=99):
+    """Pure random noise — D_f should be near 2.0 or outside cognitive window."""
+    rng = np.random.RandomState(seed)
+    field = rng.uniform(-0.095, 0.040, (N, N))
+    return FieldSequence(field=field)
+
+
+def _make_structured_field(N=32, seed=42):
+    """Structured field with clear spatial organization."""
+    rng = np.random.RandomState(seed)
+    x = np.linspace(0, 4*np.pi, N)
+    y = np.linspace(0, 4*np.pi, N)
+    X, Y = np.meshgrid(x, y)
+    field = (np.sin(X) * np.cos(Y) * 0.03 - 0.060).astype(np.float64)
+    field += rng.normal(0, 0.002, (N, N))
+    return FieldSequence(field=field)
+
+
+def _make_field_with_history(N=16, T=20, seed=42):
+    """Field with temporal history for phase coherence."""
+    rng = np.random.RandomState(seed)
+    history = np.zeros((T, N, N), dtype=np.float64)
+    for t in range(T):
+        x = np.linspace(0, 2*np.pi, N)
+        y = np.linspace(0, 2*np.pi, N)
+        X, Y = np.meshgrid(x, y)
+        history[t] = np.sin(X + t * 0.3) * np.cos(Y) * 0.03 - 0.060
+        history[t] += rng.normal(0, 0.001, (N, N))
+    field = history[-1]
+    return FieldSequence(field=field, history=history)
+
+
+def _tests_fractal_dimension(test_fn) -> None:
+    print("\n--- Fractal dimension ---")
+
+    def _test_D_f_spots():
+        seq = _make_spots_field()
+        result = compute_fractal_dimension(seq)
+        assert "D_f" in result
+        assert "D_r2" in result
+        assert 0.0 <= result["D_f"] <= 2.5, f"D_f={result['D_f']} out of range"
+    test_fn("D_f for spots pattern has valid range", _test_D_f_spots)
+
+    def _test_D_f_noise():
+        seq = _make_noise_field()
+        result = compute_fractal_dimension(seq)
+        assert result["D_f"] >= 1.0, f"noise D_f={result['D_f']} unexpectedly low"
+    test_fn("D_f for noise >= 1.0", _test_D_f_noise)
+
+    def _test_D_f_returns_all_keys():
+        seq = _make_spots_field()
+        result = compute_fractal_dimension(seq)
+        for key in ["D_f", "D_r2", "in_cognitive_window", "D_min", "D_max", "ref"]:
+            assert key in result, f"missing key: {key}"
+    test_fn("compute_fractal_dimension returns all keys", _test_D_f_returns_all_keys)
+
+
+def _tests_phi_proxy(test_fn) -> None:
+    print("\n--- Integrated information proxy ---")
+
+    def _test_phi_structured():
+        seq = _make_structured_field()
+        result = compute_integrated_information_proxy(seq)
+        assert "phi_proxy" in result
+        assert "EI_micro" in result
+        assert "EI_macro" in result
+    test_fn("Phi proxy returns all keys for structured field", _test_phi_structured)
+
+    def _test_phi_has_value():
+        seq = _make_spots_field()
+        result = compute_integrated_information_proxy(seq)
+        assert isinstance(result["phi_proxy"], float)
+    test_fn("Phi proxy is float", _test_phi_has_value)
+
+
+def _tests_phase_coherence(test_fn) -> None:
+    print("\n--- Phase coherence ---")
+
+    def _test_R_structured():
+        seq = _make_structured_field()
+        result = compute_phase_coherence(seq)
+        assert 0.0 <= result["R"] <= 1.0, f"R={result['R']} out of [0,1]"
+    test_fn("R in [0,1] for structured field", _test_R_structured)
+
+    def _test_R_with_history():
+        seq = _make_field_with_history()
+        result = compute_phase_coherence(seq)
+        assert 0.0 <= result["R"] <= 1.0
+        assert "R_c" in result
+    test_fn("R with temporal history", _test_R_with_history)
+
+
+def _tests_ccp_state(test_fn) -> None:
+    print("\n--- CCP state ---")
+
+    def _test_ccp_state_structured():
+        seq = _make_structured_field()
+        result = compute_ccp_state(seq)
+        assert "D_f" in result
+        assert "phi_proxy" in result
+        assert "R" in result
+        assert "cognitive" in result
+        assert "conditions_met" in result
+        assert 0 <= result["conditions_met"] <= 3
+    test_fn("CCP state for structured field", _test_ccp_state_structured)
+
+    def _test_ccp_cognitive_is_bool():
+        seq = _make_spots_field()
+        result = compute_ccp_state(seq)
+        assert isinstance(result["cognitive"], bool)
+    test_fn("CCP cognitive is bool", _test_ccp_cognitive_is_bool)
+
+    def _test_conditions_met_range():
+        for fn in [_make_spots_field, _make_noise_field, _make_structured_field]:
+            seq = fn()
+            result = compute_ccp_state(seq)
+            assert 0 <= result["conditions_met"] <= 3
+    test_fn("conditions_met in [0, 3] for various fields", _test_conditions_met_range)
+
+    def _test_ccp_summary_not_empty():
+        seq = _make_spots_field()
+        result = compute_ccp_state(seq)
+        assert len(result["ccp_summary"]) > 0
+    test_fn("CCP summary not empty", _test_ccp_summary_not_empty)
+
+
+def _tests_ccp_trajectory(test_fn) -> None:
+    print("\n--- CCP trajectory ---")
+
+    def _test_trajectory_returns_all_fields():
+        history = _make_field_with_history(N=16, T=10).history
+        result = ccp_trajectory(history)
+        for key in ["D_f_trajectory", "R_trajectory", "phi_trajectory",
+                     "cognitive_steps", "cognitive_fraction", "transitions"]:
+            assert key in result, f"missing key: {key}"
+    test_fn("ccp_trajectory returns all fields", _test_trajectory_returns_all_fields)
+
+    def _test_trajectory_lengths():
+        T, N = 10, 16
+        history = _make_field_with_history(N=N, T=T).history
+        result = ccp_trajectory(history)
+        assert len(result["D_f_trajectory"]) == T
+        assert len(result["R_trajectory"]) == T
+        assert len(result["phi_trajectory"]) == T
+    test_fn("trajectory lengths match T", _test_trajectory_lengths)
+
+    def _test_cognitive_fraction_range():
+        history = _make_field_with_history(N=16, T=10).history
+        result = ccp_trajectory(history)
+        assert 0.0 <= result["cognitive_fraction"] <= 1.0
+    test_fn("cognitive_fraction in [0, 1]", _test_cognitive_fraction_range)
+
+    def _test_trajectory_invalid_input():
+        try:
+            ccp_trajectory(np.zeros((10, 10)))  # 2D instead of 3D
+            raise AssertionError("should raise ValueError")
+        except ValueError:
+            pass
+    test_fn("ccp_trajectory rejects 2D input", _test_trajectory_invalid_input)
+
+
+def _run_tests() -> None:
     passed = 0
     failed = 0
     errors: list[str] = []
@@ -308,170 +486,11 @@ def _run_tests() -> None:
     print("CCP Metrics Test Suite")
     print("=" * 60)
 
-    # --- Helper: create synthetic FieldSequences ---
-    def _make_spots_field(N=32, seed=42):
-        """Structured spots pattern — should have D_f in cognitive window."""
-        rng = np.random.RandomState(seed)
-        field = np.full((N, N), -0.080, dtype=np.float64)
-        # Create spot pattern
-        for _ in range(N * N // 8):
-            cx, cy = rng.randint(0, N, 2)
-            r = rng.randint(1, max(2, N // 8))
-            y, x = np.ogrid[-cx:N-cx, -cy:N-cy]
-            mask = x*x + y*y <= r*r
-            field[mask] = rng.uniform(-0.040, 0.010)
-        return FieldSequence(field=field)
-
-    def _make_noise_field(N=32, seed=99):
-        """Pure random noise — D_f should be near 2.0 or outside cognitive window."""
-        rng = np.random.RandomState(seed)
-        field = rng.uniform(-0.095, 0.040, (N, N))
-        return FieldSequence(field=field)
-
-    def _make_structured_field(N=32, seed=42):
-        """Structured field with clear spatial organization."""
-        rng = np.random.RandomState(seed)
-        x = np.linspace(0, 4*np.pi, N)
-        y = np.linspace(0, 4*np.pi, N)
-        X, Y = np.meshgrid(x, y)
-        field = (np.sin(X) * np.cos(Y) * 0.03 - 0.060).astype(np.float64)
-        field += rng.normal(0, 0.002, (N, N))
-        return FieldSequence(field=field)
-
-    def _make_field_with_history(N=16, T=20, seed=42):
-        """Field with temporal history for phase coherence."""
-        rng = np.random.RandomState(seed)
-        history = np.zeros((T, N, N), dtype=np.float64)
-        # Evolving wave pattern
-        for t in range(T):
-            x = np.linspace(0, 2*np.pi, N)
-            y = np.linspace(0, 2*np.pi, N)
-            X, Y = np.meshgrid(x, y)
-            history[t] = np.sin(X + t * 0.3) * np.cos(Y) * 0.03 - 0.060
-            history[t] += rng.normal(0, 0.001, (N, N))
-        field = history[-1]
-        return FieldSequence(field=field, history=history)
-
-    # --- Fractal dimension tests ---
-    print("\n--- Fractal dimension ---")
-
-    def _test_D_f_spots():
-        seq = _make_spots_field()
-        result = compute_fractal_dimension(seq)
-        assert "D_f" in result and "D_r2" in result
-        assert 0.0 <= result["D_f"] <= 2.5, f"D_f={result['D_f']} out of range"
-    _test("D_f for spots pattern has valid range", _test_D_f_spots)
-
-    def _test_D_f_noise():
-        seq = _make_noise_field()
-        result = compute_fractal_dimension(seq)
-        # Pure noise → D_f near 2.0 (space-filling)
-        assert result["D_f"] >= 1.0, f"noise D_f={result['D_f']} unexpectedly low"
-    _test("D_f for noise >= 1.0", _test_D_f_noise)
-
-    def _test_D_f_returns_all_keys():
-        seq = _make_spots_field()
-        result = compute_fractal_dimension(seq)
-        for key in ["D_f", "D_r2", "in_cognitive_window", "D_min", "D_max", "ref"]:
-            assert key in result, f"missing key: {key}"
-    _test("compute_fractal_dimension returns all keys", _test_D_f_returns_all_keys)
-
-    # --- Integrated information proxy ---
-    print("\n--- Integrated information proxy ---")
-
-    def _test_phi_structured():
-        seq = _make_structured_field()
-        result = compute_integrated_information_proxy(seq)
-        assert "phi_proxy" in result
-        assert "EI_micro" in result and "EI_macro" in result
-    _test("Phi proxy returns all keys for structured field", _test_phi_structured)
-
-    def _test_phi_has_value():
-        seq = _make_spots_field()
-        result = compute_integrated_information_proxy(seq)
-        assert isinstance(result["phi_proxy"], float)
-    _test("Phi proxy is float", _test_phi_has_value)
-
-    # --- Phase coherence ---
-    print("\n--- Phase coherence ---")
-
-    def _test_R_structured():
-        seq = _make_structured_field()
-        result = compute_phase_coherence(seq)
-        assert 0.0 <= result["R"] <= 1.0, f"R={result['R']} out of [0,1]"
-    _test("R in [0,1] for structured field", _test_R_structured)
-
-    def _test_R_with_history():
-        seq = _make_field_with_history()
-        result = compute_phase_coherence(seq)
-        assert 0.0 <= result["R"] <= 1.0
-        assert "R_c" in result
-    _test("R with temporal history", _test_R_with_history)
-
-    # --- CCP state ---
-    print("\n--- CCP state ---")
-
-    def _test_ccp_state_structured():
-        seq = _make_structured_field()
-        result = compute_ccp_state(seq)
-        assert "D_f" in result and "phi_proxy" in result and "R" in result
-        assert "cognitive" in result
-        assert "conditions_met" in result
-        assert 0 <= result["conditions_met"] <= 3
-    _test("CCP state for structured field", _test_ccp_state_structured)
-
-    def _test_ccp_cognitive_is_bool():
-        seq = _make_spots_field()
-        result = compute_ccp_state(seq)
-        assert isinstance(result["cognitive"], bool)
-    _test("CCP cognitive is bool", _test_ccp_cognitive_is_bool)
-
-    def _test_conditions_met_range():
-        for fn in [_make_spots_field, _make_noise_field, _make_structured_field]:
-            seq = fn()
-            result = compute_ccp_state(seq)
-            assert 0 <= result["conditions_met"] <= 3
-    _test("conditions_met in [0, 3] for various fields", _test_conditions_met_range)
-
-    def _test_ccp_summary_not_empty():
-        seq = _make_spots_field()
-        result = compute_ccp_state(seq)
-        assert len(result["ccp_summary"]) > 0
-    _test("CCP summary not empty", _test_ccp_summary_not_empty)
-
-    # --- CCP trajectory ---
-    print("\n--- CCP trajectory ---")
-
-    def _test_trajectory_returns_all_fields():
-        history = _make_field_with_history(N=16, T=10).history
-        result = ccp_trajectory(history)
-        for key in ["D_f_trajectory", "R_trajectory", "phi_trajectory",
-                     "cognitive_steps", "cognitive_fraction", "transitions"]:
-            assert key in result, f"missing key: {key}"
-    _test("ccp_trajectory returns all fields", _test_trajectory_returns_all_fields)
-
-    def _test_trajectory_lengths():
-        T, N = 10, 16
-        history = _make_field_with_history(N=N, T=T).history
-        result = ccp_trajectory(history)
-        assert len(result["D_f_trajectory"]) == T
-        assert len(result["R_trajectory"]) == T
-        assert len(result["phi_trajectory"]) == T
-    _test("trajectory lengths match T", _test_trajectory_lengths)
-
-    def _test_cognitive_fraction_range():
-        history = _make_field_with_history(N=16, T=10).history
-        result = ccp_trajectory(history)
-        assert 0.0 <= result["cognitive_fraction"] <= 1.0
-    _test("cognitive_fraction in [0, 1]", _test_cognitive_fraction_range)
-
-    def _test_trajectory_invalid_input():
-        try:
-            ccp_trajectory(np.zeros((10, 10)))  # 2D instead of 3D
-            assert False, "should raise ValueError"
-        except ValueError:
-            pass
-    _test("ccp_trajectory rejects 2D input", _test_trajectory_invalid_input)
+    _tests_fractal_dimension(_test)
+    _tests_phi_proxy(_test)
+    _tests_phase_coherence(_test)
+    _tests_ccp_state(_test)
+    _tests_ccp_trajectory(_test)
 
     # --- Summary ---
     print("\n" + "=" * 60)

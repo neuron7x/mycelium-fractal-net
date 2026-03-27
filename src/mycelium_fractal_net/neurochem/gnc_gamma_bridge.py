@@ -12,9 +12,6 @@ Ref: Vasylenko (2026) γ-scaling on brain organoids: γ_WT2D = +1.487 ± 0.208
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
-
-import numpy as np
 
 from .gnc import GNCState, gnc_diagnose
 

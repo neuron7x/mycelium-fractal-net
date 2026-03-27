@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 
-from .gnc import GNCState, MODULATORS, SIGMA, THETA, gnc_diagnose
+from .gnc import MODULATORS, SIGMA, THETA, GNCState, gnc_diagnose
 
 __all__ = [
     "GNC_TO_LEVER_MAP",

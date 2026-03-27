@@ -384,6 +384,36 @@ def _diagnose_state(seq: FieldSequence) -> tuple:
     return det, ews, hwi, severity
 
 
+def _early_heal_result(
+    severity_before: str,
+    det_before: Any,
+    hwi_before: Any,
+    elapsed: float,
+    *,
+    needs_healing: bool,
+) -> HealResult:
+    """Build HealResult for early-return paths (no healing needed or no viable plan)."""
+    return HealResult(
+        severity_before=severity_before,
+        anomaly_before=det_before.label,
+        anomaly_score_before=float(det_before.score),
+        M_before=hwi_before.M,
+        hwi_before=hwi_before.hwi_holds,
+        needs_healing=needs_healing,
+        intervention_applied=False,
+        changes=[],
+        severity_after=None,
+        anomaly_after=None,
+        anomaly_score_after=None,
+        M_after=None,
+        hwi_after=None,
+        delta_M=None,
+        delta_anomaly=None,
+        healed=None if not needs_healing else False,
+        compute_time_ms=elapsed,
+    )
+
+
 def auto_heal(
     seq: FieldSequence,
     target_regime: str = "stable",
@@ -397,13 +427,7 @@ def auto_heal(
     t0 = time.perf_counter()
 
     # ── 1. DIAGNOSE BEFORE ──────────────────────────────────────
-    if verbose:
-        pass
-
     det_before, _ews_before, hwi_before, severity_before = _diagnose_state(seq)
-
-    if verbose:
-        pass
 
     # ── 2. DOPAMINE STATE FROM PREVIOUS CYCLE ───────────────────
     global _DA_STATE
@@ -411,39 +435,15 @@ def auto_heal(
         DopamineState, _, _ = _get_da_module()
         _DA_STATE = DopamineState()
     da_budget = budget * (0.5 + 0.5 * _DA_STATE.plasticity_scale / 3.0)
-    # High DA → expand budget up to 1.5x. Low DA → baseline budget.
-    if verbose and _DA_STATE.n_updates > 0:
-        pass
 
     # ── 3. DECIDE ───────────────────────────────────────────────
     needs_healing = severity_before in ("warning", "critical") or det_before.label == "anomalous"
 
     if not needs_healing:
         elapsed = (time.perf_counter() - t0) * 1000
-        return HealResult(
-            severity_before=severity_before,
-            anomaly_before=det_before.label,
-            anomaly_score_before=float(det_before.score),
-            M_before=hwi_before.M,
-            hwi_before=hwi_before.hwi_holds,
-            needs_healing=False,
-            intervention_applied=False,
-            changes=[],
-            severity_after=None,
-            anomaly_after=None,
-            anomaly_score_after=None,
-            M_after=None,
-            hwi_after=None,
-            delta_M=None,
-            delta_anomaly=None,
-            healed=None,
-            compute_time_ms=elapsed,
-        )
+        return _early_heal_result(severity_before, det_before, hwi_before, elapsed, needs_healing=False)
 
     # ── 4. PLAN (DA-modulated budget + lever selection) ────────
-    if verbose:
-        pass
-
     # DA selects which levers to try: high DA → all, low DA → top 2
     from .intervention import list_levers
     from .neurochem.dopamine import select_levers
@@ -451,8 +451,6 @@ def auto_heal(
     all_levers = list_levers()
     mem = memory if memory is not None else _MEMORY
     selected = select_levers(_DA_STATE, all_levers, mem.top_levers)
-    if verbose and len(selected) < len(all_levers):
-        pass
 
     # Fewer counterfactuals when model is confident
     n_candidates = 32 if not mem.can_predict else max(8, int(32 * _DA_STATE.level))
@@ -467,25 +465,7 @@ def auto_heal(
 
     if best is None or not plan.has_viable_plan:
         elapsed = (time.perf_counter() - t0) * 1000
-        return HealResult(
-            severity_before=severity_before,
-            anomaly_before=det_before.label,
-            anomaly_score_before=float(det_before.score),
-            M_before=hwi_before.M,
-            hwi_before=hwi_before.hwi_holds,
-            needs_healing=True,
-            intervention_applied=False,
-            changes=[],
-            severity_after=None,
-            anomaly_after=None,
-            anomaly_score_after=None,
-            M_after=None,
-            hwi_after=None,
-            delta_M=None,
-            delta_anomaly=None,
-            healed=False,
-            compute_time_ms=elapsed,
-        )
+        return _early_heal_result(severity_before, det_before, hwi_before, elapsed, needs_healing=True)
 
     changes = [
         {"name": s.name, "from": round(s.current_value, 4), "to": round(s.proposed_value, 4)}
@@ -493,14 +473,7 @@ def auto_heal(
         if abs(s.proposed_value - s.current_value) > 1e-6
     ]
 
-    if verbose:
-        for _c in changes:
-            pass
-
     # ── 5. ACT — re-simulate with intervention parameters ──────
-    if verbose:
-        pass
-
     from .core.simulate import simulate_history
     from .intervention.counterfactual import _apply_interventions
 
@@ -508,9 +481,6 @@ def auto_heal(
     seq_after = simulate_history(modified_spec)
 
     # ── 6. VERIFY — re-diagnose ────────────────────────────────
-    if verbose:
-        pass
-
     det_after, _ews_after, hwi_after, severity_after = _diagnose_state(seq_after)
 
     delta_M = hwi_after.M - hwi_before.M
@@ -552,9 +522,6 @@ def auto_heal(
     _, compute_dopamine_fn, _ = _get_da_module()
     _DA_STATE = compute_dopamine_fn(pe_for_da, _DA_STATE)
     mem.store(feat, M_after=hwi_after.M, anomaly_after=float(det_after.score), healed=healed)
-
-    if verbose:
-        pass
 
     elapsed = (time.perf_counter() - t0) * 1000
 
