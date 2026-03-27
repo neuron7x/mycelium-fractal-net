@@ -83,7 +83,7 @@ def reconstruct_landscape(
     # Find local minima (attractors) in the potential
     from scipy.ndimage import minimum_filter
     local_min = minimum_filter(U, size=3)
-    minima_mask = (U == local_min) & (U < np.percentile(U, 50))
+    minima_mask = (local_min == U) & (np.percentile(U, 50) > U)
     minima_coords = np.argwhere(minima_mask)
 
     attractors = []
@@ -118,8 +118,8 @@ def reconstruct_landscape(
         order_param_2=m2_centers,
         n_attractors=n_attractors,
         attractor_positions=attractors,
-        basin_depths=depths if depths else [0.0],
-        saddle_heights=saddles if saddles else [0.0],
+        basin_depths=depths or [0.0],
+        saddle_heights=saddles or [0.0],
         landscape_roughness=float(np.std(U)),
         dominant_attractor=dominant,
     )

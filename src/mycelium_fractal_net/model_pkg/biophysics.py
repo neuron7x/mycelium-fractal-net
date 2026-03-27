@@ -7,6 +7,7 @@ import math
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
 try:
     import sympy as sp
 except ImportError:  # sympy is optional (crypto extra)

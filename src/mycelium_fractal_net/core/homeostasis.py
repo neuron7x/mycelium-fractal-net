@@ -171,7 +171,7 @@ class HomeostasisLoop:
 
             report.observation = observe(current_seq)
         except Exception:
-            pass
+            pass  # observatory optional — homeostasis works without it
 
         report.compute_time_ms = (time.perf_counter() - t0) * 1000
         return report

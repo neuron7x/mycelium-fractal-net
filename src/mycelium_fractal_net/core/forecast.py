@@ -27,6 +27,7 @@ from mycelium_fractal_net.types.forecast import (
     UncertaintyEnvelope,
 )
 
+__all__ = ['counterfactual', 'forecast_next', 'forecast_regime']
 
 def _history_windows(history: np.ndarray) -> list[np.ndarray]:
     if history.shape[0] < 3:

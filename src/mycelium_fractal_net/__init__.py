@@ -173,6 +173,28 @@ def full_analyze(
     return UnifiedEngine(verbose=verbose).analyze(seq, target_field=target_field)
 
 
+def status() -> str:
+    """Quick system health check. Shows version, capabilities, and readiness.
+
+    >>> print(mfn.status())
+    """
+    from .core.release_contract import CONTRACT
+
+    lines = [
+        f"MyceliumFractalNet v{__version__}",
+        f"  Exports:      {len(__all__)} public API symbols",
+        f"  Causal rules:  {CONTRACT.causal_rules}",
+        f"  Feature dims:  {CONTRACT.feature_dim}",
+        f"  Bio mechanisms: {CONTRACT.bio_mechanisms}",
+        f"  Invariants:    {CONTRACT.invariants} proven",
+        f"  Python:        {CONTRACT.python_min}–{CONTRACT.python_max}",
+        f"  Install tiers: {', '.join(CONTRACT.install_tiers)}",
+        "",
+        "  Ready: simulate → observe → diagnose → auto_heal → homeostasis",
+    ]
+    return "\n".join(lines)
+
+
 def plan_intervention(
     source: FieldSequence,
     target_regime: str = "stable",
@@ -607,6 +629,7 @@ __all__ = [
     # ── Tier 1: Pipeline (the 7 verbs) ────────────────────────
     "simulate",
     "simulate_null",
+    "status",
     "sweep",
     "to_markdown",
 ]

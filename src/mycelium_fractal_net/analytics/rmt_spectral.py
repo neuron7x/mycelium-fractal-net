@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+
+
 def _eigvalsh(a: Any) -> Any:
     """Lazy scipy.linalg.eigvalsh."""
     from scipy.linalg import eigvalsh

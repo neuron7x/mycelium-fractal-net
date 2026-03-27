@@ -25,6 +25,9 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
+
+__all__ = ['FieldAdapter']
+
 class FieldAdapter:
     """Load and validate external data into FieldSequence.
 

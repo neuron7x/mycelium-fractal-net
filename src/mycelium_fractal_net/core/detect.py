@@ -212,6 +212,9 @@ _THRESHOLD_CRITICAL_OFFSET: float = -0.03
 _THRESHOLD_PATHOLOGICAL_OFFSET: float = -0.08
 
 
+
+__all__ = ['detect_anomaly', 'detect_morphology_drift', 'detect_regime_shift', 'score_instability']
+
 def _regime_evidence(sequence: FieldSequence) -> dict[str, float]:
     descriptor = compute_morphology_descriptor(sequence)
     cpts = detect_change_points(sequence.history)

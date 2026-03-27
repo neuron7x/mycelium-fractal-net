@@ -123,7 +123,7 @@ def run_math_frontier(
     if run_fim and fim_simulate_fn is not None and fim_theta is not None:
         try:
             fim_result = compute_fim(fim_simulate_fn, fim_theta)
-        except Exception:  # noqa: S110
+        except Exception:
             pass  # FIM may fail for degenerate parameter spaces
 
     # 5. RMT — reuse physarum_state if provided, otherwise create fresh
@@ -152,7 +152,7 @@ def run_math_frontier(
             diff = GapJunctionDiffuser()
             L = diff.build_laplacian(D_h, D_v).toarray()
             rmt_result = rmt_diagnostics(L)
-        except Exception:  # noqa: S110
+        except Exception:
             pass  # RMT requires bio extras
 
     # 6. Unified JKO/HWI score
@@ -165,7 +165,7 @@ def run_math_frontier(
             beta_0=topo.beta_0,
             beta_1=topo.beta_1,
         )
-    except Exception:  # noqa: S110
+    except Exception:
         pass  # unified score optional — W2 may fail for degenerate fields
 
     elapsed = (time.perf_counter() - t0) * 1000

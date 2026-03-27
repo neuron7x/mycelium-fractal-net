@@ -58,6 +58,9 @@ if TYPE_CHECKING:
     from mycelium_fractal_net.types.field import FieldSequence
 
 
+
+__all__ = ['compare']
+
 def _topology_label(drift: dict[str, float]) -> str:
     connectivity = float(drift.get("connectivity_divergence", 0.0))
     hierarchy = float(drift.get("hierarchy_flattening", 0.0))

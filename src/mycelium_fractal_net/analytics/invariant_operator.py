@@ -67,7 +67,7 @@ class MState:
     t: int
     H: float
     W2: float
-    I: float  # noqa: E741
+    I: float
     M: float
     hwi_holds: bool
 

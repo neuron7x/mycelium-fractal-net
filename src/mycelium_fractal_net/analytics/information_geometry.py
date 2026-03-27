@@ -59,7 +59,7 @@ def compute_fisher_rao_metric(
     """
     N = field.shape[0]
     p = _field_to_distribution(field)
-    n = len(p)
+    len(p)
 
     # Generate perturbation directions (spatial modes)
     k = min(perturbation_directions, 8)

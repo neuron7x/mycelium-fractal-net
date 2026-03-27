@@ -9,7 +9,7 @@ Ref: Falconer (2003) Fractal Geometry, Ch. 2
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -312,7 +312,7 @@ class FractalPreservingInterpolator:
         """Auto-build ladder and traverse."""
         current_size = u.shape[0]
         if current_size == target_size:
-            d, r2 = self._dbox.estimate(u)
+            d, _r2 = self._dbox.estimate(u)
             return u, FractalScaleJourney(
                 transitions=[
                     FractalScaleReport(

@@ -133,7 +133,7 @@ def detect_criticality(
 
     # 3. Susceptibility (order parameter variance)
     N = field.size
-    m = float(np.mean(field))
+    float(np.mean(field))
     chi = float(N * np.var(field))
 
     # 4. Autocorrelation time (if history available)

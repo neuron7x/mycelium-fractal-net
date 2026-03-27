@@ -25,7 +25,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-__all__ = ["CausalCone", "compute_causal_cone", "causal_influence_map"]
+__all__ = ["CausalCone", "causal_influence_map", "compute_causal_cone"]
 
 
 @dataclass
@@ -131,7 +131,7 @@ def causal_influence_map(
     Returns (N, N) map of total causal reachability.
     High values = pattern organizing centers.
     """
-    T, N, M = history.shape
+    _T, N, M = history.shape
 
     # Place probes on a grid
     probe_locs = []

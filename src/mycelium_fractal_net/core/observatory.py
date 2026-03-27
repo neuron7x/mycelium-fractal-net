@@ -122,7 +122,14 @@ class ObservatoryReport:
             f"║    Detection: {self.anomaly_label} (score={self.anomaly_score:.3f})".ljust(w + 1) + "║",
             f"║    EWS: {self.ews_score:.3f}  Attractors: {self.n_attractors}  Roughness: {self.landscape_roughness:.4f}".ljust(w + 1) + "║",
             "╠" + "─" * w + "╣",
-            f"║  Computed in {self.compute_time_ms:.0f}ms".ljust(w + 1) + "║",
+            f"║  Lenses: {self.n_lenses_computed}/8 computed in {self.compute_time_ms:.0f}ms".ljust(w + 1) + "║",
+        ]
+        if self.lens_errors:
+            lines.append("╠" + "─" * w + "╣")
+            lines.append("║" + " WARNINGS".ljust(w) + "║")
+            for err in self.lens_errors:
+                lines.append(f"║    {err}".ljust(w + 1) + "║")
+        lines += [
             "╚" + "═" * w + "╝",
             "",
         ]
@@ -157,7 +164,7 @@ def observe(seq: Any) -> ObservatoryReport:
         from mycelium_fractal_net.core.thermodynamic_kernel import FreeEnergyTracker
         tracker = FreeEnergyTracker(grid_size=field.shape[0])
         report.free_energy = tracker.total_energy(field)
-    except Exception as _e:  # noqa: BLE001
+    except Exception as _e:
         report.lens_errors.append("thermodynamics: " + str(_e)[:60])
 
     # ── Topology ──────────────────────────────────────────
@@ -173,7 +180,7 @@ def observe(seq: Any) -> ObservatoryReport:
         report.topological_entropy = genome.topological_entropy
         report.complexity_class = genome.complexity_class
         report.genome_fingerprint_norm = float(np.linalg.norm(genome.fingerprint()))
-    except Exception as _e:  # noqa: BLE001
+    except Exception as _e:
         report.lens_errors.append("topology: " + str(_e)[:60])
 
     # ── Geometry ──────────────────────────────────────────
@@ -188,7 +195,7 @@ def observe(seq: Any) -> ObservatoryReport:
         report.anisotropy = tensor.mean_anisotropy
         report.coherence = tensor.coherence
         report.defect_count = tensor.defect_count
-    except Exception as _e:  # noqa: BLE001
+    except Exception as _e:
         report.lens_errors.append("geometry: " + str(_e)[:60])
 
     # ── Dynamics ──────────────────────────────────────────
@@ -203,7 +210,7 @@ def observe(seq: Any) -> ObservatoryReport:
         report.criticality_score = crit.criticality_score
         report.criticality_verdict = crit.verdict
         report.correlation_length = crit.correlation_length
-    except Exception as _e:  # noqa: BLE001
+    except Exception as _e:
         report.lens_errors.append("dynamics: " + str(_e)[:60])
 
     # ── Invariants ────────────────────────────────────────
@@ -216,7 +223,7 @@ def observe(seq: Any) -> ObservatoryReport:
             report.lambda2_cv = float(np.std(L2) / (np.mean(L2) + 1e-12))
             report.lambda5 = op.Lambda5(history)
             report.lambda6 = op.Lambda6(history)
-        except Exception as _e:  # noqa: BLE001
+        except Exception as _e:
             report.lens_errors.append("invariants: " + str(_e)[:60])
 
     # ── Anomaly ───────────────────────────────────────────
@@ -229,7 +236,7 @@ def observe(seq: Any) -> ObservatoryReport:
         from mycelium_fractal_net.core.early_warning import early_warning
         ews = early_warning(seq)
         report.ews_score = ews.ews_score
-    except Exception as _e:  # noqa: BLE001
+    except Exception as _e:
         report.lens_errors.append("anomaly: " + str(_e)[:60])
 
     # ── Landscape ─────────────────────────────────────────
@@ -239,14 +246,14 @@ def observe(seq: Any) -> ObservatoryReport:
             landscape = reconstruct_landscape(history, n_bins=15)
             report.n_attractors = landscape.n_attractors
             report.landscape_roughness = landscape.landscape_roughness
-        except Exception as _e:  # noqa: BLE001
+        except Exception as _e:
             report.lens_errors.append("landscape: " + str(_e)[:60])
 
     # ── Scale ─────────────────────────────────────────────
     try:
         from mycelium_fractal_net.analytics.fractal_features import compute_box_counting_dimension
         report.d_box = compute_box_counting_dimension(field)
-    except Exception as _e:  # noqa: BLE001
+    except Exception as _e:
         report.lens_errors.append("scale: " + str(_e)[:60])
 
     report.compute_time_ms = (time.perf_counter() - t0) * 1000

@@ -11,6 +11,9 @@ if TYPE_CHECKING:
     from mycelium_fractal_net.types.field import FieldSequence
 
 
+
+__all__ = ['extract']
+
 def extract(sequence: FieldSequence) -> MorphologyDescriptor:
     """Canonical morphology extraction operation."""
     return compute_morphology_descriptor(sequence)

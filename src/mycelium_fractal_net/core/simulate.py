@@ -29,6 +29,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 
+
+__all__ = ['cleanup_history_memmap', 'simulate_batch', 'simulate_final', 'simulate_history', 'simulate_null', 'simulate_scenario']
+
 def _fingerprint(spec: SimulationSpec) -> str:
     return hashlib.sha256(
         json.dumps(spec.as_runtime_dict(), sort_keys=True).encode("utf-8")

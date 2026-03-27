@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+
+
 def _lazy_entropy(pk: Any, base: float | None = None) -> Any:
     """Lazy scipy.stats.entropy — avoids loading scipy on base import."""
     from scipy.stats import entropy

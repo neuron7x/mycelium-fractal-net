@@ -294,7 +294,7 @@ class ThermodynamicKernel:
                 try:
                     lam1 = self._lyapunov.leading_lyapunov_exponent(u, v, reaction_fn)
                     lambda1_samples.append(lam1)
-                except Exception:  # noqa: BLE001
+                except Exception:
                     lambda1_samples.append(0.0)
 
         return self._build_report(

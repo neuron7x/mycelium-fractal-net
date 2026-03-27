@@ -18,7 +18,7 @@ Ref: Carlsson (2009) Bull. AMS, Edelsbrunner & Harer (2010), Ghrist (2008).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 from scipy.ndimage import label
@@ -105,8 +105,8 @@ def encode_genome(field: np.ndarray, n_thresholds: int = 30) -> PatternGenome:
         elif diff < 0:  # components die
             for _ in range(-diff):
                 if births:
-                    birth = births.pop(0)
-                    pass  # lifetime recorded below
+                    births.pop(0)
+                    # lifetime recorded below
 
     # Simpler: persistence lifetimes from β₀ curve peaks
     lifetimes = []
