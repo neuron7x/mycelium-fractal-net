@@ -98,8 +98,8 @@ from .core.early_warning import early_warning
 from .core.ensemble import ensemble_diagnose
 from .core.extract import extract as extract_operation
 from .core.forecast import forecast_next
-from .core.inverse import inverse_synthesis
 from .core.homeostasis import HomeostasisLoop, HomeostasisReport
+from .core.inverse import inverse_synthesis
 from .core.observatory import ObservatoryReport, observe
 from .core.report import report as report_operation
 from .core.scale_engine import FractalInterpolatorConfig, FractalPreservingInterpolator

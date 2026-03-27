@@ -37,8 +37,6 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-import numpy as np
-
 __all__ = ["HomeostasisLoop", "HomeostasisReport"]
 
 
