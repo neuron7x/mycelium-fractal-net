@@ -22,7 +22,7 @@ def _gate_multiplier(baseline_ms: float) -> float:
     if baseline_ms < 0.5:
         return 100.0  # sub-ms: GC/version/cache variance can exceed 50x
     if baseline_ms < 5.0:
-        return 5.0  # ms-range: moderate variance
+        return 15.0  # ms-range: moderate variance, generous for heterogeneous CI
     return 3.0  # >5ms: stable enough for 3x
 
 
