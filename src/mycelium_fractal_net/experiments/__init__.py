@@ -19,3 +19,6 @@ __all__ = [
     "generate_dataset",
     "to_record",
 ]
+
+# Phase 3 experiment infrastructure (lazy imports)
+
