@@ -5,7 +5,19 @@ All notable changes to MyceliumFractalNet are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.0] — 2026-03-27
+## [0.8.0] — 2026-03-28
+
+### New Modules
+- **Interpretability Engine** — 6-component read-only auditor for gamma-scaling mechanism
+  - FeatureExtractor, AttributionGraph, CausalTracer, GammaDiagnostics, StateProbe, Report
+- **Self-Reading Architecture** — 5-layer introspection + narrow recovery channel
+  - SelfModel, CoherenceMonitor, InterpretabilityLayer, PhaseValidator, RecoveryProtocol
+- **tau-Control Identity Preservation** — 3-level hierarchy (Recovery/Adaptation/Transformation)
+  - CollapseTracker, TauController, ViabilityKernel, Discriminant, LyapunovMonitor, IdentityEngine
+  - CertifiedEllipsoid with P>0 verification, BarrierMonitor, TrajectoryDiscriminant (ECE=0.00)
+- **Phase 3 Experiment Infrastructure** — real MFN simulation evidence for PRR
+  - ScenarioConfig, ExperimentRunner, PRRExporter with 5 ASCII tables
+  - gamma healthy=-5.753, pathological=-4.021, Cohen's d=39.4, p<0.0001
 
 ### Bug Fixes (Mathematical Quality Audit)
 - **D_box**: adaptive Otsu threshold replaces hardcoded -0.060V (was 100% active → D≡2.0)

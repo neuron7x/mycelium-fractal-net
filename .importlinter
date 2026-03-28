@@ -118,3 +118,16 @@ forbidden_modules =
     mycelium_fractal_net.api
     mycelium_fractal_net.cli
     mycelium_fractal_net.integration
+
+# === Layer 10: tau-Control (read-only except transformation.py) ===
+[importlinter:contract:tau_control_isolation]
+name = tau-Control must not import transport, UI, or simulation loop
+type = forbidden
+source_modules =
+    mycelium_fractal_net.tau_control
+forbidden_modules =
+    mycelium_fractal_net.api
+    mycelium_fractal_net.cli
+    mycelium_fractal_net.integration
+    mycelium_fractal_net.core.simulate
+    mycelium_fractal_net.core.engine

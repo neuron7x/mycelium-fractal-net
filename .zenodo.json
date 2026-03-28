@@ -1,6 +1,7 @@
 {
-  "title": "MyceliumFractalNet: Reaction-Diffusion Intelligence Engine with Causal Validation and TDA",
-  "description": "Bio-inspired morphogenetic field intelligence engine combining reaction-diffusion PDE simulation, persistent homology (TDA), causal validation (46 rules), auto-heal with dopamine learning, and thermodynamic invariants. First system to unify R-D + TDA + causal pipeline in a single Python package.",
+  "title": "MyceliumFractalNet: Morphogenetic Field Intelligence Engine with Identity Preservation",
+  "version": "0.8.0",
+  "description": "Bio-inspired morphogenetic field intelligence engine combining reaction-diffusion PDE simulation, persistent homology (TDA), causal validation (46 rules), neuromodulatory control (GNC+ 7 axes), interpretability engine, self-reading architecture, and tau-control identity preservation. First system to unify R-D + TDA + causal + neuromod + self-healing in a single Python package. 2798 tests, 20 modules, ~60K LOC.",
   "license": "MIT",
   "upload_type": "software",
   "keywords": [
@@ -10,9 +11,12 @@
     "morphogenesis",
     "Turing patterns",
     "topological data analysis",
-    "bio-inspired computing",
-    "Wasserstein geometry",
-    "JKO gradient flow"
+    "neuromodulation",
+    "identity preservation",
+    "gamma-scaling",
+    "interpretability",
+    "self-reading",
+    "Wasserstein geometry"
   ],
   "creators": [
     {

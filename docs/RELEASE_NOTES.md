@@ -1,54 +1,54 @@
-# Release Notes — v4.1.0
+# Release Notes — v0.8.0
 
-**Release date:** 2026-03-22
-**Codename:** Morphology-aware Field Intelligence Engine
+**Release date:** 2026-03-28
+**Codename:** Identity-Preserving Morphogenetic Intelligence
+
+Version numbering reset from v4.5.x to 0.x (pre-1.0 research software).
+All functionality preserved and extended.
 
 ## Highlights
 
-- **Causal Validation Gate** — 44 falsifiable rules verify that every pipeline conclusion follows from data. Perturbation stability tested with 3 noise seeds. Reports are blocked if causal consistency fails.
+- **Interpretability Engine** — 6-component read-only auditor: feature extraction (thermodynamic + topological + fractal + causal), attribution graphs, causal rule tracing, gamma diagnostics, linear state probes, PRR-ready reports.
 
-- **Typed Analytics** — 30 frozen dataclasses replace untyped dictionaries throughout the type system. All public APIs have complete type signatures.
+- **Self-Reading Architecture** — 5-layer introspection: SelfModel (per-step), CoherenceMonitor (periodic), InterpretabilityLayer (windowed), PhaseValidator (physical signals only), RecoveryProtocol (narrow write channel to Theta + PID).
 
-- **Hardened CI/CD** — 5 GitHub Actions workflows (ci with 8 jobs, release, security, benchmarks, ci-reusable) with Python 3.10–3.13 matrix testing, coverage gating (82%+), security scanning (bandit + pip-audit + gitleaks), and import boundary verification.
+- **tau-Control Identity Preservation** — 3-level hierarchy: Recovery (fast, reversible), Adaptation (controlled norm update), Transformation (rare, bounded-jump guarded). Composite Lyapunov V = V_x + alpha*V_S + beta*V_C. TrajectoryDiscriminant with isotonic calibration (ECE = 0.00). CertifiedEllipsoid with P > 0 verification. BarrierMonitor.
 
-- **Config Governance** — All 87 decision thresholds externalized to `configs/detection_thresholds_v1.json` with schema validation. Zero magic numbers in decision paths. Every causal verdict carries a `provenance_hash` for traceability.
+- **OmegaOrdinal** — transfinite neuromodulatory hierarchy omega -> omega^2, 16 interactions across 4 ordinal ranks, C7 activation condition in A_C.
 
-- **Neuromodulation** — GABA-A tonic inhibition, serotonergic plasticity, and MWC allosteric model with occupancy conservation. Six canonical profiles. Backward-compatible opt-in.
+- **LyapunovAnalyzer O(N^2)** — analytical Jacobian registry replaces O(N^4) numerical FD. Gray-Scott 64x64: 1096ms -> 0.038ms (x28800 speedup).
 
-## What's New
+- **4 Mathematical Bug Fixes** — D_box adaptive Otsu threshold, equilibrium_distance normalization, gamma bootstrap CI95 + p-value, Gray-Scott potential mode.
 
-### For Users
-- Fluent API: `seq.detect()`, `seq.extract()`, `seq.forecast()`, `seq.compare()`
-- Pretty CLI with colored output and `--json` flag
-- 6 neuromodulation profiles accessible from CLI, API, and SDK
-- Full pipeline report with Ed25519-signed artifact bundles
+- **Phase 3 Real Simulation Evidence** — gamma healthy = -5.753 +/- 0.037 vs pathological = -4.021 +/- 0.050, Cohen's d = 39.4, p < 0.0001. 5 PRR tables generated.
 
-### For Developers
-- 24-category Ruff linting (up from 3)
-- 16 pre-commit hooks (up from 6)
-- `make fullcheck` — one command for all quality gates
-- `CONTRIBUTING.md` with development workflow and code standards
-- `SECURITY.md` with vulnerability disclosure policy
+## Architecture
 
-### For Researchers
-- 41 causal rules with scientific references (Hodgkin-Huxley 1952, IEEE 754-2019)
-- Perturbation stability verification (label drift under epsilon=1e-6)
-- Deterministic fingerprinting for reproducibility
-- Scientific validation experiments in `validation/`
-
-## Upgrade Guide
-
-**From v4.0.0:** No breaking changes. All v4.0.0 code works unmodified. New features are opt-in.
-
-```python
-# v4.0.0 code continues to work
-seq = mfn.simulate(mfn.SimulationSpec(grid_size=64, steps=32, seed=42))
-
-# v4.1.0 additions (optional)
-seq.detect()   # Fluent API
-seq.forecast(4)
+```
+MFN+ = MFN
+     + Interpretability  (READ-ONLY)
+     + SelfReading        (READ-ONLY + Recovery -> {Theta, PID})
+     + tau-Control         (READ-ONLY + Transformation -> {C})
 ```
 
-## Full Changelog
+Architectural law: gamma is NEVER a control target. Recovery reads F, betti, D_box. Never gamma.
 
-See [CHANGELOG.md](CHANGELOG.md) for the complete list of changes.
+## Numbers
+
+| Metric | Value |
+|--------|-------|
+| Python files | 250+ |
+| LOC | ~60,000 |
+| Modules | 20 |
+| Tests | 2,798 pass, 0 fail |
+| Causal rules | 46 |
+| Validation gates | 7/7 PASS |
+| Import contracts | 10 |
+
+## Previous History
+
+All changes from v4.1.0 through v4.5.1 are included. See [CHANGELOG.md](../CHANGELOG.md).
+
+---
+
+*Yaroslav Vasylenko / neuron7x / Myloradove, Ukraine / 2026*

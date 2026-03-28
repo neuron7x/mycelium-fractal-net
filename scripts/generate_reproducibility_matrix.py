@@ -150,7 +150,7 @@ def main() -> None:
 
     matrix = {
         "schema_version": "mfn-reproducibility-matrix-v1",
-        "engine_version": "4.1.0",
+        "engine_version": "0.8.0",
         "environment": env,
         "dependency_hash": dep_hash,
         "profiles_tested": len(results),

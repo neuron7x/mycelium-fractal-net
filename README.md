@@ -313,7 +313,7 @@ tests/benchmarks/
 
 | Metric | Value |
 |--------|-------|
-| Tests | **2,428** collected |
+| Tests | **2,798** pass, 0 fail |
 | Coverage | **82.6%** branch |
 | Ruff | **0** lint violations |
 | Causal rules | **46/46** verified |

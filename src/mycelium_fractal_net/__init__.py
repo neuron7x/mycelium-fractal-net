@@ -449,6 +449,9 @@ _LAZY_MODULES = {
         "security",
         "signal",
         "types",
+        "interpretability",
+        "self_reading",
+        "tau_control",
     ]
 }
 
@@ -540,6 +543,13 @@ _LAZY_ATTRS = {
     "SelfReadingConfig": ("mycelium_fractal_net.self_reading", "SelfReadingConfig"),
     "SelfReadingLoop": ("mycelium_fractal_net.self_reading", "SelfReadingLoop"),
     "SelfReadingReport": ("mycelium_fractal_net.self_reading", "SelfReadingReport"),
+    # ── tau-Control (lazy: identity preservation engine) ─────────
+    "IdentityEngine": ("mycelium_fractal_net.tau_control", "IdentityEngine"),
+    "IdentityReport": ("mycelium_fractal_net.tau_control", "IdentityReport"),
+    "LyapunovMonitor": ("mycelium_fractal_net.tau_control", "LyapunovMonitor"),
+    "NormSpace": ("mycelium_fractal_net.tau_control", "NormSpace"),
+    "TauController": ("mycelium_fractal_net.tau_control", "TauController"),
+    "CertifiedEllipsoid": ("mycelium_fractal_net.tau_control", "CertifiedEllipsoid"),
 }
 
 
@@ -620,6 +630,8 @@ __all__ = [
     "AxiomaticChoiceOperator",
     "BoundaryCondition",
     "CausalTracer",
+    # ── Tier 10: tau-Control (identity preservation) ─────────────
+    "CertifiedEllipsoid",
     "ChoiceResult",
     # ── Tier 9: Self-Reading (5-layer introspection) ─────────────
     "CoherenceMonitor",
@@ -635,15 +647,19 @@ __all__ = [
     "GammaDiagnosticReport",
     "GammaDiagnostics",
     "HealResult",
+    "IdentityEngine",
+    "IdentityReport",
     # ── Tier 4: Engines & operators ───────────────────────────
     "InvariantOperator",
     "LinearStateProbe",
+    "LyapunovMonitor",
     "MFNFeatureExtractor",
     "MFNInterpretabilityReport",
     "MFNPhase",
     "MorphologyDescriptor",
     # ── Tier 6: Spec types (simulation config) ────────────────
     "NeuromodulationSpec",
+    "NormSpace",
     "ObservationNoiseSpec",
     "ObservatoryReport",
     "PhaseValidator",
@@ -659,6 +675,7 @@ __all__ = [
     "SimulationSpec",
     "SovereignGate",
     "SovereignVerdict",
+    "TauController",
     "ThermodynamicKernel",
     "ThermodynamicKernelConfig",
     "ThermodynamicStabilityReport",
