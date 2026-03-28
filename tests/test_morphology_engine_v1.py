@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 def test_public_root_exports() -> None:
     import pytest
 
-    assert mfn.__version__ == "0.8.0"
+    assert mfn.__version__ == "0.1.0"
     try:
         assert mfn.SimulationConfig is not None
         assert mfn.SimulationResult is not None

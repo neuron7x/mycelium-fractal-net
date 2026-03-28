@@ -1,4 +1,4 @@
-# Release Notes — v0.8.0
+# Release Notes — v0.1.0
 
 **Release date:** 2026-03-28
 **Codename:** Identity-Preserving Morphogenetic Intelligence

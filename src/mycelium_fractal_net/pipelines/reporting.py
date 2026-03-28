@@ -18,7 +18,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("mycelium-fractal-net")
 except PackageNotFoundError:
-    __version__ = "0.8.0"
+    __version__ = "0.1.0"
 from mycelium_fractal_net.analytics.morphology import compute_morphology_descriptor
 from mycelium_fractal_net.artifact_bundle import (
     sha256_file,

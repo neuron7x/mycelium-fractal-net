@@ -121,7 +121,7 @@ def main() -> None:
 
     ledger = {
         "schema_version": "mfn-architecture-ledger-v1",
-        "engine_version": "0.8.0",
+        "engine_version": "0.1.0",
         "total_modules": len(modules),
         "total_symbols": len(all_symbols),
         "stable_symbols": stable,

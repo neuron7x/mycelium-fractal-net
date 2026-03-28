@@ -1,6 +1,6 @@
 {
   "title": "MyceliumFractalNet: Morphogenetic Field Intelligence Engine with Identity Preservation",
-  "version": "0.8.0",
+  "version": "0.1.0",
   "description": "Bio-inspired morphogenetic field intelligence engine combining reaction-diffusion PDE simulation, persistent homology (TDA), causal validation (46 rules), neuromodulatory control (GNC+ 7 axes), interpretability engine, self-reading architecture, and tau-control identity preservation. First system to unify R-D + TDA + causal + neuromod + self-healing in a single Python package. 2798 tests, 20 modules, ~60K LOC.",
   "license": "MIT",
   "upload_type": "software",

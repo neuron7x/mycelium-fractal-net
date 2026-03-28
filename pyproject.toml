@@ -1,6 +1,6 @@
 [project]
 name = "mycelium-fractal-net"
-version = "0.8.0"
+version = "0.1.0"
 description = "Reaction-diffusion analytics engine with causal validation and adaptive bio physics"
 authors = [{ name = "Yaroslav Vasylenko", email = "example@example.com" }]
 readme = "README.md"

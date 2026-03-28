@@ -138,7 +138,7 @@ report = mfn.diagnose(seq, gnc_levels={...}, compute_ccp=True, run_ac_check=True
 
 ## Status
 
-- **v0.8.0** — 2,798 tests, 0 failures, ruff clean, mypy strict
+- **v0.1.0** — 2,798 tests, 0 failures, ruff clean, mypy strict
 - **20 modules** — core, analytics, bio, neural, neurochem, interpretability, self_reading, tau_control, types, integration, intervention, pipelines, security, numerics, experiments, adapters, crypto, signal, model_pkg
 - **75 A_C tests** — axioms A1-A5, strategies, activation, integration
 - **56 GNC+ tests** — Sigma, Omega, F1-F7, MesoController, Bridge
