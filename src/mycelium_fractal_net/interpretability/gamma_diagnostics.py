@@ -31,16 +31,18 @@ if TYPE_CHECKING:
 
 __all__ = ["GammaDiagnosticReport", "GammaDiagnostics"]
 
+GammaStatus = Literal["healthy", "pathological_low", "pathological_high", "critical"]
+DeviationOrigin = Literal[
+    "thermodynamic", "topological", "fractal",
+    "causal_rule", "stage_transition", "emergent",
+]
+
 
 @dataclass
 class GammaDiagnosticReport:
     gamma_value: float
-    gamma_status: Literal["healthy", "pathological_low", "pathological_high", "critical"]
-
-    deviation_origin: Literal[
-        "thermodynamic", "topological", "fractal",
-        "causal_rule", "stage_transition", "emergent",
-    ]
+    gamma_status: GammaStatus
+    deviation_origin: DeviationOrigin
 
     top_attributing_features: list[tuple[str, float]]
     critical_rule_ids: list[str]
@@ -150,7 +152,7 @@ class GammaDiagnostics:
             mechanistic_description=description,
         )
 
-    def _classify_gamma(self, gamma: float) -> str:
+    def _classify_gamma(self, gamma: float) -> GammaStatus:
         if 0.7 <= gamma <= 1.5:
             return "healthy"
         if gamma < 0:
@@ -159,7 +161,7 @@ class GammaDiagnostics:
             return "pathological_high"
         return "critical"
 
-    def _localize_deviation(self, graph: AttributionGraph) -> str:
+    def _localize_deviation(self, graph: AttributionGraph) -> DeviationOrigin:
         """Determine which feature group dominates the attribution."""
         group_scores: dict[str, float] = {}
         for name, weight in graph.gamma_attribution.items():
@@ -176,7 +178,7 @@ class GammaDiagnostics:
         if dominance < 0.35:
             return "emergent"
 
-        mapping = {
+        mapping: dict[str, DeviationOrigin] = {
             "thermo": "thermodynamic",
             "topo": "topological",
             "fractal": "fractal",

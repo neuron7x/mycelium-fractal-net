@@ -11,7 +11,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-__all__ = ["SCENARIO_HEALTHY", "SCENARIO_PATHOLOGICAL", "ScenarioConfig"]
+__all__ = [
+    "ABLATION_CONFIGS",
+    "SCENARIO_EXTREME_PATHOLOGICAL",
+    "SCENARIO_HEALTHY",
+    "SCENARIO_PATHOLOGICAL",
+    "ScenarioConfig",
+]
 
 
 @dataclass
@@ -41,3 +47,27 @@ SCENARIO_PATHOLOGICAL = ScenarioConfig(
     expected_gamma_range=(-2.0, 2.0),
     description="No Turing + low diffusion: weak or absent γ-scaling",
 )
+
+SCENARIO_EXTREME_PATHOLOGICAL = ScenarioConfig(
+    name="extreme_pathological",
+    sim_params={"grid_size": 32, "alpha": 0.24, "spike_probability": 0.50,
+                "turing_enabled": True, "turing_threshold": 0.10},
+    expected_gamma_range=(-10.0, 0.0),
+    description="High diffusion + high noise + low Turing threshold: chaotic regime",
+)
+
+
+# ── Ablation scenarios — parameter-level interventions ──────────
+# Each ablation modifies one mechanism while keeping others at baseline.
+# # EVIDENCE TYPE: interventional (parameter ablation), not correlational
+
+ABLATION_CONFIGS: dict[str, dict[str, object]] = {
+    "baseline": {"grid_size": 32, "alpha": 0.18, "spike_probability": 0.25,
+                 "turing_enabled": True},
+    "ablate_topology": {"grid_size": 32, "alpha": 0.18, "spike_probability": 0.25,
+                        "turing_enabled": False},  # kill Turing patterns → topology
+    "ablate_fractal": {"grid_size": 8, "alpha": 0.18, "spike_probability": 0.25,
+                       "turing_enabled": True},   # small grid → no fractal structure
+    "ablate_dynamics": {"grid_size": 32, "alpha": 0.18, "spike_probability": 0.0,
+                        "turing_enabled": True},  # no spikes → suppressed dynamics
+}

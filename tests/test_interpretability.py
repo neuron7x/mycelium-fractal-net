@@ -120,6 +120,28 @@ class TestAttributionGraph:
         graphs = AttributionGraphBuilder().build_temporal(fvs, gammas, window=8)
         assert len(graphs) >= 1
 
+    def test_graph_to_dict(self) -> None:
+        sequences = _make_sequences(8)
+        gammas = _make_gamma_values(sequences)
+        ex = MFNFeatureExtractor()
+        fvs = [ex.extract_all(seq) for seq in sequences]
+        graph = AttributionGraphBuilder().build(fvs, gammas)
+        d = graph.to_dict()
+        assert "gamma_value" in d
+        assert "gamma_attribution" in d
+        assert "n_nodes" in d
+        assert "n_edges" in d
+
+    def test_causal_path(self) -> None:
+        sequences = _make_sequences(8)
+        gammas = _make_gamma_values(sequences)
+        ex = MFNFeatureExtractor()
+        fvs = [ex.extract_all(seq) for seq in sequences]
+        graph = AttributionGraphBuilder().build(fvs, gammas)
+        if len(graph.nodes) >= 2:
+            path = graph.causal_path(graph.nodes[0].node_id, graph.nodes[-1].node_id)
+            assert isinstance(path, list)
+
 
 class TestCausalTracer:
     def test_trace_rules(self) -> None:
@@ -134,6 +156,21 @@ class TestCausalTracer:
         assert len(traces) > 0
         for trace in traces.values():
             assert len(trace.activations) == 5
+
+    def test_find_critical_rules(self) -> None:
+        sequences = _make_sequences(8)
+        results = [
+            validate_causal_consistency(seq, descriptor=mfn.extract(seq))
+            for seq in sequences
+        ]
+        gammas = [1.0 + 0.5 * np.std(seq.field) for seq in sequences]
+
+        tracer = CausalTracer()
+        traces = tracer.trace_rules(results)
+        critical = tracer.find_critical_rules(traces, gammas, threshold=0.01)
+        assert isinstance(critical, list)
+        for rule_id in critical:
+            assert isinstance(rule_id, str)
 
     def test_stage_transitions(self) -> None:
         sequences = _make_sequences(5)
@@ -243,6 +280,47 @@ class TestReport:
         report = GammaDiagnostics().diagnose(sequences, gammas)
         gen = MFNInterpretabilityReport()
         data = gen.export_for_paper(report)
+        assert "gamma_summary" in data
+        assert "top_features" in data
+
+    def test_generate_with_graph_and_traces(self) -> None:
+        sequences = _make_sequences(8)
+        gammas = _make_gamma_values(sequences)
+        ex = MFNFeatureExtractor()
+        fvs = [ex.extract_all(seq, step=i) for i, seq in enumerate(sequences)]
+        graph = AttributionGraphBuilder().build(fvs, gammas)
+        report = GammaDiagnostics().diagnose(sequences, gammas)
+
+        # With causal traces
+        results = [
+            validate_causal_consistency(seq, descriptor=mfn.extract(seq))
+            for seq in sequences
+        ]
+        tracer = CausalTracer()
+        traces = tracer.trace_rules(results)
+
+        # With probe results
+        labels = [0 if g < 1.1 else 1 for g in gammas]
+        probe_results: dict[str, dict[str, float]] | None = None
+        if len(set(labels)) == 2:
+            probe_results = LinearStateProbe().probe_all_groups(fvs, labels)
+
+        gen = MFNInterpretabilityReport()
+        md = gen.generate(report, graph, traces, probe_results)
+        assert len(md) > 200
+        assert "Attribution Analysis" in md
+
+    def test_export_with_probes(self) -> None:
+        sequences = _make_sequences(20, seed_base=0)
+        gammas = _make_gamma_values(sequences)
+        ex = MFNFeatureExtractor()
+        fvs = [ex.extract_all(seq) for seq in sequences]
+        labels = [0 if i < 10 else 1 for i in range(20)]
+        probe_results = LinearStateProbe().probe_all_groups(fvs, labels)
+
+        report = GammaDiagnostics().diagnose(sequences, gammas)
+        gen = MFNInterpretabilityReport()
+        data = gen.export_for_paper(report, probe_results)
         assert "gamma_summary" in data
         assert "top_features" in data
 

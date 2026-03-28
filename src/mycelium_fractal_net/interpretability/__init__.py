@@ -17,6 +17,7 @@ from .attribution_graph import (
 from .causal_tracer import CausalRuleTrace, CausalTracer, StageTransitionTrace
 from .feature_extractor import FeatureVector, MFNFeatureExtractor
 from .gamma_diagnostics import GammaDiagnosticReport, GammaDiagnostics
+from .pipeline import ComparisonReport, InterpretabilityPipeline
 from .report import MFNInterpretabilityReport
 from .state_probe import LinearStateProbe
 
@@ -27,9 +28,11 @@ __all__ = [
     "AttributionNode",
     "CausalRuleTrace",
     "CausalTracer",
+    "ComparisonReport",
     "FeatureVector",
     "GammaDiagnosticReport",
     "GammaDiagnostics",
+    "InterpretabilityPipeline",
     "LinearStateProbe",
     "MFNFeatureExtractor",
     "MFNInterpretabilityReport",

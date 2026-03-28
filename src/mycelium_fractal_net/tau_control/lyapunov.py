@@ -3,8 +3,9 @@
 V = V_x + alpha * V_S + beta * V_C
 
 V_x = max(0, F) from ThermodynamicKernel
-  # APPROXIMATION: V_x from heuristic free energy, not exact Friston functional
-  # GAP: full Friston proof requires differentiable F path through state space
+  # IMPLEMENTED TRUTH: V_x = F from ThermodynamicKernel (real R-D free energy)
+  # FRISTON STATUS: PARTIAL — thermodynamic F[u] ≠ Friston variational free energy
+  # GAP: full Friston proof requires variational F with prediction-error terms
 
 V_S = ||centroid(S) - centroid(S_0)||^2 + (1 - confidence)
 
@@ -57,7 +58,8 @@ class LyapunovMonitor:
     """Composite Lyapunov functional V = V_x + alpha*V_S + beta*V_C.
 
     # IMPLEMENTED TRUTH: V >= 0 by construction. V_C KL computed analytically.
-    # APPROXIMATION: V_x from heuristic free energy, not exact Friston functional.
+    # IMPLEMENTED TRUTH: V_x = F from ThermodynamicKernel (real R-D free energy)
+  # FRISTON STATUS: PARTIAL — thermodynamic F[u] ≠ Friston variational free energy.
     """
 
     def __init__(
@@ -121,7 +123,8 @@ class LyapunovMonitor:
     ) -> LyapunovState:
         """Compute composite Lyapunov value.
 
-        # APPROXIMATION: V_x from heuristic free energy, not exact Friston functional
+        # IMPLEMENTED TRUTH: V_x = F from ThermodynamicKernel (real R-D free energy)
+  # FRISTON STATUS: PARTIAL — thermodynamic F[u] ≠ Friston variational free energy
         """
         v_x = max(0.0, free_energy)
 

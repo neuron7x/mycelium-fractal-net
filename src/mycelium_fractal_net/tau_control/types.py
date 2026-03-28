@@ -12,7 +12,22 @@ from typing import Any
 
 import numpy as np
 
-__all__ = ["MetaRuleSpace", "NormSpace", "TauState"]
+__all__ = ["MFNSnapshot", "MetaRuleSpace", "NormSpace", "TauState"]
+
+
+@dataclass(frozen=True)
+class MFNSnapshot:
+    """Point-in-time snapshot of MFN observables.
+
+    Used by CollapseTracker (signal scoring) and CertifiedEllipsoid
+    (viability fitting).  All fields except *state_vector* are optional
+    so callers can supply only what they have.
+    """
+
+    state_vector: np.ndarray  # shape (d,) — system state for viability
+    free_energy: float | None = None
+    betti_0: int | None = None
+    d_box: float | None = None
 
 
 @dataclass(frozen=True)

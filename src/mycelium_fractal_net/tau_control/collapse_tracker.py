@@ -26,6 +26,7 @@ class CollapseTracker:
         self._phi: float = 0.0
         self._consecutive_failures: int = 0
         self._history: list[float] = []
+        self._signal_collapse_score: float = 0.0
 
     @property
     def phi(self) -> float:
@@ -63,11 +64,56 @@ class CollapseTracker:
         n_jumps = int(np.sum(diffs > 0.5))  # decay-adjusted threshold
         return float(n_jumps / max(len(recent), 1))
 
+    @property
+    def signal_collapse_score(self) -> float:
+        """Last computed signal collapse score (0 when no MFN signals provided)."""
+        return self._signal_collapse_score
+
+    @staticmethod
+    def _compute_signal_collapse_score(
+        free_energy: float | None,
+        betti_0: int | None,
+        d_box: float | None,
+    ) -> float:
+        """Composite collapse score from MFN observables.
+
+        Components (each in [0, 1]):
+          - free_energy: sigmoid-normalised, high F -> high score
+          - betti_0: low connected components -> topological simplification
+          - d_box: deviation from healthy CCP window [1.5, 2.0]
+
+        Returns weighted mean of available signals, or 0.0 if none supplied.
+        """
+        terms: list[float] = []
+
+        if free_energy is not None:
+            # Sigmoid centred at 1.0, steepness 2.0
+            import math
+
+            terms.append(1.0 / (1.0 + math.exp(-2.0 * (free_energy - 1.0))))
+
+        if betti_0 is not None:
+            # Healthy tissue has many components; collapse -> betti_0 drops to 1
+            terms.append(1.0 / (1.0 + betti_0))
+
+        if d_box is not None:
+            # Healthy window [1.5, 2.0], midpoint 1.75, half-width 0.25
+            deviation = abs(d_box - 1.75) / 0.25
+            terms.append(min(deviation, 1.0))
+
+        if not terms:
+            return 0.0
+        return sum(terms) / len(terms)
+
     def record(
         self,
         phase_is_collapsing: bool,
         recovery_succeeded: bool,
         norm_restored: bool,
+        *,
+        free_energy: float | None = None,
+        betti_0: int | None = None,
+        d_box: float | None = None,
     ) -> float:
         """Record one step and return updated Phi.
 
@@ -75,6 +121,10 @@ class CollapseTracker:
           - phase is COLLAPSING
           - recovery has been attempted k_max times
           - norm is still not restored
+
+        Optional MFN signals (*free_energy*, *betti_0*, *d_box*) contribute a
+        ``signal_collapse_score`` in [0, 1] that amplifies the irreversible
+        increment, making Phi sensitive to thermodynamic / topological state.
         """
         # Decay existing pressure
         self._phi *= self.decay
@@ -85,6 +135,11 @@ class CollapseTracker:
         elif recovery_succeeded or norm_restored:
             self._consecutive_failures = 0
 
+        # Signal collapse score from MFN observables
+        self._signal_collapse_score = self._compute_signal_collapse_score(
+            free_energy, betti_0, d_box,
+        )
+
         # Check irreversibility
         is_irreversible = (
             phase_is_collapsing
@@ -93,7 +148,8 @@ class CollapseTracker:
         )
 
         if is_irreversible:
-            self._phi += 1.0
+            # Base increment 1.0, amplified by up to 1.0 from signal score
+            self._phi += 1.0 + self._signal_collapse_score
             self._consecutive_failures = 0  # reset after recording
 
         self._history.append(self._phi)
@@ -103,3 +159,4 @@ class CollapseTracker:
         self._phi = 0.0
         self._consecutive_failures = 0
         self._history.clear()
+        self._signal_collapse_score = 0.0

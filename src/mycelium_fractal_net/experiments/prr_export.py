@@ -101,7 +101,10 @@ class PRRExporter:
         for run in h.runs:
             for fd in run.features:
                 for group in ("topological", "fractal", "causal"):
-                    for k, v in fd.get(group, {}).items():
+                    group_data = fd.get(group)
+                    if not isinstance(group_data, dict):
+                        continue
+                    for k, v in group_data.items():
                         key = f"{group}.{k}"
                         all_features.setdefault(key, []).append(float(v))
 

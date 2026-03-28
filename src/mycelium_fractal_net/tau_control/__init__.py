@@ -30,18 +30,34 @@ from .identity_engine import IdentityEngine, IdentityReport
 from .lyapunov import LyapunovMonitor, LyapunovState
 from .tau_controller import TauController
 from .transformation import TransformationProtocol
-from .types import MetaRuleSpace, NormSpace, TauState
-from .viability import BarrierMonitor, BarrierStatus, CertifiedEllipsoid, ViabilityKernel
+from .types import MetaRuleSpace, MFNSnapshot, NormSpace, TauState
+from .viability import (
+    BarrierMonitor,
+    BarrierStatus,
+    CertifiedEllipsoid,
+    CertifiedViabilityV3,
+    CertifiedViabilityV4,
+    GalerkinODE,
+    PODProjector,
+    PolynomialDynamicsApproximator,
+    ViabilityKernel,
+)
 
 __all__ = [
+    "CertifiedViabilityV3",
+    "CertifiedViabilityV4",
     "CollapseTracker",
     "Discriminant",
+    "GalerkinODE",
     "IdentityEngine",
     "IdentityReport",
     "LyapunovMonitor",
     "LyapunovState",
+    "MFNSnapshot",
     "MetaRuleSpace",
     "NormSpace",
+    "PODProjector",
+    "PolynomialDynamicsApproximator",
     "PressureKind",
     "SystemMode",
     "TauController",

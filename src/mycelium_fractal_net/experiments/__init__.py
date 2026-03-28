@@ -20,5 +20,19 @@ __all__ = [
     "to_record",
 ]
 
-# Phase 3 experiment infrastructure (lazy imports)
+# Phase 3 experiment infrastructure
+from .prr_export import PRRExporter, PRRReport
+from .runner import ExperimentRunner, RunResult, ScenarioResult
+from .scenarios import SCENARIO_HEALTHY, SCENARIO_PATHOLOGICAL, ScenarioConfig
+
+__all__ += [
+    "SCENARIO_HEALTHY",
+    "SCENARIO_PATHOLOGICAL",
+    "ExperimentRunner",
+    "PRRExporter",
+    "PRRReport",
+    "RunResult",
+    "ScenarioConfig",
+    "ScenarioResult",
+]
 
