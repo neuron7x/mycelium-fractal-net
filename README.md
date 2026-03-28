@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/coverage-82%25-2ea44f?style=for-the-badge" alt="Coverage" />
   <img src="https://img.shields.io/badge/ruff-0_errors-2ea44f?style=for-the-badge" alt="Ruff" />
   <img src="https://img.shields.io/badge/Python-3.10%E2%80%933.13-3776ab?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/MIT-license-lightgrey?style=for-the-badge" alt="License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue?style=for-the-badge" alt="License" /></a>
 </p>
 
 <p align="center">
@@ -496,6 +496,6 @@ Full reference: [API Documentation](docs/API.md)
 ---
 
 <p align="center">
-  <b>MIT License</b> — Yaroslav Vasylenko (<a href="https://github.com/neuron7x">@neuron7x</a>)<br/>
+  <b>AGPL-3.0-or-later</b> — Yaroslav Vasylenko (<a href="https://github.com/neuron7x">@neuron7x</a>)<br/>
   <i>Solo-authored in wartime Ukraine, 2024–2026</i>
 </p>
