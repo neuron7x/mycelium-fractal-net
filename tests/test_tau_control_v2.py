@@ -65,8 +65,8 @@ class TestTrajectoryDiscriminant:
         """Gate 7: high uncertainty -> OPERATIONAL."""
         td = TrajectoryDiscriminant(uncertainty_threshold=0.4)
         # Borderline case: features near decision boundary
-        kind, unc = td.classify(phi=1.5, phi_trend=0.1, failure_density=0.15,
-                                coherence=0.5, steps_in_bad_phase=5)
+        kind, _prob, unc = td.classify(phi=1.5, phi_trend=0.1, failure_density=0.15,
+                                       coherence=0.5, steps_in_bad_phase=5)
         if unc > 0.4:
             assert kind == PressureKind.OPERATIONAL
 
@@ -74,8 +74,8 @@ class TestTrajectoryDiscriminant:
         """Single spike should not classify as existential alone."""
         td = TrajectoryDiscriminant()
         # Low phi, single bad step
-        kind, _ = td.classify(phi=0.3, phi_trend=0.0, failure_density=0.05,
-                              coherence=0.8, steps_in_bad_phase=1)
+        kind, _, _ = td.classify(phi=0.3, phi_trend=0.0, failure_density=0.05,
+                                coherence=0.8, steps_in_bad_phase=1)
         assert kind == PressureKind.OPERATIONAL
 
     def test_no_gamma_in_features(self) -> None:

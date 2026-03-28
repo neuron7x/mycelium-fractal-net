@@ -21,6 +21,7 @@ from .collapse_tracker import CollapseTracker
 from .discriminant import (
     CalibrationResult,
     Discriminant,
+    DiscriminantResult,
     PressureKind,
     SystemMode,
     TrajectoryDiscriminant,
