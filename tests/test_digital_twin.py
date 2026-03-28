@@ -1,10 +1,9 @@
 """Tests for Neuromodulatory Digital Twin."""
 
-import numpy as np
 import pytest
 
-from mycelium_fractal_net.neurochem.gnc import GNCState, MODULATORS, compute_gnc_state
 from mycelium_fractal_net.neurochem.digital_twin import NeuromodulatoryDigitalTwin
+from mycelium_fractal_net.neurochem.gnc import MODULATORS, GNCState, compute_gnc_state
 
 
 def _make_trajectory(n: int = 10) -> list[GNCState]:
@@ -65,7 +64,7 @@ class TestPredict:
             assert abs(pred.modulators[m] - 0.5) < 0.3
 
     def test_bounded(self):
-        states = [compute_gnc_state({m: 0.95 for m in MODULATORS}) for _ in range(5)]
+        states = [compute_gnc_state(dict.fromkeys(MODULATORS, 0.95)) for _ in range(5)]
         twin = NeuromodulatoryDigitalTwin.from_gnc_states(states)
         pred = twin.predict(horizon=3)
         for m in MODULATORS:

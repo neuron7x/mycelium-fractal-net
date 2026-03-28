@@ -112,7 +112,7 @@ def run() -> dict:
     good_prediction = pred_mae < 0.1
     gate_pass = (f4_pass or good_prediction) and all_bounded and all_axioms
 
-    print(f"\n--- Gate Check ---")
+    print("\n--- Gate Check ---")
     print(f"  F4: {'PASS' if f4_pass else 'FAIL'}")
     print(f"  Power > 0.3: {'PASS' if power > 0.3 else 'FAIL'}")
     print(f"  Bounded: {'PASS' if all_bounded else 'FAIL'}")

@@ -23,7 +23,6 @@ from mycelium_fractal_net.tau_control import (
     PolynomialDynamicsApproximator,
 )
 
-
 # ── Shared trajectory fixtures ────────────────────────────────
 
 

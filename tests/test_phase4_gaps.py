@@ -72,7 +72,7 @@ class TestGap1DeviationOrigin:
         assert origin in valid_origins
         # With varying gamma, attribution should localize
         assert origin != "emergent", (
-            f"Cross-condition origin still emergent — GAP 1 remains PARTIAL"
+            "Cross-condition origin still emergent — GAP 1 remains PARTIAL"
         )
 
 

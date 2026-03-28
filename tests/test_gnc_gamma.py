@@ -1,32 +1,31 @@
 """Tests for GNC+ ↔ γ-scaling bridge."""
 
-import pytest
 
-from mycelium_fractal_net.neurochem.gnc import GNCState, compute_gnc_state, MODULATORS
+from mycelium_fractal_net.neurochem.gnc import MODULATORS, GNCState, compute_gnc_state
 from mycelium_fractal_net.neurochem.gnc_gamma_bridge import (
+    GNCGammaCorrelation,
     correlate_gnc_gamma,
     predict_gamma_regime,
-    GNCGammaCorrelation,
 )
 
 
 class TestPredictGammaRegime:
     def test_high_coherence_healthy(self):
         state = GNCState.default()
-        low, high, _ = predict_gamma_regime(state)
+        low, _high, _ = predict_gamma_regime(state)
         assert low >= 0.5
 
     def test_da_dominant_accelerating(self):
         state = compute_gnc_state({"Dopamine": 0.9, "Serotonin": 0.2})
         state.theta["eta"] = 0.8
-        low, high, reason = predict_gamma_regime(state)
+        _low, high, _reason = predict_gamma_regime(state)
         # DA-dominant may be caught by coherence check first — both are valid
         assert high >= 1.5
 
     def test_gaba_dominant_rigid(self):
         state = compute_gnc_state({"GABA": 0.9, "Glutamate": 0.1})
         state.theta["alpha"] = 0.2
-        low, high, reason = predict_gamma_regime(state)
+        low, _high, reason = predict_gamma_regime(state)
         assert low < 0.5 or "rigid" in reason.lower() or "broad" in reason.lower()
 
     def test_returns_tuple_3(self):
@@ -72,26 +71,26 @@ class TestSyntheticCorrelation:
     def test_20_states(self):
         scenarios = [
             # (levels, gamma, r2, should_broadly_match)
-            ({m: 0.5 for m in MODULATORS}, 1.2, 0.95, True),
-            ({m: 0.5 for m in MODULATORS}, 1.4, 0.90, True),
+            (dict.fromkeys(MODULATORS, 0.5), 1.2, 0.95, True),
+            (dict.fromkeys(MODULATORS, 0.5), 1.4, 0.90, True),
             ({"Dopamine": 0.9, "Serotonin": 0.1}, 2.0, 0.85, True),
             ({"GABA": 0.9, "Glutamate": 0.1}, 0.3, 0.70, True),
-            ({m: 0.85 for m in MODULATORS}, 1.0, 0.60, True),
-            ({m: 0.15 for m in MODULATORS}, -0.5, 0.20, True),
+            (dict.fromkeys(MODULATORS, 0.85), 1.0, 0.60, True),
+            (dict.fromkeys(MODULATORS, 0.15), -0.5, 0.20, True),
             ({"Noradrenaline": 0.9}, 1.0, 0.80, True),
             ({"Acetylcholine": 0.9}, 1.2, 0.90, True),
             ({"Opioid": 0.9}, 1.3, 0.85, True),
             ({"Dopamine": 0.5, "GABA": 0.5}, 1.1, 0.92, True),
             # Edge cases
-            ({m: 0.0 for m in MODULATORS}, 0.0, 0.10, True),
-            ({m: 1.0 for m in MODULATORS}, 1.5, 0.50, True),
+            (dict.fromkeys(MODULATORS, 0.0), 0.0, 0.10, True),
+            (dict.fromkeys(MODULATORS, 1.0), 1.5, 0.50, True),
             ({"Dopamine": 1.0}, 1.8, 0.75, True),
             ({"GABA": 1.0}, 0.2, 0.60, True),
             ({"Glutamate": 1.0, "GABA": 0.0}, 1.0, 0.80, True),
             ({"Serotonin": 1.0}, 0.8, 0.85, True),
             # Pathological
-            ({m: 0.1 for m in MODULATORS}, -1.0, 0.05, True),
-            ({m: 0.9 for m in MODULATORS}, 2.5, 0.40, True),
+            (dict.fromkeys(MODULATORS, 0.1), -1.0, 0.05, True),
+            (dict.fromkeys(MODULATORS, 0.9), 2.5, 0.40, True),
             ({"Dopamine": 0.3, "GABA": 0.7}, 0.5, 0.70, True),
             ({"Noradrenaline": 0.1, "Acetylcholine": 0.9}, 1.1, 0.88, True),
         ]

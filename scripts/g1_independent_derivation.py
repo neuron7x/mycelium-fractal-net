@@ -165,7 +165,7 @@ def run() -> dict:
     mean_spread = float(np.mean(spreads))
     gate_pass = max_spread < 0.5  # relaxed from 0.3 — methods have inherent variance
 
-    print(f"\n--- Statistics ---")
+    print("\n--- Statistics ---")
     print(f"  Max spread: {max_spread:.4f}")
     print(f"  Mean spread: {mean_spread:.4f}")
     print(f"\n{'=' * 60}")

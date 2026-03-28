@@ -39,7 +39,7 @@ ENV PATH=/usr/local/bin:$PATH \
 
 LABEL org.opencontainers.image.title="MyceliumFractalNet" \
       org.opencontainers.image.version="0.1.0" \
-      org.opencontainers.image.source="https://github.com/neuron7x/mycelium-fractal-net" \
+      org.opencontainers.image.source="https://github.com/neuron7xLab/mycelium-fractal-net" \
       org.opencontainers.image.description="Morphogenetic field intelligence engine"
 
 USER mfn

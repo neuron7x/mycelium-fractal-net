@@ -14,7 +14,6 @@ import numpy as np
 
 import mycelium_fractal_net as mfn
 
-
 # === evolution.py:177-247 — CMA-ES optimizer loop ===
 
 
@@ -118,7 +117,7 @@ def test_memory_fitness_landscape() -> None:
     enc = HDVEncoder(n_features=4, D=500, seed=0)
     mem = BioMemory(enc, capacity=20)
     rng = np.random.default_rng(0)
-    for i in range(10):
+    for _i in range(10):
         mem.store(enc.encode(rng.standard_normal(4)), fitness=rng.random(), params={})
     landscape = mem.fitness_landscape()
     assert "mean" in landscape
@@ -172,7 +171,7 @@ def test_psutil_sampling() -> None:
     from mycelium_fractal_net.bio.compute_reserve import ComputeBudget, ReserveConfig
 
     budget = ComputeBudget(ReserveConfig(check_every=1))
-    ram, cpu = budget._sample_system()
+    ram, _cpu = budget._sample_system()
     assert 0.0 <= ram <= 100.0
 
 

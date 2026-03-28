@@ -19,11 +19,10 @@ from mycelium_fractal_net.neurochem.gnc import (
     gnc_diagnose,
 )
 
-
 # ── Fixtures ─────────────────────────────────────────────────────────
 
 
-@pytest.fixture()
+@pytest.fixture
 def healthy_state():
     return compute_gnc_state({
         "Glutamate": 0.65, "GABA": 0.40, "Noradrenaline": 0.55,
@@ -31,15 +30,15 @@ def healthy_state():
     })
 
 
-@pytest.fixture()
+@pytest.fixture
 def candidates():
     return [
         compute_gnc_state({
             "Glutamate": 0.65, "GABA": 0.40, "Noradrenaline": 0.55,
             "Serotonin": 0.50, "Dopamine": 0.60, "Acetylcholine": 0.55, "Opioid": 0.55,
         }),
-        compute_gnc_state({m: 0.5 for m in MODULATORS}),
-        compute_gnc_state({m: 0.4 for m in MODULATORS}),
+        compute_gnc_state(dict.fromkeys(MODULATORS, 0.5)),
+        compute_gnc_state(dict.fromkeys(MODULATORS, 0.4)),
     ]
 
 
@@ -134,7 +133,7 @@ class TestA3:
 
 class TestA4:
     def test_delta_theta_nonzero(self, candidates) -> None:
-        prev = compute_gnc_state({m: 0.5 for m in MODULATORS})
+        prev = compute_gnc_state(dict.fromkeys(MODULATORS, 0.5))
         op = AxiomaticChoiceOperator()
         selected = op.select(candidates, prev_state=prev, force=True)
         delta = np.mean([abs(selected.theta[t] - prev.theta[t]) for t in THETA])
@@ -142,7 +141,7 @@ class TestA4:
 
     def test_perturbation_when_identical(self) -> None:
         """When selected == prev, A4 perturbation kicks in."""
-        state = compute_gnc_state({m: 0.5 for m in MODULATORS})
+        state = compute_gnc_state(dict.fromkeys(MODULATORS, 0.5))
         op = AxiomaticChoiceOperator(seed=42)
         selected = op.select([state], prev_state=state, force=True)
         delta = np.mean([abs(selected.theta[t] - state.theta[t]) for t in THETA])
@@ -199,7 +198,7 @@ class TestAxiomValidation:
         assert result["A5_stabilization"]
 
     def test_a4_with_prev_state(self, candidates) -> None:
-        prev = compute_gnc_state({m: 0.5 for m in MODULATORS})
+        prev = compute_gnc_state(dict.fromkeys(MODULATORS, 0.5))
         op = AxiomaticChoiceOperator()
         selected = op.select(candidates, prev_state=prev, force=True)
         result = op.validate_axioms(selected, candidates, prev_state=prev)

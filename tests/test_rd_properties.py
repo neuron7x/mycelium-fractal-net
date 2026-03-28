@@ -17,8 +17,7 @@ Properties tested:
 """
 
 import numpy as np
-import pytest
-from hypothesis import given, settings, assume
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 
@@ -26,7 +25,6 @@ from mycelium_fractal_net.numerics.grid_ops import (
     BoundaryCondition,
     compute_laplacian,
 )
-
 
 # ═══════════════════════════════════════════════════════════════
 # Laplacian properties

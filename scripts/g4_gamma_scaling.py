@@ -182,7 +182,6 @@ def run() -> dict:
         mean_r2 = float(np.mean(r2s))
         # gamma sign depends on metric pair direction; |gamma| indicates scaling
         gamma_in_range = abs(mean_gamma) > 0.5  # non-trivial scaling exists
-        r2_above_threshold = mean_r2 > 0.3  # meaningful fit
     else:
         mean_gamma = 0.0
         mean_r2 = 0.0

@@ -6,15 +6,12 @@ import numpy as np
 import pytest
 
 from mycelium_fractal_net.core.choice_operator import (
-    INDETERMINACY_THRESHOLD,
     ChoiceResult,
-    IndeterminacyReport,
     choice_operator,
     detect_indeterminacy,
     select_by_criticality,
     select_by_perturbation,
 )
-
 
 # ── detect_indeterminacy ─────────────────────────────────────────────
 
@@ -74,7 +71,7 @@ class TestDetectIndeterminacy:
 
 
 class TestSelectByPerturbation:
-    @pytest.fixture()
+    @pytest.fixture
     def seq_and_fields(self):
         """Create a FieldSequence and candidate fields with varying structure."""
         from mycelium_fractal_net.types.field import FieldSequence

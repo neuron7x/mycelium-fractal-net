@@ -2,7 +2,7 @@
 name = "mycelium-fractal-net"
 version = "0.1.0"
 description = "Reaction-diffusion analytics engine with causal validation and adaptive bio physics"
-authors = [{ name = "Yaroslav Vasylenko", email = "example@example.com" }]
+authors = [{ name = "Yaroslav Vasylenko", email = "neuron7xlab@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
 license = { text = "AGPL-3.0-or-later" }
@@ -22,8 +22,11 @@ classifiers = [
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Topic :: Scientific/Engineering :: Bio-Informatics",
-  "License :: OSI Approved :: AGPL-3.0-or-later License",
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 
 dependencies = [

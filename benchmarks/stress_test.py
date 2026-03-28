@@ -121,7 +121,7 @@ for N, D in [(8, 500), (16, 1000), (32, 1000), (32, 5000), (64, 1000)]:
             phys = eng.step(phys, src, snk)
         cfg = AnonymizationConfig(alpha=3.0, dt=0.1, n_diffusion_steps=10)
         diffuser = GapJunctionDiffuser(cfg)
-        diffused, metrics = diffuser.diffuse(M0, phys.D_h, phys.D_v)
+        _diffused, metrics = diffuser.diffuse(M0, phys.D_h, phys.D_v)
         return metrics.cosine_anonymity
 
     run_test(f"MemAnon N={N} D={D}", anon_test)

@@ -30,7 +30,6 @@ def run() -> dict:
     )
     from mycelium_fractal_net.neurochem.gnc import (
         MODULATORS,
-        GNCBridge,
         MesoController,
         compute_gnc_state,
         gnc_diagnose,
@@ -74,7 +73,7 @@ def run() -> dict:
             for m in MODULATORS:
                 levels[m] = float(np.clip(levels[m] + rng.normal(0, 0.02), 0.1, 0.9))
         elif strategy == "RESET":
-            levels = {m: 0.5 for m in MODULATORS}
+            levels = dict.fromkeys(MODULATORS, 0.5)
 
         # Omega Hebbian update
         omega_update(state, learning_rate=0.01)
@@ -111,7 +110,7 @@ def run() -> dict:
     with _OMEGA_LOCK:
         _OMEGA[:] = 0.0
 
-    ablation_state = compute_gnc_state({m: 0.5 for m in MODULATORS})
+    ablation_state = compute_gnc_state(dict.fromkeys(MODULATORS, 0.5))
     ablation_diag = gnc_diagnose(ablation_state)
     ablation_coh = ablation_diag.coherence
 
@@ -119,19 +118,18 @@ def run() -> dict:
     reset_omega()
 
     # With Omega
-    full_state = compute_gnc_state({m: 0.5 for m in MODULATORS})
+    full_state = compute_gnc_state(dict.fromkeys(MODULATORS, 0.5))
     full_diag = gnc_diagnose(full_state)
     full_coh = full_diag.coherence
 
-    ablation_degrades = True  # Omega zeroing should change behavior
     print(f"  Without Omega: coherence={ablation_coh:.4f}")
     print(f"  With Omega:    coherence={full_coh:.4f}")
     print(f"  Ablation effect: {'YES' if ablation_coh != full_coh else 'MINIMAL'}")
 
     # ── A_C in stagnation ─────────────────────────────────────────
     print("\n--- A_C Stagnation Test ---")
-    stag_state = compute_gnc_state({m: 0.5 for m in MODULATORS})
-    prev_state = compute_gnc_state({m: 0.5001 for m in MODULATORS})
+    stag_state = compute_gnc_state(dict.fromkeys(MODULATORS, 0.5))
+    prev_state = compute_gnc_state(dict.fromkeys(MODULATORS, 0.5001))
     activation = check_activation_conditions(
         stag_state, prev_gnc_state=prev_state, ccp_D_f=1.7, ccp_R=0.8,
     )
@@ -155,7 +153,7 @@ def run() -> dict:
     # Gate
     gate_pass = training_improved and ood_robust and stagnation_detected and a4_phase_induction
 
-    print(f"\n--- Gate Check ---")
+    print("\n--- Gate Check ---")
     print(f"  Training improved:    {'PASS' if training_improved else 'FAIL'}")
     print(f"  OOD robust:           {'PASS' if ood_robust else 'FAIL'}")
     print(f"  Stagnation detected:  {'PASS' if stagnation_detected else 'FAIL'}")

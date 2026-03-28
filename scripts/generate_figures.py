@@ -10,9 +10,9 @@ import json
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
 
 RESULTS = Path("results")
 FIGURES = Path("manuscript/figures")
@@ -78,7 +78,7 @@ def fig2_cross_substrate():
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 3.5))
 
-    for i, (name, key, color) in enumerate(zip(names, keys, colors)):
+    for i, (name, key, color) in enumerate(zip(names, keys, colors, strict=False)):
         results = substrates[key]["results"]
         D_f_vals = [r["D_f"] for r in results]
         R_vals = [r["R"] for r in results]
@@ -166,7 +166,7 @@ def fig4_gnc_agent():
     ax.set_title("GNC+ Agent: Resilience Under Perturbation (G6)")
     ax.legend(fontsize=8)
 
-    for bar, val in zip(bars, [early, late, ood]):
+    for bar, val in zip(bars, [early, late, ood], strict=False):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.02,
                 f"{val:.3f}", ha="center", fontsize=9)
 

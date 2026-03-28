@@ -7,8 +7,6 @@ Usage:
 
 from __future__ import annotations
 
-import numpy as np
-
 from mycelium_fractal_net.neurochem.axiomatic_choice import (
     AxiomaticChoiceOperator,
     SelectionStrategy,
@@ -27,14 +25,14 @@ candidates = [
         "Glutamate": 0.7, "GABA": 0.3, "Noradrenaline": 0.6,
         "Serotonin": 0.4, "Dopamine": 0.65, "Acetylcholine": 0.55, "Opioid": 0.5,
     }),
-    compute_gnc_state({m: 0.5 for m in MODULATORS}),
+    compute_gnc_state(dict.fromkeys(MODULATORS, 0.5)),
     compute_gnc_state({
         "Glutamate": 0.6, "GABA": 0.4, "Noradrenaline": 0.55,
         "Serotonin": 0.45, "Dopamine": 0.6, "Acetylcholine": 0.5, "Opioid": 0.55,
     }),
 ]
 
-prev_state = compute_gnc_state({m: 0.5 for m in MODULATORS})
+prev_state = compute_gnc_state(dict.fromkeys(MODULATORS, 0.5))
 
 print("\n--- Strategy Sweep ---\n")
 

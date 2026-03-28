@@ -253,7 +253,8 @@ def test_frontier_physarum_state_identity() -> None:
 
     r1 = run_math_frontier(s, run_rmt=True, physarum_state=phys)
     r2 = run_math_frontier(s, run_rmt=True, physarum_state=phys)
-    assert r1.rmt is not None and r2.rmt is not None
+    assert r1.rmt is not None
+    assert r2.rmt is not None
     assert abs(r1.rmt.r_ratio - r2.rmt.r_ratio) < 1e-10
 
 

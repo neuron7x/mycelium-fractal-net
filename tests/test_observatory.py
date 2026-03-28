@@ -1,6 +1,5 @@
 """Tests for Observatory — unified diagnostic view."""
 
-import numpy as np
 
 from mycelium_fractal_net.core.observatory import ObservatoryReport, observe
 from mycelium_fractal_net.core.simulate import simulate_history

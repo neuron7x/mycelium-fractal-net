@@ -193,7 +193,8 @@ class TestUnifiedEngine:
         assert report is not None
         assert hasattr(report, "summary")
         s = report.summary()
-        assert isinstance(s, str) and len(s) > 10
+        assert isinstance(s, str)
+        assert len(s) > 10
 
     def test_system_report_interpretation(self, seq32):
         from mycelium_fractal_net.core.unified_engine import UnifiedEngine

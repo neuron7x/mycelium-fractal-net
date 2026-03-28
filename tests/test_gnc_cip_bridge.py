@@ -1,9 +1,11 @@
 """Tests for GNC+ ↔ CIP Bridge."""
 
-import pytest
-from mycelium_fractal_net.neurochem.gnc import GNCState, MODULATORS, SIGMA, compute_gnc_state
+from mycelium_fractal_net.neurochem.gnc import MODULATORS, GNCState, compute_gnc_state
 from mycelium_fractal_net.neurochem.gnc_cip_bridge import (
-    GNC_TO_LEVER_MAP, gnc_guided_levers, gnc_lever_direction, run_gnc_guided_cip,
+    GNC_TO_LEVER_MAP,
+    gnc_guided_levers,
+    gnc_lever_direction,
+    run_gnc_guided_cip,
 )
 
 
@@ -13,9 +15,10 @@ class TestGNCToLeverMap:
             assert m in GNC_TO_LEVER_MAP, f"{m} missing from GNC_TO_LEVER_MAP"
 
     def test_levers_are_strings(self):
-        for m, mapping in GNC_TO_LEVER_MAP.items():
-            for t, lever in mapping.items():
-                assert isinstance(lever, str) and len(lever) > 0
+        for mapping in GNC_TO_LEVER_MAP.values():
+            for lever in mapping.values():
+                assert isinstance(lever, str)
+                assert len(lever) > 0
 
 
 class TestGuidedLevers:
@@ -39,7 +42,8 @@ class TestGuidedLevers:
         stable = gnc_guided_levers(state, "stable")
         explore = gnc_guided_levers(state, "explore")
         # May differ in order or content
-        assert isinstance(stable, list) and isinstance(explore, list)
+        assert isinstance(stable, list)
+        assert isinstance(explore, list)
 
     def test_no_duplicates(self):
         levers = gnc_guided_levers(compute_gnc_state({"Noradrenaline": 0.9}))

@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 
 from mycelium_fractal_net.neurochem.gnc import (
-    GNCBridge,
-    GNCState,
-    MesoController,
+    _IDX,
     MODULATORS,
     ROLES,
     SIGMA,
     THETA,
-    _IDX,
+    GNCBridge,
+    GNCState,
+    MesoController,
     compute_gnc_state,
     get_omega,
     gnc_diagnose,
@@ -19,7 +19,6 @@ from mycelium_fractal_net.neurochem.gnc import (
     reset_omega,
     step,
 )
-
 
 # ═══════════════════════════════════════════════════════════════
 # CONSTANTS
@@ -177,12 +176,13 @@ class TestGNCState:
         assert s.modulators["GABA"] == 0.0
 
     def test_theta_bounded(self):
-        s = compute_gnc_state({m: 1.0 for m in MODULATORS})
+        s = compute_gnc_state(dict.fromkeys(MODULATORS, 1.0))
         assert all(0.1 <= s.theta[t] <= 0.9 for t in THETA)
 
     def test_to_dict(self):
         d = GNCState.default().to_dict()
-        assert "modulators" in d and "theta" in d
+        assert "modulators" in d
+        assert "theta" in d
 
     def test_summary(self):
         s = compute_gnc_state({"Dopamine": 0.8})
@@ -223,11 +223,11 @@ class TestDiagnosis:
         assert d.regime in ("optimal", "dysregulated")
 
     def test_hyperactivated(self):
-        d = gnc_diagnose(compute_gnc_state({m: 0.85 for m in MODULATORS}))
+        d = gnc_diagnose(compute_gnc_state(dict.fromkeys(MODULATORS, 0.85)))
         assert d.regime == "hyperactivated"
 
     def test_hypoactivated(self):
-        d = gnc_diagnose(compute_gnc_state({m: 0.15 for m in MODULATORS}))
+        d = gnc_diagnose(compute_gnc_state(dict.fromkeys(MODULATORS, 0.15)))
         assert d.regime == "hypoactivated"
 
     def test_coherence_bounded(self):
@@ -245,8 +245,8 @@ class TestDiagnosis:
     def test_f1_sign_mismatch(self):
         # Force a state where theta doesn't follow sigma prediction
         s = GNCState(
-            modulators={m: 0.5 for m in MODULATORS},
-            theta={t: 0.5 for t in THETA},
+            modulators=dict.fromkeys(MODULATORS, 0.5),
+            theta=dict.fromkeys(THETA, 0.5),
         )
         s.modulators["Dopamine"] = 0.9  # high DA → nu should be high
         s.theta["nu"] = 0.1             # but nu is low → F1 violation
@@ -256,8 +256,8 @@ class TestDiagnosis:
 
     def test_f3_omega_inactive(self):
         s = GNCState(
-            modulators={m: 0.0 for m in MODULATORS},
-            theta={t: 0.5 for t in THETA},
+            modulators=dict.fromkeys(MODULATORS, 0.0),
+            theta=dict.fromkeys(THETA, 0.5),
         )
         d = gnc_diagnose(s)
         f3_flags = [f for f in d.falsification_flags if "F3" in f]
@@ -265,8 +265,8 @@ class TestDiagnosis:
 
     def test_f5_theta_identical(self):
         s = GNCState(
-            modulators={m: 0.5 for m in MODULATORS},
-            theta={t: 0.5 for t in THETA},
+            modulators=dict.fromkeys(MODULATORS, 0.5),
+            theta=dict.fromkeys(THETA, 0.5),
         )
         d = gnc_diagnose(s)
         f5_flags = [f for f in d.falsification_flags if "F5" in f]
@@ -293,7 +293,7 @@ class TestMesoController:
 
     def test_macro_for_extreme(self):
         ctrl = MesoController()
-        s = compute_gnc_state({m: 0.95 for m in MODULATORS})
+        s = compute_gnc_state(dict.fromkeys(MODULATORS, 0.95))
         ctrl.evaluate(s)
         # High imbalance or low coherence should trigger meso/macro
         assert ctrl.current_strategy in ("meso", "macro")
@@ -375,7 +375,7 @@ class TestGNCBridge:
 
 class TestGNCIntegration:
     def test_diagnose_includes_gnc(self):
-        from mycelium_fractal_net import diagnose, simulate, SimulationSpec
+        from mycelium_fractal_net import SimulationSpec, diagnose, simulate
 
         seq = simulate(SimulationSpec(grid_size=16, steps=20, seed=42))
         report = diagnose(seq)

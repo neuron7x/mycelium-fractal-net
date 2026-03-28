@@ -13,7 +13,6 @@ from mycelium_fractal_net.numerics.grid_ops import (
     BoundaryCondition,
     compute_laplacian,
     laplacian_backend,
-    njit,
 )
 from mycelium_fractal_net.types.field import SimulationSpec
 

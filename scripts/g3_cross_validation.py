@@ -143,7 +143,7 @@ def run() -> dict:
     substrates_passing = sum(1 for s in substrates.values() if s["passes_ccp"])
     gate_pass = mfn_cognitive and others_have_negative and all_d_f_valid
 
-    print(f"\n--- Gate Check ---")
+    print("\n--- Gate Check ---")
     for name, data in substrates.items():
         print(f"  {name:20s}: {'PASS' if data['passes_ccp'] else 'FAIL'} ({data['cognitive_fraction']:.0%} cognitive)")
     print(f"  Substrates passing: {substrates_passing}/3")

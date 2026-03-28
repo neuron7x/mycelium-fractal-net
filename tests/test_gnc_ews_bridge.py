@@ -1,8 +1,11 @@
 """Tests for GNC+ ↔ EWS Bridge."""
 
-from mycelium_fractal_net.neurochem.gnc import GNCState, MODULATORS, compute_gnc_state
+from mycelium_fractal_net.neurochem.gnc import GNCState, compute_gnc_state
 from mycelium_fractal_net.neurochem.gnc_ews_bridge import (
-    TRANSITION_PATTERNS, detect_transition_pattern, gnc_predictive_ews, gnc_ews_trajectory,
+    TRANSITION_PATTERNS,
+    detect_transition_pattern,
+    gnc_ews_trajectory,
+    gnc_predictive_ews,
 )
 
 
@@ -12,11 +15,11 @@ class TestTransitionPatterns:
             assert "ref" in p and len(p["ref"]) > 10, f"{name} missing ref"
 
     def test_all_patterns_have_risk(self):
-        for name, p in TRANSITION_PATTERNS.items():
+        for p in TRANSITION_PATTERNS.values():
             assert p["risk"] in ("low", "medium", "high")
 
     def test_pattern_risk_scores_bounded(self):
-        for name, p in TRANSITION_PATTERNS.items():
+        for p in TRANSITION_PATTERNS.values():
             assert 0 <= p["risk_score"] <= 1
 
 

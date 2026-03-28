@@ -119,7 +119,7 @@ def run() -> dict:
 
     gate_pass = critical_correct
 
-    print(f"\n--- Gate Check ---")
+    print("\n--- Gate Check ---")
     print(f"  Critical cases correct: {'PASS' if critical_correct else 'FAIL'}")
     print(f"  Total correct: {total_correct}/{len(results)}")
     print(f"\n{'=' * 60}")

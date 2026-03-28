@@ -75,12 +75,12 @@ def run() -> dict:
 
     gate_pass = all_D_f_in_window and all_R_above_threshold and cognitive_80_pct and cv_below_5_pct
 
-    print(f"\n--- Statistics ---")
+    print("\n--- Statistics ---")
     print(f"  D_f: {D_f_mean:.4f} +/- {D_f_std:.4f} (CV={D_f_cv:.4f})")
     print(f"  R:   {R_mean:.4f} +/- {R_std:.4f}")
     print(f"  Cognitive: {cognitive_count}/{N_SEEDS} ({cognitive_fraction:.0%})")
 
-    print(f"\n--- Gate Checks ---")
+    print("\n--- Gate Checks ---")
     print(f"  D_f in [1.5, 2.0] all seeds: {'PASS' if all_D_f_in_window else 'FAIL'}")
     print(f"  R > 0.4 all seeds:            {'PASS' if all_R_above_threshold else 'FAIL'}")
     print(f"  Cognitive >= 80%:              {'PASS' if cognitive_80_pct else 'FAIL'}")

@@ -7,12 +7,9 @@ MUST agree with release_contract.py.
 import json
 from pathlib import Path
 
-import pytest
-
 from mycelium_fractal_net.core.release_contract import CONTRACT
 from mycelium_fractal_net.core.simulate import simulate_history
 from mycelium_fractal_net.types.field import SimulationSpec
-
 
 ROOT = Path(__file__).parent.parent
 

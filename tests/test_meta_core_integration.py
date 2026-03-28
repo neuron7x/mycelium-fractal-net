@@ -11,11 +11,9 @@ Covers all gaps identified in the audit:
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 import mycelium_fractal_net as mfn
-
 
 # ── Public API exports ───────────────────────────────────────────────
 
@@ -149,7 +147,7 @@ class TestPredictWithAC:
         for i in range(5):
             twin.update(compute_gnc_state({"Dopamine": 0.5 + i * 0.02}))
 
-        traj, flags = twin.predict_with_ac(horizon=3, ccp_D_f=1.7, ccp_R=0.8, seed=42)
+        traj, _flags = twin.predict_with_ac(horizon=3, ccp_D_f=1.7, ccp_R=0.8, seed=42)
         # Regardless of activation, trajectory must be valid GNC states
         assert all(isinstance(s, GNCState) for s in traj)
         assert all(0.1 <= s.theta["alpha"] <= 0.9 for s in traj)

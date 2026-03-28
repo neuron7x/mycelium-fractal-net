@@ -10,7 +10,6 @@ import numpy as np
 import pytest
 
 import mycelium_fractal_net as mfn
-from mycelium_fractal_net.adapters import FieldAdapter
 
 
 def test_load_2d_array() -> None:

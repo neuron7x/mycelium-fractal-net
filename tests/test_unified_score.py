@@ -8,12 +8,12 @@ import numpy as np
 import pytest
 
 import mycelium_fractal_net as mfn
+from mycelium_fractal_net.analytics.math_frontier import run_math_frontier
 from mycelium_fractal_net.analytics.unified_score import (
     compute_hwi_components,
     compute_unified_score,
     hwi_trajectory,
 )
-from mycelium_fractal_net.analytics.math_frontier import run_math_frontier
 
 
 @pytest.fixture(scope="module")

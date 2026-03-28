@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from mycelium_fractal_net.core.simulate import simulate_history
-from mycelium_fractal_net.types.field import SimulationSpec, FieldSequence
+from mycelium_fractal_net.types.field import FieldSequence, SimulationSpec
 
 
 @pytest.fixture
@@ -35,7 +35,8 @@ class TestTDA:
         from mycelium_fractal_net.analytics.tda import PersistenceTransformer
 
         r = PersistenceTransformer(min_persistence=0.001).fit_transform([field])
-        assert isinstance(r, list) and len(r) == 1
+        assert isinstance(r, list)
+        assert len(r) == 1
 
     def test_superlevel(self, field):
         from mycelium_fractal_net.analytics.tda import PersistenceTransformer
@@ -51,25 +52,28 @@ class TestTDA:
 
     def test_vectorizer(self, field):
         from mycelium_fractal_net.analytics.tda import (
-            PersistenceTransformer,
             PersistenceLandscapeVectorizer,
+            PersistenceTransformer,
         )
 
         dgm = PersistenceTransformer().fit_transform([field])
         v = PersistenceLandscapeVectorizer(n_landscapes=3, n_bins=50).fit_transform(dgm)
-        assert v.shape == (1, 150) and np.all(np.isfinite(v))
+        assert v.shape == (1, 150)
+        assert np.all(np.isfinite(v))
 
     def test_vectorizer_empty(self):
         from mycelium_fractal_net.analytics.tda import PersistenceLandscapeVectorizer
 
         v = PersistenceLandscapeVectorizer(n_landscapes=2, n_bins=20).fit_transform([[]])
-        assert v.shape == (1, 40) and np.allclose(v, 0)
+        assert v.shape == (1, 40)
+        assert np.allclose(v, 0)
 
     def test_pipeline(self, field):
         from sklearn.pipeline import Pipeline
+
         from mycelium_fractal_net.analytics.tda import (
-            PersistenceTransformer,
             PersistenceLandscapeVectorizer,
+            PersistenceTransformer,
         )
 
         pipe = Pipeline(
@@ -88,7 +92,8 @@ class TestTransitions:
         )
 
         w = wasserstein_persistence_trajectory(history, stride=5)
-        assert len(w) > 0 and np.all(w >= 0)
+        assert len(w) > 0
+        assert np.all(w >= 0)
 
     def test_detect(self, history):
         from mycelium_fractal_net.analytics.topological_transition import (
@@ -124,7 +129,8 @@ class TestCausalBridge:
 
         try:
             r = DagmaBridge(lambda1=0.05).discover(np.random.randn(100, 4), ["a", "b", "c", "d"])
-            assert r.n_nodes == 4 and r.summary().startswith("[CAUSAL]")
+            assert r.n_nodes == 4
+            assert r.summary().startswith("[CAUSAL]")
         except ImportError:
             pytest.skip("dagma not installed")
 
@@ -160,7 +166,9 @@ class TestInvariantOp:
         from mycelium_fractal_net.analytics.invariant_operator import InvariantOperator
 
         s = InvariantOperator().measure(field, np.random.rand(*field.shape))
-        assert s.H >= 0 and s.W2 >= 0 and 0 <= s.M <= 1
+        assert s.H >= 0
+        assert s.W2 >= 0
+        assert 0 <= s.M <= 1
         assert s.to_dict()
 
     def test_self(self, field):
@@ -172,7 +180,8 @@ class TestInvariantOp:
         from mycelium_fractal_net.analytics.invariant_operator import InvariantOperator
 
         t = InvariantOperator().trajectory(history, stride=5)
-        assert len(t.states) > 0 and t.summary()
+        assert len(t.states) > 0
+        assert t.summary()
 
     def test_null_check(self):
         from mycelium_fractal_net.analytics.invariant_operator import InvariantOperator
@@ -200,7 +209,8 @@ class TestInvariantOp:
             return h
 
         s = InvariantOperator().stability_map("s", [0.1, 0.5], gen)
-        assert s.param_name == "s" and s.summary()
+        assert s.param_name == "s"
+        assert s.summary()
 
 
 # ── Bifiltration ─────────────────────────────────────────────
@@ -211,7 +221,9 @@ class TestBifiltration:
         from mycelium_fractal_net.analytics.bifiltration import compute_bifiltration
 
         s = compute_bifiltration(field, n_thresholds=5)
-        assert s.n_thresholds == 5 and s.summary() and s.to_dict()
+        assert s.n_thresholds == 5
+        assert s.summary()
+        assert s.to_dict()
 
     def test_explicit(self, field):
         from mycelium_fractal_net.analytics.bifiltration import compute_bifiltration
@@ -227,13 +239,15 @@ class TestSync:
         from mycelium_fractal_net.analytics.synchronization import kuramoto_order_parameter
 
         k = kuramoto_order_parameter(field)
-        assert 0 <= k.R <= 1 and k.summary()
+        assert 0 <= k.R <= 1
+        assert k.summary()
 
     def test_trajectory(self, history):
         from mycelium_fractal_net.analytics.synchronization import kuramoto_trajectory
 
         t = kuramoto_trajectory(history, stride=5)
-        assert len(t) > 0 and np.all((t >= 0) & (t <= 1))
+        assert len(t) > 0
+        assert np.all((t >= 0) & (t <= 1))
 
 
 # ── Determinism ──────────────────────────────────────────────
@@ -244,7 +258,8 @@ class TestDeterminism:
         from mycelium_fractal_net.core.determinism import DeterminismSpec
 
         s = DeterminismSpec()
-        assert s.dtype == "float64" and s.to_dict()
+        assert s.dtype == "float64"
+        assert s.to_dict()
 
     def test_current(self):
         from mycelium_fractal_net.core.determinism import DeterminismSpec
@@ -256,13 +271,15 @@ class TestDeterminism:
         from mycelium_fractal_net.core.determinism import DeterminismSpec
 
         ok, d = DeterminismSpec().matches(DeterminismSpec())
-        assert ok and d == []
+        assert ok
+        assert d == []
 
     def test_mismatch(self):
         from mycelium_fractal_net.core.determinism import DeterminismSpec
 
         ok, d = DeterminismSpec(os="linux").matches(DeterminismSpec(os="darwin"))
-        assert not ok and len(d) == 1
+        assert not ok
+        assert len(d) == 1
 
     def test_canonical(self):
         from mycelium_fractal_net.core.determinism import CANONICAL_SPEC
@@ -271,6 +288,7 @@ class TestDeterminism:
 
     def test_verify(self, field):
         import hashlib
+
         from mycelium_fractal_net.core.determinism import verify_determinism
 
         h = hashlib.sha256(field.astype(np.float64).tobytes()).hexdigest()[:16]
@@ -337,7 +355,8 @@ class TestCognitive:
         from mycelium_fractal_net.cognitive import invariance_report
 
         r = invariance_report(seq)
-        assert "Λ₂" in r and "Λ₅" in r
+        assert "Λ₂" in r
+        assert "Λ₅" in r
 
     def test_invariance_short(self):
         from mycelium_fractal_net.cognitive import invariance_report
@@ -357,7 +376,8 @@ class TestSimulateNull:
         from mycelium_fractal_net.core.simulate import simulate_null
 
         s = simulate_null(mode, grid_size=8, steps=5)
-        assert s.field.shape == (8, 8) and s.history.shape == (5, 8, 8)
+        assert s.field.shape == (8, 8)
+        assert s.history.shape == (5, 8, 8)
 
     def test_invalid(self):
         from mycelium_fractal_net.core.simulate import simulate_null
