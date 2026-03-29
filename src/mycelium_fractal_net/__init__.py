@@ -543,6 +543,14 @@ _LAZY_ATTRS = {
     "SelfReadingConfig": ("mycelium_fractal_net.self_reading", "SelfReadingConfig"),
     "SelfReadingLoop": ("mycelium_fractal_net.self_reading", "SelfReadingLoop"),
     "SelfReadingReport": ("mycelium_fractal_net.self_reading", "SelfReadingReport"),
+    # ── NFI (lazy: neuromodulatory field intelligence) ────────────
+    "NFIAdaptiveLoop": ("mycelium_fractal_net.nfi", "NFIAdaptiveLoop"),
+    "NFIClosureLoop": ("mycelium_fractal_net.nfi", "NFIClosureLoop"),
+    "NFIStateContract": ("mycelium_fractal_net.nfi", "NFIStateContract"),
+    "GammaEmergenceProbe": ("mycelium_fractal_net.nfi", "GammaEmergenceProbe"),
+    "EmergentValidationSuite": ("mycelium_fractal_net.nfi", "EmergentValidationSuite"),
+    "AdaptiveRunResult": ("mycelium_fractal_net.nfi", "AdaptiveRunResult"),
+    "ThetaMapping": ("mycelium_fractal_net.nfi", "ThetaMapping"),
     # ── tau-Control (lazy: identity preservation engine) ─────────
     "IdentityEngine": ("mycelium_fractal_net.tau_control", "IdentityEngine"),
     "IdentityReport": ("mycelium_fractal_net.tau_control", "IdentityReport"),
@@ -632,6 +640,14 @@ __all__ = [
     "CausalTracer",
     # ── Tier 10: tau-Control (identity preservation) ─────────────
     "CertifiedEllipsoid",
+    # ── Tier 11: NFI (neuromodulatory field intelligence) ────────
+    "AdaptiveRunResult",
+    "EmergentValidationSuite",
+    "GammaEmergenceProbe",
+    "NFIAdaptiveLoop",
+    "NFIClosureLoop",
+    "NFIStateContract",
+    "ThetaMapping",
     "ChoiceResult",
     # ── Tier 9: Self-Reading (5-layer introspection) ─────────────
     "CoherenceMonitor",

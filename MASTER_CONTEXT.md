@@ -77,6 +77,40 @@ D_T  Longitudinal Digital Twin   — predicts manifold trajectory x_{t+1:t+h}
 T    Transfer to adaptive agents — AI deployment target
 ```
 
+## NFI — Neuromodulatory Field Intelligence
+
+**Definition**: unified cognitive machine with formally defined truth interface.
+
+**Four layers**:
+
+| Layer | Module | Role |
+|-------|--------|------|
+| ML-SDM | (external) | Adaptive LLM behaviour |
+| CA1-LAM | nfi/ca1_lam.py | Temporal memory structure (ring buffer of MFNSnapshot) |
+| BN-Syn | (external) | Physically consistent spike dynamics |
+| MFN+ | src/mycelium_fractal_net/ | Morphogenetic integrity + gamma-scaling |
+
+**NFI Closure Contract**:
+  gamma emerges as CONSEQUENCE of inter-layer coherence.
+  Contract first -> adapters second -> closure loop third.
+  tau_control never reads gamma. interpretability reads gamma read-only, post-hoc.
+
+**Quick start**:
+```python
+from mycelium_fractal_net.nfi import NFIAdaptiveLoop
+import mycelium_fractal_net as mfn
+
+loop = NFIAdaptiveLoop(base_spec=mfn.SimulationSpec(grid_size=64, steps=100))
+result = loop.run(n_steps=30)
+# result.gamma_report.label: EMERGENT / NOT_EMERGED / INSUFFICIENT_DATA
+```
+
+**Architectural invariants (violation = blocker)**:
+  INV-1: NFIStateContract has no field named gamma
+  INV-2: tau_control does not import GammaEmergenceProbe
+  INV-3: GNC feedback loop preserves CFL: sim.alpha in (0, 0.25]
+  INV-4: GammaEmergenceProbe is read-only, post-hoc, not part of main loop
+
 ## Falsification Conditions (F1-F7)
 
 | # | Condition | What kills the theory |
